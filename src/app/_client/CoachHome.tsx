@@ -323,20 +323,22 @@ export function CoachHome() {
       score: number | null;
     };
 
-    const pillars: PillarRow[] = journeyReadinessSnapshot?.pillars
-      ? journeyReadinessSnapshot.pillars.map((p) => ({
-          id: p.id as (typeof DRIVER_ORDER)[number],
-          label: p.label,
-          score: p.score,
-        }))
-      : DRIVER_ORDER.map((id) => ({ id, label: pillarTitle(id), score: null }));
+    const pillars: PillarRow[] = interviewReadinessEmpty
+      ? DRIVER_ORDER.map((id) => ({ id, label: pillarTitle(id), score: null }))
+      : journeyReadinessSnapshot?.pillars
+        ? journeyReadinessSnapshot.pillars.map((p) => ({
+            id: p.id as (typeof DRIVER_ORDER)[number],
+            label: p.label,
+            score: p.score,
+          }))
+        : DRIVER_ORDER.map((id) => ({ id, label: pillarTitle(id), score: null }));
 
-    const overall = journeyReadinessSnapshot?.overall ?? null;
+    const overall = interviewReadinessEmpty ? null : (journeyReadinessSnapshot?.overall ?? null);
     const overallText = overall == null ? "--" : overall.toFixed(1);
     const overallTextClass =
       overall == null ? "text-gray-500" : coachScoreTextClasses(journeyReadinessSnapshot?.overall ?? 0);
 
-    const band = journeyReadinessSnapshot?.band ?? null;
+    const band = interviewReadinessEmpty ? null : (journeyReadinessSnapshot?.band ?? null);
     const bandText = band ?? "--";
     const bandClass =
       band == null
@@ -351,6 +353,117 @@ export function CoachHome() {
 
     return { pillars, overall, overallText, overallTextClass, bandText, bandClass, noteText };
   }, [interviewReadinessEmpty, journeyReadinessSnapshot]);
+
+  const readinessCardEl = useMemo(() => {
+    if (!showInterviewReadinessCard) return null;
+    return (
+      <GlassCard className="w-full mt-6">
+        <Link
+          href={readinessSourceReport?.meta?.id ? `/report/${readinessSourceReport.meta.id}` : "/report"}
+          aria-label="Open report"
+          className={cn(
+            "absolute right-5 top-5 z-10 inline-flex items-center justify-center rounded-full p-1.5",
+            "text-gray-400 hover:text-gray-700 hover:bg-white/50 active:bg-white/70",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+          )}
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden
+          >
+            <path
+              d="M7 17L17 7M17 7H10M17 7V14"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </Link>
+        <CardBody>
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 lg:flex-1">
+              <h3 className="text-2xl font-extrabold tracking-tight pr-10">Interview readiness</h3>
+              <div className="mt-2 flex w-full flex-col gap-3">
+                <p className="text-base leading-6 text-[var(--app-muted)]">
+                  Mocks, trainings, and pillar balance at a glance.
+                </p>
+
+                <div className="flex shrink-0 flex-wrap items-end justify-start gap-1">
+                  <span
+                    className={cn(
+                      "text-7xl font-extrabold leading-none tracking-tight tabular-nums",
+                      readinessCardModel.overallTextClass,
+                    )}
+                  >
+                    {readinessCardModel.overallText}
+                  </span>
+                  <span className="pb-1.5 text-xl font-extrabold tracking-tight text-gray-500 tabular-nums">
+                    /{READINESS_MAX.toFixed(1)}
+                  </span>
+                </div>
+              </div>
+
+              <p className="mt-4 flex flex-wrap items-center gap-3 text-base leading-6 text-[var(--app-muted)]">
+                You’re currently on{" "}
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-base font-extrabold tracking-tight",
+                    readinessCardModel.bandClass,
+                  )}
+                >
+                  {readinessCardModel.bandText}
+                </span>
+              </p>
+
+              {readinessCardModel.noteText ? (
+                <p className="mt-5 text-base leading-7 text-[var(--app-muted)]">{readinessCardModel.noteText}</p>
+              ) : null}
+            </div>
+
+            <div className="lg:w-[360px] lg:shrink-0">
+              <div className="mt-2 lg:mt-10 space-y-4">
+                {readinessCardModel.pillars.map(({ id, label, score }) => (
+                  <div key={id}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <div className="min-w-0 text-sm font-bold tracking-tight flex items-center gap-1">
+                        <span className="min-w-0 truncate">{label}</span>
+                        <PillarInfoIcon tooltip={pillarTooltip(id)} />
+                      </div>
+                      <div
+                        className={cn(
+                          "shrink-0 text-sm font-extrabold tabular-nums",
+                          score == null ? "text-gray-500" : coachScoreTextClasses(score),
+                        )}
+                      >
+                        {score == null ? "--" : score.toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/60">
+                      <div
+                        className={cn(
+                          "h-full rounded-full",
+                          score == null ? "bg-black/70 w-0" : coachScoreBarClasses(score),
+                        )}
+                        style={
+                          score == null ? undefined : { width: `${Math.min(100, (score / READINESS_MAX) * 100)}%` }
+                        }
+                        aria-hidden
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardBody>
+      </GlassCard>
+    );
+  }, [readinessCardModel, readinessSourceReport?.meta?.id, showInterviewReadinessCard]);
 
   useEffect(() => {
     const is = (k: string) => {
@@ -579,6 +692,7 @@ export function CoachHome() {
                     <ArrowUpRightIcon className="h-5 w-5 shrink-0 text-gray-500" />
                   </Link>
                 </div>
+                {readinessCardEl}
               </>
             ) : showJourneyColumn ? (
               <>
@@ -600,121 +714,7 @@ export function CoachHome() {
                     return "A bit more refinement and you'll be interview-ready.";
                   })()}
                 </h4>
-                {showInterviewReadinessCard ? (
-                  <GlassCard className="w-full mt-6">
-                    <Link
-                      href={
-                        readinessSourceReport?.meta?.id
-                          ? `/report/${readinessSourceReport.meta.id}`
-                          : "/report"
-                      }
-                      aria-label="Open report"
-                      className={cn(
-                        "absolute right-5 top-5 z-10 inline-flex items-center justify-center rounded-full p-1.5",
-                        "text-gray-400 hover:text-gray-700 hover:bg-white/50 active:bg-white/70",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
-                      )}
-                    >
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden
-                      >
-                        <path
-                          d="M7 17L17 7M17 7H10M17 7V14"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </Link>
-                    <CardBody>
-                      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="min-w-0 lg:flex-1">
-                          <h3 className="text-2xl font-extrabold tracking-tight pr-10">Interview readiness</h3>
-                          <div className="mt-2 flex w-full flex-col gap-3">
-                            <p className="text-base leading-6 text-[var(--app-muted)]">
-                              Mocks, trainings, and pillar balance at a glance.
-                            </p>
-
-                            <div className="flex shrink-0 flex-wrap items-end justify-start gap-1">
-                              <span
-                                className={cn(
-                                  "text-7xl font-extrabold leading-none tracking-tight tabular-nums",
-                                  readinessCardModel.overallTextClass,
-                                )}
-                              >
-                                {readinessCardModel.overallText}
-                              </span>
-                              <span className="pb-1.5 text-xl font-extrabold tracking-tight text-gray-500 tabular-nums">
-                                /{READINESS_MAX.toFixed(1)}
-                              </span>
-                            </div>
-                          </div>
-
-                          <p className="mt-4 flex flex-wrap items-center gap-3 text-base leading-6 text-[var(--app-muted)]">
-                            You’re currently on{" "}
-                            <span
-                              className={cn(
-                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-base font-extrabold tracking-tight",
-                                readinessCardModel.bandClass,
-                              )}
-                            >
-                              {readinessCardModel.bandText}
-                            </span>
-                          </p>
-
-                          {readinessCardModel.noteText ? (
-                            <p className="mt-5 text-base leading-7 text-[var(--app-muted)]">
-                              {readinessCardModel.noteText}
-                            </p>
-                          ) : null}
-                        </div>
-
-                        <div className="lg:w-[360px] lg:shrink-0">
-                          <div className="mt-2 lg:mt-10 space-y-4">
-                            {readinessCardModel.pillars.map(({ id, label, score }) => (
-                              <div key={id}>
-                                <div className="flex items-baseline justify-between gap-3">
-                                  <div className="min-w-0 text-sm font-bold tracking-tight flex items-center gap-1">
-                                    <span className="min-w-0 truncate">{label}</span>
-                                    <PillarInfoIcon tooltip={pillarTooltip(id)} />
-                                  </div>
-                                  <div
-                                    className={cn(
-                                      "shrink-0 text-sm font-extrabold tabular-nums",
-                                      score == null ? "text-gray-500" : coachScoreTextClasses(score),
-                                    )}
-                                  >
-                                    {score == null ? "--" : score.toFixed(1)}
-                                  </div>
-                                </div>
-                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/60">
-                                  <div
-                                    className={cn(
-                                      "h-full rounded-full",
-                                      score == null ? "bg-black/70 w-0" : coachScoreBarClasses(score),
-                                    )}
-                                    style={
-                                      score == null
-                                        ? undefined
-                                        : { width: `${Math.min(100, (score / READINESS_MAX) * 100)}%` }
-                                    }
-                                    aria-hidden
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </CardBody>
-                  </GlassCard>
-                ) : null}
+                {readinessCardEl}
                 <div className="mt-4 w-full pt-0">
                   {!isRoadmapCoach ? (
                     <p className="w-full text-left text-xl leading-7 text-[var(--app-muted)]">
