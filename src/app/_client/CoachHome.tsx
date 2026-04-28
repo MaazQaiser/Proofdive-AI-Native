@@ -19,6 +19,7 @@ import {
 } from "@/lib/storyboardDraft";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type {
+  Experience,
   InterviewReport,
   ReadinessLabel,
   RoleProfile,
@@ -57,6 +58,13 @@ function pillarTitle(id: (typeof DRIVER_ORDER)[number]): string {
   if (id === "action") return "Power of Action";
   if (id === "people") return "Power of People";
   return "Power of Mastery";
+}
+
+function pillarTooltip(id: (typeof DRIVER_ORDER)[number]): string {
+  if (id === "thinking") return "Clarity of thinking: structure, prioritization, and sound judgment under pressure.";
+  if (id === "action") return "Execution: ownership, speed, and delivering outcomes with constraints.";
+  if (id === "people") return "Collaboration: communication, influence, and working effectively with others.";
+  return "Craft mastery: role fundamentals, depth, and consistent high-quality work.";
 }
 
 function safeParseReportsMap(raw: string | null): Record<string, InterviewReport> {
@@ -193,6 +201,63 @@ function ArrowUpRightIcon({ className }: { className?: string }) {
   );
 }
 
+/** Minimal info icon (Heroicons-like) */
+function InfoIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <path
+        d="M12 16.25V11.25"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 8.25h.01"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PillarInfoIcon({ tooltip }: { tooltip: string }) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        "group relative inline-flex items-center justify-center rounded-md",
+        "text-gray-500/80 hover:text-gray-700",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+      )}
+      aria-label={tooltip}
+    >
+      <InfoIcon className="h-4 w-4 shrink-0" />
+      <span
+        className={cn(
+          "pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2",
+          "w-max max-w-[240px] whitespace-normal rounded-xl bg-black px-3 py-2 text-xs font-semibold leading-4 text-white shadow-lg",
+          "opacity-0 translate-y-1 transition",
+          "group-hover:opacity-100 group-hover:translate-y-0",
+          "group-focus-visible:opacity-100 group-focus-visible:translate-y-0",
+        )}
+        role="tooltip"
+      >
+        {tooltip}
+      </span>
+    </button>
+  );
+}
+
 export function CoachHome() {
   const router = useRouter();
   const pathname = usePathname();
@@ -201,6 +266,7 @@ export function CoachHome() {
     StorageKeys.roleProfile,
     null,
   );
+  const [experiences] = useLocalStorageState<Experience[]>(StorageKeys.experiences, []);
   const [trainingJourneyProgress] = useLocalStorageState<TrainingJourneyProgress | null>(
     StorageKeys.trainingProgress,
     null,
@@ -249,6 +315,42 @@ export function CoachHome() {
   const showInterviewReadinessCard =
     coachJourneyView === "welcome" || coachJourneyView === "journey" || coachJourneyView === "final";
   const interviewReadinessEmpty = coachJourneyView === "welcome";
+
+  const readinessCardModel = useMemo(() => {
+    type PillarRow = {
+      id: (typeof DRIVER_ORDER)[number];
+      label: string;
+      score: number | null;
+    };
+
+    const pillars: PillarRow[] = journeyReadinessSnapshot?.pillars
+      ? journeyReadinessSnapshot.pillars.map((p) => ({
+          id: p.id as (typeof DRIVER_ORDER)[number],
+          label: p.label,
+          score: p.score,
+        }))
+      : DRIVER_ORDER.map((id) => ({ id, label: pillarTitle(id), score: null }));
+
+    const overall = journeyReadinessSnapshot?.overall ?? null;
+    const overallText = overall == null ? "--" : overall.toFixed(1);
+    const overallTextClass =
+      overall == null ? "text-gray-500" : coachScoreTextClasses(journeyReadinessSnapshot?.overall ?? 0);
+
+    const band = journeyReadinessSnapshot?.band ?? null;
+    const bandText = band ?? "--";
+    const bandClass =
+      band == null
+        ? "bg-rose-500/12 text-[#e60000]"
+        : coachReadinessBadgeClasses(journeyReadinessSnapshot?.band ?? "Not ready");
+
+    const noteText = interviewReadinessEmpty
+      ? "Take your first mock interview to get your interview readiness score."
+      : journeyReadinessSnapshot
+        ? null
+        : "Complete a mock interview to see your readiness snapshot here (same scores as your report page).";
+
+    return { pillars, overall, overallText, overallTextClass, bandText, bandClass, noteText };
+  }, [interviewReadinessEmpty, journeyReadinessSnapshot]);
 
   useEffect(() => {
     const is = (k: string) => {
@@ -333,6 +435,10 @@ export function CoachHome() {
   }, [coachJourneyView, coachFinalReportId, pathname, setCoachJourneyView, setCoachFinalReportId]);
 
   const role = roleProfile?.targetRole?.trim() ?? "";
+  const roleExperiences = useMemo(
+    () => experiences.filter((e) => (e.role ?? "").trim() === role.trim()),
+    [experiences, role],
+  );
 
   const trainingProgressForRole = useMemo(() => {
     if (!trainingJourneyProgress) return null;
@@ -376,8 +482,13 @@ export function CoachHome() {
   const hasCreatedStoryboard = useMemo(() => {
     if (!role) return false;
     if (fromCraft && fromCraft.v === 1 && fromCraft.role === role) return true;
+    if (roleExperiences.length > 0) return true;
     return storyOverallScore > 0;
-  }, [role, fromCraft, storyOverallScore]);
+  }, [role, fromCraft, storyOverallScore, roleExperiences.length]);
+
+  const hasCraftedStoryboard = useMemo(() => {
+    return Boolean(fromCraft && fromCraft.v === 1 && fromCraft.role === role);
+  }, [fromCraft, role]);
 
   function handleRoleChange(nextTargetRole: string) {
     const trimmed = nextTargetRole.trim();
@@ -394,11 +505,11 @@ export function CoachHome() {
     <AppShell>
       <CoachFloatingNav />
       <div className="flex min-h-[70vh] flex-col items-start justify-start pb-44">
-        <div className="mx-auto mt-[64px] flex w-full max-w-[960px] flex-row items-center justify-center gap-6">
+        <div className="mx-auto mt-0 flex w-full max-w-[840px] flex-row items-center justify-center gap-6 px-6">
           <div
             className={cn(
               "flex min-h-0 min-w-0 h-full w-full flex-col items-start justify-center gap-0 text-left lg:flex-none lg:self-start",
-              showInterviewReadinessCard ? "lg:w-3/5" : "lg:w-full",
+              "lg:w-full",
             )}
           >
             <div className="mb-6 flex w-full flex-col justify-start items-start gap-0.5 sm:mb-8">
@@ -472,25 +583,150 @@ export function CoachHome() {
             ) : showJourneyColumn ? (
               <>
                 <h2 className="text-5xl font-extrabold leading-[52px] tracking-tight">
-                  {isRoadmapCoach
-                    ? "Here is your guided journey"
-                    : isFinalCoach
-                      ? readinessSourceReport?.meta.heroVariant === "first_start"
-                        ? "You're off to a strong start."
-                        : "Good news! You're improving"
-                      : "You're off to a strong start."}
+                  {(() => {
+                    const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                    if (isRoadmapCoach) return "Here is your guided journey";
+                    if (isFinalCoach) return isFirstStart ? "You're off to a strong start." : "Good New! you are Improving";
+                    return "You're off to a strong start.";
+                  })()}
                 </h2>
                 <h4 className="mt-1 mb-[14px] text-[32px] font-semibold leading-[52px] tracking-tight">
-                  {isRoadmapCoach
-                    ? "Follow the path, then go for your mock interview."
-                    : "A bit more refinement and you'll be interview-ready."}
+                  {(() => {
+                    const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                    if (isRoadmapCoach) return "Follow the path, then go for your mock interview.";
+                    if (isFinalCoach) return isFirstStart
+                      ? "A bit more refinement and you'll be interview-ready."
+                      : "Focus on your weaker area's now to get it done.";
+                    return "A bit more refinement and you'll be interview-ready.";
+                  })()}
                 </h4>
+                {showInterviewReadinessCard ? (
+                  <GlassCard className="w-full mt-6">
+                    <Link
+                      href={
+                        readinessSourceReport?.meta?.id
+                          ? `/report/${readinessSourceReport.meta.id}`
+                          : "/report"
+                      }
+                      aria-label="Open report"
+                      className={cn(
+                        "absolute right-5 top-5 z-10 inline-flex items-center justify-center rounded-full p-1.5",
+                        "text-gray-400 hover:text-gray-700 hover:bg-white/50 active:bg-white/70",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+                      )}
+                    >
+                      <svg
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden
+                      >
+                        <path
+                          d="M7 17L17 7M17 7H10M17 7V14"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </Link>
+                    <CardBody>
+                      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 lg:flex-1">
+                          <h3 className="text-2xl font-extrabold tracking-tight pr-10">Interview readiness</h3>
+                          <div className="mt-2 flex w-full flex-col gap-3">
+                            <p className="text-base leading-6 text-[var(--app-muted)]">
+                              Mocks, trainings, and pillar balance at a glance.
+                            </p>
+
+                            <div className="flex shrink-0 flex-wrap items-end justify-start gap-1">
+                              <span
+                                className={cn(
+                                  "text-7xl font-extrabold leading-none tracking-tight tabular-nums",
+                                  readinessCardModel.overallTextClass,
+                                )}
+                              >
+                                {readinessCardModel.overallText}
+                              </span>
+                              <span className="pb-1.5 text-xl font-extrabold tracking-tight text-gray-500 tabular-nums">
+                                /{READINESS_MAX.toFixed(1)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <p className="mt-4 flex flex-wrap items-center gap-3 text-base leading-6 text-[var(--app-muted)]">
+                            You’re currently on{" "}
+                            <span
+                              className={cn(
+                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-base font-extrabold tracking-tight",
+                                readinessCardModel.bandClass,
+                              )}
+                            >
+                              {readinessCardModel.bandText}
+                            </span>
+                          </p>
+
+                          {readinessCardModel.noteText ? (
+                            <p className="mt-5 text-base leading-7 text-[var(--app-muted)]">
+                              {readinessCardModel.noteText}
+                            </p>
+                          ) : null}
+                        </div>
+
+                        <div className="lg:w-[360px] lg:shrink-0">
+                          <div className="mt-2 lg:mt-10 space-y-4">
+                            {readinessCardModel.pillars.map(({ id, label, score }) => (
+                              <div key={id}>
+                                <div className="flex items-baseline justify-between gap-3">
+                                  <div className="min-w-0 text-sm font-bold tracking-tight flex items-center gap-1">
+                                    <span className="min-w-0 truncate">{label}</span>
+                                    <PillarInfoIcon tooltip={pillarTooltip(id)} />
+                                  </div>
+                                  <div
+                                    className={cn(
+                                      "shrink-0 text-sm font-extrabold tabular-nums",
+                                      score == null ? "text-gray-500" : coachScoreTextClasses(score),
+                                    )}
+                                  >
+                                    {score == null ? "--" : score.toFixed(1)}
+                                  </div>
+                                </div>
+                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/60">
+                                  <div
+                                    className={cn(
+                                      "h-full rounded-full",
+                                      score == null ? "bg-black/70 w-0" : coachScoreBarClasses(score),
+                                    )}
+                                    style={
+                                      score == null
+                                        ? undefined
+                                        : { width: `${Math.min(100, (score / READINESS_MAX) * 100)}%` }
+                                    }
+                                    aria-hidden
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </CardBody>
+                  </GlassCard>
+                ) : null}
                 <div className="mt-4 w-full pt-0">
                   {!isRoadmapCoach ? (
-                    <p className="max-w-xl text-left text-xl leading-7 text-[var(--app-muted)]">
-                      {isFinalCoach
-                        ? "Complete the guided journey — it will help you improve."
-                        : "A guided journey by AI Coach to help you improve."}
+                    <p className="w-full text-left text-xl leading-7 text-[var(--app-muted)]">
+                      {(() => {
+                        const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                        if (isFinalCoach) {
+                          return isFirstStart
+                            ? "Complete the guided journey — it will help you improve."
+                            : "Based on your last session, let’s focus on strengthening your execution and depth.";
+                        }
+                        return "Based on your last session Ai coach identified the areas to work on";
+                      })()}
                     </p>
                   ) : null}
 
@@ -504,43 +740,80 @@ export function CoachHome() {
                       <CardBody className="p-0">
                         <div className="flex items-start justify-between gap-4 rounded-[20px] transition-colors hover:bg-white/70">
                           <div className="min-w-0 flex-1">
-                            {trainingContinue ? (
-                              <>
-                                <h3 className="text-xl font-extrabold tracking-tight">
-                                  1. Train with essential interview guides
-                                </h3>
-                                {trainingProgressForRole?.courseTitle ? (
-                                  <p className="mt-2 text-sm font-semibold leading-5 text-[var(--app-muted)]">
-                                    {trainingProgressForRole.courseTitle}
-                                  </p>
-                                ) : null}
-                                <div
-                                  className="mt-4 h-2.5 w-full max-w-md overflow-hidden rounded-full bg-black/10"
-                                  role="progressbar"
-                                  aria-valuenow={trainingPct}
-                                  aria-valuemin={0}
-                                  aria-valuemax={100}
-                                  aria-label="Training progress"
-                                >
-                                  <div
-                                    className="h-full rounded-full bg-black transition-[width] duration-300 ease-out"
-                                    style={{ width: `${trainingPct}%` }}
-                                  />
-                                </div>
-                                <p className="mt-2 text-xs font-semibold tabular-nums text-[var(--app-muted)]">
-                                  {trainingPct}% complete
-                                </p>
-                              </>
-                            ) : (
-                              <>
-                                <h3 className="text-xl font-extrabold tracking-tight">
-                                  1. Train with essential interview guides
-                                </h3>
-                                <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
-                                  Learn the fundamentals with guided practice.
-                                </p>
-                              </>
-                            )}
+                            {(() => {
+                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                              const isSecondInterview = isFinalCoach && !isFirstStart;
+                              const showFirstStartProgress = Boolean(
+                                coachJourneyView === "journey" && isFirstStart && trainingContinue,
+                              );
+
+                              const title = isSecondInterview
+                                ? "1. Strengthen how you take action"
+                                : "1. Train with essential interview guides";
+
+                              const subtitle = isSecondInterview
+                                ? "Work on turning ideas into clear, outcome-driven execution."
+                                : "Learn the fundamentals with guided practice.";
+
+                              const showActionBadge = isSecondInterview;
+
+                              if (trainingContinue) {
+                                return (
+                                  <>
+                                    <h3 className="text-xl font-extrabold tracking-tight">
+                                      {showActionBadge ? (
+                                        <span className="inline-flex items-center gap-2">
+                                          <span>{title}</span>
+                                          <span className="inline-flex items-center rounded-full border border-black/10 bg-black/[.04] px-2.5 py-0.5 text-xs font-extrabold tracking-tight text-gray-800">
+                                            Action
+                                          </span>
+                                        </span>
+                                      ) : (
+                                        title
+                                      )}
+                                    </h3>
+                                    <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">{subtitle}</p>
+                                    {showFirstStartProgress ? (
+                                      <>
+                                        <div
+                                          className="mt-4 h-2.5 w-full max-w-md overflow-hidden rounded-full bg-black/10"
+                                          role="progressbar"
+                                          aria-valuenow={trainingPct}
+                                          aria-valuemin={0}
+                                          aria-valuemax={100}
+                                          aria-label="Training progress"
+                                        >
+                                          <div
+                                            className="h-full rounded-full bg-black transition-[width] duration-300 ease-out"
+                                            style={{ width: `${trainingPct}%` }}
+                                          />
+                                        </div>
+                                        <p className="mt-2 text-xs font-semibold tabular-nums text-[var(--app-muted)]">
+                                          {Math.round(trainingPct)}% done
+                                        </p>
+                                      </>
+                                    ) : null}
+                                  </>
+                                );
+                              }
+                              return (
+                                <>
+                                  <h3 className="text-xl font-extrabold tracking-tight">
+                                    {showActionBadge ? (
+                                      <span className="inline-flex items-center gap-2">
+                                        <span>{title}</span>
+                                        <span className="inline-flex items-center rounded-full border border-black/10 bg-black/[.04] px-2.5 py-0.5 text-xs font-extrabold tracking-tight text-gray-800">
+                                          Action
+                                        </span>
+                                      </span>
+                                    ) : (
+                                      title
+                                    )}
+                                  </h3>
+                                  <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">{subtitle}</p>
+                                </>
+                              );
+                            })()}
                           </div>
                           <Link
                             href="/training"
@@ -550,7 +823,15 @@ export function CoachHome() {
                               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                             )}
                           >
-                            {trainingContinue ? "Continue" : "Start learning"}
+                            {(() => {
+                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                              const isSecondInterview = isFinalCoach && !isFirstStart;
+                              if (isSecondInterview) return "Start learning";
+                              if (coachJourneyView === "journey" && isFirstStart && trainingContinue) {
+                                return "Continue learning";
+                              }
+                              return "Start learning";
+                            })()}
                             <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
                           </Link>
                         </div>
@@ -562,7 +843,41 @@ export function CoachHome() {
                 <CardBody className="p-0">
                   <div className="flex items-start justify-between gap-4 rounded-[20px] transition-colors hover:bg-white/70">
                     <div className="min-w-0 flex-1">
-                      {hasCreatedStoryboard ? (
+                      {hasCraftedStoryboard ? (
+                        <>
+                          <h3 className="text-xl font-extrabold tracking-tight">2. Craft your story</h3>
+                          <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
+                            {(() => {
+                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                              const isSecondInterview = isFinalCoach && !isFirstStart;
+                              if (!isSecondInterview) {
+                                return (
+                                  <>
+                                    Turn your experience into clear, structured answers.
+                                  </>
+                                );
+                              }
+                              return (
+                                <>
+                                  Add more depth around your{" "}
+                                  <span className="font-extrabold text-gray-900">decisions</span>,{" "}
+                                  <span className="font-extrabold text-gray-900">actions</span>, and{" "}
+                                  <span className="font-extrabold text-gray-900">impact</span>.
+                                </>
+                              );
+                            })()}
+                          </p>
+                          <div className="mt-3 flex flex-wrap items-baseline gap-2">
+                            <span className="text-sm font-bold tracking-tight text-gray-800">
+                              Here is your story score
+                            </span>
+                            <span className="text-2xl font-extrabold tabular-nums leading-none tracking-tight text-gray-900">
+                              {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
+                            </span>
+                            <span className="text-sm font-extrabold tabular-nums text-gray-500">/ 5</span>
+                          </div>
+                        </>
+                      ) : hasCreatedStoryboard ? (
                         <>
                           <h3 className="text-xl font-extrabold tracking-tight">2. Craft your story</h3>
                           <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
@@ -588,17 +903,56 @@ export function CoachHome() {
                         </>
                       )}
                     </div>
-                    <Link
-                      href={hasCreatedStoryboard ? "/storyboard" : "/storyboard/crafting"}
-                      className={cn(
-                        "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
-                        "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+                    <div className="flex shrink-0 items-center gap-2">
+                      {hasCraftedStoryboard ? (
+                        <Link
+                          href="/storyboard?new=1"
+                          className={cn(
+                            "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
+                            "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+                          )}
+                        >
+                          Add another experience
+                          <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
+                        </Link>
+                      ) : (
+                        <>
+                          <Link
+                            href="/storyboard"
+                            className={cn(
+                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
+                              "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+                            )}
+                          >
+                            {(() => {
+                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                              const isSecondInterview = isFinalCoach && !isFirstStart;
+                              return isSecondInterview ? "Add more" : "Start crafting";
+                            })()}
+                            <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
+                          </Link>
+                          {hasCreatedStoryboard ? (
+                            <Link
+                              href="/storyboard?new=1"
+                              className={cn(
+                                "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
+                                "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+                              )}
+                            >
+                              {(() => {
+                                const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                const isSecondInterview = isFinalCoach && !isFirstStart;
+                                return isSecondInterview ? "Add more" : "Add another experience";
+                              })()}
+                              <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
+                            </Link>
+                          ) : null}
+                        </>
                       )}
-                    >
-                      {hasCreatedStoryboard ? "Continue crafting" : "Start crafting"}
-                      <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
-                    </Link>
+                    </div>
                   </div>
                 </CardBody>
               </div>
@@ -609,13 +963,32 @@ export function CoachHome() {
                       <CardBody className="p-0">
                         <div className="flex items-start justify-between gap-4 rounded-[20px] transition-colors hover:bg-white/70">
                           <div className="min-w-0">
-                            <h3 className="text-xl font-extrabold tracking-tight">3. Take a mock interview</h3>
+                            <h3 className="text-xl font-extrabold tracking-tight">
+                              {(() => {
+                                const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                const isSecondInterview = isFinalCoach && !isFirstStart;
+                                return isSecondInterview ? "3. Practice with a focused mock" : "3. Take a mock interview";
+                              })()}
+                            </h3>
                             <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
-                              Practice with a 30-minute, real-world interview.
+                              {(() => {
+                                const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                const isSecondInterview = isFinalCoach && !isFirstStart;
+                                if (!isSecondInterview) {
+                                  return <>Practice with a 30-minute, real-world interview.</>;
+                                }
+                                return (
+                                  <>
+                                    Try a short interview focused on{" "}
+                                    <span className="font-extrabold text-gray-900">Action</span> and{" "}
+                                    <span className="font-extrabold text-gray-900">Mastery</span> pillars.
+                                  </>
+                                );
+                              })()}
                             </p>
                           </div>
                           <Link
-                            href="/interview"
+                            href="/interview?welcomeBack=1"
                             className={cn(
                               "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
                               "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
@@ -633,173 +1006,6 @@ export function CoachHome() {
               </>
             ) : null}
           </div>
-
-          {showInterviewReadinessCard ? (
-            <GlassCard className="w-full lg:w-2/5 lg:flex-none">
-              <div
-                className="pointer-events-none absolute right-5 top-5 z-10 text-gray-400"
-                aria-hidden
-              >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M7 17L17 7M17 7H10M17 7V14"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <CardBody>
-                <h3 className="text-2xl font-extrabold tracking-tight pr-10">Interview readiness</h3>
-                {interviewReadinessEmpty ? (
-                  <>
-                    <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
-                      Mocks, trainings, and pillar balance at a glance.
-                    </p>
-
-                    <div className="mt-8 flex flex-wrap items-end gap-1">
-                      <span className="text-7xl font-extrabold leading-none tracking-tight text-gray-500 tabular-nums">
-                        --
-                      </span>
-                      <span className="pb-1.5 text-xl font-extrabold tracking-tight text-gray-500 tabular-nums">
-                        /{READINESS_MAX.toFixed(1)}
-                      </span>
-                    </div>
-
-                    <p className="mt-4 flex flex-wrap items-center gap-3 text-base leading-6 text-[var(--app-muted)]">
-                      You’re currently on{" "}
-                      <span className="inline-flex min-w-[2.25rem] items-center justify-center rounded-full bg-rose-500/12 px-2.5 py-0.5 text-base font-extrabold tracking-tight text-[#e60000]">
-                        --
-                      </span>
-                    </p>
-
-                    <div className="mt-8 space-y-4">
-                      {DRIVER_ORDER.map((id) => (
-                        <div key={id}>
-                          <div className="flex items-baseline justify-between gap-3">
-                            <div className="min-w-0 text-sm font-bold tracking-tight">{pillarTitle(id)}</div>
-                            <div className="shrink-0 text-sm font-extrabold tabular-nums text-gray-500">--</div>
-                          </div>
-                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/60">
-                            <div className="h-full w-0 rounded-full bg-black/70" aria-hidden />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <p className="mt-5 text-base leading-7 text-[var(--app-muted)]">
-                      Take your first mock interview to get your interview readiness score.
-                    </p>
-                  </>
-                ) : journeyReadinessSnapshot ? (
-                  <>
-                    <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
-                      Mocks, trainings, and pillar balance at a glance.
-                    </p>
-
-                    <div className="mt-8 flex flex-wrap items-end gap-1">
-                      <span
-                        className={cn(
-                          "text-7xl font-extrabold leading-none tracking-tight tabular-nums",
-                          coachScoreTextClasses(journeyReadinessSnapshot.overall),
-                        )}
-                      >
-                        {journeyReadinessSnapshot.overall.toFixed(1)}
-                      </span>
-                      <span className="pb-1.5 text-xl font-extrabold tracking-tight text-gray-500 tabular-nums">
-                        /{READINESS_MAX.toFixed(1)}
-                      </span>
-                    </div>
-
-                    <p className="mt-4 flex flex-wrap items-center gap-3 text-base leading-6 text-[var(--app-muted)]">
-                      You’re currently on{" "}
-                      <span
-                        className={cn(
-                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-base font-extrabold tracking-tight",
-                          coachReadinessBadgeClasses(journeyReadinessSnapshot.band),
-                        )}
-                      >
-                        {journeyReadinessSnapshot.band}
-                      </span>
-                    </p>
-
-                    <div className="mt-8 space-y-4">
-                      {journeyReadinessSnapshot.pillars.map(({ id, label, score }) => (
-                        <div key={id}>
-                          <div className="flex items-baseline justify-between gap-3">
-                            <div className="min-w-0 text-sm font-bold tracking-tight">{label}</div>
-                            <div
-                              className={cn(
-                                "shrink-0 text-sm font-extrabold tabular-nums",
-                                coachScoreTextClasses(score),
-                              )}
-                            >
-                              {score.toFixed(1)}
-                            </div>
-                          </div>
-                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/60">
-                            <div
-                              className={cn("h-full rounded-full", coachScoreBarClasses(score))}
-                              style={{ width: `${Math.min(100, (score / READINESS_MAX) * 100)}%` }}
-                              aria-hidden
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
-                      Mocks, trainings, and pillar balance at a glance.
-                    </p>
-
-                    <div className="mt-8 flex flex-wrap items-end gap-1">
-                      <span className="text-7xl font-extrabold leading-none tracking-tight text-gray-500 tabular-nums">
-                        --
-                      </span>
-                      <span className="pb-1.5 text-xl font-extrabold tracking-tight text-gray-500 tabular-nums">
-                        /{READINESS_MAX.toFixed(1)}
-                      </span>
-                    </div>
-
-                    <p className="mt-4 flex flex-wrap items-center gap-3 text-base leading-6 text-[var(--app-muted)]">
-                      You’re currently on{" "}
-                      <span className="inline-flex min-w-[2.25rem] items-center justify-center rounded-full bg-rose-500/12 px-2.5 py-0.5 text-base font-extrabold tracking-tight text-[#e60000]">
-                        --
-                      </span>
-                    </p>
-
-                    <div className="mt-8 space-y-4">
-                      {DRIVER_ORDER.map((id) => (
-                        <div key={id}>
-                          <div className="flex items-baseline justify-between gap-3">
-                            <div className="min-w-0 text-sm font-bold tracking-tight">{pillarTitle(id)}</div>
-                            <div className="shrink-0 text-sm font-extrabold tabular-nums text-gray-500">--</div>
-                          </div>
-                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/60">
-                            <div className="h-full w-0 rounded-full bg-black/70" aria-hidden />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <p className="mt-5 text-base leading-7 text-[var(--app-muted)]">
-                      Complete a mock interview to see your readiness snapshot here (same scores as your report
-                      page).
-                    </p>
-                  </>
-                )}
-              </CardBody>
-            </GlassCard>
-          ) : null}
         </div>
       </div>
 

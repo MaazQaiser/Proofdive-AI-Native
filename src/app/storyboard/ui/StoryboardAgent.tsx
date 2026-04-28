@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState, type ReactElement } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
@@ -90,6 +90,59 @@ I explained how the new system would reduce errors and save time, which helped g
 I learned the importance of involving teams early.`,
 ];
 
+function clampText(text: string, maxChars: number) {
+  const t = text.trim();
+  if (t.length <= maxChars) return t;
+  const cut = t.slice(0, maxChars);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${cut.slice(0, Math.max(0, lastSpace)).trim()}…`;
+}
+
+function emphasizeSuggestionText(s: string): ReactElement {
+  const keywords = [
+    "deprioritize",
+    "prioritize",
+    "outcome",
+    "metric",
+    "steps",
+    "decision",
+    "pushback",
+    "buy-in",
+    "alignment",
+    "leadership",
+    "team management",
+  ];
+
+  const lower = s.toLowerCase();
+  const match = keywords
+    .map((k) => ({ k, idx: lower.indexOf(k) }))
+    .filter((m) => m.idx >= 0)
+    .sort((a, b) => a.idx - b.idx)[0];
+
+  if (match) {
+    const start = s.slice(0, match.idx);
+    const mid = s.slice(match.idx, match.idx + match.k.length);
+    const end = s.slice(match.idx + match.k.length);
+    return (
+      <span>
+        {start}
+        <span className="font-extrabold">{mid}</span>
+        {end}
+      </span>
+    );
+  }
+
+  const words = s.split(/\s+/);
+  if (words.length <= 2) return <span className="font-extrabold">{s}</span>;
+  const head = words.slice(0, 2).join(" ");
+  const tail = words.slice(2).join(" ");
+  return (
+    <span>
+      <span className="font-extrabold">{head}</span> {tail}
+    </span>
+  );
+}
+
 function firstMissingEnrichmentKey(exp: Experience): number | "done" {
   for (let i = 0; i < ENRICHMENT_KEYS.length; i++) {
     const k = ENRICHMENT_KEYS[i]!;
@@ -134,6 +187,7 @@ function latestReportOverallForRole(roleTitle: string): number | null {
 
 export function StoryboardAgent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [roleProfile] = useLocalStorageState<RoleProfile | null>(
     StorageKeys.roleProfile,
     null,
@@ -165,6 +219,19 @@ export function StoryboardAgent() {
   const [pendingNewEntry, setPendingNewEntry] = useState(false);
   const [statusLine, setStatusLine] = useState<string | null>(null);
   const [craftUi, setCraftUi] = useState<"idle" | "crafting" | "ready">("idle");
+  const [isDraftUpdating, setIsDraftUpdating] = useState(false);
+  const [suggestionCursor, setSuggestionCursor] = useState(0);
+
+  useEffect(() => {
+    const wantNew = (searchParams.get("new") ?? "").trim();
+    if (wantNew === "1" || wantNew.toLowerCase() === "true") {
+      setPendingNewEntry(true);
+      setSelectedId(null);
+      setStatusLine(null);
+      setCraftUi("idle");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const postCraftHome = Boolean(
     fromCraft && fromCraft.v === 1 && fromCraft.role === role,
@@ -241,6 +308,9 @@ Start simple. What's something you worked on that stands out?`,
     window.setTimeout(() => {
       setCraftUi("ready");
       setStatusLine(null);
+      if (role) {
+        setFromCraft({ v: 1, role, at: new Date().toISOString() });
+      }
     }, 900);
   }
 
@@ -267,38 +337,11 @@ Start simple. What's something you worked on that stands out?`,
     upsertExperience(next);
   }
 
-  if (!role) {
-    return (
-      <AppShell>
-        <CoachFloatingNav />
-        <div className="pb-44">
-          <Card>
-            <CardBody>
-              <h2 className="text-4xl font-extrabold tracking-tight">
-                First, set a target role.
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--app-muted)]">
-                Story banks are saved per role. Once you pick a role, we’ll build
-                at least 3 experiences and enrich them into proof.
-              </p>
-              <div className="mt-6 flex gap-2">
-                <Link href="/onboarding">
-                  <Button>Go to onboarding</Button>
-                </Link>
-                <Link href="/coach?journey=1">
-                  <Button variant="secondary">Back to Coach</Button>
-                </Link>
-              </div>
-            </CardBody>
-          </Card>
-        </div>
-        <CoachBottomChatBar />
-      </AppShell>
-    );
-  }
-
   function handleText(text: string) {
     setStatusLine(null);
+    setIsDraftUpdating(true);
+    setSuggestionCursor((v) => v + 1);
+    window.setTimeout(() => setIsDraftUpdating(false), 450);
 
     if (storyStep === 6) {
       return;
@@ -345,100 +388,153 @@ Start simple. What's something you worked on that stands out?`,
     }
   }
 
+  type StoryQuick = { title: string; body: string; suggestions: Array<string | ReactElement> };
+
+  const storyQuick = useMemo<StoryQuick>(() => {
+    if (!selected) {
+      return {
+        title: "Start sharing",
+        body: "Start sharing about your journey to craft your story.",
+        suggestions: [
+          <span key="leadership">
+            Mention your <span className="font-extrabold">leadership</span> and{" "}
+            <span className="font-extrabold">team management</span> (alignment, delegation,
+            feedback, conflict) to position your story stronger.
+          </span>,
+        ],
+      };
+    }
+
+    const e = selected;
+    const enrich = e.enrichment ?? {};
+    const rawLine = (e.raw ?? "").trim().split("\n").map((l) => l.trim()).filter(Boolean)[0] ?? "";
+    const goal = (enrich.goalObjective ?? "").trim();
+    const exec = (enrich.execution ?? "").trim();
+    const outcome = (enrich.outcome ?? "").trim();
+    const people = (enrich.people ?? "").trim();
+
+    const p1Parts = [rawLine, goal].filter(Boolean);
+    const p2Parts = [exec, people, outcome].filter(Boolean);
+
+    const p1 = p1Parts.join(" ");
+    const p2 = p2Parts.join(" ");
+
+    const body = [p1 ? clampText(p1, 260) : "", p2 ? clampText(p2, 320) : ""]
+      .filter(Boolean)
+      .join("\n\n")
+      .trim();
+
+    const missingIdx = firstMissingEnrichmentKey(e);
+    const suggestions: string[] = [];
+
+    if (missingIdx === "done") {
+      suggestions.push(
+        "Add 1–2 concrete details that make this uniquely yours (tools, constraints, trade-offs)",
+        "Add one sentence that shows your judgment (why you chose that approach)",
+        "Add a crisp metric (before → after) if you can",
+      );
+    } else {
+      const key = ENRICHMENT_KEYS[missingIdx]!;
+      const byKey: Record<EnrichmentKey, string[]> = {
+        goalObjective: [
+          "What was the goal? What did “good” look like?",
+          "What was hard about it (constraints, ambiguity, stakes)?",
+        ],
+        breakdownTools: [
+          "How did you break the problem down? Any frameworks/tools?",
+          "What information did you gather first and why?",
+        ],
+        prioritization: [
+          "What did you tackle first and why (impact vs effort, risk, dependencies)?",
+          "What did you explicitly deprioritize?",
+        ],
+        execution: [
+          "List the 3–5 steps you took (sequence matters)",
+          "Call out one decision you made that moved things forward",
+        ],
+        people: [
+          "Who did you influence or align? What resistance did you face?",
+          "What did you do to get buy-in (data, narrative, pilots, stakeholder mgmt)?",
+        ],
+        outcome: [
+          "What changed after? Add a metric if possible",
+          "What did you learn and how do you apply it now?",
+        ],
+      };
+      suggestions.push(...(byKey[key] ?? []));
+    }
+
+    return {
+      title: e.title,
+      body: body || clampText((e.raw ?? "").trim(), 340) || "Add a little more detail to build the story.",
+      suggestions,
+    };
+  }, [selected]);
+
+  const activeSuggestion = useMemo(() => {
+    const list = storyQuick.suggestions;
+    if (!list.length) return null;
+    return list[suggestionCursor % list.length] ?? null;
+  }, [storyQuick.suggestions, suggestionCursor]);
+
+  if (!role) {
+    return (
+      <AppShell>
+        <CoachFloatingNav />
+        <div className="pb-44">
+          <Card>
+            <CardBody>
+              <h2 className="text-4xl font-extrabold tracking-tight">
+                First, set a target role.
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-[var(--app-muted)]">
+                Story banks are saved per role. Once you pick a role, we’ll build
+                at least 3 experiences and enrich them into proof.
+              </p>
+              <div className="mt-6 flex gap-2">
+                <Link href="/onboarding">
+                  <Button>Go to onboarding</Button>
+                </Link>
+                <Link href="/coach?journey=1">
+                  <Button variant="secondary">Back to Coach</Button>
+                </Link>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+        <CoachBottomChatBar />
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <CoachFloatingNav />
-      <div className="space-y-6 pb-44">
+      <div className="pb-44">
         <div className="px-6">
-          <div className="p-0">
-            {postCraftHome ? (
-              <div className="mx-auto w-[672px] max-w-full space-y-6">
-                <div className="space-y-3">
-                  <h2 className="text-left text-[34px] font-extrabold leading-tight tracking-tight sm:text-[40px]">
-                    Hey {firstName} — we’ve crafted a story.
-                  </h2>
-                  <p className="text-left text-lg font-semibold leading-snug tracking-tight text-black/80 sm:text-xl">
-                    For the role of <span className="text-gray-900">{role}</span>
-                  </p>
-                  <p className="text-left text-sm leading-6 text-[var(--app-muted)] sm:text-base">
-                    You can still add more to your story to get better results.
-                  </p>
-                </div>
-                <Card className="shadow-none">
-                  <CardBody>
-                    <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
-                      YOUR STORYBOARD
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div className="min-w-0">
+              <div className="p-0">
+                {postCraftHome ? (
+                  <div className="mx-auto w-[672px] max-w-full space-y-6">
+                    <div className="space-y-3">
+                      <h2 className="text-left text-[34px] font-extrabold leading-tight tracking-tight sm:text-[40px]">
+                        Hey {firstName} — we’ve crafted a story.
+                      </h2>
+                      <p className="text-left text-lg font-semibold leading-snug tracking-tight text-black/80 sm:text-xl">
+                        For the role of <span className="text-gray-900">{role}</span>
+                      </p>
+                      <p className="text-left text-sm leading-6 text-[var(--app-muted)] sm:text-base">
+                        You can still add more to your story to get better results.
+                      </p>
                     </div>
-                    <div className="mt-2 text-base font-extrabold tracking-tight">
-                      Your storyboard for {role} is ready to review.
-                    </div>
-                    <div className="mt-5 flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/50 bg-white/50 px-4 py-3">
-                      <div>
-                        <div className="text-sm font-bold tracking-tight">Overall story score</div>
-                        <div className="text-xs text-[var(--app-muted)]">
-                          Mean of 12 competencies (0–5)
-                        </div>
-                      </div>
-                      <div
-                        className="text-3xl font-extrabold tabular-nums tracking-tight"
-                        title="Mean of 12 competency sections in your draft, or latest mock interview overall if the draft is still empty"
-                      >
-                        {storyScoreForCard.toFixed(1)}
-                        <span className="pl-1 text-lg font-extrabold text-[var(--app-muted)]">
-                          / 5
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <Button type="button" onClick={() => router.push("/storyboard/crafting")}>
-                        View story
-                      </Button>
-                    </div>
-                  </CardBody>
-                </Card>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="w-full"
-                  onClick={() => {
-                    setFromCraft(null);
-                    setPendingNewEntry(true);
-                    setSelectedId(null);
-                    setStatusLine(null);
-                    setCraftUi("idle");
-                  }}
-                >
-                  Add another experience
-                </Button>
-              </div>
-            ) : (
-              <>
-                <AgentPrompt
-                  promptKey={storyPromptKey}
-                  prompt={storyPrompt}
-                  ariaLabel="Storyboard prompt"
-                />
-                {storyStep === 6 && craftUi !== "ready" ? (
-                  <div className="mx-auto mt-8 w-[672px] max-w-full">
-                    <Button
-                      className="w-full"
-                      type="button"
-                      onClick={startCrafting}
-                      disabled={craftUi === "crafting"}
-                    >
-                      Craft my story
-                    </Button>
-                  </div>
-                ) : null}
-                {storyStep === 6 && craftUi === "ready" ? (
-                  <div className="mx-auto mt-8 w-[672px] max-w-full">
                     <Card className="shadow-none">
                       <CardBody>
                         <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
                           YOUR STORYBOARD
                         </div>
                         <div className="mt-2 text-base font-extrabold tracking-tight">
-                          Your storyboard for {role} is here.
+                          Your storyboard for {role} is ready to review.
                         </div>
                         <div className="mt-5 flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/50 bg-white/50 px-4 py-3">
                           <div>
@@ -449,7 +545,7 @@ Start simple. What's something you worked on that stands out?`,
                           </div>
                           <div
                             className="text-3xl font-extrabold tabular-nums tracking-tight"
-                            title="Mean strength across the 12 competency sections, or latest mock interview if draft is empty"
+                            title="Mean of 12 competency sections in your draft, or latest mock interview overall if the draft is still empty"
                           >
                             {storyScoreForCard.toFixed(1)}
                             <span className="pl-1 text-lg font-extrabold text-[var(--app-muted)]">
@@ -458,39 +554,231 @@ Start simple. What's something you worked on that stands out?`,
                           </div>
                         </div>
                         <div className="mt-4">
-                          <Button
-                            type="button"
-                            onClick={() => router.push("/storyboard/crafting")}
-                          >
+                          <Button type="button" onClick={() => router.push("/storyboard/crafting")}>
                             View story
                           </Button>
                         </div>
                       </CardBody>
                     </Card>
-                    <div className="mt-6 w-full">
-                      <Button
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="w-full"
+                      onClick={() => {
+                        setFromCraft(null);
+                        setPendingNewEntry(true);
+                        setSelectedId(null);
+                        setStatusLine(null);
+                        setCraftUi("idle");
+                      }}
+                    >
+                      Add another experience
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <AgentPrompt
+                      promptKey={storyPromptKey}
+                      prompt={storyPrompt}
+                      ariaLabel="Storyboard prompt"
+                    />
+                    {storyStep === 6 && craftUi !== "ready" ? (
+                      <div className="mx-auto mt-8 w-[672px] max-w-full">
+                        <Button
+                          className="w-full"
+                          type="button"
+                          onClick={startCrafting}
+                          disabled={craftUi === "crafting"}
+                        >
+                          Craft my story
+                        </Button>
+                        <div className="mt-3">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="w-full"
+                            onClick={() => {
+                              setPendingNewEntry(true);
+                              setSelectedId(null);
+                              setStatusLine(null);
+                              setCraftUi("idle");
+                            }}
+                          >
+                            Add another experience
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
+                    {storyStep === 6 && craftUi === "ready" ? (
+                      <div className="mx-auto mt-8 w-[672px] max-w-full">
+                        <Card className="shadow-none">
+                          <CardBody>
+                            <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+                              YOUR STORYBOARD
+                            </div>
+                            <div className="mt-2 text-base font-extrabold tracking-tight">
+                              Your storyboard for {role} is here.
+                            </div>
+                            <div className="mt-5 flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/50 bg-white/50 px-4 py-3">
+                              <div>
+                                <div className="text-sm font-bold tracking-tight">Overall story score</div>
+                                <div className="text-xs text-[var(--app-muted)]">
+                                  Mean of 12 competencies (0–5)
+                                </div>
+                              </div>
+                              <div
+                                className="text-3xl font-extrabold tabular-nums tracking-tight"
+                                title="Mean strength across the 12 competency sections, or latest mock interview if draft is empty"
+                              >
+                                {storyScoreForCard.toFixed(1)}
+                                <span className="pl-1 text-lg font-extrabold text-[var(--app-muted)]">
+                                  / 5
+                                </span>
+                              </div>
+                            </div>
+                            <div className="mt-4">
+                              <Button
+                                type="button"
+                                onClick={() => router.push("/storyboard/crafting")}
+                              >
+                                View story
+                              </Button>
+                            </div>
+                          </CardBody>
+                        </Card>
+                        <div className="mt-6 w-full">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="w-full"
+                            onClick={() => {
+                              setPendingNewEntry(true);
+                              setSelectedId(null);
+                              setStatusLine(null);
+                              setCraftUi("idle");
+                            }}
+                          >
+                            Add another experience
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
+                    {statusLine ? (
+                      <p className="mx-auto mt-6 w-[672px] max-w-full text-sm font-medium leading-6 text-gray-800">
+                        {statusLine}
+                      </p>
+                    ) : null}
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+                    EXPERIENCE BANK
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {roleExperiences.length ? (
+                  roleExperiences.map((e, idx) => {
+                    const isActive = e.id === activeExperienceId && !pendingNewEntry;
+                    const n = String(idx + 1).padStart(2, "0");
+                    return (
+                      <button
+                        key={e.id}
                         type="button"
-                        variant="secondary"
-                        className="w-full"
+                        className="block w-full text-left"
                         onClick={() => {
-                          setPendingNewEntry(true);
-                          setSelectedId(null);
+                          setPendingNewEntry(false);
+                          setSelectedId(e.id);
                           setStatusLine(null);
                           setCraftUi("idle");
                         }}
                       >
-                        Add another experience
-                      </Button>
+                        <Card
+                          className={[
+                            "shadow-none transition",
+                            isActive ? "ring-2 ring-black/70" : "hover:ring-2 hover:ring-black/10",
+                          ].join(" ")}
+                        >
+                          <CardBody className="p-4">
+                            <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+                              EXPERIENCE {n}
+                            </div>
+                            <div className="mt-1 text-sm font-extrabold tracking-tight">
+                              {e.title || `Experience ${n}`}
+                            </div>
+                          </CardBody>
+                        </Card>
+                      </button>
+                    );
+                  })
+                ) : (
+                  <Card className="shadow-none">
+                    <CardBody className="p-4">
+                      <div className="text-sm font-extrabold tracking-tight">No experiences yet</div>
+                      <div className="mt-1 text-xs leading-5 text-[var(--app-muted)]">
+                        Start by sharing an experience in the chat. To add another one later, just say{" "}
+                        <span className="font-extrabold text-gray-900">“Add new experience”</span>.
+                      </div>
+                    </CardBody>
+                  </Card>
+                )}
+              </div>
+
+              <div className="pt-2 text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+                YOUR STORY DRAFT
+              </div>
+              <Card className="shadow-none">
+                <CardBody className="space-y-3 p-5">
+                  {isDraftUpdating ? (
+                    <div className="space-y-3">
+                      <div className="h-5 w-44 animate-pulse rounded-lg bg-black/10" />
+                      <div className="space-y-2">
+                        <div className="h-4 w-full animate-pulse rounded-lg bg-black/10" />
+                        <div className="h-4 w-11/12 animate-pulse rounded-lg bg-black/10" />
+                        <div className="h-4 w-9/12 animate-pulse rounded-lg bg-black/10" />
+                      </div>
                     </div>
-                  </div>
-                ) : null}
-                {statusLine ? (
-                  <p className="mx-auto mt-6 w-[672px] max-w-full text-sm font-medium leading-6 text-gray-800">
-                    {statusLine}
-                  </p>
-                ) : null}
-              </>
-            )}
+                  ) : (
+                    <>
+                      <div className="text-base font-extrabold tracking-tight">{storyQuick.title}</div>
+                      <div className="whitespace-pre-wrap text-sm leading-6 text-black/80">
+                        {storyQuick.body}
+                      </div>
+                    </>
+                  )}
+                </CardBody>
+              </Card>
+
+              <div className="pt-2 text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+                SUGGESTIONS
+              </div>
+              <Card className="shadow-none">
+                <CardBody className="space-y-3 p-5">
+                  {isDraftUpdating ? (
+                    <div className="space-y-2">
+                      <div className="h-5 w-full animate-pulse rounded-lg bg-black/10" />
+                      <div className="h-5 w-10/12 animate-pulse rounded-lg bg-black/10" />
+                    </div>
+                  ) : activeSuggestion ? (
+                    <div className="text-sm font-medium leading-6 text-gray-900">
+                      {typeof activeSuggestion === "string"
+                        ? emphasizeSuggestionText(activeSuggestion)
+                        : activeSuggestion}
+                    </div>
+                  ) : (
+                    <div className="text-sm font-medium leading-6 text-[var(--app-muted)]">
+                      Keep going — I’ll suggest the next best detail to add.
+                    </div>
+                  )}
+                </CardBody>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

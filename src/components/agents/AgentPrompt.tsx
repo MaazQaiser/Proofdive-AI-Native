@@ -23,7 +23,7 @@ function AgentPromptInner({
   const headingText = promptHeading || prompt;
 
   return (
-    <div className="relative mx-auto max-w-2xl">
+    <div className="relative mx-auto w-full max-w-3xl">
       {/* Height sizer: reserve final layout so typing doesn't reflow */}
       <div aria-hidden="true" className="pointer-events-none opacity-0">
         <div className="whitespace-pre-wrap text-left text-[48px] font-extrabold leading-[1.05] tracking-tight">

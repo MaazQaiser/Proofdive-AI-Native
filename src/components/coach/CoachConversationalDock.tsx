@@ -245,8 +245,8 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
                         <GuidedJourneyStepRow
                           title="2. Craft your story"
                           body="Turn your experience into clear, structured answers."
-                          actionHref="/storyboard/crafting"
-                          actionLabel="Start crafting"
+                          actionHref="/storyboard"
+                          actionLabel="Create my story"
                         />
                         <div className="h-px w-full bg-slate-300" aria-hidden />
                         <GuidedJourneyStepRow
@@ -270,7 +270,7 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 w-full">
       <div
-        className="mx-auto w-full max-w-[960px] px-6 pb-4"
+        className="mx-auto w-full max-w-[840px] px-6 pb-4"
         role="region"
         aria-labelledby={titleId}
       >

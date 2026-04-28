@@ -335,7 +335,7 @@ export function OnboardingAgent() {
 
   return (
     <div className="min-h-screen w-full">
-      <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-6 py-10">
+      <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-6 pb-32 pt-10">
         <div className="flex items-center justify-between gap-3">
           <div className="text-xs font-extrabold tracking-[0.22em] text-gray-600">
             PROOFDIVE
@@ -446,8 +446,8 @@ export function OnboardingAgent() {
           </div>
         </div>
 
-        <div className="sticky bottom-0 -mx-6 bg-[var(--app-bg)] px-6 py-5">
-          <div className="mx-auto w-full max-w-3xl">
+        <div className="fixed bottom-0 left-0 right-0 z-40 w-full bg-[var(--app-bg)]">
+          <div className="mx-auto w-full max-w-[840px] px-6 py-5">
             <ChatComposer
               placeholder="Reply (type or use voice)…"
               onSend={handleAnswer}

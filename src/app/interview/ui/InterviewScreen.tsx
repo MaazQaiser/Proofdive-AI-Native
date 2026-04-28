@@ -75,6 +75,9 @@ export function InterviewScreen() {
   /** When set (e.g. coach “quick interview” CTA), always show the first-time 10 min flow even if post-journey landing would apply. */
   const forceFirstMockFlow =
     searchParams.get("first") === "1" || searchParams.get("first")?.toLowerCase() === "true";
+  /** When set (e.g. coach journey “Start interview”), show the “welcome back” landing. */
+  const forceWelcomeBackLanding =
+    searchParams.get("welcomeBack") === "1" || searchParams.get("welcomeBack")?.toLowerCase() === "true";
   const [roleProfile] = useLocalStorageState<RoleProfile | null>(StorageKeys.roleProfile, null);
   const [trainingJourneyProgress] = useLocalStorageState<TrainingJourneyProgress | null>(
     StorageKeys.trainingProgress,
@@ -123,7 +126,7 @@ export function InterviewScreen() {
   }, [trainingJourneyProgress, role]);
 
   const showPostJourneyMockLanding =
-    trainingComplete && hasCreatedStoryboard && !forceFirstMockFlow;
+    (forceWelcomeBackLanding || (trainingComplete && hasCreatedStoryboard)) && !forceFirstMockFlow;
 
   const [jobDescriptionName, setJobDescriptionName] = useState<string>("");
   const [cameraEnabled, setCameraEnabled] = useState(false);
@@ -136,6 +139,7 @@ export function InterviewScreen() {
   const introLearnVideoRef = useRef<HTMLVideoElement>(null);
   const [recentStatsOpen, setRecentStatsOpen] = useState(false);
   const [recentReports, setRecentReports] = useState<InterviewReport[]>([]);
+  const [recentDemoSeed, setRecentDemoSeed] = useState(0);
   const [pillarPickOpen, setPillarPickOpen] = useState(false);
   const [selectivePillarIds, setSelectivePillarIds] = useState<PillarId[]>([]);
   const [pillarPickError, setPillarPickError] = useState<string | null>(null);
@@ -171,8 +175,43 @@ export function InterviewScreen() {
 
   useEffect(() => {
     if (!recentStatsOpen) return;
+    setRecentDemoSeed(Date.now());
     setRecentReports(pickRecentReports(role, 2));
   }, [recentStatsOpen, role]);
+
+  const recentStatsCards = useMemo(() => {
+    if (recentReports.length > 0) {
+      return recentReports.map((rep) => ({
+        key: rep.meta.id,
+        roleTitle: rep.meta.roleTitle,
+        scoreText: rep.overallScore.toFixed(1),
+        status: rep.overallStatus,
+        sessionType: sessionTypeLabel(rep),
+        onView: () => router.push(`/report/${rep.meta.id}`),
+      }));
+    }
+
+    // Demo cards (when there are no saved reports yet)
+    const roleTitle = role || "Software Engineer";
+    const rng = (n: number) => {
+      const x = Math.sin((recentDemoSeed + n) * 999) * 10000;
+      return x - Math.floor(x);
+    };
+    const mk = (i: number) => {
+      const score = 1.6 + rng(i) * 2.6;
+      const status = score >= 3.5 ? "Ready" : score >= 2.5 ? "Borderline" : "Not ready";
+      const mins = score >= 3.2 ? 30 : 10;
+      return {
+        key: `demo-${i}`,
+        roleTitle,
+        scoreText: score.toFixed(1),
+        status,
+        sessionType: mins === 30 ? "Full competency mock · 30 min" : "Mock session · 10 min",
+        onView: () => router.push("/report"),
+      };
+    };
+    return [mk(1), mk(2)];
+  }, [recentReports, recentDemoSeed, role, router]);
 
   function openConsent(nextKind: InterviewSessionKind) {
     setSessionKind(nextKind);
@@ -230,7 +269,7 @@ export function InterviewScreen() {
                   onClick={() => openConsent("full_competency")}
                   className="group w-full cursor-pointer rounded-[18px] border border-white/50 bg-white p-5 text-left shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition hover:bg-white/90 active:bg-white/80"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex w-full flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-base font-extrabold tracking-tight text-black">
                         Take a 30-minute mock interview
@@ -251,7 +290,7 @@ export function InterviewScreen() {
                     onClick={openSelectivePillarPicker}
                     className="group w-full cursor-pointer rounded-[18px] border border-white/50 bg-white p-5 pr-16 text-left shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition hover:bg-white/90 active:bg-white/80"
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex w-full flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="text-base font-extrabold tracking-tight text-black">
                           Take a short interview
@@ -264,18 +303,6 @@ export function InterviewScreen() {
                         Short
                       </span>
                     </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openSelectivePillarPicker();
-                    }}
-                    className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-black/10 bg-white/90 text-black/55 shadow-sm transition hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20"
-                    aria-label="Choose competency areas for short interview"
-                    title="Choose competencies"
-                  >
-                    <ShortInterviewClockIcon className="h-5 w-5" />
                   </button>
                 </div>
               </div>
@@ -310,49 +337,45 @@ export function InterviewScreen() {
                 </button>
                 {recentStatsOpen ? (
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    {recentReports.length === 0 ? (
-                      <div className="rounded-[18px] border border-white/50 bg-white/80 p-5 text-sm leading-6 text-[var(--app-muted)] sm:col-span-2">
-                        No saved mock reports yet for this role. Finish a mock interview to see session
-                        cards here.
-                      </div>
-                    ) : (
-                      recentReports.map((rep) => (
-                        <div
-                          key={rep.meta.id}
-                          className="flex flex-col rounded-[18px] border border-white/50 bg-white p-5 shadow-[0_12px_30px_rgba(0,0,0,0.06)]"
-                        >
-                          <div className="text-xs font-extrabold tracking-[0.18em] text-[var(--app-muted)]">
-                            ROLE
-                          </div>
-                          <div className="mt-1 text-lg font-extrabold tracking-tight text-black">
-                            {rep.meta.roleTitle}
-                          </div>
-                          <div className="mt-4 text-xs font-extrabold tracking-[0.18em] text-[var(--app-muted)]">
-                            SESSION SCORE
-                          </div>
-                          <div className="mt-1 text-2xl font-extrabold tabular-nums tracking-tight text-black">
-                            {rep.overallScore.toFixed(1)}
-                            <span className="text-base font-extrabold text-[var(--app-muted)]"> / 5</span>
-                          </div>
-                          <div className="mt-1 text-xs font-semibold text-[var(--app-muted)]">
-                            {rep.overallStatus}
-                          </div>
-                          <div className="mt-4 text-xs font-extrabold tracking-[0.18em] text-[var(--app-muted)]">
-                            SESSION TYPE
-                          </div>
-                          <div className="mt-1 text-sm font-bold text-black">{sessionTypeLabel(rep)}</div>
-                          <div className="mt-4 flex-1" />
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            className="mt-2 w-full sm:w-auto"
-                            onClick={() => router.push(`/report/${rep.meta.id}`)}
-                          >
-                            View report
-                          </Button>
+                    {recentStatsCards.map((c) => (
+                      <div
+                        key={c.key}
+                        className="flex flex-col rounded-[18px] border border-white/50 bg-white p-5 shadow-[0_12px_30px_rgba(0,0,0,0.06)]"
+                      >
+                        <div className="text-xs font-extrabold tracking-[0.18em] text-[var(--app-muted)]">
+                          ROLE
                         </div>
-                      ))
-                    )}
+                        <div className="mt-1 text-lg font-extrabold tracking-tight text-black">
+                          {c.roleTitle}
+                        </div>
+                        <div className="mt-4 text-xs font-extrabold tracking-[0.18em] text-[var(--app-muted)]">
+                          SESSION SCORE
+                        </div>
+                        <div className="mt-1 text-2xl font-extrabold tabular-nums tracking-tight text-black">
+                          {c.scoreText}
+                          <span className="text-base font-extrabold text-[var(--app-muted)]"> / 5</span>
+                        </div>
+                        <div className="mt-1 text-xs font-semibold text-[var(--app-muted)]">
+                          {c.status}
+                        </div>
+                        <div className="mt-4 text-xs font-extrabold tracking-[0.18em] text-[var(--app-muted)]">
+                          SESSION TYPE
+                        </div>
+                        <div className="mt-1 text-sm font-bold text-black">{c.sessionType}</div>
+                        <div className="mt-4 flex-1" />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className={cn(
+                            "mt-2 w-full sm:w-auto shadow-none",
+                            "bg-black/[.04] text-gray-900 hover:bg-black/[.06] active:bg-black/[.08]",
+                          )}
+                          onClick={c.onView}
+                        >
+                          View report
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 ) : null}
               </div>
@@ -583,7 +606,7 @@ export function InterviewScreen() {
                     {pendingSelectivePillars.map((id) => PILLAR_LABEL[id]).join(" · ")}
                   </div>
                 ) : null}
-                <div className="rounded-[16px] border border-white/50 bg-white/40 p-4">
+                <div className="mb-0 rounded-[16px] border border-white/50 bg-white/40 p-4">
                   Structure your answers using the <span className="font-bold text-black">CAR</span>{" "}
                   method (Context, Action, Result).
                 </div>
@@ -596,7 +619,7 @@ export function InterviewScreen() {
                 <div className="rounded-[16px] border border-white/50 bg-white/40 p-4">
                   Position yourself properly if your camera is on — sit centered, well-lit, and not too far.
                 </div>
-                <div className="rounded-[16px] border border-white/50 bg-white/40 p-4">
+                <div className="rounded-[16px] border border-white/50 bg-white/40 px-4 py-1">
                   Ensure a clean, plain background with minimal distractions.
                 </div>
               </div>

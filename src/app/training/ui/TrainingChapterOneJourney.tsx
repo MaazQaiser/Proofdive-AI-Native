@@ -20,6 +20,7 @@ import {
   chapterComplete,
   FINAL_ASSESSMENT,
 } from "@/app/training/trainingCopy";
+import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { parseTrainingJourneyPhase } from "@/lib/trainingJourneyProgress";
 import type { TrainingJourneyPhase } from "@/lib/proofdiveTypes";
 
@@ -518,6 +519,18 @@ export function TrainingChapterOneJourney({
                         type="button"
                         variant="secondary"
                         onClick={() => {
+                          try {
+                            const payload = {
+                              courseId: course.id,
+                              courseTitle: course.title,
+                              percentComplete: 34,
+                              phase: "quiz" as const,
+                              updatedAt: new Date().toISOString(),
+                            };
+                            window.localStorage.setItem(StorageKeys.trainingProgress, JSON.stringify(payload));
+                          } catch {
+                            // ignore localStorage write failures
+                          }
                           router.push("/coach?journey=1");
                         }}
                       >
