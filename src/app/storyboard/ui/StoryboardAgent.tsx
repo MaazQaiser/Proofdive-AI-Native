@@ -511,10 +511,8 @@ Start simple. What's something you worked on that stands out?`,
     <AppShell>
       <CoachFloatingNav />
       <div className="pb-44">
-        <div className="px-6">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="min-w-0">
-              <div className="p-0">
+        <div className="mx-auto w-[800px] max-w-full">
+          <div className="p-0">
                 {postCraftHome ? (
                   <div className="mx-auto w-[672px] max-w-full space-y-6">
                     <div className="space-y-3">
@@ -670,10 +668,12 @@ Start simple. What's something you worked on that stands out?`,
                     ) : null}
                   </>
                 )}
-              </div>
-            </div>
+          </div>
+        </div>
+      </div>
 
-            <div className="space-y-3">
+      {/* ── fixed right panel ── */}
+      <div className="fixed right-4 top-16 bottom-24 w-[320px] space-y-3 overflow-y-auto pr-8">
               <div className="flex items-end justify-between gap-3">
                 <div>
                   <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
@@ -793,9 +793,6 @@ Start simple. What's something you worked on that stands out?`,
                   )}
                 </CardBody>
               </Card>
-            </div>
-          </div>
-        </div>
       </div>
       <CoachBottomChatBar
         placeholder={postCraftHome ? "Add another experience to start a new story…" : composerPlaceholder}

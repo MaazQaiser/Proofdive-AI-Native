@@ -254,7 +254,7 @@ export function TrainingScreen() {
     <AppShell>
       <CoachFloatingNav />
       <div className="space-y-6 pb-44">
-        <div className="px-6">
+        <div className="mx-auto w-[800px] max-w-full">
           <div className="p-0">
             {!selectedCourse ? (
               <>
@@ -263,10 +263,11 @@ export function TrainingScreen() {
                   prompt={entryIntro(name)}
                   ariaLabel="Training prompt"
                 />
-                <div className="mx-auto mt-6 flex w-full max-w-3xl flex-col gap-4">
-                  {courses.map((course) => (
-                    <div key={course.id} className="flex flex-col gap-4">
+                <div className="mx-auto mt-6 w-[800px] max-w-full space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    {courses.map((course) => (
                       <button
+                        key={course.id}
                         type="button"
                         onClick={() => setSelectedCourseId(course.id)}
                         className="rounded-[22px] border border-white/50 bg-white px-5 py-5 text-left shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70"
@@ -276,8 +277,10 @@ export function TrainingScreen() {
                           {course.subtitle}
                         </div>
                       </button>
+                    ))}
+                  </div>
 
-                      {course.id === "competency-pillars" ? (
+                  {true ? (
                         <section aria-label="Suggested for you" className="px-1">
                           <div className="text-sm font-extrabold tracking-tight text-gray-900">
                             Suggested for you
@@ -325,9 +328,7 @@ export function TrainingScreen() {
                             ))}
                           </div>
                         </section>
-                      ) : null}
-                    </div>
-                  ))}
+                  ) : null}
                 </div>
               </>
             ) : startedCourseId === selectedCourse.id ? (
@@ -340,7 +341,7 @@ export function TrainingScreen() {
               />
             ) : (
               <>
-                <div className="relative mx-auto mt-6 w-full max-w-3xl">
+                <div className="relative mx-auto mt-6 w-[800px] max-w-full">
                   <Button
                     type="button"
                     variant="ghost"
@@ -421,7 +422,7 @@ export function TrainingScreen() {
                   </div>
                 </div>
 
-                <div className="mx-auto mt-6 w-full max-w-3xl">
+                <div className="mx-auto mt-6 w-[800px] max-w-full">
                   <Button
                     onClick={() => {
                       if (!selectedCourse) return;

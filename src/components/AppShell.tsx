@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { AppShellHeaderRoleSelector } from "./AppShellHeaderRoleSelector";
+
 type Props = {
   children: ReactNode;
 };
@@ -13,6 +15,7 @@ export function AppShell({ children }: Props) {
             <div className="text-xs font-extrabold tracking-[0.22em] text-black">
               PROOFDIVE
             </div>
+            <AppShellHeaderRoleSelector />
           </header>
           {children}
         </main>
@@ -20,4 +23,3 @@ export function AppShell({ children }: Props) {
     </div>
   );
 }
-

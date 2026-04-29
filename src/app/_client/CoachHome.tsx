@@ -180,11 +180,6 @@ const ROLE_SUGGESTIONS = [
   "Project Manager",
 ] as const;
 
-const ROLE_SELECT_CHEVRON =
-  "data:image/svg+xml," +
-  encodeURIComponent(
-    "<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1.25 1.75L5 4.75L8.75 1.75' fill='none' stroke='black' stroke-opacity='0.4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>",
-  );
 
 /** Heroicons 24 outline: arrow-up-right (Tailwind design system) */
 function ArrowUpRightIcon({ className }: { className?: string }) {
@@ -625,38 +620,6 @@ export function CoachHome() {
               "lg:w-full",
             )}
           >
-            <div className="mb-6 flex w-full flex-col justify-start items-start gap-0.5 sm:mb-8">
-              <div className="flex w-full max-w-xl flex-col items-stretch gap-0 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:gap-0">
-                <p className="text-base leading-7 text-[var(--app-muted)] sm:shrink-0 sm:pr-1">
-                  Currently we are preparing for
-                </p>
-                <label className="sr-only" htmlFor="coach-target-role">
-                  Target role
-                </label>
-                <div className="flex w-full min-w-0 items-start justify-center overflow-visible sm:w-auto sm:min-w-0 sm:justify-start">
-                  <select
-                    id="coach-target-role"
-                    value={role}
-                    onChange={(e) => handleRoleChange(e.target.value)}
-                    className="min-h-0 w-full min-w-0 cursor-pointer appearance-none overflow-visible border-0 bg-transparent py-0.5 pl-0 pr-5 text-left text-lg font-extrabold leading-snug tracking-tight shadow-none outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#3EC878]/40 focus-visible:ring-offset-0"
-                    style={{
-                      backgroundImage: `url("${ROLE_SELECT_CHEVRON}")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 0 center",
-                      backgroundSize: "10px 6px",
-                    }}
-                  >
-                    <option value="">Pick a role</option>
-                    {roleOptions.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
             {showWelcomeLanding ? (
               <>
                 <h2 className="text-5xl font-extrabold leading-[52px] tracking-tight">Welcome to Proofdive</h2>

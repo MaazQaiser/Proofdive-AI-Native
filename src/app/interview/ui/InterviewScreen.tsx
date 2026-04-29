@@ -246,7 +246,7 @@ export function InterviewScreen() {
       <CoachFloatingNav />
       <div className="flex min-h-[70vh] w-full flex-col items-stretch justify-start pb-44">
         <div className="flex w-full flex-1 items-center justify-center">
-          <div className="mx-auto w-full max-w-3xl text-left">
+          <div className="mx-auto w-[800px] max-w-full text-left">
           {showPostJourneyMockLanding ? (
             <>
               <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-xs font-extrabold tracking-tight text-gray-800">
@@ -588,7 +588,7 @@ export function InterviewScreen() {
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-6"
           role="dialog"
           aria-modal="true"
-          aria-label="Interview consent"
+          aria-label="Interview Consent & Instructions"
         >
           <div className="w-full max-w-2xl rounded-[24px] bg-white shadow-[0_26px_80px_rgba(0,0,0,0.20)]">
             <div className="p-6 sm:p-8">
@@ -596,10 +596,10 @@ export function InterviewScreen() {
                 BEFORE WE BEGIN
               </div>
               <div className="mt-3 text-3xl font-extrabold tracking-tight text-black">
-                Interview consent
+                Interview Consent & Instructions
               </div>
 
-              <div className="mt-6 space-y-3 text-sm leading-6 text-[var(--app-muted)]">
+              <div className="mt-6 space-y-1.5 text-sm leading-6 text-[var(--app-muted)]">
                 {sessionKind === "selective_pillar" && pendingSelectivePillars && pendingSelectivePillars.length > 0 ? (
                   <div className="rounded-[16px] border border-black/10 bg-black/[0.04] p-4 text-sm font-semibold text-black">
                     Selected focus:{" "}

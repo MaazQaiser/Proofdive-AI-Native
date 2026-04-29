@@ -335,8 +335,8 @@ export function OnboardingAgent() {
 
   return (
     <div className="min-h-screen w-full">
-      <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-6 pb-32 pt-10">
-        <div className="flex items-center justify-between gap-3">
+      <div className="mx-auto flex min-h-screen w-[800px] max-w-full flex-col pb-32 pt-10">
+        <div className="flex items-center justify-between gap-3 px-6">
           <div className="text-xs font-extrabold tracking-[0.22em] text-gray-600">
             PROOFDIVE
           </div>
@@ -350,13 +350,13 @@ export function OnboardingAgent() {
               prompt={prompt}
               ariaLabel="Onboarding prompt"
             />
-            <div className="mx-auto mt-4 max-w-2xl text-left text-2xl text-[var(--app-muted)]">
+            <div className="mt-4 w-full text-left text-2xl text-[var(--app-muted)]">
               {quickReplies.length
                 ? "Type your answer, use voice, or pick an option."
                 : "Type your answer or use voice."}
             </div>
             {step === "role" ? (
-              <div className="mx-auto mt-6 max-w-2xl">
+              <div className="mt-6 w-full">
                 <div className="text-xs font-extrabold tracking-[0.22em] text-gray-600">
                   SUGGESTED ROLES
                 </div>
@@ -375,7 +375,7 @@ export function OnboardingAgent() {
               </div>
             ) : null}
             {quickReplies.length ? (
-              <div className="mx-auto mt-6 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="mt-6 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
                 {quickReplies.map((opt) => (
                   <button
                     key={opt.id}
@@ -396,7 +396,7 @@ export function OnboardingAgent() {
               </div>
             ) : null}
             {step === "done" ? (
-              <div className="mx-auto mt-8 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="mt-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
                 <Link
                   className="group rounded-[18px] border border-white/50 bg-black text-white shadow-[0_12px_30px_rgba(0,0,0,0.10)] transition hover:bg-black/90 active:bg-black/80"
                   href="/interview"
