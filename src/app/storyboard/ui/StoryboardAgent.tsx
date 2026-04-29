@@ -680,6 +680,21 @@ Start simple. What's something you worked on that stands out?`,
                     EXPERIENCE BANK
                   </div>
                 </div>
+                <button
+                  type="button"
+                  aria-label="Add experience"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-black text-white transition hover:bg-black/80 active:bg-black/70"
+                  onClick={() => {
+                    setPendingNewEntry(true);
+                    setSelectedId(null);
+                    setStatusLine(null);
+                    setCraftUi("idle");
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-3.5 w-3.5">
+                    <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </button>
               </div>
 
               <div className="space-y-2">
@@ -720,8 +735,8 @@ Start simple. What's something you worked on that stands out?`,
                 ) : (
                   <Card className="shadow-none">
                     <CardBody className="p-4">
-                      <div className="text-sm font-extrabold tracking-tight">No experiences yet</div>
-                      <div className="mt-1 text-xs leading-5 text-[var(--app-muted)]">
+                      <div className="text-lg font-extrabold tracking-tight">No experiences yet</div>
+                      <div className="mt-1 text-sm leading-5 text-[var(--app-muted)]">
                         Start by sharing an experience in the chat. To add another one later, just say{" "}
                         <span className="font-extrabold text-gray-900">“Add new experience”</span>.
                       </div>
@@ -746,7 +761,7 @@ Start simple. What's something you worked on that stands out?`,
                     </div>
                   ) : (
                     <>
-                      <div className="text-base font-extrabold tracking-tight">{storyQuick.title}</div>
+                      <div className="text-lg font-extrabold tracking-tight">{storyQuick.title}</div>
                       <div className="whitespace-pre-wrap text-sm leading-6 text-black/80">
                         {storyQuick.body}
                       </div>

@@ -411,9 +411,40 @@ export function OnboardingAgent() {
                   </div>
                 </Link>
 
+                <Link
+                  className="group rounded-[18px] border border-white/50 bg-white text-left text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white"
+                  href="/storyboard"
+                >
+                  <div className="p-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-base font-extrabold tracking-tight">
+                        Story Board
+                      </div>
+                      <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/60 text-black transition group-hover:bg-white/80 group-active:bg-white">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          aria-hidden="true"
+                          className="h-4 w-4"
+                        >
+                          <path
+                            d="M4 5h16M4 9h10M4 13h7M4 17h5"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="mt-1 text-sm text-[var(--app-muted)]">
+                      Build your career story board
+                    </div>
+                  </div>
+                </Link>
+
                 <button
                   type="button"
-                  className="group w-full rounded-[18px] border border-white/50 bg-white text-left text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white"
+                  className="group w-full rounded-[18px] border border-white/50 bg-white text-left text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white sm:col-span-2"
                   onClick={() => setIntroModalOpen(true)}
                 >
                   <div className="p-5">
