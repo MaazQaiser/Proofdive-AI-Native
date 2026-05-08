@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import {
   buildMockCraftingDraft,
@@ -370,6 +370,9 @@ function DraftSectionCard({
   onToggleLock: () => void;
   children: ReactNode;
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftInput, setDraftInput] = useState("");
+
   return (
     <div className="overflow-hidden rounded-[22px] border border-white/50 bg-white shadow-[var(--app-shadow-soft)]">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/50 bg-[var(--app-surface)] px-4 py-3">
@@ -390,6 +393,15 @@ function DraftSectionCard({
           <Button
             type="button"
             variant="secondary"
+            onClick={() => setIsEditing((v) => !v)}
+            className="text-xs"
+            title="Show an inline edit field"
+          >
+            {isEditing ? "Close edit" : "Edit"}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
             onClick={onToggleLock}
             className="text-xs"
             title={locked ? "Unlock to edit" : "Lock to prevent edits"}
@@ -398,7 +410,43 @@ function DraftSectionCard({
           </Button>
         </div>
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-4">
+        {children}
+        {isEditing ? (
+          <div className="mt-4">
+            <label className="block">
+              <span className="text-xs font-bold tracking-tight">
+                Share the quick change you want updated in this area of the story
+              </span>
+              <div className="relative mt-1.5 overflow-hidden rounded-xl">
+                <input
+                  type="text"
+                  value={draftInput}
+                  onChange={(e) => setDraftInput(e.target.value)}
+                  placeholder="Type here..."
+                  className="w-full rounded-xl border border-white/50 bg-white px-3 py-2 pr-12 text-sm text-gray-800 outline-none placeholder:text-[var(--app-muted)]"
+                />
+                <button
+                  type="button"
+                  aria-label="Send quick change"
+                  title="Send quick change"
+                  className="absolute right-1.5 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border border-black bg-black text-white transition hover:bg-black/90"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+                    <path
+                      d="M5 12h12M11 6l6 6-6 6"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </label>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
