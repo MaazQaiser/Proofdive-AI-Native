@@ -127,7 +127,7 @@ export function OnboardingAgent() {
         role: "assistant",
         createdAt: new Date().toISOString(),
         content:
-          "Everything’s set. You can jump into a mock interview to test your readiness, or explore how the Proofdive Competency Engine works.",
+          "Everything’s set. Start building your StoryBoard, practice your answers, or explore how ProofDive turns experience into proof.",
       });
     }
     return base;
@@ -155,7 +155,7 @@ export function OnboardingAgent() {
     });
     push(
       "assistant",
-      "Everything’s set. You can jump into a mock interview to test your readiness, or explore how the Proofdive Competency Engine works.",
+      "Everything’s set. Start building your StoryBoard, practice your answers, or explore how ProofDive turns experience into proof.",
     );
     setStep("done");
   }
@@ -398,21 +398,7 @@ export function OnboardingAgent() {
             {step === "done" ? (
               <div className="mt-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
                 <Link
-                  className="group rounded-[18px] border border-white/50 bg-black text-white shadow-[0_12px_30px_rgba(0,0,0,0.10)] transition hover:bg-black/90 active:bg-black/80"
-                  href="/interview"
-                >
-                  <div className="p-5">
-                    <div className="text-base font-extrabold tracking-tight">
-                      Start a mock interview
-                    </div>
-                    <div className="mt-1 text-sm text-white/75">
-                      Evaluate yourself for the {role || "selected role"}
-                    </div>
-                  </div>
-                </Link>
-
-                <Link
-                  className="group rounded-[18px] border border-white/50 bg-white text-left text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white"
+                  className="group rounded-[18px] border border-white/50 bg-black text-left text-white shadow-[0_12px_30px_rgba(0,0,0,0.10)] transition hover:bg-black/90 active:bg-black/80"
                   href="/storyboard"
                 >
                   <div className="p-5">
@@ -420,7 +406,7 @@ export function OnboardingAgent() {
                       <div className="text-base font-extrabold tracking-tight">
                         Story Board
                       </div>
-                      <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/60 text-black transition group-hover:bg-white/80 group-active:bg-white">
+                      <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition group-hover:bg-white/20 group-active:bg-white/30">
                         <svg
                           viewBox="0 0 24 24"
                           fill="none"
@@ -436,8 +422,22 @@ export function OnboardingAgent() {
                         </svg>
                       </div>
                     </div>
-                    <div className="mt-1 text-sm text-[var(--app-muted)]">
+                    <div className="mt-1 text-sm text-white/75">
                       Build your career story board
+                    </div>
+                  </div>
+                </Link>
+
+                <Link
+                  className="group rounded-[18px] border border-white/50 bg-white text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white"
+                  href="/interview"
+                >
+                  <div className="p-5">
+                    <div className="text-base font-extrabold tracking-tight">
+                      Start a mock interview
+                    </div>
+                    <div className="mt-1 text-sm text-[var(--app-muted)]">
+                      Evaluate yourself for the {role || "selected role"}
                     </div>
                   </div>
                 </Link>
