@@ -424,7 +424,7 @@ function DraftSectionCard({
                   value={draftInput}
                   onChange={(e) => setDraftInput(e.target.value)}
                   placeholder="Type here..."
-                  className="w-full rounded-xl border border-white/50 bg-white px-3 py-2 pr-12 text-sm text-gray-800 outline-none placeholder:text-[var(--app-muted)]"
+                  className="w-full rounded-xl border-2 border-black/20 bg-white px-3 py-2 pr-12 text-sm text-gray-800 outline-none placeholder:text-[var(--app-muted)] focus:border-black/40"
                 />
                 <button
                   type="button"
