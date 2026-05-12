@@ -20,6 +20,7 @@ type Step =
   | "experienceLevel"
   | "education"
   | "resume"
+  | "industryVertical"
   | "done";
 
 export function OnboardingAgent() {
@@ -88,6 +89,7 @@ export function OnboardingAgent() {
     education: string;
     background: string;
     resumeOrJobDescription: string;
+    industryVertical: string;
   }>(() => ({
     name: roleProfile?.name ?? "",
     targetRole: roleProfile?.targetRole ?? "",
@@ -96,6 +98,7 @@ export function OnboardingAgent() {
     education: roleProfile?.education ?? "",
     background: roleProfile?.background ?? "",
     resumeOrJobDescription: roleProfile?.resumeOrJobDescription ?? "",
+    industryVertical: roleProfile?.industryVertical ?? "",
   }));
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -105,7 +108,7 @@ export function OnboardingAgent() {
 
     let firstContent: string;
     if (initialStep === "role") {
-      firstContent = `hey — welcome to proofdive${namePart ? `, ${namePart}` : ""}. i’m your onboarding agent.\n\nFirst up: what’s the job role you’re preparing for?`;
+      firstContent = `hey — welcome to proofdive${namePart ? `, ${namePart}` : ""}. i’m your onboarding agent.\n\nFirst up: what’s the role you’re preparing for?`;
     } else if (initialStep === "done") {
       firstContent = `hey — welcome to proofdive${namePart ? `, ${namePart}` : ""}. i’m your onboarding agent.`;
     } else {
@@ -151,6 +154,7 @@ export function OnboardingAgent() {
       education: nextDraft.education.trim() || undefined,
       background: nextDraft.background.trim() || undefined,
       resumeOrJobDescription: nextDraft.resumeOrJobDescription.trim() || undefined,
+      industryVertical: nextDraft.industryVertical.trim() || undefined,
       createdAt: roleProfile?.createdAt ?? new Date().toISOString(),
     });
     push(
@@ -183,7 +187,17 @@ export function OnboardingAgent() {
           ]
         : step === "education" || step === "resume"
           ? [{ id: "skip", label: "Skip", value: "skip" }]
-          : [];
+          : step === "industryVertical"
+            ? [
+                { id: "tech", label: "Technology", value: "Technology" },
+                { id: "finance", label: "Finance", value: "Finance" },
+                { id: "healthcare", label: "Healthcare", value: "Healthcare" },
+                { id: "retail", label: "Retail", value: "Retail" },
+                { id: "education", label: "Education", value: "Education" },
+                { id: "consulting", label: "Consulting", value: "Consulting" },
+                { id: "skip", label: "Skip", value: "skip" },
+              ]
+            : [];
 
   function who() {
     return "";
@@ -208,7 +222,7 @@ export function OnboardingAgent() {
       setDraft(next);
       push(
         "assistant",
-        `hey ${name} — welcome to proofdive. i’m your onboarding agent.\n\nLet’s get you interview-ready.\n\nFirst up: what’s the job role you’re preparing for?`,
+        `hey ${name} — welcome to proofdive. i’m your onboarding agent.\n\nLet’s start with your story and get you interview-ready.\n\nFirst up: what’s the role you’re preparing for?`,
       );
       setStep("role");
       return;
@@ -320,7 +334,17 @@ export function OnboardingAgent() {
     if (step === "resume") {
       const next = { ...draft, resumeOrJobDescription: isSkip ? "" : cleaned };
       setDraft(next);
+      push(
+        "assistant",
+        "Almost there! Which industry vertical are you targeting? Pick one below or type your own.",
+      );
+      setStep("industryVertical");
+      return;
+    }
 
+    if (step === "industryVertical") {
+      const next = { ...draft, industryVertical: isSkip ? "" : cleaned };
+      setDraft(next);
       finalizeProfile(next);
       return;
     }

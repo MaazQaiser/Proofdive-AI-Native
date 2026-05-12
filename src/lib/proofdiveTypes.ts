@@ -112,6 +112,7 @@ export type RoleProfile = {
   education?: string;
   background?: string;
   resumeOrJobDescription?: string;
+  industryVertical?: string;
   createdAt: string;
 };
 

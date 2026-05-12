@@ -672,9 +672,9 @@ export function CoachHome() {
                     const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                     if (isRoadmapCoach) return "Follow the path, then go for your mock interview.";
                     if (isFinalCoach) return isFirstStart
-                      ? "A bit more refinement and you'll be interview-ready."
+                      ? "Let start with building a story which help you to improve."
                       : "Focus on your weaker area's now to get it done.";
-                    return "A bit more refinement and you'll be interview-ready.";
+                    return "Let start with building a story which help you to improve.";
                   })()}
                 </h4>
                 {readinessCardEl}
@@ -808,7 +808,13 @@ export function CoachHome() {
                     <div className="min-w-0 flex-1">
                       {hasCraftedStoryboard ? (
                         <>
-                          <h3 className="text-xl font-extrabold tracking-tight">2. Craft your story</h3>
+                          <h3 className="text-xl font-extrabold tracking-tight">
+                            {(() => {
+                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                              const isSecondInterview = isFinalCoach && !isFirstStart;
+                              return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
+                            })()}
+                          </h3>
                           <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
                             {(() => {
                               const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
@@ -842,7 +848,13 @@ export function CoachHome() {
                         </>
                       ) : hasCreatedStoryboard ? (
                         <>
-                          <h3 className="text-xl font-extrabold tracking-tight">2. Craft your story</h3>
+                          <h3 className="text-xl font-extrabold tracking-tight">
+                            {(() => {
+                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                              const isSecondInterview = isFinalCoach && !isFirstStart;
+                              return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
+                            })()}
+                          </h3>
                           <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
                             Turn your experience into clear, structured answers. Add more detail to raise your story
                             score.
@@ -859,7 +871,13 @@ export function CoachHome() {
                         </>
                       ) : (
                         <>
-                          <h3 className="text-xl font-extrabold tracking-tight">2. Craft your story</h3>
+                          <h3 className="text-xl font-extrabold tracking-tight">
+                            {(() => {
+                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                              const isSecondInterview = isFinalCoach && !isFirstStart;
+                              return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
+                            })()}
+                          </h3>
                           <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
                             Turn your experience into clear, structured answers.
                           </p>
