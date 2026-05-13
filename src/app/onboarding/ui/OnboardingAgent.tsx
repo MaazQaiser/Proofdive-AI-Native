@@ -222,7 +222,7 @@ export function OnboardingAgent() {
       setDraft(next);
       push(
         "assistant",
-        `hey ${name} — welcome to proofdive. i’m your onboarding agent.\n\nLet’s start with your story and get you interview-ready.\n\nFirst up: what’s the role you’re preparing for?`,
+        `hey ${name} — welcome to proofdive.\n\nLet’s start with your story and get you interview-ready.\n\nFirst up: what’s the role you’re preparing for?`,
       );
       setStep("role");
       return;
