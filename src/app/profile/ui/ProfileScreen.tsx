@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import { Card, CardBody } from "@/components/Card";
@@ -115,7 +116,16 @@ export function ProfileScreen() {
   const router = useRouter();
 
   const [roleProfile] = useLocalStorageState<RoleProfile | null>(StorageKeys.roleProfile, null);
-  const [reports] = useLocalStorageState<Record<string, InterviewReport>>(StorageKeys.reports, {});
+  const [reports, setReports] = useLocalStorageState<Record<string, InterviewReport>>(
+    StorageKeys.reports,
+    {},
+  );
+  const [aiTrainingConsent, setAiTrainingConsent] = useLocalStorageState<boolean>(
+    StorageKeys.aiTrainingConsent,
+    true,
+  );
+  const [recordingsCleared, setRecordingsCleared] = useState(false);
+  const [deleteRequested, setDeleteRequested] = useState(false);
 
   const reportCount = Object.keys(reports ?? {}).length;
   const usageUsed = reportCount;
@@ -216,12 +226,89 @@ export function ProfileScreen() {
                   label="Language"
                   description="Interface and interview language"
                   value="English"
-                />
-                <PrefRow
-                  label="Data & privacy"
-                  description="Manage your data and delete your account"
                   last
                 />
+              </Card>
+
+              {/* Data & privacy card */}
+              <Card>
+                <SectionHeader title="Data &amp; privacy" />
+
+                {/* AI training consent toggle */}
+                <div className="flex items-center justify-between gap-4 px-6 py-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold">Use my recordings to improve AI</div>
+                    <div className="mt-0.5 text-xs text-[var(--app-muted)]">
+                      Allow ProofDive to use your interview recordings to train and improve the AI.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={aiTrainingConsent}
+                    aria-label="Use my recordings to improve AI"
+                    onClick={() => setAiTrainingConsent((v) => !v)}
+                    className={[
+                      "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+                      aiTrainingConsent
+                        ? "border-black/10 bg-black"
+                        : "border-black/15 bg-white/60 hover:bg-white/80",
+                    ].join(" ")}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={[
+                        "inline-block h-5 w-5 transform rounded-full bg-white shadow-[0_6px_16px_rgba(0,0,0,0.12)] transition",
+                        aiTrainingConsent ? "translate-x-6" : "translate-x-1",
+                      ].join(" ")}
+                    />
+                  </button>
+                </div>
+                <div className="h-px bg-[var(--app-hairline)] mx-6" />
+
+                {/* Delete interview recordings */}
+                <div className="flex items-center justify-between gap-4 px-6 py-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold">Interview recordings</div>
+                    <div className="mt-0.5 text-xs text-[var(--app-muted)]">
+                      {recordingsCleared
+                        ? "Your interview recordings have been removed."
+                        : `${reportCount} recording${reportCount === 1 ? "" : "s"} stored on this device.`}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={reportCount === 0}
+                    onClick={() => {
+                      setReports({});
+                      setRecordingsCleared(true);
+                    }}
+                    className="shrink-0 rounded-full border border-red-300 bg-transparent px-4 py-2 text-sm font-bold text-red-500 transition hover:bg-red-50 active:bg-red-100 disabled:cursor-not-allowed disabled:border-black/10 disabled:text-black/30 disabled:hover:bg-transparent"
+                  >
+                    Delete recordings
+                  </button>
+                </div>
+                <div className="h-px bg-[var(--app-hairline)] mx-6" />
+
+                {/* Delete my data (showcase) */}
+                <div className="flex items-center justify-between gap-4 px-6 py-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold">Delete my data</div>
+                    <div className="mt-0.5 text-xs text-[var(--app-muted)]">
+                      {deleteRequested
+                        ? "Account deletion isn't available in this prototype yet."
+                        : "Permanently remove your account and all associated data."}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteRequested(true)}
+                    className="shrink-0 rounded-full border border-red-300 bg-transparent px-4 py-2 text-sm font-bold text-red-500 transition hover:bg-red-50 active:bg-red-100"
+                  >
+                    Delete my data
+                  </button>
+                </div>
               </Card>
             </div>
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Button } from "@/components/Button";
 import { cn } from "@/components/cn";
@@ -45,6 +46,16 @@ const field =
 
 export default function SignupPage() {
   const router = useRouter();
+  const [agreed, setAgreed] = useState(false);
+  const [showAgreeError, setShowAgreeError] = useState(false);
+
+  function guardConsent(): boolean {
+    if (!agreed) {
+      setShowAgreeError(true);
+      return false;
+    }
+    return true;
+  }
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col justify-center px-6 py-12 sm:px-8">
@@ -54,7 +65,7 @@ export default function SignupPage() {
       <button
         type="button"
         className={cn(oauthBtn, "mt-8")}
-        onClick={() => router.push("/onboarding")}
+        onClick={() => guardConsent() && router.push("/onboarding")}
       >
         <GoogleIcon />
         Continue with Google
@@ -62,7 +73,7 @@ export default function SignupPage() {
       <button
         type="button"
         className={cn(oauthBtn, "mt-2.5")}
-        onClick={() => router.push("/onboarding")}
+        onClick={() => guardConsent() && router.push("/onboarding")}
       >
         <LinkedInIcon />
         Continue with LinkedIn
@@ -79,6 +90,7 @@ export default function SignupPage() {
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
+          if (!guardConsent()) return;
           router.push("/onboarding");
         }}
       >
@@ -103,6 +115,28 @@ export default function SignupPage() {
           Create account
         </Button>
       </form>
+
+      <label className="mt-4 flex cursor-pointer items-start gap-2.5 text-sm text-black/60">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(e) => {
+            setAgreed(e.target.checked);
+            if (e.target.checked) setShowAgreeError(false);
+          }}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-black/25 accent-black"
+        />
+        <span>
+          I agree to the{" "}
+          <span className="font-semibold text-black">Terms &amp; Conditions</span> and{" "}
+          <span className="font-semibold text-black">Privacy Policy</span>.
+        </span>
+      </label>
+      {showAgreeError ? (
+        <p className="mt-1.5 text-xs font-medium text-red-500" role="alert">
+          Please accept the Terms &amp; Conditions and Privacy Policy to continue.
+        </p>
+      ) : null}
 
       <p className="mt-8 text-center text-sm text-black/55">
         Already have an account?{" "}
