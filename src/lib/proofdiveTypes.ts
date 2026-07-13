@@ -110,8 +110,11 @@ export type RoleProfile = {
   backgroundType?: "fresh_grad" | "under_grad" | "diploma_holder" | "experienced";
   experienceLevel?: "1-5" | "5-10" | "10+";
   education?: string;
+  /** Last employer, captured only for backgroundType === "experienced" (replaces education for that path). */
+  lastWorkedAt?: string;
   background?: string;
-  resumeOrJobDescription?: string;
+  jobDescription?: string;
+  resume?: string;
   industryVertical?: string;
   createdAt: string;
 };
