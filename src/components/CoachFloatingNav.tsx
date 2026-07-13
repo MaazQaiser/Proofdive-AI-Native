@@ -32,7 +32,7 @@ export function CoachFloatingNav() {
   ] as const;
 
   return (
-    <nav aria-label="Coach shortcuts" className="fixed left-3 top-1/2 z-50 -translate-y-1/2">
+    <nav aria-label="Coach shortcuts" className="fixed left-3 top-1/2 z-50 -translate-y-1/2 print:hidden">
       <div className="flex flex-col gap-0">
         {items.map((it) => {
           const Icon = it.icon;

@@ -547,6 +547,14 @@ export function CoachHome() {
     () => experiences.filter((e) => (e.role ?? "").trim() === role.trim()),
     [experiences, role],
   );
+  const experienceBankPreviewTitles = useMemo(
+    () =>
+      roleExperiences
+        .slice(0, 2)
+        .map((e) => e.title?.trim())
+        .filter((t): t is string => Boolean(t)),
+    [roleExperiences],
+  );
 
   const trainingProgressForRole = useMemo(() => {
     if (!trainingJourneyProgress) return null;
@@ -631,14 +639,14 @@ export function CoachHome() {
                 </p>
                 <div className="mt-8 flex w-full max-w-xl flex-col gap-4">
                   <Link
-                    href="/interview?first=1"
+                    href="/storyboard"
                     className={cn(
                       "flex w-full items-center justify-between gap-4 rounded-2xl border border-white/60 bg-white/45 px-5 py-4 text-left shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition hover:bg-white/70",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                     )}
                   >
                     <span className="text-base font-extrabold leading-6 tracking-tight text-gray-900">
-                      Would you like to take a quick interview?
+                      Would you like to start building your Storyboard?
                     </span>
                     <ArrowUpRightIcon className="h-5 w-5 shrink-0 text-gray-500" />
                   </Link>
@@ -937,6 +945,44 @@ export function CoachHome() {
                   </div>
                 </CardBody>
               </div>
+
+                    <div className="h-px w-full bg-slate-300" aria-hidden />
+
+                    <div className="w-full">
+                      <CardBody className="p-0">
+                        <div className="flex items-start justify-between gap-4 rounded-[20px] transition-colors hover:bg-white/70">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-xl font-extrabold tracking-tight">Experience bank</h3>
+                            <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
+                              {roleExperiences.length ? (
+                                <>
+                                  {roleExperiences.length} experience{roleExperiences.length === 1 ? "" : "s"}{" "}
+                                  captured for {role || "this role"}
+                                  {experienceBankPreviewTitles.length ? (
+                                    <> — including “{experienceBankPreviewTitles.join("”, “")}”.</>
+                                  ) : (
+                                    "."
+                                  )}
+                                </>
+                              ) : (
+                                "Nothing captured yet — add your first experience to start building proof."
+                              )}
+                            </p>
+                          </div>
+                          <Link
+                            href="/storyboard"
+                            className={cn(
+                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
+                              "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+                            )}
+                          >
+                            {roleExperiences.length ? "Open Storyboard" : "Add an experience"}
+                            <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
+                          </Link>
+                        </div>
+                      </CardBody>
+                    </div>
 
                     <div className="h-px w-full bg-slate-300" aria-hidden />
 

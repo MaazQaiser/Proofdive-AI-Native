@@ -88,7 +88,7 @@ export function OnboardingAgent() {
     experienceLevel: NonNullable<RoleProfile["experienceLevel"]> | "";
     education: string;
     background: string;
-    resumeOrJobDescription: string;
+    jobDescription: string;
     industryVertical: string;
   }>(() => ({
     name: roleProfile?.name ?? "",
@@ -97,7 +97,7 @@ export function OnboardingAgent() {
     experienceLevel: roleProfile?.experienceLevel ?? "",
     education: roleProfile?.education ?? "",
     background: roleProfile?.background ?? "",
-    resumeOrJobDescription: roleProfile?.resumeOrJobDescription ?? "",
+    jobDescription: roleProfile?.jobDescription ?? "",
     industryVertical: roleProfile?.industryVertical ?? "",
   }));
 
@@ -153,7 +153,7 @@ export function OnboardingAgent() {
       experienceLevel: nextDraft.experienceLevel || undefined,
       education: nextDraft.education.trim() || undefined,
       background: nextDraft.background.trim() || undefined,
-      resumeOrJobDescription: nextDraft.resumeOrJobDescription.trim() || undefined,
+      jobDescription: nextDraft.jobDescription.trim() || undefined,
       industryVertical: nextDraft.industryVertical.trim() || undefined,
       createdAt: roleProfile?.createdAt ?? new Date().toISOString(),
     });
@@ -332,7 +332,7 @@ export function OnboardingAgent() {
     }
 
     if (step === "resume") {
-      const next = { ...draft, resumeOrJobDescription: isSkip ? "" : cleaned };
+      const next = { ...draft, jobDescription: isSkip ? "" : cleaned };
       setDraft(next);
       push(
         "assistant",

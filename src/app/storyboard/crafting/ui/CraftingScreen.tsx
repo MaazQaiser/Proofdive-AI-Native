@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import {
   buildMockCraftingDraft,
@@ -41,6 +41,8 @@ const TA =
 
 export function CraftingScreen() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const hasTriggeredPrintRef = useRef(false);
   const [roleProfile] = useLocalStorageState<RoleProfile | null>(
     StorageKeys.roleProfile,
     null,
@@ -122,6 +124,15 @@ export function CraftingScreen() {
     });
   }, [role, setExperiences]);
 
+  useEffect(() => {
+    if (searchParams.get("print") !== "1") return;
+    if (hasTriggeredPrintRef.current) return;
+    hasTriggeredPrintRef.current = true;
+    const id = window.setTimeout(() => window.print(), 200);
+    router.replace("/storyboard/crafting");
+    return () => window.clearTimeout(id);
+  }, [searchParams, router]);
+
   const handleSaveStoryboard = useCallback(() => {
     if (!role) return;
     writeJson(StorageKeys.storyboardDraft, store);
@@ -171,7 +182,7 @@ export function CraftingScreen() {
             </Card>
           </div>
         </div>
-        <CoachBottomChatBar />
+        <CoachBottomChatBar showUploadButton={false} />
       </AppShell>
     );
   }
@@ -183,7 +194,7 @@ export function CraftingScreen() {
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <Link
             href="/coach?journey=1"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-black/65 transition hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)]"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-black/65 transition hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)] print:hidden"
           >
             <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0" aria-hidden>
               <path
@@ -196,9 +207,15 @@ export function CraftingScreen() {
             </svg>
             Back to home
           </Link>
+          <div className="hidden print:block">
+            <div className="text-xs font-extrabold tracking-[0.22em] text-black">PROOFDIVE</div>
+            <p className="mt-1 text-sm text-[var(--app-muted)]">
+              Storyboard for {role} — generated {new Date().toLocaleDateString()}
+            </p>
+          </div>
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight">Storyboard draft</h1>
-            <p className="mt-2 text-sm leading-6 text-[var(--app-muted)]">
+            <p className="mt-2 text-sm leading-6 text-[var(--app-muted)] print:hidden">
               One <strong>Core Introduction</strong> + twelve fixed competencies (CAR: Context, Action,
               Result). Lock a section when it&apos;s interview-ready. Edits save in this browser.
             </p>
@@ -329,7 +346,7 @@ export function CraftingScreen() {
             );
           })}
 
-          <div className="space-y-3 border-t border-white/40 pt-6">
+          <div className="space-y-3 border-t border-white/40 pt-6 print:hidden">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm leading-6 text-[var(--app-muted)]">
                 Continue building in Storyboard or save this draft to the browser.
@@ -348,7 +365,7 @@ export function CraftingScreen() {
           </div>
         </div>
       </div>
-      <CoachBottomChatBar />
+      <CoachBottomChatBar showUploadButton={false} />
     </AppShell>
   );
 }
@@ -394,7 +411,7 @@ function DraftSectionCard({
             type="button"
             variant="secondary"
             onClick={() => setIsEditing((v) => !v)}
-            className="text-xs"
+            className="text-xs print:hidden"
             title="Show an inline edit field"
           >
             {isEditing ? "Close edit" : "Edit"}
@@ -403,7 +420,7 @@ function DraftSectionCard({
             type="button"
             variant="secondary"
             onClick={onToggleLock}
-            className="text-xs"
+            className="text-xs print:hidden"
             title={locked ? "Unlock to edit" : "Lock to prevent edits"}
           >
             {locked ? "Unlock" : "Lock"}
