@@ -122,9 +122,13 @@ export default function LoginPage() {
       </p>
 
       <p className="mt-6 text-center text-sm text-black/40">
-        <Link href="/superadmin/login" className="hover:text-black/70 hover:underline">
+        <button
+          type="button"
+          onClick={() => router.push("/superadmin/overview")}
+          className="hover:text-black/70 hover:underline"
+        >
           Super Admin login →
-        </Link>
+        </button>
       </p>
     </main>
   );
