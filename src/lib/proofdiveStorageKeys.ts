@@ -14,5 +14,7 @@ export const StorageKeys = {
   coachFinalReadinessReportId: "proofdive.coachFinalReadinessReportId.v1",
   /** Whether the user consents to their interview recordings being used to improve AI. */
   aiTrainingConsent: "proofdive.aiTrainingConsent.v1",
+  /** Selected Daily/Weekly/Monthly granularity on the Super Admin dashboard. */
+  superAdminDashboardDateRange: "proofdive.superAdmin.dashboardDateRange.v1",
 } as const;
 
