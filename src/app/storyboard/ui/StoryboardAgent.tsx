@@ -502,7 +502,7 @@ Start simple. What's something you worked on that stands out?`,
             </CardBody>
           </Card>
         </div>
-        <CoachBottomChatBar />
+        <CoachBottomChatBar showUploadButton={false} />
       </AppShell>
     );
   }
@@ -551,9 +551,16 @@ Start simple. What's something you worked on that stands out?`,
                             </span>
                           </div>
                         </div>
-                        <div className="mt-4">
+                        <div className="mt-4 flex flex-wrap gap-2">
                           <Button type="button" onClick={() => router.push("/storyboard/crafting")}>
                             View story
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => router.push("/storyboard/crafting?print=1")}
+                          >
+                            Download
                           </Button>
                         </div>
                       </CardBody>
@@ -634,12 +641,19 @@ Start simple. What's something you worked on that stands out?`,
                                 </span>
                               </div>
                             </div>
-                            <div className="mt-4">
+                            <div className="mt-4 flex flex-wrap gap-2">
                               <Button
                                 type="button"
                                 onClick={() => router.push("/storyboard/crafting")}
                               >
                                 View story
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => router.push("/storyboard/crafting?print=1")}
+                              >
+                                Download
                               </Button>
                             </div>
                           </CardBody>
@@ -800,6 +814,7 @@ Start simple. What's something you worked on that stands out?`,
         disabled={postCraftHome || storyStep === 6 || craftUi === "crafting"}
         prefill={postCraftHome ? "" : exampleReplyPrefill}
         prefillKey={postCraftHome ? "post-craft" : replyPrefillKey}
+        showUploadButton={false}
       />
     </AppShell>
   );

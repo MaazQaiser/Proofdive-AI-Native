@@ -12,5 +12,7 @@ export const StorageKeys = {
   coachJourneyView: "proofdive.coachJourneyView.v1",
   /** When `coachJourneyView` is `final`, readiness uses this report id from `reports`. */
   coachFinalReadinessReportId: "proofdive.coachFinalReadinessReportId.v1",
+  /** Whether the user consents to their interview recordings being used to improve AI. */
+  aiTrainingConsent: "proofdive.aiTrainingConsent.v1",
 } as const;
 

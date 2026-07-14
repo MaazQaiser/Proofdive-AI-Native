@@ -418,40 +418,59 @@ export function InterviewScreen() {
                 }}
               />
 
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="text-base font-extrabold tracking-tight text-black">
-                    Would you like to add a job description for this interview?
-                  </div>
-                  <div className="mt-1 text-sm leading-6 text-[var(--app-muted)]">
-                    Uploading it helps tailor the interview.
-                  </div>
-                </div>
-
-                <Button variant="secondary" onClick={() => jobDescriptionInputRef.current?.click()}>
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
+              {roleProfile?.jobDescription ? (
+                <div className="flex items-start gap-3">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-black/60">
                     <path
-                      d="M12 15V3m0 0 4 4m-4-4-4 4"
+                      d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
                       stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"
-                      stroke="currentColor"
-                      strokeWidth="2"
+                      strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                   </svg>
-                  Upload job description
-                </Button>
-              </div>
+                  <div className="min-w-0 text-sm leading-6 text-[var(--app-muted)]">
+                    Using the job description from your profile to tailor this interview.
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="text-base font-extrabold tracking-tight text-black">
+                        Would you like to add a job description for this interview?
+                      </div>
+                      <div className="mt-1 text-sm leading-6 text-[var(--app-muted)]">
+                        Uploading it helps tailor the interview.
+                      </div>
+                    </div>
 
-              {jobDescriptionName ? (
-                <div className="mt-3 text-sm text-[var(--app-muted)]">{jobDescriptionName}</div>
-              ) : null}
+                    <Button variant="secondary" onClick={() => jobDescriptionInputRef.current?.click()}>
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
+                        <path
+                          d="M12 15V3m0 0 4 4m-4-4-4 4"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      Upload job description
+                    </Button>
+                  </div>
+
+                  {jobDescriptionName ? (
+                    <div className="mt-3 text-sm text-[var(--app-muted)]">{jobDescriptionName}</div>
+                  ) : null}
+                </>
+              )}
 
               <div className="mt-5 border-t border-white/50 pt-4">
                 <div className="flex items-start justify-between gap-4">
