@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Required so shadcn's `.dark` class strategy works — Tailwind v4's built-in
+   `dark:` variant defaults to a media query otherwise. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --app-bg: #f2f2f3;
   --app-surface: #ffffff;
@@ -10,14 +14,295 @@
   --app-shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.08);
 }
 
+/* ==========================================================
+   Design system foundation (shadcn tokens + typography + logo scale)
+   Source: ProofDive Design Foundation (Figma-derived), foundation.css
+   ========================================================== */
+
+:root {
+  --background: #F5F5F3;
+  --foreground: #0E0E0E;
+  --card: #F5F5F3;
+  --card-foreground: #0E0E0E;
+  --popover: #F5F5F3;
+  --popover-foreground: #0E0E0E;
+  /* Primary button color — deliberately neutral (not the brand teal). See
+     --accent for where brand color is reserved. */
+  --primary: #0E0E0E;
+  --primary-foreground: #F5F5F5;
+  --secondary: #B9EFF4;
+  --secondary-foreground: #073E4C;
+  --muted: #E8E8E6;
+  --muted-foreground: #6B7280;
+  --accent: #22D3EE;
+  --accent-foreground: #062C35;
+  --destructive: #CB3A31;
+  --destructive-foreground: #F5F5F3;
+  --border: #D4D4D2;
+  --input: #D4D4D2;
+  --ring: #0E9AB5;
+  --base: #F5F5F3;
+  --surface: #E8E8E6;
+  --text-primary: #0E0E0E;
+  --text-secondary: #6B7280;
+  --extended-light-cyan: #B9EFF4;
+  --extended-cyan: #00A8B9;
+  --extended-blue: #006F8F;
+  --extended-green: #C7DCD5;
+  --extended-green-blue: #073E4C;
+  --extended-cyan-green: #062C35;
+  --extended-dark-cyan-green: #042027;
+  --extended-dark-cyan: #01161B;
+  --brand-100: #0E9AB5;
+  --brand-200: #26A4BC;
+  --brand-300: #3EAEC4;
+  --brand-400: #56B8CB;
+  --brand-500: #6EC2D3;
+  --brand-600: #87CDDA;
+  --brand-700: #9FD7E1;
+  --brand-800: #B7E1E9;
+  --brand-900: #CFEBF0;
+  --brand-1000: #E7F5F8;
+  --scoring-red: #CB3A31;
+  --scoring-yellow: #E9A13B;
+  --scoring-green: #16A34A;
+  --scoring-cyan: #22D3EE;
+
+  /* Not defined in the Figma foundation — gap-fill so shadcn components have a
+     radius token. Flag with design if this should differ. */
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: #0E0E0E;
+  --foreground: #F5F5F5;
+  --card: #01161B;
+  --card-foreground: #22D3EE;
+  --popover: #042027;
+  --popover-foreground: #22D3EE;
+  /* Primary button color — inverted neutral (near-white on near-black bg). */
+  --primary: #F5F5F5;
+  --primary-foreground: #0E0E0E;
+  --secondary: #042027;
+  --secondary-foreground: #22D3EE;
+  --muted: #01161B;
+  --muted-foreground: #9CA3AF;
+  --accent: #00A8B9;
+  --accent-foreground: #F5F5F5;
+  --destructive: #CB3A31;
+  --destructive-foreground: #F5F5F5;
+  --border: #2A2A2A;
+  --input: #2A2A2A;
+  --ring: #22D3EE;
+  --base: #0E0E0E;
+  --surface: #1A1A1A;
+  --text-primary: #F5F5F5;
+  --text-secondary: #9CA3AF;
+  --extended-light-cyan: #B9EFF4;
+  --extended-cyan: #00A8B9;
+  --extended-blue: #006F8F;
+  --extended-green: #C7DCD5;
+  --extended-green-blue: #073E4C;
+  --extended-cyan-green: #062C35;
+  --extended-dark-cyan-green: #042027;
+  --extended-dark-cyan: #01161B;
+  --brand-100: #22D3EE;
+  --brand-200: #1FBED6;
+  --brand-300: #1BA9BE;
+  --brand-400: #1894A7;
+  --brand-500: #147F8F;
+  --brand-600: #116A77;
+  --brand-700: #0E545F;
+  --brand-800: #0A3F47;
+  --brand-900: #072A30;
+  --brand-1000: #031518;
+  --scoring-red: #CB3A31;
+  --scoring-yellow: #E9A13B;
+  --scoring-green: #16A34A;
+  --scoring-cyan: #22D3EE;
+}
+
+/* Typography & logo scale (mode-independent).
+   NOTE: h1/subheading/body are exact Figma values. h2-h6, body-lg, body-sm,
+   caption, overline are interpolated to fill gaps Figma didn't define -
+   confirm with design before shipping. */
+:root {
+  /* --font-logo itself comes from next/font/local (layout.tsx) — same
+     pattern as --font-sans — now that real Gilroy files are wired up. */
+
+  --text-h1-size: 80px;
+  --text-h1-weight: 700;
+  --text-h1-tracking: -4px;
+  --text-h2-size: 64px;
+  --text-h2-weight: 700;
+  --text-h2-tracking: -4px;
+  --text-h3-size: 48px;
+  --text-h3-weight: 700;
+  --text-h3-tracking: -4px;
+  --text-h4-size: 36px;
+  --text-h4-weight: 600;
+  --text-h4-tracking: -3px;
+  --text-h5-size: 28px;
+  --text-h5-weight: 600;
+  --text-h5-tracking: -2px;
+  --text-h6-size: 22px;
+  --text-h6-weight: 600;
+  --text-h6-tracking: -1px;
+  --text-subheading-size: 48px;
+  --text-subheading-weight: 400;
+  --text-subheading-tracking: -4px;
+  --text-body-lg-size: 20px;
+  --text-body-lg-weight: 400;
+  --text-body-lg-tracking: -1px;
+  --text-body-size: 18px;
+  --text-body-weight: 400;
+  --text-body-tracking: -1px;
+  --text-body-paragraph-spacing: 18px;
+  --text-body-sm-size: 16px;
+  --text-body-sm-weight: 400;
+  --text-body-sm-tracking: 0px;
+  --text-caption-size: 14px;
+  --text-caption-weight: 400;
+  --text-caption-tracking: 0px;
+  --text-overline-size: 12px;
+  --text-overline-weight: 500;
+  --text-overline-tracking: 0.5px;
+
+  /* Logo scale - exact Figma values */
+  --logo-xxl: 80px;
+  --logo-xl: 72px;
+  --logo-lg: 64px;
+  --logo-md: 56px;
+  --logo-sm: 48px;
+  --logo-xs: 40px;
+  --logo-xxs: 32px;
+  --logo-min-height: 32px;
+  --logo-max-height: 80px;
+}
+
 @theme inline {
-  --font-sans: var(--font-urbanist);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-base: var(--base);
+  --color-surface: var(--surface);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-extended-light-cyan: var(--extended-light-cyan);
+  --color-extended-cyan: var(--extended-cyan);
+  --color-extended-blue: var(--extended-blue);
+  --color-extended-green: var(--extended-green);
+  --color-extended-green-blue: var(--extended-green-blue);
+  --color-extended-cyan-green: var(--extended-cyan-green);
+  --color-extended-dark-cyan-green: var(--extended-dark-cyan-green);
+  --color-extended-dark-cyan: var(--extended-dark-cyan);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+  --color-brand-1000: var(--brand-1000);
+  --color-scoring-red: var(--scoring-red);
+  --color-scoring-yellow: var(--scoring-yellow);
+  --color-scoring-green: var(--scoring-green);
+  --color-scoring-cyan: var(--scoring-cyan);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-sans);
+  --font-logo: var(--font-logo);
+}
+
+/* Typography utilities — one class per Figma text style, applying size,
+   weight, and tracking together (native Tailwind v4 `@utility` at-rule). */
+@utility text-h1 {
+  font-size: var(--text-h1-size);
+  font-weight: var(--text-h1-weight);
+  letter-spacing: var(--text-h1-tracking);
+}
+@utility text-h2 {
+  font-size: var(--text-h2-size);
+  font-weight: var(--text-h2-weight);
+  letter-spacing: var(--text-h2-tracking);
+}
+@utility text-h3 {
+  font-size: var(--text-h3-size);
+  font-weight: var(--text-h3-weight);
+  letter-spacing: var(--text-h3-tracking);
+}
+@utility text-h4 {
+  font-size: var(--text-h4-size);
+  font-weight: var(--text-h4-weight);
+  letter-spacing: var(--text-h4-tracking);
+}
+@utility text-h5 {
+  font-size: var(--text-h5-size);
+  font-weight: var(--text-h5-weight);
+  letter-spacing: var(--text-h5-tracking);
+}
+@utility text-h6 {
+  font-size: var(--text-h6-size);
+  font-weight: var(--text-h6-weight);
+  letter-spacing: var(--text-h6-tracking);
+}
+@utility text-subheading {
+  font-size: var(--text-subheading-size);
+  font-weight: var(--text-subheading-weight);
+  letter-spacing: var(--text-subheading-tracking);
+}
+@utility text-body-lg {
+  font-size: var(--text-body-lg-size);
+  font-weight: var(--text-body-lg-weight);
+  letter-spacing: var(--text-body-lg-tracking);
+}
+@utility text-body {
+  font-size: var(--text-body-size);
+  font-weight: var(--text-body-weight);
+  letter-spacing: var(--text-body-tracking);
+}
+@utility text-body-sm {
+  font-size: var(--text-body-sm-size);
+  font-weight: var(--text-body-sm-weight);
+  letter-spacing: var(--text-body-sm-tracking);
+}
+@utility text-caption {
+  font-size: var(--text-caption-size);
+  font-weight: var(--text-caption-weight);
+  letter-spacing: var(--text-caption-tracking);
+}
+@utility text-overline {
+  font-size: var(--text-overline-size);
+  font-weight: var(--text-overline-weight);
+  letter-spacing: var(--text-overline-tracking);
 }
 
 body {
   background: var(--app-bg);
   color: var(--app-fg);
-  font-family: var(--font-urbanist), system-ui, -apple-system, Segoe UI, Roboto,
+  font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto,
     Helvetica, Arial, sans-serif;
 }
 
