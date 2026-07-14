@@ -1,13 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { removeKey } from "@/lib/storage";
 
 export function ResetFlowCta() {
-  const router = useRouter();
-
   function reset() {
     removeKey(StorageKeys.roleProfile);
     removeKey(StorageKeys.experiences);
@@ -17,8 +13,9 @@ export function ResetFlowCta() {
     removeKey(StorageKeys.storyboardDraft);
     removeKey(StorageKeys.storyboardFromCraft);
 
-    router.push("/onboarding");
-    router.refresh();
+    // Hard reload guarantees a full remount so onboarding state re-reads the
+    // now-cleared storage — a client-side push to the same route wouldn't.
+    window.location.href = "/onboarding";
   }
 
   return (

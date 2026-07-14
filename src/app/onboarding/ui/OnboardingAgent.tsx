@@ -19,6 +19,8 @@ type Step =
   | "backgroundType"
   | "experienceLevel"
   | "education"
+  | "lastWorkedAt"
+  | "jobDescription"
   | "resume"
   | "industryVertical"
   | "done";
@@ -87,8 +89,10 @@ export function OnboardingAgent() {
     backgroundType: NonNullable<RoleProfile["backgroundType"]> | "";
     experienceLevel: NonNullable<RoleProfile["experienceLevel"]> | "";
     education: string;
+    lastWorkedAt: string;
     background: string;
-    resumeOrJobDescription: string;
+    jobDescription: string;
+    resume: string;
     industryVertical: string;
   }>(() => ({
     name: roleProfile?.name ?? "",
@@ -96,8 +100,10 @@ export function OnboardingAgent() {
     backgroundType: roleProfile?.backgroundType ?? "",
     experienceLevel: roleProfile?.experienceLevel ?? "",
     education: roleProfile?.education ?? "",
+    lastWorkedAt: roleProfile?.lastWorkedAt ?? "",
     background: roleProfile?.background ?? "",
-    resumeOrJobDescription: roleProfile?.resumeOrJobDescription ?? "",
+    jobDescription: roleProfile?.jobDescription ?? "",
+    resume: roleProfile?.resume ?? "",
     industryVertical: roleProfile?.industryVertical ?? "",
   }));
 
@@ -152,8 +158,10 @@ export function OnboardingAgent() {
       backgroundType: nextDraft.backgroundType || undefined,
       experienceLevel: nextDraft.experienceLevel || undefined,
       education: nextDraft.education.trim() || undefined,
+      lastWorkedAt: nextDraft.lastWorkedAt.trim() || undefined,
       background: nextDraft.background.trim() || undefined,
-      resumeOrJobDescription: nextDraft.resumeOrJobDescription.trim() || undefined,
+      jobDescription: nextDraft.jobDescription.trim() || undefined,
+      resume: nextDraft.resume.trim() || undefined,
       industryVertical: nextDraft.industryVertical.trim() || undefined,
       createdAt: roleProfile?.createdAt ?? new Date().toISOString(),
     });
@@ -185,7 +193,7 @@ export function OnboardingAgent() {
             { id: "5-10", label: "5–10 years", value: "5-10" },
             { id: "10+", label: "10+ years", value: "10+" },
           ]
-        : step === "education" || step === "resume"
+        : step === "education" || step === "lastWorkedAt" || step === "resume"
           ? [{ id: "skip", label: "Skip", value: "skip" }]
           : step === "industryVertical"
             ? [
@@ -201,6 +209,41 @@ export function OnboardingAgent() {
 
   function who() {
     return "";
+  }
+
+  function getPrevStep(current: Step): Step | null {
+    switch (current) {
+      case "role":
+        return "name";
+      case "backgroundType":
+        return "role";
+      case "experienceLevel":
+        return "backgroundType";
+      case "education":
+        return "backgroundType";
+      case "lastWorkedAt":
+        return "experienceLevel";
+      case "jobDescription":
+        return draft.backgroundType === "experienced" ? "lastWorkedAt" : "education";
+      case "resume":
+        return "jobDescription";
+      case "industryVertical":
+        return "resume";
+      default:
+        return null;
+    }
+  }
+
+  const canGoBack =
+    step !== "done" &&
+    messages.length >= 2 &&
+    messages[messages.length - 2]?.role === "user";
+
+  function goBack() {
+    const prevStep = getPrevStep(step);
+    if (!prevStep) return;
+    setMessages((prev) => prev.slice(0, -2));
+    setStep(prevStep);
   }
 
   function handleAnswer(rawText: string) {
@@ -312,11 +355,19 @@ export function OnboardingAgent() {
 
       const next = { ...draft, experienceLevel };
       setDraft(next);
+      push("assistant", "Moving forward, where did you last work?");
+      setStep("lastWorkedAt");
+      return;
+    }
+
+    if (step === "lastWorkedAt") {
+      const next = { ...draft, lastWorkedAt: isSkip ? "" : cleaned };
+      setDraft(next);
       push(
         "assistant",
-        "Moving forward, would you like to share about your education background (school/university)?",
+        `${who()}one more thing.\n\nDrop in the job description you're targeting — this one's required so I can tailor everything around it.`,
       );
-      setStep("education");
+      setStep("jobDescription");
       return;
     }
 
@@ -325,14 +376,32 @@ export function OnboardingAgent() {
       setDraft(next);
       push(
         "assistant",
-        `${who()}one more thing.\n\nIf you have a job description or your resume, drop it here — it helps me prep you way better for this role.`,
+        `${who()}one more thing.\n\nDrop in the job description you're targeting — this one's required so I can tailor everything around it.`,
+      );
+      setStep("jobDescription");
+      return;
+    }
+
+    if (step === "jobDescription") {
+      if (isSkip || !cleaned) {
+        push(
+          "assistant",
+          "The job description is required — paste it in or upload the file, and I'll take it from there.",
+        );
+        return;
+      }
+      const next = { ...draft, jobDescription: cleaned };
+      setDraft(next);
+      push(
+        "assistant",
+        "Got it. If you also have a resume, drop it here — totally optional, but it helps me prep you way better for this role.",
       );
       setStep("resume");
       return;
     }
 
     if (step === "resume") {
-      const next = { ...draft, resumeOrJobDescription: isSkip ? "" : cleaned };
+      const next = { ...draft, resume: isSkip ? "" : cleaned };
       setDraft(next);
       push(
         "assistant",
@@ -357,6 +426,13 @@ export function OnboardingAgent() {
     }
   }
 
+  function handleUpload(files: File[]) {
+    const file = files[0];
+    if (!file) return;
+    if (step !== "jobDescription" && step !== "resume") return;
+    handleAnswer(`📎 ${file.name}`);
+  }
+
   return (
     <div className="min-h-screen w-full">
       <div className="mx-auto flex min-h-screen w-[800px] max-w-full flex-col pb-32 pt-10">
@@ -364,6 +440,16 @@ export function OnboardingAgent() {
           <div className="text-xs font-extrabold tracking-[0.22em] text-gray-600">
             PROOFDIVE
           </div>
+          {canGoBack ? (
+            <button
+              type="button"
+              onClick={goBack}
+              className="inline-flex items-center gap-1 text-xs font-bold text-gray-500 transition hover:text-gray-800"
+              aria-label="Go back to previous step"
+            >
+              ← Back
+            </button>
+          ) : null}
         </div>
 
         <div className="flex flex-1 items-center justify-center py-10">
@@ -468,7 +554,7 @@ export function OnboardingAgent() {
 
                 <button
                   type="button"
-                  className="group w-full rounded-[18px] border border-white/50 bg-white text-left text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white sm:col-span-2"
+                  className="group w-full rounded-[18px] border border-white/50 bg-white text-left text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white"
                   onClick={() => setIntroModalOpen(true)}
                 >
                   <div className="p-5">
@@ -495,6 +581,38 @@ export function OnboardingAgent() {
                     </div>
                   </div>
                 </button>
+
+                <Link
+                  className="group w-full rounded-[18px] border border-white/50 bg-white text-left text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white"
+                  href="/coach?welcome=1"
+                >
+                  <div className="p-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-base font-extrabold tracking-tight">
+                        Go to Home
+                      </div>
+                      <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/60 text-black transition group-hover:bg-white/80 group-active:bg-white">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          aria-hidden="true"
+                          className="h-4 w-4"
+                        >
+                          <path
+                            d="M9 6l6 6-6 6"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="mt-1 text-sm text-[var(--app-muted)]">
+                      Jump straight to your dashboard
+                    </div>
+                  </div>
+                </Link>
               </div>
             ) : null}
 
@@ -506,6 +624,9 @@ export function OnboardingAgent() {
             <ChatComposer
               placeholder="Reply (type or use voice)…"
               onSend={handleAnswer}
+              showUploadButton={step === "jobDescription" || step === "resume"}
+              uploadAccept=".pdf,.doc,.docx,.txt"
+              onUpload={handleUpload}
             />
           </div>
         </div>
