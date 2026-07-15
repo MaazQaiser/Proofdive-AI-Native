@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/Button";
 import { cn } from "@/components/cn";
+import { Logo } from "@/components/ui/logo";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -59,7 +60,7 @@ export default function SignupPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col justify-center px-6 py-12 sm:px-8">
-      <p className="text-[11px] font-bold tracking-[0.2em] text-black/45">PROOFDIVE</p>
+      <Logo size="xs" />
       <h1 className="mt-6 text-2xl font-bold tracking-tight text-black">Sign up</h1>
 
       <button

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/Button";
+import { Logo } from "@/components/ui/logo";
 
 const field =
   "h-11 w-full rounded-md border border-black/[0.12] bg-white px-3 text-sm outline-none transition placeholder:text-black/35 focus:border-black/25 focus:ring-1 focus:ring-black/15";
@@ -14,7 +15,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col justify-center px-6 py-12 sm:px-8">
-      <p className="text-[11px] font-bold tracking-[0.2em] text-black/45">PROOFDIVE</p>
+      <Logo size="xs" />
 
       {submitted ? (
         <>

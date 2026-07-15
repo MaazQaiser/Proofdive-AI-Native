@@ -200,7 +200,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-base: var(--base);
+  /* No --color-base here deliberately: Tailwind auto-generates a "base" color
+     utility from it, which collides with the built-in text-base font-size
+     utility and silently repaints every text-base element's color instead of
+     sizing it. Use var(--base) directly where the raw value is needed. */
   --color-surface: var(--surface);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);

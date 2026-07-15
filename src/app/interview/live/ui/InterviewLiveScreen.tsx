@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/Button";
 import { cn } from "@/components/cn";
+import { Logo } from "@/components/ui/logo";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { PILLAR_LABEL, type PillarId } from "@/lib/storyboardDraft";
 import type {
@@ -660,8 +661,11 @@ export function InterviewLiveScreen() {
       {isEnding ? (
         <div className="fixed inset-0 z-[60] bg-[var(--app-bg)] text-[var(--app-fg)]">
           <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-6 py-10">
-            <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">
-              PROOFDIVE REPORT
+            <div className="flex items-center gap-2">
+              <Logo size="xxs" />
+              <span className="text-xs font-extrabold tracking-[0.22em] text-gray-500">
+                REPORT
+              </span>
             </div>
 
             <div className="mt-8">

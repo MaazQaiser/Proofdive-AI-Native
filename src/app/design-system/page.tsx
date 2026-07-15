@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Logo, type LogoSize } from "@/components/ui/logo";
 import {
   Select,
   SelectContent,
@@ -209,7 +210,7 @@ const TYPE_STYLES: TypeStyle[] = [
   },
 ];
 
-const LOGO_SCALE: { key: string; label: string; cssVar: string; px: string }[] = [
+const LOGO_SCALE: { key: LogoSize; label: string; cssVar: string; px: string }[] = [
   { key: "xxl", label: "logo-xxl", cssVar: "--logo-xxl", px: "80px" },
   { key: "xl", label: "logo-xl", cssVar: "--logo-xl", px: "72px" },
   { key: "lg", label: "logo-lg", cssVar: "--logo-lg", px: "64px" },
@@ -383,13 +384,7 @@ export default function DesignSystemPage() {
                 <div className="flex flex-wrap items-end gap-6 rounded-lg border border-border bg-white p-6">
                   {LOGO_SCALE.map((step) => (
                     <div key={step.key} className="flex flex-col items-center gap-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={LOGO_SVG_PATH}
-                        alt="ProofDive logo"
-                        className="w-auto"
-                        style={{ height: `var(${step.cssVar})` }}
-                      />
+                      <Logo size={step.key} />
                       <p className="text-caption text-muted-foreground text-center">
                         {step.label}
                         <br />
