@@ -14,6 +14,7 @@ import { Button } from "@/components/Button";
 import { Card, CardBody } from "@/components/Card";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { Logo } from "@/components/ui/logo";
 import { buildCarSnapshot } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import {
@@ -208,7 +209,7 @@ export function CraftingScreen() {
             Back to home
           </Link>
           <div className="hidden print:block">
-            <div className="text-xs font-extrabold tracking-[0.22em] text-black">PROOFDIVE</div>
+            <Logo size="xxs" />
             <p className="mt-1 text-sm text-[var(--app-muted)]">
               Storyboard for {role} — generated {new Date().toLocaleDateString()}
             </p>

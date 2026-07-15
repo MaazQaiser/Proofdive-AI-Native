@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChatMessage } from "@/components/chat/chatTypes";
 import { ChatComposer } from "@/components/chat/ChatComposer";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
+import { Logo } from "@/components/ui/logo";
 import { makeId } from "@/lib/id";
 import { reportCountForRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -445,9 +446,7 @@ export function OnboardingAgent() {
     <div className="min-h-screen w-full">
       <div className="mx-auto flex min-h-screen w-[800px] max-w-full flex-col pb-32 pt-10">
         <div className="flex items-center justify-between gap-3 px-6">
-          <div className="text-xs font-extrabold tracking-[0.22em] text-gray-600">
-            PROOFDIVE
-          </div>
+          <Logo size="xxs" />
           {canGoBack ? (
             <button
               type="button"
