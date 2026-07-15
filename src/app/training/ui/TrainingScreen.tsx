@@ -19,7 +19,7 @@ import {
   entryIntro,
 } from "@/app/training/trainingCopy";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
-import { buildTrainingJourneyProgress } from "@/lib/trainingJourneyProgress";
+import { buildTrainingJourneyProgress, trainingProgressKey } from "@/lib/trainingJourneyProgress";
 import type { RoleProfile, TrainingJourneyProgress, TrainingJourneyPhase } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 
@@ -54,13 +54,19 @@ export function TrainingScreen() {
     StorageKeys.roleProfile,
     null,
   );
-  const [journeyProgress, setJourneyProgress] = useLocalStorageState<TrainingJourneyProgress | null>(
-    StorageKeys.trainingProgress,
-    null,
-  );
+  const [journeyProgressMap, setJourneyProgressMap] = useLocalStorageState<
+    Record<string, TrainingJourneyProgress>
+  >(StorageKeys.trainingProgress, {});
 
   const role = roleProfile?.targetRole?.trim() ?? "";
   const name = roleProfile?.name?.trim() ?? "";
+
+  const progressForCourse = useCallback(
+    (courseId: string): TrainingJourneyProgress | null =>
+      journeyProgressMap[trainingProgressKey(role, courseId)] ?? null,
+    [journeyProgressMap, role],
+  );
+
   const courses = useMemo<TrainingCourse[]>(
     () => [
       {
@@ -192,36 +198,37 @@ export function TrainingScreen() {
   const reportTrainingPhase = useCallback(
     (phase: TrainingJourneyPhase) => {
       if (!selectedCourse || !role) return;
-      setJourneyProgress(
-        buildTrainingJourneyProgress({
+      const key = trainingProgressKey(role, selectedCourse.id);
+      setJourneyProgressMap((prev) => ({
+        ...prev,
+        [key]: buildTrainingJourneyProgress({
           courseId: selectedCourse.id,
           courseTitle: selectedCourse.title,
           phase,
           roleKey: role,
         }),
-      );
+      }));
     },
-    [selectedCourse, setJourneyProgress, role],
+    [selectedCourse, setJourneyProgressMap, role],
   );
 
   useEffect(() => {
-    if (didHydrateResume.current || !journeyProgress) return;
-    if (journeyProgress.roleKey && journeyProgress.roleKey !== role) return;
-    if (journeyProgress.percentComplete >= 100) return;
-    if (journeyProgress.phase === "complete") return;
-    if (!courses.some((c) => c.id === journeyProgress.courseId)) return;
+    if (didHydrateResume.current || !role) return;
+    const incomplete = Object.values(journeyProgressMap)
+      .filter((p) => (p.roleKey ?? "").trim() === role)
+      .filter((p) => p.phase !== "complete" && p.percentComplete < 100)
+      .filter((p) => courses.some((c) => c.id === p.courseId))
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    const toResume = incomplete[0];
+    if (!toResume) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resume in-progress course after localStorage loads
-    setSelectedCourseId(journeyProgress.courseId);
-    setStartedCourseId(journeyProgress.courseId);
+    setSelectedCourseId(toResume.courseId);
+    setStartedCourseId(toResume.courseId);
     didHydrateResume.current = true;
-  }, [journeyProgress, courses, role]);
+  }, [journeyProgressMap, courses, role]);
 
-  const journeyInitialPhase: TrainingJourneyPhase | null =
-    selectedCourse &&
-    journeyProgress?.courseId === selectedCourse.id &&
-    (!journeyProgress.roleKey || journeyProgress.roleKey === role)
-      ? journeyProgress.phase
-      : null;
+  const journeyProgress = selectedCourse ? progressForCourse(selectedCourse.id) : null;
+  const journeyInitialPhase: TrainingJourneyPhase | null = journeyProgress?.phase ?? null;
 
   if (!role) {
     return (
@@ -265,19 +272,44 @@ export function TrainingScreen() {
                 />
                 <div className="mx-auto mt-6 w-[800px] max-w-full space-y-6">
                   <div className="grid grid-cols-2 gap-4">
-                    {courses.map((course) => (
-                      <button
-                        key={course.id}
-                        type="button"
-                        onClick={() => setSelectedCourseId(course.id)}
-                        className="rounded-[22px] border border-white/50 bg-white px-5 py-5 text-left shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70"
-                      >
-                        <div className="text-lg font-extrabold tracking-tight">{course.title}</div>
-                        <div className="mt-2 text-sm leading-6 text-[var(--app-muted)]">
-                          {course.subtitle}
-                        </div>
-                      </button>
-                    ))}
+                    {courses.map((course) => {
+                      const progress = progressForCourse(course.id);
+                      const pct = progress?.percentComplete ?? 0;
+                      return (
+                        <button
+                          key={course.id}
+                          type="button"
+                          onClick={() => setSelectedCourseId(course.id)}
+                          className="rounded-[22px] border border-white/50 bg-white px-5 py-5 text-left shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70"
+                        >
+                          <div className="text-lg font-extrabold tracking-tight">{course.title}</div>
+                          <div className="mt-2 text-sm leading-6 text-[var(--app-muted)]">
+                            {course.subtitle}
+                          </div>
+                          <div className="mt-4">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-semibold text-[var(--app-muted)]">
+                                {pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started"}
+                              </span>
+                              <span className="text-xs font-bold tabular-nums text-gray-700">{pct}%</span>
+                            </div>
+                            <div
+                              className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/10"
+                              role="progressbar"
+                              aria-valuenow={pct}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-label={`${course.title} progress`}
+                            >
+                              <div
+                                className="h-full rounded-full bg-black transition-[width] duration-300 ease-out"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {true ? (
@@ -383,6 +415,33 @@ export function TrainingScreen() {
                     </span>
                   </div>
 
+                  {(() => {
+                    const pct = journeyProgress?.percentComplete ?? 0;
+                    return (
+                      <div className="mt-5 max-w-md">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-[var(--app-muted)]">
+                            {pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started"}
+                          </span>
+                          <span className="text-xs font-bold tabular-nums text-gray-700">{pct}%</span>
+                        </div>
+                        <div
+                          className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/10"
+                          role="progressbar"
+                          aria-valuenow={pct}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label="Course progress"
+                        >
+                          <div
+                            className="h-full rounded-full bg-black transition-[width] duration-300 ease-out"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <div className="mt-8">
                     <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
                       CHAPTERS
@@ -426,19 +485,21 @@ export function TrainingScreen() {
                   <Button
                     onClick={() => {
                       if (!selectedCourse) return;
-                      setJourneyProgress(
-                        buildTrainingJourneyProgress({
+                      const key = trainingProgressKey(role, selectedCourse.id);
+                      setJourneyProgressMap((prev) => ({
+                        ...prev,
+                        [key]: buildTrainingJourneyProgress({
                           courseId: selectedCourse.id,
                           courseTitle: selectedCourse.title,
                           phase: "video_intro",
                           roleKey: role,
                         }),
-                      );
+                      }));
                       setStartedCourseId(selectedCourse.id);
                     }}
                     className="w-full sm:w-auto"
                   >
-                    Start course
+                    {journeyProgress ? "Continue" : "Start course"}
                   </Button>
                 </div>
               </>

@@ -27,6 +27,7 @@ import {
   type StoryboardDraftStore,
 } from "@/lib/storyboardDraft";
 import { ONBOARDING_INTRO_VIDEO_SRC } from "@/lib/onboardingIntroVideo";
+import { hasCompletedAnyTrainingForRole } from "@/lib/trainingJourneyProgress";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 
 function parseReportsMap(raw: string | null): Record<string, InterviewReport> | null {
@@ -79,9 +80,9 @@ export function InterviewScreen() {
   const forceWelcomeBackLanding =
     searchParams.get("welcomeBack") === "1" || searchParams.get("welcomeBack")?.toLowerCase() === "true";
   const [roleProfile] = useLocalStorageState<RoleProfile | null>(StorageKeys.roleProfile, null);
-  const [trainingJourneyProgress] = useLocalStorageState<TrainingJourneyProgress | null>(
+  const [trainingJourneyProgressMap] = useLocalStorageState<Record<string, TrainingJourneyProgress>>(
     StorageKeys.trainingProgress,
-    null,
+    {},
   );
   const [draftStore] = useLocalStorageState<StoryboardDraftStore>(StorageKeys.storyboardDraft, {
     version: 1,
@@ -112,18 +113,10 @@ export function InterviewScreen() {
     return storyOverallScore > 0;
   }, [role, fromCraft, storyOverallScore]);
 
-  const trainingComplete = useMemo(() => {
-    if (!trainingJourneyProgress) return false;
-    if (
-      trainingJourneyProgress.roleKey &&
-      trainingJourneyProgress.roleKey !== role.trim()
-    ) {
-      return false;
-    }
-    return (
-      trainingJourneyProgress.phase === "complete" || trainingJourneyProgress.percentComplete >= 100
-    );
-  }, [trainingJourneyProgress, role]);
+  const trainingComplete = useMemo(
+    () => hasCompletedAnyTrainingForRole(trainingJourneyProgressMap, role),
+    [trainingJourneyProgressMap, role],
+  );
 
   const showPostJourneyMockLanding =
     (forceWelcomeBackLanding || (trainingComplete && hasCreatedStoryboard)) && !forceFirstMockFlow;

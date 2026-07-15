@@ -17,7 +17,10 @@ import {
   type StoryboardDraftDocument,
   type StoryboardDraftStore,
 } from "@/lib/storyboardDraft";
+import { reportCountForRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
+import { readJson } from "@/lib/storage";
+import { pickMostRecentForRole } from "@/lib/trainingJourneyProgress";
 import type {
   Experience,
   InterviewReport,
@@ -262,9 +265,9 @@ export function CoachHome() {
     null,
   );
   const [experiences] = useLocalStorageState<Experience[]>(StorageKeys.experiences, []);
-  const [trainingJourneyProgress] = useLocalStorageState<TrainingJourneyProgress | null>(
+  const [trainingJourneyProgressMap] = useLocalStorageState<Record<string, TrainingJourneyProgress>>(
     StorageKeys.trainingProgress,
-    null,
+    {},
   );
   const [draftStore] = useLocalStorageState<StoryboardDraftStore>(StorageKeys.storyboardDraft, {
     version: 1,
@@ -466,6 +469,21 @@ export function CoachHome() {
       return v === "1" || v?.toLowerCase() === "true";
     };
     if (is("welcome")) {
+      // Read directly from localStorage instead of the (async-hydrated) `roleProfile`
+      // state — this effect can run before that hook's own hydration effect has
+      // committed, which would otherwise always see `roleProfile` as null here.
+      const storedRoleProfile = readJson<RoleProfile>(StorageKeys.roleProfile);
+      const roleTitle = storedRoleProfile?.targetRole?.trim() ?? "";
+      if (reportCountForRole(roleTitle) > 0) {
+        // Returning user (already completed ≥1 mock interview for this role) — skip the
+        // first-time intro and land directly on the module hub.
+        sessionStorage.removeItem(COACH_WELCOME_ENTRY_SESSION_KEY);
+        sessionStorage.removeItem(COACH_ROADMAP_ENTRY_SESSION_KEY);
+        setCoachFinalReportId(null);
+        setCoachJourneyView("journey");
+        router.replace("/coach", { scroll: false });
+        return;
+      }
       sessionStorage.setItem(COACH_WELCOME_ENTRY_SESSION_KEY, "1");
       setCoachFinalReportId(null);
       setCoachJourneyView("welcome");
@@ -527,6 +545,7 @@ export function CoachHome() {
     setCoachJourneyView,
     setCoachFinalReportId,
     coachJourneyView,
+    roleProfile,
   ]);
 
   useEffect(() => {
@@ -556,11 +575,10 @@ export function CoachHome() {
     [roleExperiences],
   );
 
-  const trainingProgressForRole = useMemo(() => {
-    if (!trainingJourneyProgress) return null;
-    if (trainingJourneyProgress.roleKey && trainingJourneyProgress.roleKey !== role) return null;
-    return trainingJourneyProgress;
-  }, [trainingJourneyProgress, role]);
+  const trainingProgressForRole = useMemo(
+    () => pickMostRecentForRole(trainingJourneyProgressMap, role),
+    [trainingJourneyProgressMap, role],
+  );
 
   const trainingContinue =
     typeof trainingProgressForRole?.percentComplete === "number" &&

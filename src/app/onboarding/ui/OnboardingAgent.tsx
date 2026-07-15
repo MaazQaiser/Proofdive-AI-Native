@@ -8,6 +8,7 @@ import type { ChatMessage } from "@/components/chat/chatTypes";
 import { ChatComposer } from "@/components/chat/ChatComposer";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { makeId } from "@/lib/id";
+import { reportCountForRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type { RoleProfile } from "@/lib/proofdiveTypes";
 import { ONBOARDING_INTRO_VIDEO_SRC } from "@/lib/onboardingIntroVideo";
@@ -44,10 +45,17 @@ export function OnboardingAgent() {
     setIntroModalOpen(false);
   }, []);
 
+  /** Returning users (already completed ≥1 mock interview for this role) skip the
+   * first-time welcome intro and land directly on the module hub. */
+  const homeHref = useMemo(() => {
+    const roleTitle = roleProfile?.targetRole?.trim() ?? "";
+    return reportCountForRole(roleTitle) > 0 ? "/coach?journey=1" : "/coach?welcome=1";
+  }, [roleProfile]);
+
   const skipIntroAndOpenCoachWelcome = useCallback(() => {
     closeIntroModal();
-    router.push("/coach?welcome=1");
-  }, [closeIntroModal, router]);
+    router.push(homeHref);
+  }, [closeIntroModal, router, homeHref]);
 
   useEffect(() => {
     if (!introModalOpen) return;
@@ -584,7 +592,7 @@ export function OnboardingAgent() {
 
                 <Link
                   className="group w-full rounded-[18px] border border-white/50 bg-white text-left text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white"
-                  href="/coach?welcome=1"
+                  href={homeHref}
                 >
                   <div className="p-5">
                     <div className="flex items-center justify-between gap-3">

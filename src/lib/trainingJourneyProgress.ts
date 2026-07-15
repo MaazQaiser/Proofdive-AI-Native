@@ -55,3 +55,32 @@ export function buildTrainingJourneyProgress(args: {
     roleKey: args.roleKey.trim(),
   };
 }
+
+/** Composite key so progress persists independently per role + course. */
+export function trainingProgressKey(roleKey: string, courseId: string): string {
+  return `${roleKey.trim()}::${courseId}`;
+}
+
+/** Most recently updated entry for this role — used where a single "current course" view is needed (e.g. the dashboard card). */
+export function pickMostRecentForRole(
+  map: Record<string, TrainingJourneyProgress>,
+  roleKey: string,
+): TrainingJourneyProgress | null {
+  const trimmed = roleKey.trim();
+  const list = Object.values(map).filter((p) => (p.roleKey ?? "").trim() === trimmed);
+  if (!list.length) return null;
+  return [...list].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  )[0] ?? null;
+}
+
+/** Whether at least one course has been completed for this role. */
+export function hasCompletedAnyTrainingForRole(
+  map: Record<string, TrainingJourneyProgress>,
+  roleKey: string,
+): boolean {
+  const trimmed = roleKey.trim();
+  return Object.values(map).some(
+    (p) => (p.roleKey ?? "").trim() === trimmed && (p.phase === "complete" || p.percentComplete >= 100),
+  );
+}
