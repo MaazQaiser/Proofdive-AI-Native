@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
+import { IconDefaultsProvider } from "@/components/IconDefaultsProvider";
 import { ResetFlowCta } from "@/components/ResetFlowCta";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -41,9 +42,11 @@ export default function RootLayout({
       className={`${inter.variable} ${gilroy.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[var(--app-bg)] text-[var(--app-fg)]">
-        {children}
-        <ResetFlowCta />
-        <Toaster />
+        <IconDefaultsProvider>
+          {children}
+          <ResetFlowCta />
+          <Toaster />
+        </IconDefaultsProvider>
       </body>
     </html>
   );
