@@ -45,7 +45,7 @@ export function AppShellHeaderRoleSelector() {
 
   return (
     <div className="flex min-w-0 items-center gap-0 sm:flex-row sm:flex-wrap sm:items-center">
-      <p className="shrink-0 pr-1 text-sm leading-7 text-[var(--app-muted)]">
+      <p className="shrink-0 pr-1 text-sm leading-7 text-muted-foreground">
         Preparing for
       </p>
       <label className="sr-only" htmlFor="appshell-target-role">
@@ -56,7 +56,7 @@ export function AppShellHeaderRoleSelector() {
           id="appshell-target-role"
           value={role}
           onChange={(e) => handleRoleChange(e.target.value)}
-          className="min-h-0 min-w-0 cursor-pointer appearance-none border-0 bg-transparent py-0.5 pl-0 pr-5 text-left text-sm font-extrabold leading-snug tracking-tight shadow-none outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-[#3EC878]/40 focus-visible:ring-offset-0"
+          className="min-h-0 min-w-0 cursor-pointer appearance-none border-0 bg-transparent py-0.5 pl-0 pr-5 text-left text-sm font-extrabold leading-snug tracking-tight text-foreground shadow-none outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0"
           style={{
             backgroundImage: `url("${CHEVRON}")`,
             backgroundRepeat: "no-repeat",

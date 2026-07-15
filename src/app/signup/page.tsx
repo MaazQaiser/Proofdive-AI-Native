@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Button } from "@/components/Button";
-import { cn } from "@/components/cn";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/ui/logo";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { writeJson } from "@/lib/storage";
+import { cn } from "@/lib/utils";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -41,12 +42,6 @@ function LinkedInIcon({ className }: { className?: string }) {
   );
 }
 
-const oauthBtn =
-  "flex h-11 w-full items-center justify-center gap-2 rounded-md border border-black/[0.12] bg-white text-sm font-semibold text-black transition hover:bg-black/[0.03] active:bg-black/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15";
-
-const field =
-  "h-11 w-full rounded-md border border-black/[0.12] bg-white px-3 text-sm outline-none transition placeholder:text-black/35 focus:border-black/25 focus:ring-1 focus:ring-black/15";
-
 export default function SignupPage() {
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
@@ -62,29 +57,31 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col justify-center px-6 py-12 sm:px-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col justify-center bg-background px-6 py-12 text-foreground sm:px-8">
       <Logo size="xs" />
-      <h1 className="mt-6 text-2xl font-bold tracking-tight text-black">Sign up</h1>
+      <h1 className="mt-6 text-2xl font-bold tracking-tight">Sign up</h1>
 
-      <button
+      <Button
         type="button"
-        className={cn(oauthBtn, "mt-8")}
+        variant="outline"
+        className="mt-8 h-11 w-full"
         onClick={() => guardConsent() && router.push("/onboarding")}
       >
         <GoogleIcon />
         Continue with Google
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
-        className={cn(oauthBtn, "mt-2.5")}
+        variant="outline"
+        className="mt-2.5 h-11 w-full"
         onClick={() => guardConsent() && router.push("/onboarding")}
       >
         <LinkedInIcon />
         Continue with LinkedIn
-      </button>
+      </Button>
 
       <p
-        className="my-8 flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-black/40 before:h-px before:flex-1 before:bg-black/[0.12] before:content-[''] after:h-px after:flex-1 after:bg-black/[0.12] after:content-['']"
+        className="my-8 flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-muted-foreground before:h-px before:flex-1 before:bg-border before:content-[''] after:h-px after:flex-1 after:bg-border after:content-['']"
         role="separator"
       >
         or
@@ -98,29 +95,29 @@ export default function SignupPage() {
           router.push("/onboarding");
         }}
       >
-        <input
+        <Input
           name="email"
           type="email"
           autoComplete="email"
           placeholder="Email"
-          className={field}
+          className="h-11"
           required
         />
-        <input
+        <Input
           name="password"
           type="password"
           autoComplete="new-password"
           placeholder="Password"
-          className={field}
+          className="h-11"
           required
           minLength={8}
         />
-        <Button type="submit" className="!h-11 !w-full !rounded-md !px-4">
+        <Button type="submit" className="h-11 w-full">
           Create account
         </Button>
       </form>
 
-      <label className="mt-4 flex cursor-pointer items-start gap-2.5 text-sm text-black/60">
+      <label className="mt-4 flex cursor-pointer items-start gap-2.5 text-sm text-muted-foreground">
         <input
           type="checkbox"
           checked={agreed}
@@ -128,7 +125,7 @@ export default function SignupPage() {
             setAgreed(e.target.checked);
             if (e.target.checked) setShowAgreeError(false);
           }}
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-black/25 accent-black"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-primary"
         />
         <span>
           By signing up, I agree to the{" "}
@@ -136,7 +133,7 @@ export default function SignupPage() {
             href="/terms"
             target="_blank"
             onClick={(e) => e.stopPropagation()}
-            className="font-semibold text-black underline-offset-2 hover:underline"
+            className="font-semibold text-foreground underline-offset-2 hover:underline"
           >
             terms and conditions
           </Link>{" "}
@@ -145,7 +142,7 @@ export default function SignupPage() {
             href="/privacy"
             target="_blank"
             onClick={(e) => e.stopPropagation()}
-            className="font-semibold text-black underline-offset-2 hover:underline"
+            className="font-semibold text-foreground underline-offset-2 hover:underline"
           >
             privacy policy
           </Link>
@@ -153,20 +150,20 @@ export default function SignupPage() {
         </span>
       </label>
       {showAgreeError ? (
-        <p className="mt-1.5 text-xs font-medium text-red-500" role="alert">
+        <p className="mt-1.5 text-xs font-medium text-destructive" role="alert">
           Please agree to the terms and conditions and privacy policy to continue.
         </p>
       ) : null}
 
-      <p className="mt-8 text-center text-sm text-black/55">
+      <p className="mt-8 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href="/login" className="font-semibold text-black underline-offset-2 hover:underline">
+        <Link href="/login" className="font-semibold text-foreground underline-offset-2 hover:underline">
           Log in
         </Link>
       </p>
 
-      <p className="mt-6 text-center text-sm text-black/45">
-        <Link href="/" className="hover:text-black hover:underline">
+      <p className="mt-6 text-center text-sm text-muted-foreground/70">
+        <Link href="/" className="hover:text-foreground hover:underline">
           Back to home
         </Link>
       </p>
