@@ -1,4 +1,5 @@
-import type { CarSnapshot, Experience } from "@/lib/proofdiveTypes";
+import type { CarSnapshot, Experience, InterviewReport } from "@/lib/proofdiveTypes";
+import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 
 export function buildCarSnapshot(exp: Experience): CarSnapshot | null {
   const e = exp.enrichment;
@@ -28,5 +29,23 @@ export function countEnrichedForRole(experiences: Experience[], role: string) {
 
 export function normalizeWhitespace(s: string) {
   return s.replace(/\r\n/g, "\n").trim();
+}
+
+/** Number of stored interview reports for this role — used as the "returning user" signal. */
+export function reportCountForRole(roleTitle: string): number {
+  if (typeof window === "undefined") return 0;
+  const trimmed = roleTitle.trim();
+  if (!trimmed) return 0;
+  try {
+    const raw = window.localStorage.getItem(StorageKeys.reports);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw) as Record<string, InterviewReport>;
+    if (!parsed || typeof parsed !== "object") return 0;
+    return Object.values(parsed).filter(
+      (r) => (r.meta?.roleTitle ?? "").trim() === trimmed,
+    ).length;
+  } catch {
+    return 0;
+  }
 }
 

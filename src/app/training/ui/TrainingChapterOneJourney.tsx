@@ -21,7 +21,7 @@ import {
   FINAL_ASSESSMENT,
 } from "@/app/training/trainingCopy";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
-import { parseTrainingJourneyPhase } from "@/lib/trainingJourneyProgress";
+import { parseTrainingJourneyPhase, percentForTrainingPhase } from "@/lib/trainingJourneyProgress";
 import type { TrainingJourneyPhase } from "@/lib/proofdiveTypes";
 
 type CourseLite = {
@@ -231,6 +231,27 @@ export function TrainingChapterOneJourney({
           <div className="min-w-0 w-full space-y-6">
             {showTimeline ? (
               <div className="w-full rounded-[20px] border border-white/50 bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow-soft)]">
+                <div className="mb-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-[var(--app-muted)]">Module progress</span>
+                    <span className="text-xs font-bold tabular-nums text-gray-700">
+                      {percentForTrainingPhase(phase)}%
+                    </span>
+                  </div>
+                  <div
+                    className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/10"
+                    role="progressbar"
+                    aria-valuenow={percentForTrainingPhase(phase)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label="Module progress"
+                  >
+                    <div
+                      className="h-full rounded-full bg-black transition-[width] duration-300 ease-out"
+                      style={{ width: `${percentForTrainingPhase(phase)}%` }}
+                    />
+                  </div>
+                </div>
                 <div
                   className="flex w-full flex-wrap items-start justify-center gap-y-3 sm:flex-nowrap"
                   aria-label="Chapter progress"
