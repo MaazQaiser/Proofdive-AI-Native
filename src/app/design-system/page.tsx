@@ -61,8 +61,8 @@ const PAIR_TOKENS: PairToken[] = [
     title: "Primary",
     bgVar: "--primary",
     fgVar: "--primary-foreground",
-    light: { bg: "#0E0E0E", fg: "#F5F5F5" },
-    dark: { bg: "#F5F5F5", fg: "#0E0E0E" },
+    light: { bg: "#0E9AB5", fg: "#0E0E0E" },
+    dark: { bg: "#22D3EE", fg: "#0E0E0E" },
   },
   {
     title: "Secondary",

@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { writeJson } from "@/lib/storage";
@@ -57,7 +58,7 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col justify-center bg-background px-6 py-12 text-foreground sm:px-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col items-center justify-center bg-background px-6 py-12 text-center text-foreground sm:px-8">
       <Logo size="xs" />
       <h1 className="mt-6 text-2xl font-bold tracking-tight">Sign up</h1>
 
@@ -88,36 +89,44 @@ export default function SignupPage() {
       </p>
 
       <form
-        className="space-y-3"
+        className="w-full space-y-3 text-left"
         onSubmit={(e) => {
           e.preventDefault();
           if (!guardConsent()) return;
           router.push("/onboarding");
         }}
       >
-        <Input
-          name="email"
-          type="email"
-          autoComplete="email"
-          placeholder="Email"
-          className="h-11"
-          required
-        />
-        <Input
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          placeholder="Password"
-          className="h-11"
-          required
-          minLength={8}
-        />
+        <div className="space-y-1.5">
+          <Label htmlFor="signup-email">Email</Label>
+          <Input
+            id="signup-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="Enter your email"
+            className="h-11"
+            required
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="signup-password">Password</Label>
+          <Input
+            id="signup-password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Create a password"
+            className="h-11"
+            required
+            minLength={8}
+          />
+        </div>
         <Button type="submit" className="h-11 w-full">
           Create account
         </Button>
       </form>
 
-      <label className="mt-4 flex cursor-pointer items-start gap-2.5 text-sm text-muted-foreground">
+      <label className="mt-4 flex w-full cursor-pointer items-start gap-2.5 text-left text-sm text-muted-foreground">
         <input
           type="checkbox"
           checked={agreed}
@@ -150,7 +159,7 @@ export default function SignupPage() {
         </span>
       </label>
       {showAgreeError ? (
-        <p className="mt-1.5 text-xs font-medium text-destructive" role="alert">
+        <p className="mt-1.5 w-full text-left text-xs font-medium text-destructive" role="alert">
           Please agree to the terms and conditions and privacy policy to continue.
         </p>
       ) : null}

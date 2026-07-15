@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +44,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col justify-center bg-background px-6 py-12 text-foreground sm:px-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col items-center justify-center bg-background px-6 py-12 text-center text-foreground sm:px-8">
       <Logo size="xs" />
       <h1 className="mt-6 text-2xl font-bold tracking-tight">
         Start your interview prep
@@ -79,28 +80,36 @@ export default function LoginPage() {
       </p>
 
       <form
-        className="space-y-3"
+        className="w-full space-y-3 text-left"
         onSubmit={(e) => {
           e.preventDefault();
           router.push("/onboarding");
         }}
       >
-        <Input
-          name="email"
-          type="email"
-          autoComplete="email"
-          placeholder="Email"
-          className="h-11"
-          required
-        />
-        <Input
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          placeholder="Password"
-          className="h-11"
-          required
-        />
+        <div className="space-y-1.5">
+          <Label htmlFor="login-email">Email</Label>
+          <Input
+            id="login-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="Enter your email"
+            className="h-11"
+            required
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="login-password">Password</Label>
+          <Input
+            id="login-password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            className="h-11"
+            required
+          />
+        </div>
         <Button type="submit" className="h-11 w-full">
           Sign in
         </Button>

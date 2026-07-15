@@ -26,10 +26,11 @@
   --card-foreground: #0E0E0E;
   --popover: #F5F5F3;
   --popover-foreground: #0E0E0E;
-  /* Primary button color — deliberately neutral (not the brand teal). See
-     --accent for where brand color is reserved. */
-  --primary: #0E0E0E;
-  --primary-foreground: #F5F5F5;
+  /* Primary button color — brand teal (matches --ring/--brand-100), with
+     near-black text for contrast (bright teal against white text falls short
+     of WCAG AA; dark text on the bright brand color reads cleanly instead). */
+  --primary: #0E9AB5;
+  --primary-foreground: #0E0E0E;
   --secondary: #B9EFF4;
   --secondary-foreground: #073E4C;
   --muted: #E8E8E6;
@@ -80,8 +81,9 @@
   --card-foreground: #22D3EE;
   --popover: #042027;
   --popover-foreground: #22D3EE;
-  /* Primary button color — inverted neutral (near-white on near-black bg). */
-  --primary: #F5F5F5;
+  /* Primary button color — brand teal (matches --ring/--brand-100 in dark
+     mode), with near-black text for contrast, same reasoning as light mode. */
+  --primary: #22D3EE;
   --primary-foreground: #0E0E0E;
   --secondary: #042027;
   --secondary-foreground: #22D3EE;

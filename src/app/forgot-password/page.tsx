@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
 
 export default function ForgotPasswordPage() {
@@ -12,7 +13,7 @@ export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col justify-center bg-background px-6 py-12 text-foreground sm:px-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col items-center justify-center bg-background px-6 py-12 text-center text-foreground sm:px-8">
       <Logo size="xs" />
 
       {submitted ? (
@@ -51,22 +52,26 @@ export default function ForgotPasswordPage() {
           </p>
 
           <form
-            className="mt-8 space-y-3"
+            className="mt-8 w-full space-y-3 text-left"
             onSubmit={(e) => {
               e.preventDefault();
               setSubmitted(true);
             }}
           >
-            <Input
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-11"
-              required
-            />
+            <div className="space-y-1.5">
+              <Label htmlFor="forgot-email">Email</Label>
+              <Input
+                id="forgot-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-11"
+                required
+              />
+            </div>
             <Button type="submit" className="h-11 w-full">
               Send reset link
             </Button>
