@@ -55,7 +55,7 @@ export default function SignupPage() {
       <button
         type="button"
         className={cn(oauthBtn, "mt-8")}
-        onClick={() => router.push("/onboarding")}
+        onClick={() => router.push("/consent")}
       >
         <GoogleIcon />
         Continue with Google
@@ -63,7 +63,7 @@ export default function SignupPage() {
       <button
         type="button"
         className={cn(oauthBtn, "mt-2.5")}
-        onClick={() => router.push("/onboarding")}
+        onClick={() => router.push("/consent")}
       >
         <LinkedInIcon />
         Continue with LinkedIn
@@ -80,7 +80,7 @@ export default function SignupPage() {
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
-          router.push("/onboarding");
+          router.push("/consent");
         }}
       >
         <input
@@ -104,18 +104,6 @@ export default function SignupPage() {
           Create account
         </Button>
       </form>
-
-      <p className="mt-4 text-sm text-black/55">
-        By using ProofDive, you agree to the{" "}
-        <Link href="/terms" className="font-semibold text-black underline-offset-2 hover:underline">
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link href="/privacy" className="font-semibold text-black underline-offset-2 hover:underline">
-          Privacy Policy
-        </Link>
-        .
-      </p>
 
       <p className="mt-8 text-center text-sm text-black/55">
         Already have an account?{" "}

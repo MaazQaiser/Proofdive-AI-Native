@@ -302,6 +302,22 @@
   letter-spacing: var(--text-overline-tracking);
 }
 
+/* Icon size scale — use instead of arbitrary size-N utilities so icon sizing
+   stays consistent across components. Pair with the app-wide strokeWidth: 2
+   default set via IconDefaultsProvider (src/components/IconDefaultsProvider.tsx). */
+@utility icon-sm {
+  width: 1rem; /* 16px */
+  height: 1rem;
+}
+@utility icon-md {
+  width: 1.25rem; /* 20px */
+  height: 1.25rem;
+}
+@utility icon-lg {
+  width: 1.5rem; /* 24px */
+  height: 1.5rem;
+}
+
 body {
   background: var(--app-bg);
   color: var(--app-fg);
