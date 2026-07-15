@@ -13,7 +13,6 @@ import { reportCountForRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type { RoleProfile } from "@/lib/proofdiveTypes";
 import { ONBOARDING_INTRO_VIDEO_SRC } from "@/lib/onboardingIntroVideo";
-import { readJson } from "@/lib/storage";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 
 type Step =
@@ -32,17 +31,6 @@ export function OnboardingAgent() {
   const router = useRouter();
   const [introModalOpen, setIntroModalOpen] = useState(false);
   const introVideoRef = useRef<HTMLVideoElement>(null);
-
-  // Real routing guard, not just a hidden button: re-checked on every mount so
-  // direct URL entry, browser back/forward, and refresh can't skip consent.
-  const [hasConsent, setHasConsent] = useState(false);
-  useEffect(() => {
-    if (!readJson<boolean>(StorageKeys.termsConsent)) {
-      router.replace("/consent");
-      return;
-    }
-    setHasConsent(true);
-  }, [router]);
 
   const [roleProfile, setRoleProfile] = useLocalStorageState<RoleProfile | null>(
     StorageKeys.roleProfile,
@@ -453,8 +441,6 @@ export function OnboardingAgent() {
     if (step !== "jobDescription" && step !== "resume") return;
     handleAnswer(`📎 ${file.name}`);
   }
-
-  if (!hasConsent) return null;
 
   return (
     <div className="min-h-screen w-full">
