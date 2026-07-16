@@ -15,13 +15,13 @@ export function RevenueAnalyticsChart({ data }: Props) {
       <CardBody>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <h2 className="text-base font-bold tracking-tight text-black">Revenue Analytics</h2>
-            <p className="mt-0.5 text-sm text-[var(--app-muted)]">Subscription revenue trends</p>
+            <h2 className="text-h6 text-black">Revenue Analytics</h2>
+            <p className="mt-0.5 text-caption text-[var(--app-muted)]">Subscription revenue trends</p>
           </div>
           {latestGrowthPct !== null ? (
             <span
               className={cn(
-                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-extrabold tracking-tight",
+                "inline-flex items-center rounded-full px-2.5 py-0.5 text-overline",
                 latestGrowthPct >= 0
                   ? "border border-emerald-500/20 bg-emerald-500/15 text-emerald-900"
                   : "border border-rose-500/20 bg-rose-500/15 text-rose-900",
@@ -34,7 +34,7 @@ export function RevenueAnalyticsChart({ data }: Props) {
         </div>
         <div className="mt-4">
           {data.length === 0 ? (
-            <p className="py-10 text-center text-sm font-medium text-[var(--app-muted)]">
+            <p className="py-10 text-center text-caption text-[var(--app-muted)]">
               Revenue data unavailable.
             </p>
           ) : (

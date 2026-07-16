@@ -243,7 +243,7 @@ function PillarInfoIcon({ tooltip }: { tooltip: string }) {
       <span
         className={cn(
           "pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2",
-          "w-max max-w-[240px] whitespace-normal rounded-xl bg-black px-3 py-2 text-xs font-semibold leading-4 text-white shadow-lg",
+          "w-max max-w-[240px] whitespace-normal rounded-xl bg-black px-3 py-2 text-caption leading-4 text-white shadow-lg",
           "opacity-0 translate-y-1 transition",
           "group-hover:opacity-100 group-hover:translate-y-0",
           "group-focus-visible:opacity-100 group-focus-visible:translate-y-0",
@@ -385,32 +385,32 @@ export function CoachHome() {
         <CardBody>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 lg:flex-1">
-              <h3 className="text-2xl font-extrabold tracking-tight pr-10">Interview readiness</h3>
+              <h3 className="text-h6 pr-10">Interview readiness</h3>
               <div className="mt-2 flex w-full flex-col gap-3">
-                <p className="text-base leading-6 text-[var(--app-muted)]">
+                <p className="text-body leading-6 text-[var(--app-muted)]">
                   Mocks, trainings, and pillar balance at a glance.
                 </p>
 
                 <div className="flex shrink-0 flex-wrap items-end justify-start gap-1">
                   <span
                     className={cn(
-                      "text-7xl font-extrabold leading-none tracking-tight tabular-nums",
+                      "text-h2 font-extrabold leading-none tabular-nums",
                       readinessCardModel.overallTextClass,
                     )}
                   >
                     {readinessCardModel.overallText}
                   </span>
-                  <span className="pb-1.5 text-xl font-extrabold tracking-tight text-gray-500 tabular-nums">
+                  <span className="pb-1.5 text-body-lg text-gray-500 tabular-nums">
                     /{READINESS_MAX.toFixed(1)}
                   </span>
                 </div>
               </div>
 
-              <p className="mt-4 flex flex-wrap items-center gap-3 text-base leading-6 text-[var(--app-muted)]">
+              <p className="mt-4 flex flex-wrap items-center gap-3 text-body leading-6 text-[var(--app-muted)]">
                 You’re currently on{" "}
                 <span
                   className={cn(
-                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-base font-extrabold tracking-tight",
+                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-body",
                     readinessCardModel.bandClass,
                   )}
                 >
@@ -419,7 +419,7 @@ export function CoachHome() {
               </p>
 
               {readinessCardModel.noteText ? (
-                <p className="mt-5 text-base leading-7 text-[var(--app-muted)]">{readinessCardModel.noteText}</p>
+                <p className="mt-5 text-body leading-7 text-[var(--app-muted)]">{readinessCardModel.noteText}</p>
               ) : null}
             </div>
 
@@ -428,13 +428,13 @@ export function CoachHome() {
                 {readinessCardModel.pillars.map(({ id, label, score }) => (
                   <div key={id}>
                     <div className="flex items-baseline justify-between gap-3">
-                      <div className="min-w-0 text-sm font-bold tracking-tight flex items-center gap-1">
+                      <div className="min-w-0 text-caption flex items-center gap-1">
                         <span className="min-w-0 truncate">{label}</span>
                         <PillarInfoIcon tooltip={pillarTooltip(id)} />
                       </div>
                       <div
                         className={cn(
-                          "shrink-0 text-sm font-extrabold tabular-nums",
+                          "shrink-0 text-caption tabular-nums",
                           score == null ? "text-gray-500" : coachScoreTextClasses(score),
                         )}
                       >
@@ -648,11 +648,11 @@ export function CoachHome() {
           >
             {showWelcomeLanding ? (
               <>
-                <h2 className="text-5xl font-extrabold leading-[52px] tracking-tight">Welcome to Proofdive</h2>
-                <h4 className="mt-1 mb-[14px] text-[32px] font-semibold leading-[52px] tracking-tight">
+                <h2 className="text-h3 leading-[52px]">Welcome to Proofdive</h2>
+                <h4 className="mt-1 mb-[14px] text-h4 leading-[52px]">
                   Let&apos;s get interview ready
                 </h4>
-                <p className="mt-2 max-w-xl text-left text-lg leading-7 text-[var(--app-muted)]">
+                <p className="mt-2 max-w-xl text-left text-body leading-7 text-[var(--app-muted)]">
                   Choose a path to get started.
                 </p>
                 <div className="mt-8 flex w-full max-w-xl flex-col gap-4">
@@ -663,7 +663,7 @@ export function CoachHome() {
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                     )}
                   >
-                    <span className="text-base font-extrabold leading-6 tracking-tight text-gray-900">
+                    <span className="text-body leading-6 text-gray-900">
                       Would you like to start building your Storyboard?
                     </span>
                     <ArrowUpRightIcon className="h-5 w-5 shrink-0 text-gray-500" />
@@ -675,7 +675,7 @@ export function CoachHome() {
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                     )}
                   >
-                    <span className="text-base font-extrabold leading-6 tracking-tight text-gray-900">
+                    <span className="text-body leading-6 text-gray-900">
                       Plan a preparation road map for me
                     </span>
                     <ArrowUpRightIcon className="h-5 w-5 shrink-0 text-gray-500" />
@@ -685,7 +685,7 @@ export function CoachHome() {
               </>
             ) : showJourneyColumn ? (
               <>
-                <h2 className="text-5xl font-extrabold leading-[52px] tracking-tight">
+                <h2 className="text-h3 leading-[52px]">
                   {(() => {
                     const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                     if (isRoadmapCoach) return "Here is your guided journey";
@@ -693,7 +693,7 @@ export function CoachHome() {
                     return "You're off to a strong start.";
                   })()}
                 </h2>
-                <h4 className="mt-1 mb-[14px] text-[32px] font-semibold leading-[52px] tracking-tight">
+                <h4 className="mt-1 mb-[14px] text-h4 leading-[52px]">
                   {(() => {
                     const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                     if (isRoadmapCoach) return "Follow the path, then go for your mock interview.";
@@ -706,12 +706,12 @@ export function CoachHome() {
                 {readinessCardEl}
                 <div className="mt-4 w-full pt-0">
                   {!isRoadmapCoach ? (
-                    <p className="w-full text-left text-xl leading-7 text-[var(--app-muted)]">
+                    <p className="w-full text-left text-body-lg leading-7 text-[var(--app-muted)]">
                       {(() => {
                         const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                         if (isFinalCoach) {
                           return isFirstStart
-                            ? "Complete the guided journey — it will help you improve."
+                            ? "Complete the guided journey to help you improve."
                             : "Based on your last session, let’s focus on strengthening your execution and depth.";
                         }
                         return "Based on your last session Ai coach identified the areas to work on";
@@ -749,11 +749,11 @@ export function CoachHome() {
                               if (trainingContinue) {
                                 return (
                                   <>
-                                    <h3 className="text-xl font-extrabold tracking-tight">
+                                    <h3 className="text-h6">
                                       {showActionBadge ? (
                                         <span className="inline-flex items-center gap-2">
                                           <span>{title}</span>
-                                          <span className="inline-flex items-center rounded-full border border-black/10 bg-black/[.04] px-2.5 py-0.5 text-xs font-extrabold tracking-tight text-gray-800">
+                                          <span className="inline-flex items-center rounded-full border border-black/10 bg-black/[.04] px-2.5 py-0.5 text-overline text-gray-800">
                                             Action
                                           </span>
                                         </span>
@@ -761,7 +761,7 @@ export function CoachHome() {
                                         title
                                       )}
                                     </h3>
-                                    <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">{subtitle}</p>
+                                    <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">{subtitle}</p>
                                     {showFirstStartProgress ? (
                                       <>
                                         <div
@@ -777,7 +777,7 @@ export function CoachHome() {
                                             style={{ width: `${trainingPct}%` }}
                                           />
                                         </div>
-                                        <p className="mt-2 text-xs font-semibold tabular-nums text-[var(--app-muted)]">
+                                        <p className="mt-2 text-overline tabular-nums text-[var(--app-muted)]">
                                           {Math.round(trainingPct)}% done
                                         </p>
                                       </>
@@ -787,11 +787,11 @@ export function CoachHome() {
                               }
                               return (
                                 <>
-                                  <h3 className="text-xl font-extrabold tracking-tight">
+                                  <h3 className="text-h6">
                                     {showActionBadge ? (
                                       <span className="inline-flex items-center gap-2">
                                         <span>{title}</span>
-                                        <span className="inline-flex items-center rounded-full border border-black/10 bg-black/[.04] px-2.5 py-0.5 text-xs font-extrabold tracking-tight text-gray-800">
+                                        <span className="inline-flex items-center rounded-full border border-black/10 bg-black/[.04] px-2.5 py-0.5 text-overline text-gray-800">
                                           Action
                                         </span>
                                       </span>
@@ -799,7 +799,7 @@ export function CoachHome() {
                                       title
                                     )}
                                   </h3>
-                                  <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">{subtitle}</p>
+                                  <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">{subtitle}</p>
                                 </>
                               );
                             })()}
@@ -807,7 +807,7 @@ export function CoachHome() {
                           <Link
                             href="/training"
                             className={cn(
-                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
+                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
                               "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
                               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                             )}
@@ -834,14 +834,14 @@ export function CoachHome() {
                     <div className="min-w-0 flex-1">
                       {hasCraftedStoryboard ? (
                         <>
-                          <h3 className="text-xl font-extrabold tracking-tight">
+                          <h3 className="text-h6">
                             {(() => {
                               const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                               const isSecondInterview = isFinalCoach && !isFirstStart;
                               return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
                             })()}
                           </h3>
-                          <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
+                          <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">
                             {(() => {
                               const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                               const isSecondInterview = isFinalCoach && !isFirstStart;
@@ -863,48 +863,48 @@ export function CoachHome() {
                             })()}
                           </p>
                           <div className="mt-3 flex flex-wrap items-baseline gap-2">
-                            <span className="text-sm font-bold tracking-tight text-gray-800">
+                            <span className="text-caption text-gray-800">
                               Here is your story score
                             </span>
-                            <span className="text-2xl font-extrabold tabular-nums leading-none tracking-tight text-gray-900">
+                            <span className="text-h5 leading-none tabular-nums text-gray-900">
                               {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
                             </span>
-                            <span className="text-sm font-extrabold tabular-nums text-gray-500">/ 5</span>
+                            <span className="text-caption tabular-nums text-gray-500">/ 5</span>
                           </div>
                         </>
                       ) : hasCreatedStoryboard ? (
                         <>
-                          <h3 className="text-xl font-extrabold tracking-tight">
+                          <h3 className="text-h6">
                             {(() => {
                               const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                               const isSecondInterview = isFinalCoach && !isFirstStart;
                               return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
                             })()}
                           </h3>
-                          <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
+                          <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">
                             Turn your experience into clear, structured answers. Add more detail to raise your story
                             score.
                           </p>
                           <div className="mt-3 flex flex-wrap items-baseline gap-2">
-                            <span className="text-sm font-bold tracking-tight text-gray-800">
+                            <span className="text-caption text-gray-800">
                               Overall story score
                             </span>
-                            <span className="text-2xl font-extrabold tabular-nums leading-none tracking-tight text-gray-900">
+                            <span className="text-h5 leading-none tabular-nums text-gray-900">
                               {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
                             </span>
-                            <span className="text-sm font-extrabold tabular-nums text-gray-500">/ 5</span>
+                            <span className="text-caption tabular-nums text-gray-500">/ 5</span>
                           </div>
                         </>
                       ) : (
                         <>
-                          <h3 className="text-xl font-extrabold tracking-tight">
+                          <h3 className="text-h6">
                             {(() => {
                               const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                               const isSecondInterview = isFinalCoach && !isFirstStart;
                               return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
                             })()}
                           </h3>
-                          <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
+                          <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">
                             Turn your experience into clear, structured answers.
                           </p>
                         </>
@@ -915,7 +915,7 @@ export function CoachHome() {
                         <Link
                           href="/storyboard?new=1"
                           className={cn(
-                            "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
+                            "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
                             "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                           )}
@@ -928,7 +928,7 @@ export function CoachHome() {
                           <Link
                             href="/storyboard"
                             className={cn(
-                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
+                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
                               "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
                               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                             )}
@@ -944,7 +944,7 @@ export function CoachHome() {
                             <Link
                               href="/storyboard?new=1"
                               className={cn(
-                                "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
+                                "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
                                 "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
                                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                               )}
@@ -970,27 +970,27 @@ export function CoachHome() {
                       <CardBody className="p-0">
                         <div className="flex items-start justify-between gap-4 rounded-[20px] transition-colors hover:bg-white/70">
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-xl font-extrabold tracking-tight">Experience bank</h3>
-                            <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
+                            <h3 className="text-h6">Experience bank</h3>
+                            <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">
                               {roleExperiences.length ? (
                                 <>
                                   {roleExperiences.length} experience{roleExperiences.length === 1 ? "" : "s"}{" "}
                                   captured for {role || "this role"}
                                   {experienceBankPreviewTitles.length ? (
-                                    <> — including “{experienceBankPreviewTitles.join("”, “")}”.</>
+                                    <>, including “{experienceBankPreviewTitles.join("”, “")}”.</>
                                   ) : (
                                     "."
                                   )}
                                 </>
                               ) : (
-                                "Nothing captured yet — add your first experience to start building proof."
+                                "Nothing captured yet. Add your first experience to start building proof."
                               )}
                             </p>
                           </div>
                           <Link
                             href="/storyboard"
                             className={cn(
-                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
+                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
                               "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
                               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                             )}
@@ -1008,14 +1008,14 @@ export function CoachHome() {
                       <CardBody className="p-0">
                         <div className="flex items-start justify-between gap-4 rounded-[20px] transition-colors hover:bg-white/70">
                           <div className="min-w-0">
-                            <h3 className="text-xl font-extrabold tracking-tight">
+                            <h3 className="text-h6">
                               {(() => {
                                 const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                                 const isSecondInterview = isFinalCoach && !isFirstStart;
                                 return isSecondInterview ? "3. Practice with a focused mock" : "3. Take a mock interview";
                               })()}
                             </h3>
-                            <p className="mt-2 text-base leading-6 text-[var(--app-muted)]">
+                            <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">
                               {(() => {
                                 const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                                 const isSecondInterview = isFinalCoach && !isFirstStart;
@@ -1035,7 +1035,7 @@ export function CoachHome() {
                           <Link
                             href="/interview?welcomeBack=1"
                             className={cn(
-                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold tracking-tight transition",
+                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
                               "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
                               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                             )}

@@ -25,7 +25,7 @@ export function SuperAdminDashboardScreen() {
   if (!dataset) {
     return (
       <Card>
-        <CardBody className="py-16 text-center text-sm font-medium text-[var(--app-muted)]">
+        <CardBody className="py-16 text-center text-caption text-[var(--app-muted)]">
           Unable to load dashboard analytics at the moment.
         </CardBody>
       </Card>
@@ -38,8 +38,8 @@ export function SuperAdminDashboardScreen() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-black">Overview</h1>
-          <p className="mt-0.5 text-sm text-[var(--app-muted)]">
+          <h1 className="text-h5 text-black">Overview</h1>
+          <p className="mt-0.5 text-caption text-[var(--app-muted)]">
             Read-only platform KPIs and usage trends.
           </p>
         </div>

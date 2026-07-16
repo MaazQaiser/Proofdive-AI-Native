@@ -38,7 +38,7 @@ import { useLocalStorageState } from "@/lib/useLocalStorageState";
 const PILLAR_ORDER: PillarId[] = ["thinking", "action", "people", "mastery"];
 
 const TA =
-  "min-h-24 w-full rounded-2xl border border-white/50 bg-white px-4 py-3 text-sm leading-6 text-gray-800 outline-none ring-0 placeholder:text-[var(--app-muted)] disabled:cursor-not-allowed disabled:opacity-60";
+  "min-h-24 w-full rounded-2xl border border-white/50 bg-white px-4 py-3 text-caption leading-6 text-gray-800 outline-none ring-0 placeholder:text-[var(--app-muted)] disabled:cursor-not-allowed disabled:opacity-60";
 
 export function CraftingScreen() {
   const router = useRouter();
@@ -153,9 +153,9 @@ export function CraftingScreen() {
           <div className="mx-auto w-full max-w-3xl space-y-6">
             <Card>
               <CardBody>
-                <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">STATUS</div>
-                <div className="mt-3 text-base font-bold tracking-tight">No role set</div>
-                <p className="mt-2 text-sm leading-6 text-[var(--app-muted)]">
+                <div className="text-overline text-[var(--app-muted)]">STATUS</div>
+                <div className="mt-3 text-body-sm font-semibold">No role set</div>
+                <p className="mt-2 text-caption leading-6 text-[var(--app-muted)]">
                   Go to onboarding to set your target role.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -170,8 +170,8 @@ export function CraftingScreen() {
             </Card>
             <Card>
               <CardBody>
-                <h1 className="text-4xl font-extrabold tracking-tight">Storyboard draft</h1>
-                <p className="mt-3 text-sm leading-6 text-[var(--app-muted)]">
+                <h1 className="text-h4">Storyboard draft</h1>
+                <p className="mt-3 text-caption leading-6 text-[var(--app-muted)]">
                   Set a target role in onboarding to edit your 13 sections here.
                 </p>
                 <div className="mt-6">
@@ -195,7 +195,7 @@ export function CraftingScreen() {
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <Link
             href="/coach?journey=1"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-black/65 transition hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)] print:hidden"
+            className="inline-flex items-center gap-1.5 text-caption font-semibold text-black/65 transition hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)] print:hidden"
           >
             <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0" aria-hidden>
               <path
@@ -210,13 +210,13 @@ export function CraftingScreen() {
           </Link>
           <div className="hidden print:block">
             <Logo size="xxs" />
-            <p className="mt-1 text-sm text-[var(--app-muted)]">
-              Storyboard for {role} — generated {new Date().toLocaleDateString()}
+            <p className="mt-1 text-caption text-[var(--app-muted)]">
+              Storyboard for {role}, generated {new Date().toLocaleDateString()}
             </p>
           </div>
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight">Storyboard draft</h1>
-            <p className="mt-2 text-sm leading-6 text-[var(--app-muted)] print:hidden">
+            <h1 className="text-h4">Storyboard draft</h1>
+            <p className="mt-2 text-caption leading-6 text-[var(--app-muted)] print:hidden">
               One <strong>Core Introduction</strong> + twelve fixed competencies (CAR: Context, Action,
               Result). Lock a section when it&apos;s interview-ready. Edits save in this browser.
             </p>
@@ -224,32 +224,32 @@ export function CraftingScreen() {
 
           <Card className="shadow-[var(--app-shadow-soft)]">
             <CardBody>
-              <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+              <div className="text-overline text-[var(--app-muted)]">
                 STORY STRENGTH
               </div>
-              <p className="mt-1 text-sm leading-6 text-[var(--app-muted)]">
+              <p className="mt-1 text-caption leading-6 text-[var(--app-muted)]">
                 0–5 placeholder from CAR completeness. Overall = mean of the 12 competencies (intro
                 excluded).
               </p>
               <div className="mt-4 flex flex-wrap items-baseline justify-between gap-3">
                 <div>
-                  <div className="text-sm font-bold tracking-tight">Overall (12 competencies)</div>
-                  <div className="text-xs text-[var(--app-muted)]">Mean strength</div>
+                  <div className="text-caption font-semibold">Overall (12 competencies)</div>
+                  <div className="text-overline text-[var(--app-muted)]">Mean strength</div>
                 </div>
                 <div
-                  className="text-4xl font-extrabold tabular-nums tracking-tight"
+                  className="text-h4"
                   title="Mean of 12 section strength scores"
                 >
                   {overall.toFixed(1)}
-                  <span className="text-lg font-extrabold text-[var(--app-muted)]"> / 5</span>
+                  <span className="text-body text-[var(--app-muted)]"> / 5</span>
                 </div>
               </div>
 
               <details className="mt-6 border-t border-white/50 pt-4" open>
-                <summary className="cursor-pointer list-none text-sm font-bold tracking-tight text-gray-900 [&::-webkit-details-marker]:hidden">
+                <summary className="cursor-pointer list-none text-caption font-semibold text-gray-900 [&::-webkit-details-marker]:hidden">
                   <span className="inline-flex items-center gap-2">
                     Pillar scores
-                    <span className="text-xs font-normal text-[var(--app-muted)]">
+                    <span className="text-overline text-[var(--app-muted)]">
                       (4 pillars · 3 sections each)
                     </span>
                   </span>
@@ -261,14 +261,14 @@ export function CraftingScreen() {
                       className="flex items-center justify-between gap-2 rounded-2xl border border-white/50 bg-white/60 px-3 py-2.5"
                     >
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-extrabold tracking-tight">
+                        <div className="truncate text-caption font-semibold">
                           {PILLAR_LABEL[id]}
                         </div>
-                        <div className="text-xs text-[var(--app-muted)]">Mean / 5</div>
+                        <div className="text-overline text-[var(--app-muted)]">Mean / 5</div>
                       </div>
-                      <div className="shrink-0 text-lg font-extrabold tabular-nums">
+                      <div className="shrink-0 text-body font-semibold">
                         {v.toFixed(1)}
-                        <span className="text-sm font-extrabold text-[var(--app-muted)]"> / 5</span>
+                        <span className="text-caption text-[var(--app-muted)]"> / 5</span>
                       </div>
                     </div>
                   ))}
@@ -349,7 +349,7 @@ export function CraftingScreen() {
 
           <div className="space-y-3 border-t border-white/40 pt-6 print:hidden">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-[var(--app-muted)]">
+              <p className="text-caption leading-6 text-[var(--app-muted)]">
                 Continue building in Storyboard or save this draft to the browser.
               </p>
               <div className="flex flex-wrap gap-2 sm:shrink-0">
@@ -395,15 +395,15 @@ function DraftSectionCard({
     <div className="overflow-hidden rounded-[22px] border border-white/50 bg-white shadow-[var(--app-shadow-soft)]">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/50 bg-[var(--app-surface)] px-4 py-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--app-muted)]">
+          <div className="text-overline uppercase text-[var(--app-muted)]">
             {pillarLabel}
           </div>
-          <h3 className="text-lg font-extrabold tracking-tight">{displayTitle}</h3>
-          <div className="mt-0.5 text-xs text-[var(--app-muted)]">id: {idLabel}</div>
+          <h3 className="text-h6">{displayTitle}</h3>
+          <div className="mt-0.5 text-overline text-[var(--app-muted)]">id: {idLabel}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span
-            className="inline-flex items-center rounded-full bg-black px-2.5 py-0.5 text-xs font-bold text-white"
+            className="inline-flex items-center rounded-full bg-black px-2.5 py-0.5 text-overline text-white"
             title="Strength score (0–5), based on how complete the CAR is (placeholder)."
           >
             Strength {score} / 5
@@ -412,7 +412,7 @@ function DraftSectionCard({
             type="button"
             variant="secondary"
             onClick={() => setIsEditing((v) => !v)}
-            className="text-xs print:hidden"
+            className="text-overline print:hidden"
             title="Show an inline edit field"
           >
             {isEditing ? "Close edit" : "Edit"}
@@ -421,7 +421,7 @@ function DraftSectionCard({
             type="button"
             variant="secondary"
             onClick={onToggleLock}
-            className="text-xs print:hidden"
+            className="text-overline print:hidden"
             title={locked ? "Unlock to edit" : "Lock to prevent edits"}
           >
             {locked ? "Unlock" : "Lock"}
@@ -433,7 +433,7 @@ function DraftSectionCard({
         {isEditing ? (
           <div className="mt-4">
             <label className="block">
-              <span className="text-xs font-bold tracking-tight">
+              <span className="text-overline">
                 Share the quick change you want updated in this area of the story
               </span>
               <div className="relative mt-1.5 overflow-hidden rounded-xl">
@@ -442,7 +442,7 @@ function DraftSectionCard({
                   value={draftInput}
                   onChange={(e) => setDraftInput(e.target.value)}
                   placeholder="Type here..."
-                  className="w-full rounded-xl border-2 border-black/20 bg-white px-3 py-2 pr-12 text-sm text-gray-800 outline-none placeholder:text-[var(--app-muted)] focus:border-black/40"
+                  className="w-full rounded-xl border-2 border-black/20 bg-white px-3 py-2 pr-12 text-caption text-gray-800 outline-none placeholder:text-[var(--app-muted)] focus:border-black/40"
                 />
                 <button
                   type="button"
@@ -484,8 +484,8 @@ function CarTextAreas({
   return (
     <div className="space-y-4">
       <label className="block">
-        <span className="text-xs font-bold tracking-tight">Context</span>
-        <p className="mb-1 text-xs text-[var(--app-muted)]">
+        <span className="text-overline">Context</span>
+        <p className="mb-1 text-caption text-[var(--app-muted)]">
           {introVariant
             ? "Primary interview opener: role, scope, and how the stories connect (2–3 sentences; may carry most of the intro)."
             : "Situation, constraints, stakes (2–3 sentences)."}
@@ -499,8 +499,8 @@ function CarTextAreas({
         />
       </label>
       <label className="block">
-        <span className="text-xs font-bold tracking-tight">Action</span>
-        <p className="mb-1 text-xs text-[var(--app-muted)]">
+        <span className="text-overline">Action</span>
+        <p className="mb-1 text-caption text-[var(--app-muted)]">
           {introVariant
             ? "Optional for intro. Add if you want a distinct “how you operate” line."
             : "What you did, decisions, and how you moved the work forward."}
@@ -514,8 +514,8 @@ function CarTextAreas({
         />
       </label>
       <label className="block">
-        <span className="text-xs font-bold tracking-tight">Result</span>
-        <p className="mb-1 text-xs text-[var(--app-muted)]">
+        <span className="text-overline">Result</span>
+        <p className="mb-1 text-caption text-[var(--app-muted)]">
           {introVariant
             ? "Optional. Outcomes, themes, or what the listener should take away."
             : "Outcomes, learning, business impact (measurable or qualitative)."}

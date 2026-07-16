@@ -302,7 +302,7 @@ function buildMockReport(args: {
       ? `Baseline set across pillars (${overallScore.toFixed(1)}/5). Biggest lift: sharper outcomes and CAR structure.`
       : `Strongest: ${strongest.shortTitle}. Biggest opportunity: ${weakest.shortTitle}.`,
     summary: firstStart
-      ? "Finishing your first mock is the hardest step — you now have a baseline to build from. Scores sit around 2.4, which is normal early on: focus next on one clear metric per story and a tight Context → Action → Result flow."
+      ? "Finishing your first mock is the hardest step. You now have a baseline to build from. Scores sit around 2.4, which is normal early on: focus next on one clear metric per story and a tight Context → Action → Result flow."
       : "Your strongest moments were when you aligned people quickly and communicated trade-offs clearly. The main gap is turning actions into measurable outcomes and using tighter CAR structure to keep answers crisp. With a few targeted rewrites, your delivery can feel more decisive and metric-driven.",
     drivers,
     narrative: {
@@ -332,7 +332,7 @@ function buildMockReport(args: {
       delivery: {
         bodyLanguage: [
           "Sit centered and keep shoulders open; avoid looking down when recalling details.",
-          "Pause before the Result — it makes the metric land.",
+          "Pause before the Result. It makes the metric land.",
         ],
         grammarPhrasing: [
           "Replace “we kind of” / “basically” with direct verbs (decided, aligned, shipped).",
@@ -512,14 +512,14 @@ export function InterviewLiveScreen() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-6 pb-28">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
-            <div className="truncate text-2xl font-extrabold tracking-tight">
+            <div className="truncate text-h5">
               {role} • Live interview
             </div>
-            <div className="mt-1 text-base text-[var(--app-muted)]">Proofdive interview room</div>
+            <div className="mt-1 text-body-sm text-[var(--app-muted)]">Proofdive interview room</div>
             {session.prefs.sessionKind === "selective_pillar" &&
             session.prefs.selectivePillars &&
             session.prefs.selectivePillars.length > 0 ? (
-              <div className="mt-1 text-sm font-semibold leading-snug text-black/75">
+              <div className="mt-1 text-caption font-semibold leading-snug text-black/75">
                 Focus:{" "}
                 {session.prefs.selectivePillars
                   .map((id) => PILLAR_LABEL[id as PillarId] ?? id)
@@ -527,7 +527,7 @@ export function InterviewLiveScreen() {
               </div>
             ) : null}
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-xs font-extrabold tracking-tight text-gray-800">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-overline text-gray-800">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             <span>{formatTimer(secondsLeft)}</span>
           </div>
@@ -538,13 +538,13 @@ export function InterviewLiveScreen() {
             <div className="relative aspect-video w-full overflow-hidden rounded-[24px] bg-white shadow-[0_26px_80px_rgba(0,0,0,0.10)]">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-sm font-extrabold tracking-tight text-gray-800">
+                  <div className="text-caption font-semibold text-gray-800">
                     AI Interviewer
                   </div>
-                  <div className="mt-2 text-xs text-[var(--app-muted)]">Video feed placeholder</div>
+                  <div className="mt-2 text-overline text-[var(--app-muted)]">Video feed placeholder</div>
                 </div>
               </div>
-              <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-xs font-extrabold tracking-tight text-white">
+              <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-overline text-white">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 <span>Speaking</span>
               </div>
@@ -555,23 +555,23 @@ export function InterviewLiveScreen() {
             <div className="relative aspect-video w-full overflow-hidden rounded-[24px] bg-white shadow-[0_26px_80px_rgba(0,0,0,0.10)]">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-sm font-extrabold tracking-tight text-gray-800">
+                  <div className="text-caption font-semibold text-gray-800">
                     {name}
                   </div>
-                  <div className="mt-2 text-xs text-[var(--app-muted)]">Camera preview placeholder</div>
+                  <div className="mt-2 text-overline text-[var(--app-muted)]">Camera preview placeholder</div>
                 </div>
               </div>
-              <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-xs font-extrabold tracking-tight text-white">
+              <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-overline text-white">
                 <span className={cn("h-2 w-2 rounded-full", micOn ? "bg-emerald-400" : "bg-rose-400")} />
                 <span>{micOn ? "Mic on" : "Mic off"}</span>
               </div>
             </div>
 
             <div className="rounded-[24px] border border-white/50 bg-white p-4 shadow-[0_14px_40px_rgba(0,0,0,0.06)]">
-              <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">
+              <div className="text-overline text-gray-500">
                 NOTES
               </div>
-              <div className="mt-2 text-sm text-[var(--app-muted)]">
+              <div className="mt-2 text-caption text-[var(--app-muted)]">
                 Answer naturally. Use STAR/CARE structure where possible. Stay concise.
               </div>
             </div>
@@ -640,7 +640,7 @@ export function InterviewLiveScreen() {
               </button>
             </div>
 
-            <div className="hidden text-xs font-extrabold tracking-tight text-gray-500 sm:block">
+            <div className="hidden text-overline text-gray-500 sm:block">
               {formatTimer(secondsLeft)} remaining
             </div>
 
@@ -663,23 +663,23 @@ export function InterviewLiveScreen() {
           <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-6 py-10">
             <div className="flex items-center gap-2">
               <Logo size="xxs" />
-              <span className="text-xs font-extrabold tracking-[0.22em] text-gray-500">
+              <span className="text-overline text-gray-500">
                 REPORT
               </span>
             </div>
 
             <div className="mt-8">
-              <div className="text-4xl font-extrabold leading-tight tracking-tight">
+              <div className="text-h4">
                 Generating your report…
               </div>
-              <div className="mt-3 max-w-2xl text-sm leading-6 text-[var(--app-muted)]">
+              <div className="mt-3 max-w-2xl text-caption leading-6 text-[var(--app-muted)]">
                 Mapping each answer to competencies and extracting the strongest proof points.
               </div>
             </div>
 
             <div className="mt-10 grid gap-4 lg:grid-cols-2">
               <div className="rounded-[24px] border border-white/50 bg-white p-5 shadow-[0_14px_40px_rgba(0,0,0,0.06)]">
-                <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">
+                <div className="text-overline text-gray-500">
                   PROGRESS
                 </div>
                 <div className="mt-4 space-y-3">
@@ -691,7 +691,7 @@ export function InterviewLiveScreen() {
                         <div className="min-w-0">
                           <div
                             className={cn(
-                              "truncate text-sm font-extrabold tracking-tight",
+                              "truncate text-caption font-semibold",
                               done ? "text-black" : active ? "text-black" : "text-gray-500",
                             )}
                           >
@@ -715,7 +715,7 @@ export function InterviewLiveScreen() {
               </div>
 
               <div className="rounded-[24px] border border-white/50 bg-white p-5 shadow-[0_14px_40px_rgba(0,0,0,0.06)]">
-                <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">
+                <div className="text-overline text-gray-500">
                   COMPETENCY MAPPING
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -725,7 +725,7 @@ export function InterviewLiveScreen() {
                       <div
                         key={c}
                         className={cn(
-                          "rounded-[14px] border px-3 py-3 text-xs font-extrabold tracking-tight transition",
+                          "rounded-[14px] border px-3 py-3 text-overline transition",
                           filled
                             ? "border-emerald-500/30 bg-emerald-500/10 text-black"
                             : "border-white/50 bg-white/40 text-gray-600",
@@ -739,7 +739,7 @@ export function InterviewLiveScreen() {
               </div>
             </div>
 
-            <div className="mt-auto pt-10 text-xs text-gray-500">
+            <div className="mt-auto pt-10 text-overline text-gray-500">
               You’ll be redirected to home automatically.
             </div>
           </div>

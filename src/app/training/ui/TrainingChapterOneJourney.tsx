@@ -99,7 +99,7 @@ function segmentCompleteBetween(leftIdx: number, phase: TrainingJourneyPhase): b
 
 function CoachBlock({ children }: { children: ReactNode }) {
   return (
-    <div className="whitespace-pre-wrap text-lg font-semibold leading-7 text-black/90">
+    <div className="whitespace-pre-wrap text-body font-semibold leading-7 text-black/90">
       {children}
     </div>
   );
@@ -203,21 +203,21 @@ export function TrainingChapterOneJourney({
               />
             </svg>
           </button>
-          <p className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+          <p className="text-overline text-[var(--app-muted)]">
             CHAPTER 1
           </p>
         </div>
-        <h2 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">
+        <h2 className="text-h5 mt-1">
           {chapterTitle}
         </h2>
-        <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--app-muted)]">
+        <p className="mt-1 max-w-2xl text-caption leading-6 text-[var(--app-muted)]">
           {chapterSummary}
         </p>
       </div>
 
       {chapter2Placeholder ? (
         <div className="mt-8 rounded-[24px] border border-white/50 bg-white p-6 shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
-          <p className="text-sm font-semibold leading-6 text-[var(--app-muted)]">
+          <p className="text-caption font-semibold leading-6 text-[var(--app-muted)]">
             Chapter 2 is coming soon.
           </p>
           <div className="mt-4">
@@ -233,8 +233,8 @@ export function TrainingChapterOneJourney({
               <div className="w-full rounded-[20px] border border-white/50 bg-[var(--app-surface)] p-4 shadow-[var(--app-shadow-soft)]">
                 <div className="mb-4">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-[var(--app-muted)]">Module progress</span>
-                    <span className="text-xs font-bold tabular-nums text-gray-700">
+                    <span className="text-overline text-[var(--app-muted)]">Module progress</span>
+                    <span className="text-overline text-gray-700">
                       {percentForTrainingPhase(phase)}%
                     </span>
                   </div>
@@ -273,7 +273,7 @@ export function TrainingChapterOneJourney({
                       >
                         <div
                           className={cn(
-                            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-extrabold transition",
+                            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-caption font-semibold transition",
                             done
                               ? "border-black bg-black text-white"
                               : active
@@ -285,7 +285,7 @@ export function TrainingChapterOneJourney({
                         </div>
                         <p
                           className={cn(
-                            "mt-2 w-full px-0.5 text-center text-[10px] font-semibold leading-snug tracking-tight sm:text-xs",
+                            "mt-2 w-full px-0.5 text-center text-overline leading-snug",
                             active || done ? "text-black" : "text-black/45",
                           )}
                         >
@@ -330,13 +330,13 @@ export function TrainingChapterOneJourney({
                               <path d="M8 5v14l11-7z" />
                             </svg>
                           </button>
-                          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                          <span className="text-overline uppercase text-gray-500">
                             Video
                           </span>
-                          <p className="text-sm font-semibold text-gray-600">
+                          <p className="text-caption font-semibold text-gray-600">
                             Lesson player placeholder
                           </p>
-                          <p className="max-w-sm text-xs leading-5 text-[var(--app-muted)]">
+                          <p className="max-w-sm text-caption leading-5 text-[var(--app-muted)]">
                             Replace with your hosted lesson (embed URL, Mux, or Vimeo).
                           </p>
                         </div>
@@ -374,14 +374,14 @@ export function TrainingChapterOneJourney({
 
                 {phase === "quiz" ? (
                   <div className="rounded-[24px] border border-white/50 bg-white p-5 shadow-[0_12px_30px_rgba(0,0,0,0.08)] sm:p-6">
-                    <h3 className="text-lg font-extrabold tracking-tight">Quick quiz (3 questions)</h3>
+                    <h3 className="text-h6">Quick quiz (3 questions)</h3>
                     <div className="mt-5 space-y-6">
                       {QUIZ.map((item, qi) => (
                         <fieldset
                           key={qi}
                           className="rounded-2xl border border-white/50 bg-white/40 p-4"
                         >
-                          <legend className="text-sm font-extrabold tracking-tight text-black">
+                          <legend className="text-body-sm font-semibold text-black">
                             {qi + 1}. {item.q}
                           </legend>
                           <div className="mt-3 space-y-2">
@@ -391,7 +391,7 @@ export function TrainingChapterOneJourney({
                                 <label
                                   key={opt}
                                   className={cn(
-                                    "flex cursor-pointer items-start gap-2 rounded-xl border px-3 py-2 text-sm transition",
+                                    "flex cursor-pointer items-start gap-2 rounded-xl border px-3 py-2 text-caption transition",
                                     selected
                                       ? "border-black bg-white"
                                       : "border-transparent bg-white/60 hover:bg-white",
@@ -429,7 +429,7 @@ export function TrainingChapterOneJourney({
                         Submit quiz
                       </Button>
                       {quizSubmitted && quizScore !== null ? (
-                        <span className="self-center text-sm font-semibold text-gray-600">
+                        <span className="self-center text-caption font-semibold text-gray-600">
                           Score: {quizScore}/{QUIZ.length}
                         </span>
                       ) : null}
@@ -442,7 +442,7 @@ export function TrainingChapterOneJourney({
                     <CoachBlock>{AFTER_QUIZ}</CoachBlock>
                     <CoachBlock>{CASE_INTRO}</CoachBlock>
                     {quizSubmitted && quizScore !== null ? (
-                      <p className="text-xs font-semibold text-[var(--app-muted)]">
+                      <p className="text-overline text-[var(--app-muted)]">
                         Score: {quizScore}/{QUIZ.length}
                       </p>
                     ) : null}
@@ -456,13 +456,13 @@ export function TrainingChapterOneJourney({
 
                 {phase === "case" ? (
                   <div className="rounded-[24px] border border-white/50 bg-white p-5 shadow-[0_12px_30px_rgba(0,0,0,0.08)] sm:p-6">
-                    <h3 className="text-lg font-extrabold tracking-tight">Case practice</h3>
-                    <p className="mt-2 text-sm leading-6 text-[var(--app-muted)]">
+                    <h3 className="text-h6">Case practice</h3>
+                    <p className="mt-2 text-caption leading-6 text-[var(--app-muted)]">
                       Work through a short scenario the way you would in an interview. State your
                       structure, assumptions, and recommendation.
                     </p>
-                    <div className="mt-4 rounded-2xl border border-dashed border-black/20 bg-white/50 p-4 text-sm text-[var(--app-muted)]">
-                      Scenario placeholder — connect your case prompt or exercise here.
+                    <div className="mt-4 rounded-2xl border border-dashed border-black/20 bg-white/50 p-4 text-caption text-[var(--app-muted)]">
+                      Scenario placeholder. Connect your case prompt or exercise here.
                     </div>
                     <div className="mt-4">
                       <Button
@@ -490,14 +490,14 @@ export function TrainingChapterOneJourney({
 
                 {phase === "assessment" ? (
                   <div className="rounded-[24px] border border-white/50 bg-white p-5 shadow-[0_12px_30px_rgba(0,0,0,0.08)] sm:p-6">
-                    <h3 className="text-lg font-extrabold tracking-tight">Assessment (up to 600 words)</h3>
-                    <p className="mt-2 text-sm leading-6 text-[var(--app-muted)]">
+                    <h3 className="text-h6">Assessment (up to 600 words)</h3>
+                    <p className="mt-2 text-caption leading-6 text-[var(--app-muted)]">
                       Summarize how you would apply this chapter in an interview setting. Aim for
                       clarity and structure.
                     </p>
                     <label
                       htmlFor="chapter-assessment"
-                      className="mt-4 block text-xs font-semibold text-gray-600"
+                      className="mt-4 block text-overline text-gray-600"
                     >
                       Your response
                     </label>
@@ -507,12 +507,12 @@ export function TrainingChapterOneJourney({
                       onChange={(e) => setAssessmentText(e.target.value)}
                       rows={12}
                       className={cn(
-                        "mt-2 w-full resize-y rounded-2xl border border-white/70 bg-white px-4 py-3 text-sm leading-6 outline-none transition focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+                        "mt-2 w-full resize-y rounded-2xl border border-white/70 bg-white px-4 py-3 text-caption leading-6 outline-none transition focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                         overWordLimit && "border-red-500/60 focus-visible:ring-red-500/30",
                       )}
                       placeholder="Write your assessment…"
                     />
-                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--app-muted)]">
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-overline text-[var(--app-muted)]">
                       <span className={cn(overWordLimit && "font-semibold text-red-600")}>
                         {wordCount} / 600 words
                       </span>

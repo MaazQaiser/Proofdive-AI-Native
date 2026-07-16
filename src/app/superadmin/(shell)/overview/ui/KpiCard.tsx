@@ -18,18 +18,18 @@ export function KpiCard({
   return (
     <Card>
       <CardBody>
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--app-muted)]">
+        <p className="text-overline uppercase text-[var(--app-muted)]">
           {label}
         </p>
         {isEmpty ? (
-          <p className="mt-3 text-sm font-medium text-[var(--app-muted)]">{emptyMessage}</p>
+          <p className="mt-3 text-caption text-[var(--app-muted)]">{emptyMessage}</p>
         ) : (
           <>
-            <p className="mt-2 text-3xl font-extrabold tabular-nums tracking-tight text-black">
+            <p className="mt-2 text-h4 tabular-nums text-black">
               {value}
             </p>
             {breakdown && breakdown.length > 0 ? (
-              <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold text-[var(--app-muted)]">
+              <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-overline text-[var(--app-muted)]">
                 {breakdown.map((b) => (
                   <span key={b.label}>
                     {b.label}: <span className="text-black">{b.value}</span>

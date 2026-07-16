@@ -45,7 +45,7 @@ export function SuperAdminSidebarNav() {
             key={href}
             href={href}
             className={cn(
-              "flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold tracking-tight transition",
+              "flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-caption transition",
               active
                 ? "bg-black text-white"
                 : "text-[var(--app-muted)] hover:bg-black/[0.04] hover:text-black",

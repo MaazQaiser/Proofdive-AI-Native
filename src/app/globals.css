@@ -26,11 +26,13 @@
   --card-foreground: #0E0E0E;
   --popover: #F5F5F3;
   --popover-foreground: #0E0E0E;
-  /* Primary button color — brand teal (matches --ring/--brand-100), with
-     near-black text for contrast (bright teal against white text falls short
-     of WCAG AA; dark text on the bright brand color reads cleanly instead). */
+  /* Primary button color — brand teal (matches --ring/--brand-100). Text is
+     near-white per the Figma auth-page spec: contrast against #0E9AB5 is
+     ~3.05:1, right at the WCAG AA large-text/UI-component threshold (3:1) -
+     fine for 18px+ button labels, but too low for small text (e.g. a 12px
+     nav pill) - watch for that if reusing --primary on small type. */
   --primary: #0E9AB5;
-  --primary-foreground: #0E0E0E;
+  --primary-foreground: #F5F5F5;
   --secondary: #B9EFF4;
   --secondary-foreground: #073E4C;
   --muted: #E8E8E6;
@@ -42,6 +44,9 @@
   --border: #D4D4D2;
   --input: #D4D4D2;
   --ring: #0E9AB5;
+  /* Field placeholder text — distinct from --muted-foreground per the Figma
+     auth-page spec. */
+  --placeholder: #999999;
   --base: #F5F5F3;
   --surface: #E8E8E6;
   --text-primary: #0E0E0E;
@@ -82,7 +87,9 @@
   --popover: #042027;
   --popover-foreground: #22D3EE;
   /* Primary button color — brand teal (matches --ring/--brand-100 in dark
-     mode), with near-black text for contrast, same reasoning as light mode. */
+     mode). Unlike light mode, text stays near-black here: dark mode's primary
+     is brighter (#22D3EE), so white text only reaches ~1.66:1 contrast
+     (fails badly) while black text reaches ~10.7:1. */
   --primary: #22D3EE;
   --primary-foreground: #0E0E0E;
   --secondary: #042027;
@@ -96,6 +103,7 @@
   --border: #2A2A2A;
   --input: #2A2A2A;
   --ring: #22D3EE;
+  --placeholder: #9CA3AF;
   --base: #0E0E0E;
   --surface: #1A1A1A;
   --text-primary: #F5F5F5;
@@ -129,9 +137,6 @@
    caption, overline are interpolated to fill gaps Figma didn't define -
    confirm with design before shipping. */
 :root {
-  /* --font-logo itself comes from next/font/local (layout.tsx) — same
-     pattern as --font-sans — now that real Gilroy files are wired up. */
-
   --text-h1-size: 80px;
   --text-h1-weight: 700;
   --text-h1-tracking: -4px;
@@ -150,9 +155,14 @@
   --text-h6-size: 22px;
   --text-h6-weight: 600;
   --text-h6-tracking: -1px;
-  --text-subheading-size: 48px;
+  /* Updated to 36px per the Figma auth-page spec (was 48px) - this is the
+     "Sub heading" style used for page headings (e.g. "Login" / "Signup").
+     Tracking is -4% of size (Figma's actual convention), not a flat -4px -
+     the old flat value was tight enough at 48px but visibly collided
+     letters once the size dropped to 36px. */
+  --text-subheading-size: 36px;
   --text-subheading-weight: 400;
-  --text-subheading-tracking: -4px;
+  --text-subheading-tracking: -1.44px;
   --text-body-lg-size: 20px;
   --text-body-lg-weight: 400;
   --text-body-lg-tracking: -1px;
@@ -202,6 +212,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-placeholder: var(--placeholder);
   /* No --color-base here deliberately: Tailwind auto-generates a "base" color
      utility from it, which collides with the built-in text-base font-size
      utility and silently repaints every text-base element's color instead of
@@ -238,7 +249,6 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   --font-sans: var(--font-sans);
-  --font-logo: var(--font-logo);
 }
 
 /* Typography utilities — one class per Figma text style, applying size,

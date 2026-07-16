@@ -26,11 +26,11 @@ function AgentPromptInner({
     <div className="relative w-full">
       {/* Height sizer: reserve final layout so typing doesn't reflow */}
       <div aria-hidden="true" className="pointer-events-none opacity-0">
-        <div className="whitespace-pre-wrap text-left text-[48px] font-extrabold leading-[1.05] tracking-tight">
+        <div className="whitespace-pre-wrap text-left text-h3 leading-[1.05]">
           {headingText}
         </div>
         {promptSubtext ? (
-          <div className="mt-4 whitespace-pre-wrap text-left text-[34px] font-semibold leading-[48px] tracking-tight text-black/80">
+          <div className="mt-4 whitespace-pre-wrap text-left text-h4 leading-[48px] text-black/80">
             {promptSubtext}
           </div>
         ) : null}
@@ -47,7 +47,7 @@ function AgentPromptInner({
         }}
         aria-label={ariaLabel}
       >
-        <div className="whitespace-pre-wrap text-left text-[48px] font-extrabold leading-[1.05] tracking-tight">
+        <div className="whitespace-pre-wrap text-left text-h3 leading-[1.05]">
           <TypingText
             key={`heading-${promptKey}`}
             text={headingText}
@@ -58,7 +58,7 @@ function AgentPromptInner({
           />
         </div>
         {promptSubtext && headingDone ? (
-          <div className="mt-4 whitespace-pre-wrap text-left text-[34px] font-semibold leading-[48px] tracking-tight text-black/80">
+          <div className="mt-4 whitespace-pre-wrap text-left text-h4 leading-[48px] text-black/80">
             <TypingText
               key={`subtext-${promptKey}`}
               text={promptSubtext}

@@ -61,7 +61,7 @@ const PAIR_TOKENS: PairToken[] = [
     title: "Primary",
     bgVar: "--primary",
     fgVar: "--primary-foreground",
-    light: { bg: "#0E9AB5", fg: "#0E0E0E" },
+    light: { bg: "#0E9AB5", fg: "#F5F5F5" },
     dark: { bg: "#22D3EE", fg: "#0E0E0E" },
   },
   {
@@ -109,6 +109,7 @@ const STRUCTURAL_TOKENS: FlatToken[] = [
   { name: "surface", cssVar: "--surface", light: "#E8E8E6", dark: "#1A1A1A" },
   { name: "text-primary", cssVar: "--text-primary", light: "#0E0E0E", dark: "#F5F5F5" },
   { name: "text-secondary", cssVar: "--text-secondary", light: "#6B7280", dark: "#9CA3AF" },
+  { name: "placeholder", cssVar: "--placeholder", light: "#999999", dark: "#9CA3AF" },
 ];
 
 const EXTENDED_TOKENS: FlatToken[] = [
@@ -163,9 +164,9 @@ const TYPE_STYLES: TypeStyle[] = [
     key: "subheading",
     className: "text-subheading",
     label: "Subheading",
-    size: "48px",
+    size: "36px",
     weight: "400",
-    tracking: "-4px",
+    tracking: "-1.44px",
   },
   {
     key: "body-lg",
@@ -182,7 +183,7 @@ const TYPE_STYLES: TypeStyle[] = [
     size: "18px",
     weight: "400",
     tracking: "-1px",
-    note: "--text-body-paragraph-spacing (18px) also exists but isn't baked into this utility — apply it explicitly where paragraph rhythm is needed.",
+    note: "--text-body-paragraph-spacing (18px) also exists but isn't baked into this utility. Apply it explicitly where paragraph rhythm is needed.",
   },
   {
     key: "body-sm",
@@ -227,12 +228,12 @@ function PairSwatch({ token, dark }: { token: PairToken; dark: boolean }) {
   return (
     <div className="flex flex-col gap-2">
       <div
-        className="flex h-20 items-center justify-center rounded-lg border border-border text-sm font-semibold"
+        className="flex h-20 items-center justify-center rounded-lg border border-border text-caption font-semibold"
         style={{ background: `var(${token.bgVar})`, color: `var(${token.fgVar})` }}
       >
         {token.title}
       </div>
-      <div className="text-xs">
+      <div className="text-caption">
         <p className="font-medium text-foreground">{token.title}</p>
         <p className="text-muted-foreground">
           {token.bgVar} <span className="text-foreground/70">{values.bg}</span>
@@ -253,7 +254,7 @@ function FlatSwatch({ token, dark }: { token: FlatToken; dark: boolean }) {
         className="h-16 w-full rounded-lg border border-border"
         style={{ background: `var(${token.cssVar})` }}
       />
-      <div className="text-xs">
+      <div className="text-caption">
         <p className="font-medium text-foreground">{token.name}</p>
         <p className="text-muted-foreground">{token.cssVar}</p>
         <p className="text-muted-foreground">{hex}</p>
@@ -298,7 +299,7 @@ export default function DesignSystemPage() {
               <p className="text-body text-muted-foreground mt-2 max-w-2xl">
                 Color tokens and typography from the Figma design foundation, plus a
                 first pass of shadcn/ui components wired to them. Not linked from any
-                nav — bookmark <code className="text-body-sm">/design-system</code>.
+                nav. Bookmark <code className="text-body-sm">/design-system</code>.
               </p>
             </div>
             <Button variant="outline" onClick={() => setDark((v) => !v)}>
@@ -308,7 +309,7 @@ export default function DesignSystemPage() {
 
           <Section
             title="Semantic colors"
-            description="Paired background / foreground tokens — shadcn's core convention."
+            description="Paired background / foreground tokens, shadcn's core convention."
           >
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {PAIR_TOKENS.map((token) => (
@@ -412,28 +413,17 @@ export default function DesignSystemPage() {
 
           <Section
             title="Fonts"
-            description="--font-sans (Inter) and --font-logo (Gilroy)."
+            description="--font-sans (Inter) is the only typeface used across the application."
           >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-sans">Inter — font-sans</CardTitle>
-                  <CardDescription>Body copy, UI text</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="font-sans text-body-lg">Turn experience into proof.</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-logo">Gilroy — font-logo</CardTitle>
-                  <CardDescription>Wordmark / logo only</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="font-logo text-body-lg">ProofDive</p>
-                </CardContent>
-              </Card>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-sans">Inter, font-sans</CardTitle>
+                <CardDescription>Headings, body copy, UI text, wordmark</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="font-sans text-body-lg">Turn experience into proof.</p>
+              </CardContent>
+            </Card>
           </Section>
 
           <Separator />

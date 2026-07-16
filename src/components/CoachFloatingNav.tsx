@@ -60,7 +60,7 @@ export function CoachFloatingNav() {
               <span
                 className={cn(
                   "pointer-events-none absolute left-full top-1/2 z-10 ml-2 -translate-y-1/2",
-                  "whitespace-nowrap rounded-full bg-black px-2.5 py-1 text-xs font-extrabold tracking-tight text-white shadow-lg",
+                  "whitespace-nowrap rounded-full bg-black px-2.5 py-1 text-overline text-white shadow-lg",
                   "opacity-0 translate-x-1 transition",
                   "group-hover:opacity-100 group-hover:translate-x-0",
                 )}

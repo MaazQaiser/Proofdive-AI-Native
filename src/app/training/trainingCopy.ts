@@ -2,7 +2,7 @@
 
 export function entryIntro(name: string) {
   const n = name.trim();
-  return `Hey${n ? ` ${n}` : ""} — I'm your training agent. I'll help you get interview-ready.
+  return `Hey${n ? ` ${n}` : ""}, I'm your training agent. I'll help you get interview-ready.
 
 Let's start with the basics, then you can go deeper once you're comfortable.`;
 }
@@ -20,11 +20,11 @@ export const COURSE_ENTRY_HEADING = "Here's what we'll cover in this course.";
 export const CH1_VIDEO_INTRO = `Let's start with Chapter 1.
 
 Start with a quick video to get the core idea.
-Take your time with it—you'll need it for what's coming next.`;
+Take your time with it. You'll need it for what's coming next.`;
 
 export const CTA_PLAY_VIDEO = "Play video";
 
-export const AFTER_VIDEO = `Alright—now let's work with what you just saw.
+export const AFTER_VIDEO = `Alright, now let's work with what you just saw.
 
 This next part will help you check how well it's sticking.
 If anything feels unclear, you can always jump back to the video.`;
@@ -32,7 +32,7 @@ If anything feels unclear, you can always jump back to the video.`;
 export const CTA_START_QUIZ = "Start quiz";
 
 export const AFTER_QUIZ =
-  "Nice—that's a good sign. You're starting to connect the dots.";
+  "Nice, that's a good sign. You're starting to connect the dots.";
 
 export const CASE_INTRO = `Let's take it a step further.
 
@@ -41,11 +41,11 @@ Try applying this in a real scenario and see how you approach it.`;
 export const CTA_START_CASE = "Start case";
 
 export const AFTER_CASE =
-  "That's solid work. You're not just understanding it—you're using it.";
+  "That's solid work. You're not just understanding it, you're using it.";
 
 export const FINAL_ASSESSMENT = `You're almost there.
 
-This is the final step for this chapter—complete this assessment to wrap it up.`;
+This is the final step for this chapter. Complete this assessment to wrap it up.`;
 
 export const CTA_START_ASSESSMENT = "Start assessment";
 

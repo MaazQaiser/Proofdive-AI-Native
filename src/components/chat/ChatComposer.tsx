@@ -194,7 +194,7 @@ export function ChatComposer({
                 disabled={disabled}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => applyQuickChipFromChipObject(chip)}
-                className="rounded-full border border-black/10 bg-white/90 px-3.5 py-1.5 text-left text-xs font-extrabold tracking-tight text-gray-900 shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition-[color,background-color,border-color] duration-200 ease-out hover:bg-white hover:border-black/15 active:bg-black/[.03] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border border-black/10 bg-white/90 px-3.5 py-1.5 text-left text-overline text-gray-900 shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition-[color,background-color,border-color] duration-200 ease-out hover:bg-white hover:border-black/15 active:bg-black/[.03] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {chip.label}
               </button>
@@ -233,7 +233,7 @@ export function ChatComposer({
               >
                 <div className="flex min-w-0 items-center gap-2 pl-1">
                   <StarInCircleIcon className="h-4 w-4 text-amber-500" />
-                  <span className="text-sm font-extrabold tracking-tight text-gray-900">
+                  <span className="text-caption text-gray-900">
                     {threadHeaderTitle}
                   </span>
                 </div>
@@ -264,7 +264,7 @@ export function ChatComposer({
             onChange={(e) => handleTextChange(e.target.value)}
             placeholder={placeholder}
             className={cn(
-              "min-h-12 w-full resize-none bg-transparent px-4 py-3 text-sm leading-6 outline-none disabled:cursor-not-allowed disabled:opacity-60",
+              "min-h-12 w-full resize-none bg-transparent px-4 py-3 text-body-sm leading-6 outline-none disabled:cursor-not-allowed disabled:opacity-60",
               thread ? "shrink-0 rounded-none rounded-b-[20px] pt-3" : "rounded-[24px]",
             )}
             rows={1}
@@ -288,10 +288,10 @@ export function ChatComposer({
                     className="flex items-center justify-between gap-3 rounded-[16px] border border-white/50 bg-white/40 px-3 py-2"
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-xs font-extrabold tracking-tight text-gray-800">
+                      <div className="truncate text-overline text-gray-800">
                         {file.name}
                       </div>
-                      <div className="text-[11px] text-[var(--app-muted)]">Document selected</div>
+                      <div className="text-overline text-[var(--app-muted)]">Document selected</div>
                     </div>
                     <button
                       type="button"
@@ -330,12 +330,12 @@ export function ChatComposer({
           ) : null}
           <div className="flex flex-col gap-1 px-4 pb-3">
             {voiceError ? (
-              <div className="text-xs font-medium text-red-600" role="status">
+              <div className="text-overline text-red-600" role="status">
                 {voiceError}
               </div>
             ) : null}
             <div className="flex items-center justify-between gap-3">
-              <div className="text-xs text-[var(--app-muted)]">
+              <div className="text-overline text-[var(--app-muted)]">
                 Enter to send • Shift+Enter for new line
               </div>
               <div className="flex items-center gap-2">
@@ -424,7 +424,7 @@ export function ChatComposer({
                     </svg>
                   </button>
                 ) : (
-                  <div className="text-xs text-[var(--app-muted)]">
+                  <div className="text-overline text-[var(--app-muted)]">
                     Voice needs Chrome, Edge, or Safari (not Firefox).
                   </div>
                 )}

@@ -8,10 +8,10 @@ export default function Home() {
     <div className="min-h-screen w-full bg-background px-6 py-10 text-foreground">
       <div className="mx-0 flex min-h-[calc(100vh-5rem)] max-w-[800px] flex-col items-start justify-center text-left md:pl-[180px]">
         <Logo size="xs" />
-        <h1 className="mt-5 w-full text-7xl font-extrabold leading-[84px] tracking-tight">
+        <h1 className="mt-5 w-full text-h1">
           Turn your experience into interview-ready proof.
         </h1>
-        <p className="mt-5 text-2xl font-medium leading-7 text-muted-foreground">
+        <p className="mt-5 text-body-lg leading-7 text-muted-foreground">
           Practice with AI, improve your answers, and see exactly what to work on
           next.
         </p>

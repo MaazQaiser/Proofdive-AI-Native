@@ -11,10 +11,10 @@ export function ReportScreen() {
     <AppShell>
       <Card>
         <CardBody>
-          <h2 className="text-5xl font-extrabold leading-[0.95] tracking-tight">
+          <h2 className="text-h3 leading-[0.95]">
             Report (next)
           </h2>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--app-muted)]">
+          <p className="mt-4 max-w-2xl text-body-sm leading-7 text-[var(--app-muted)]">
             Next step: generate readiness (Star/Ready/Borderline/Not Yet) plus
             4 pillars and 12 competencies with rewrite suggestions and the next
             best action.

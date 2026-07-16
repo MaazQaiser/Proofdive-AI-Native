@@ -4,7 +4,7 @@ export default function SuperAdminOrganizationsPage() {
   return (
     <SuperAdminComingSoon
       title="Organizations"
-      description="Onboard and manage universities, training centers, and employers — coming in a future batch."
+      description="Onboard and manage universities, training centers, and employers. Coming in a future batch."
     />
   );
 }

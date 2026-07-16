@@ -131,7 +131,7 @@ export function useSpeechDictation({
           } catch {
             wantListeningRef.current = false;
             setIsListening(false);
-            setVoiceError("Could not restart voice — try the mic button again.");
+            setVoiceError("Could not restart voice. Try the mic button again.");
           }
         }, RESTART_MS);
       } else {
@@ -187,7 +187,7 @@ export function useSpeechDictation({
         await navigator.mediaDevices.getUserMedia({ audio: true });
       }
     } catch {
-      setVoiceError("Microphone access denied — allow the mic for this site.");
+      setVoiceError("Microphone access denied. Allow the mic for this site.");
       startingRef.current = false;
       return;
     }
@@ -205,7 +205,7 @@ export function useSpeechDictation({
     } catch {
       wantListeningRef.current = false;
       setIsListening(false);
-      setVoiceError("Could not start voice — try again.");
+      setVoiceError("Could not start voice. Try again.");
     } finally {
       startingRef.current = false;
     }

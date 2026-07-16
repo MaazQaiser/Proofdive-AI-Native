@@ -123,12 +123,12 @@ export function OnboardingAgent() {
 
     let firstContent: string;
     if (initialStep === "role") {
-      firstContent = `hey — welcome to proofdive${namePart ? `, ${namePart}` : ""}. i’m your onboarding agent.\n\nFirst up: what’s the role you’re preparing for?`;
+      firstContent = `hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. i’m your onboarding agent.\n\nFirst up: what’s the role you’re preparing for?`;
     } else if (initialStep === "done") {
-      firstContent = `hey — welcome to proofdive${namePart ? `, ${namePart}` : ""}. i’m your onboarding agent.`;
+      firstContent = `hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. i’m your onboarding agent.`;
     } else {
       firstContent =
-        "hey — welcome to proofdive. i’m your onboarding agent.\n\nWhat should I call you?";
+        "hey, welcome to proofdive. i’m your onboarding agent.\n\nWhat should I call you?";
     }
 
     const base: ChatMessage[] = [
@@ -274,7 +274,7 @@ export function OnboardingAgent() {
       setDraft(next);
       push(
         "assistant",
-        `hey ${name} — welcome to proofdive.\n\nLet’s start with your story and get you interview-ready.\n\nFirst up: what’s the role you’re preparing for?`,
+        `hey ${name}, welcome to proofdive.\n\nLet’s start with your story and get you interview-ready.\n\nFirst up: what’s the role you’re preparing for?`,
       );
       setStep("role");
       return;
@@ -284,7 +284,7 @@ export function OnboardingAgent() {
       if (role && /^keep$/i.test(cleaned)) {
         push(
           "assistant",
-          `${who()}perfect — we’ll keep it.\n\nNow tell me a bit about you.\nWhat’s your background?`,
+          `${who()}perfect, we’ll keep it.\n\nNow tell me a bit about you.\nWhat’s your background?`,
         );
         setStep("backgroundType");
         return;
@@ -299,7 +299,7 @@ export function OnboardingAgent() {
       setDraft(next);
       push(
         "assistant",
-        `Perfect — ${cleaned} it is.\n\nlet’s get things around the ${cleaned} role.\nShare a bit more about your career stage`,
+        `Perfect, ${cleaned} it is.\n\nlet’s get things around the ${cleaned} role.\nShare a bit more about your career stage`,
       );
       setStep("backgroundType");
       return;
@@ -321,7 +321,7 @@ export function OnboardingAgent() {
       if (!backgroundType) {
         push(
           "assistant",
-          `${who()}pick one option below — I’ll tailor everything around it.`,
+          `${who()}pick one option below, and I’ll tailor everything around it.`,
         );
         return;
       }
@@ -374,7 +374,7 @@ export function OnboardingAgent() {
       setDraft(next);
       push(
         "assistant",
-        `${who()}one more thing.\n\nDrop in the job description you're targeting — this one's required so I can tailor everything around it.`,
+        `${who()}one more thing.\n\nDrop in the job description you're targeting: this one's required so I can tailor everything around it.`,
       );
       setStep("jobDescription");
       return;
@@ -385,7 +385,7 @@ export function OnboardingAgent() {
       setDraft(next);
       push(
         "assistant",
-        `${who()}one more thing.\n\nDrop in the job description you're targeting — this one's required so I can tailor everything around it.`,
+        `${who()}one more thing.\n\nDrop in the job description you're targeting: this one's required so I can tailor everything around it.`,
       );
       setStep("jobDescription");
       return;
@@ -395,7 +395,7 @@ export function OnboardingAgent() {
       if (isSkip || !cleaned) {
         push(
           "assistant",
-          "The job description is required — paste it in or upload the file, and I'll take it from there.",
+          "The job description is required. Paste it in or upload the file, and I'll take it from there.",
         );
         return;
       }
@@ -403,7 +403,7 @@ export function OnboardingAgent() {
       setDraft(next);
       push(
         "assistant",
-        "Got it. If you also have a resume, drop it here — totally optional, but it helps me prep you way better for this role.",
+        "Got it. If you also have a resume, drop it here. It's totally optional, but it helps me prep you way better for this role.",
       );
       setStep("resume");
       return;
@@ -451,7 +451,7 @@ export function OnboardingAgent() {
             <button
               type="button"
               onClick={goBack}
-              className="inline-flex items-center gap-1 text-xs font-bold text-gray-500 transition hover:text-gray-800"
+              className="inline-flex items-center gap-1 text-caption text-gray-500 transition hover:text-gray-800"
               aria-label="Go back to previous step"
             >
               ← Back
@@ -467,14 +467,14 @@ export function OnboardingAgent() {
               prompt={prompt}
               ariaLabel="Onboarding prompt"
             />
-            <div className="mt-4 w-full text-left text-2xl text-[var(--app-muted)]">
+            <div className="mt-4 w-full text-left text-body-lg text-[var(--app-muted)]">
               {quickReplies.length
                 ? "Type your answer, use voice, or pick an option."
                 : "Type your answer or use voice."}
             </div>
             {step === "role" ? (
               <div className="mt-6 w-full">
-                <div className="text-xs font-extrabold tracking-[0.22em] text-gray-600">
+                <div className="text-overline text-gray-600">
                   SUGGESTED ROLES
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -483,7 +483,7 @@ export function OnboardingAgent() {
                       key={r}
                       type="button"
                       onClick={() => handleAnswer(r)}
-                      className="rounded-full border border-[#E2E8F0]/90 bg-white/60 px-4 py-2 text-sm font-extrabold tracking-tight shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition hover:bg-white/70 active:bg-white/80"
+                      className="rounded-full border border-[#E2E8F0]/90 bg-white/60 px-4 py-2 text-caption shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition hover:bg-white/70 active:bg-white/80"
                     >
                       {r}
                     </button>
@@ -500,11 +500,11 @@ export function OnboardingAgent() {
                     onClick={() => handleAnswer(opt.value)}
                     className="rounded-[16px] border border-[#E2E8F0]/90 bg-white/60 px-4 py-4 text-left shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition hover:bg-white/70 active:bg-white/80"
                   >
-                    <div className="text-sm font-extrabold tracking-tight">
+                    <div className="text-caption">
                       {opt.label}
                     </div>
                     {opt.value === "skip" ? (
-                      <div className="mt-1 text-xs text-[var(--app-muted)]">
+                      <div className="mt-1 text-caption text-[var(--app-muted)]">
                         I will share later
                       </div>
                     ) : null}
@@ -520,7 +520,7 @@ export function OnboardingAgent() {
                 >
                   <div className="p-5">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="text-base font-extrabold tracking-tight">
+                      <div className="text-h6">
                         Story Board
                       </div>
                       <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition group-hover:bg-white/20 group-active:bg-white/30">
@@ -539,7 +539,7 @@ export function OnboardingAgent() {
                         </svg>
                       </div>
                     </div>
-                    <div className="mt-1 text-sm text-white/75">
+                    <div className="mt-1 text-caption text-white/75">
                       Build your career story board
                     </div>
                   </div>
@@ -550,10 +550,10 @@ export function OnboardingAgent() {
                   href="/interview"
                 >
                   <div className="p-5">
-                    <div className="text-base font-extrabold tracking-tight">
+                    <div className="text-h6">
                       Start a mock interview
                     </div>
-                    <div className="mt-1 text-sm text-[var(--app-muted)]">
+                    <div className="mt-1 text-caption text-[var(--app-muted)]">
                       Evaluate yourself for the {role || "selected role"}
                     </div>
                   </div>
@@ -566,7 +566,7 @@ export function OnboardingAgent() {
                 >
                   <div className="p-5">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="text-base font-extrabold tracking-tight">
+                      <div className="text-h6">
                         Learn about Proofdive
                       </div>
                       <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/60 text-black transition group-hover:bg-white/80 group-active:bg-white">
@@ -583,7 +583,7 @@ export function OnboardingAgent() {
                         </svg>
                       </div>
                     </div>
-                    <div className="mt-1 text-sm text-[var(--app-muted)]">
+                    <div className="mt-1 text-caption text-[var(--app-muted)]">
                       Explore our competency engine in depth
                     </div>
                   </div>
@@ -595,7 +595,7 @@ export function OnboardingAgent() {
                 >
                   <div className="p-5">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="text-base font-extrabold tracking-tight">
+                      <div className="text-h6">
                         Go to Home
                       </div>
                       <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/60 text-black transition group-hover:bg-white/80 group-active:bg-white">
@@ -615,7 +615,7 @@ export function OnboardingAgent() {
                         </svg>
                       </div>
                     </div>
-                    <div className="mt-1 text-sm text-[var(--app-muted)]">
+                    <div className="mt-1 text-caption text-[var(--app-muted)]">
                       Jump straight to your dashboard
                     </div>
                   </div>
@@ -653,7 +653,7 @@ export function OnboardingAgent() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/[0.08] px-4 py-3">
-              <span id="intro-video-title" className="min-w-0 flex-1 truncate text-sm font-bold text-black">
+              <span id="intro-video-title" className="min-w-0 flex-1 truncate text-caption text-black">
                 Learn about Proofdive
               </span>
               <div className="flex shrink-0 items-center gap-2">
@@ -661,14 +661,14 @@ export function OnboardingAgent() {
                   type="button"
                   onClick={skipIntroAndOpenCoachWelcome}
                   aria-label="Skip intro and open coach welcome"
-                  className="inline-flex h-9 items-center justify-center rounded-full px-3 text-sm font-bold text-black/60 transition hover:bg-black/[0.05] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 sm:px-4"
+                  className="inline-flex h-9 items-center justify-center rounded-full px-3 text-caption text-black/60 transition hover:bg-black/[0.05] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 sm:px-4"
                 >
                   Skip & Go to home
                 </button>
                 <button
                   type="button"
                   onClick={closeIntroModal}
-                  className="inline-flex h-9 min-w-[72px] items-center justify-center rounded-full border border-black/10 bg-black/[0.04] px-3 text-sm font-bold text-black transition hover:bg-black/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15"
+                  className="inline-flex h-9 min-w-[72px] items-center justify-center rounded-full border border-black/10 bg-black/[0.04] px-3 text-caption text-black transition hover:bg-black/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15"
                 >
                   Close
                 </button>

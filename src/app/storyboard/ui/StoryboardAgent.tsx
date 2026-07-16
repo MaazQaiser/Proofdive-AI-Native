@@ -42,7 +42,7 @@ const CONVERSATION_PROMPTS: readonly string[] = [
 What needed to change there?
 And what made it challenging?`,
 
-  `Got it—that kind of misalignment can get messy fast.
+  `Got it. That kind of misalignment can get messy fast.
 
 How did you start making sense of it?
 I'm interested in how you broke things down and brought some structure in.`,
@@ -52,17 +52,17 @@ I'm interested in how you broke things down and brought some structure in.`,
 When everything feels broken, deciding where to start matters a lot.
 How did you choose what to focus on first?`,
 
-  `Makes sense—that's a high-impact move.
+  `Makes sense. That's a high-impact move.
 
 What did you actually do to move things forward?
 Think in terms of the steps you took and how you pushed this ahead.`,
 
-  `Nice—you didn't just design it, you drove it forward.
+  `Nice. You didn't just design it, you drove it forward.
 
 How did the team respond?
 Did you face any pushback while changing the way they worked?`,
 
-  `That's a big part of the story—getting people aligned.
+  `That's a big part of the story: getting people aligned.
 
 What changed after all this?
 And what did you take away from the experience?`,
@@ -70,7 +70,7 @@ And what did you take away from the experience?`,
 
 const CLOSING_PROMPT = `This is coming together really well.
 
-You've got a clear challenge, strong decisions, real actions, and measurable impact—exactly what interviewers look for.
+You've got a clear challenge, strong decisions, real actions, and measurable impact, exactly what interviewers look for.
 
 What would you like to do next?`;
 
@@ -271,7 +271,7 @@ export function StoryboardAgent() {
 
   const entryPrompt = useMemo(
     () =>
-      `Hey ${firstName} — let's turn your real experiences into a story you can confidently tell in an interview.
+      `Hey ${firstName}, let's turn your real experiences into a story you can confidently tell in an interview.
 
 Start simple. What's something you worked on that stands out?`,
     [firstName],
@@ -298,12 +298,12 @@ Start simple. What's something you worked on that stands out?`,
   const composerPlaceholder = useMemo(() => {
     if (storyStep === 6) return "Choose an option above";
     if (storyStep === -1) return "Share something you worked on (type or voice)…";
-    return "Your answer (type or voice) — send to go to the next question…";
+    return "Your answer (type or voice). Send to go to the next question…";
   }, [storyStep]);
 
   function startCrafting() {
     if (craftUi === "crafting") return;
-    setStatusLine("It will take a moment — I’m crafting your story…");
+    setStatusLine("It will take a moment. I’m crafting your story…");
     setCraftUi("crafting");
     window.setTimeout(() => {
       setCraftUi("ready");
@@ -350,7 +350,7 @@ Start simple. What's something you worked on that stands out?`,
     if (storyStep === -1) {
       const cleaned = normalizeWhitespace(text);
       if (cleaned.length < 8) {
-        setStatusLine("Add a little more—what you worked on and why it mattered helps.");
+        setStatusLine("Add a little more: what you worked on and why it mattered helps.");
         return;
       }
       const lines = cleaned.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -484,10 +484,10 @@ Start simple. What's something you worked on that stands out?`,
         <div className="pb-44">
           <Card>
             <CardBody>
-              <h2 className="text-4xl font-extrabold tracking-tight">
+              <h2 className="text-h4">
                 First, set a target role.
               </h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--app-muted)]">
+              <p className="mt-3 text-caption leading-6 text-[var(--app-muted)]">
                 Story banks are saved per role. Once you pick a role, we’ll build
                 at least 3 experiences and enrich them into proof.
               </p>
@@ -516,37 +516,37 @@ Start simple. What's something you worked on that stands out?`,
                 {postCraftHome ? (
                   <div className="mx-auto w-[672px] max-w-full space-y-6">
                     <div className="space-y-3">
-                      <h2 className="text-left text-[34px] font-extrabold leading-tight tracking-tight sm:text-[40px]">
-                        Hey {firstName} — we’ve crafted a story.
+                      <h2 className="text-h4 text-left">
+                        Hey {firstName}, we’ve crafted a story.
                       </h2>
-                      <p className="text-left text-lg font-semibold leading-snug tracking-tight text-black/80 sm:text-xl">
+                      <p className="text-body-lg font-semibold text-left text-black/80">
                         For the role of <span className="text-gray-900">{role}</span>
                       </p>
-                      <p className="text-left text-sm leading-6 text-[var(--app-muted)] sm:text-base">
+                      <p className="text-caption text-left leading-6 text-[var(--app-muted)]">
                         You can still add more to your story to get better results.
                       </p>
                     </div>
                     <Card className="shadow-none">
                       <CardBody>
-                        <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+                        <div className="text-overline text-[var(--app-muted)]">
                           YOUR STORYBOARD
                         </div>
-                        <div className="mt-2 text-base font-extrabold tracking-tight">
+                        <div className="mt-2 text-h6">
                           Your storyboard for {role} is ready to review.
                         </div>
                         <div className="mt-5 flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/50 bg-white/50 px-4 py-3">
                           <div>
-                            <div className="text-sm font-bold tracking-tight">Overall story score</div>
-                            <div className="text-xs text-[var(--app-muted)]">
+                            <div className="text-caption font-semibold">Overall story score</div>
+                            <div className="text-overline text-[var(--app-muted)]">
                               Mean of 12 competencies (0–5)
                             </div>
                           </div>
                           <div
-                            className="text-3xl font-extrabold tabular-nums tracking-tight"
+                            className="text-h5"
                             title="Mean of 12 competency sections in your draft, or latest mock interview overall if the draft is still empty"
                           >
                             {storyScoreForCard.toFixed(1)}
-                            <span className="pl-1 text-lg font-extrabold text-[var(--app-muted)]">
+                            <span className="pl-1 text-body text-[var(--app-muted)]">
                               / 5
                             </span>
                           </div>
@@ -618,25 +618,25 @@ Start simple. What's something you worked on that stands out?`,
                       <div className="mx-auto mt-8 w-[672px] max-w-full">
                         <Card className="shadow-none">
                           <CardBody>
-                            <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+                            <div className="text-overline text-[var(--app-muted)]">
                               YOUR STORYBOARD
                             </div>
-                            <div className="mt-2 text-base font-extrabold tracking-tight">
+                            <div className="mt-2 text-h6">
                               Your storyboard for {role} is here.
                             </div>
                             <div className="mt-5 flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/50 bg-white/50 px-4 py-3">
                               <div>
-                                <div className="text-sm font-bold tracking-tight">Overall story score</div>
-                                <div className="text-xs text-[var(--app-muted)]">
+                                <div className="text-caption font-semibold">Overall story score</div>
+                                <div className="text-overline text-[var(--app-muted)]">
                                   Mean of 12 competencies (0–5)
                                 </div>
                               </div>
                               <div
-                                className="text-3xl font-extrabold tabular-nums tracking-tight"
+                                className="text-h5"
                                 title="Mean strength across the 12 competency sections, or latest mock interview if draft is empty"
                               >
                                 {storyScoreForCard.toFixed(1)}
-                                <span className="pl-1 text-lg font-extrabold text-[var(--app-muted)]">
+                                <span className="pl-1 text-body text-[var(--app-muted)]">
                                   / 5
                                 </span>
                               </div>
@@ -676,7 +676,7 @@ Start simple. What's something you worked on that stands out?`,
                       </div>
                     ) : null}
                     {statusLine ? (
-                      <p className="mx-auto mt-6 w-[672px] max-w-full text-sm font-medium leading-6 text-gray-800">
+                      <p className="mx-auto mt-6 w-[672px] max-w-full text-caption leading-6 text-gray-800">
                         {statusLine}
                       </p>
                     ) : null}
@@ -690,7 +690,7 @@ Start simple. What's something you worked on that stands out?`,
       <div className="fixed right-4 top-16 bottom-24 w-[320px] space-y-3 overflow-y-auto pr-8">
               <div className="flex items-end justify-between gap-3">
                 <div>
-                  <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+                  <div className="text-overline text-[var(--app-muted)]">
                     EXPERIENCE BANK
                   </div>
                 </div>
@@ -735,10 +735,10 @@ Start simple. What's something you worked on that stands out?`,
                           ].join(" ")}
                         >
                           <CardBody className="p-4">
-                            <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+                            <div className="text-overline text-[var(--app-muted)]">
                               EXPERIENCE {n}
                             </div>
-                            <div className="mt-1 text-sm font-extrabold tracking-tight">
+                            <div className="mt-1 text-caption font-semibold">
                               {e.title || `Experience ${n}`}
                             </div>
                           </CardBody>
@@ -749,8 +749,8 @@ Start simple. What's something you worked on that stands out?`,
                 ) : (
                   <Card className="shadow-none">
                     <CardBody className="p-4">
-                      <div className="text-lg font-extrabold tracking-tight">No experiences yet</div>
-                      <div className="mt-1 text-sm leading-5 text-[var(--app-muted)]">
+                      <div className="text-body font-semibold">No experiences yet</div>
+                      <div className="mt-1 text-caption leading-5 text-[var(--app-muted)]">
                         Start by sharing an experience in the chat. To add another one later, just say{" "}
                         <span className="font-extrabold text-gray-900">“Add new experience”</span>.
                       </div>
@@ -759,7 +759,7 @@ Start simple. What's something you worked on that stands out?`,
                 )}
               </div>
 
-              <div className="pt-2 text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+              <div className="pt-2 text-overline text-[var(--app-muted)]">
                 YOUR STORY DRAFT
               </div>
               <Card className="shadow-none">
@@ -775,8 +775,8 @@ Start simple. What's something you worked on that stands out?`,
                     </div>
                   ) : (
                     <>
-                      <div className="text-lg font-extrabold tracking-tight">{storyQuick.title}</div>
-                      <div className="whitespace-pre-wrap text-sm leading-6 text-black/80">
+                      <div className="text-body font-semibold">{storyQuick.title}</div>
+                      <div className="whitespace-pre-wrap text-caption leading-6 text-black/80">
                         {storyQuick.body}
                       </div>
                     </>
@@ -784,7 +784,7 @@ Start simple. What's something you worked on that stands out?`,
                 </CardBody>
               </Card>
 
-              <div className="pt-2 text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+              <div className="pt-2 text-overline text-[var(--app-muted)]">
                 SUGGESTIONS
               </div>
               <Card className="shadow-none">
@@ -795,14 +795,14 @@ Start simple. What's something you worked on that stands out?`,
                       <div className="h-5 w-10/12 animate-pulse rounded-lg bg-black/10" />
                     </div>
                   ) : activeSuggestion ? (
-                    <div className="text-sm font-medium leading-6 text-gray-900">
+                    <div className="text-caption leading-6 text-gray-900">
                       {typeof activeSuggestion === "string"
                         ? emphasizeSuggestionText(activeSuggestion)
                         : activeSuggestion}
                     </div>
                   ) : (
-                    <div className="text-sm font-medium leading-6 text-[var(--app-muted)]">
-                      Keep going — I’ll suggest the next best detail to add.
+                    <div className="text-caption leading-6 text-[var(--app-muted)]">
+                      Keep going. I’ll suggest the next best detail to add.
                     </div>
                   )}
                 </CardBody>

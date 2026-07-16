@@ -10,7 +10,7 @@ export function Button({ className, variant = "primary", ...props }: Props) {
   return (
     <button
       className={cn(
-        "inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 text-base font-bold tracking-tight transition",
+        "inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 text-body transition",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
         "disabled:cursor-not-allowed disabled:opacity-40",
         variant === "primary" &&

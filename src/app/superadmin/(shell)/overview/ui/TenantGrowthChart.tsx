@@ -15,11 +15,11 @@ export function TenantGrowthChart({ data }: Props) {
   return (
     <Card>
       <CardBody>
-        <h2 className="text-base font-bold tracking-tight text-black">Tenant Growth Analytics</h2>
-        <p className="mt-0.5 text-sm text-[var(--app-muted)]">Onboarding trends across the platform</p>
+        <h2 className="text-h6 text-black">Tenant Growth Analytics</h2>
+        <p className="mt-0.5 text-caption text-[var(--app-muted)]">Onboarding trends across the platform</p>
         <div className="mt-4">
           {data.length === 0 ? (
-            <p className="py-10 text-center text-sm font-medium text-[var(--app-muted)]">
+            <p className="py-10 text-center text-caption text-[var(--app-muted)]">
               No analytics data available.
             </p>
           ) : (

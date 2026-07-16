@@ -10,11 +10,11 @@ export function ActiveUserTrendChart({ data }: Props) {
   return (
     <Card>
       <CardBody>
-        <h2 className="text-base font-bold tracking-tight text-black">Active User Trend</h2>
-        <p className="mt-0.5 text-sm text-[var(--app-muted)]">Platform engagement trends</p>
+        <h2 className="text-h6 text-black">Active User Trend</h2>
+        <p className="mt-0.5 text-caption text-[var(--app-muted)]">Platform engagement trends</p>
         <div className="mt-4">
           {data.length === 0 ? (
-            <p className="py-10 text-center text-sm font-medium text-[var(--app-muted)]">
+            <p className="py-10 text-center text-caption text-[var(--app-muted)]">
               No activity found for selected date range.
             </p>
           ) : (

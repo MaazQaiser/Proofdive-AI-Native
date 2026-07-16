@@ -16,7 +16,7 @@ export function ChatThread({ messages }: { messages: ChatMessage[] }) {
         >
           <div
             className={cn(
-              "max-w-[85%] whitespace-pre-wrap rounded-[22px] px-4 py-3 text-sm leading-6",
+              "max-w-[85%] whitespace-pre-wrap rounded-[22px] px-4 py-3 text-body-sm leading-6",
               m.role === "user"
                 ? "bg-black text-white"
                 : "bg-white text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)]",
