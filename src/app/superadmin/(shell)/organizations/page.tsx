@@ -1,10 +1,5 @@
-import { SuperAdminComingSoon } from "../ui/SuperAdminComingSoon";
+import { OrganizationsListScreen } from "./ui/OrganizationsListScreen";
 
 export default function SuperAdminOrganizationsPage() {
-  return (
-    <SuperAdminComingSoon
-      title="Organizations"
-      description="Onboard and manage universities, training centers, and employers — coming in a future batch."
-    />
-  );
+  return <OrganizationsListScreen />;
 }
