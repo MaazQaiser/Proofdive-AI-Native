@@ -16,7 +16,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -41,9 +41,9 @@ import {
   type OrganizationType,
 } from "@/lib/superAdminOrganizations";
 
-type StepId = "landing" | "details" | "competency" | "courses" | "payment" | "users";
+type StepId = "landing" | "details" | "competency" | "courses" | "payment" | "users" | "review";
 
-const STEP_ORDER: StepId[] = ["landing", "details", "competency", "courses", "payment", "users"];
+const STEP_ORDER: StepId[] = ["landing", "details", "competency", "courses", "payment", "users", "review"];
 const TOTAL_STEPS = STEP_ORDER.length - 1;
 
 const STEP_TITLES: Record<StepId, string> = {
@@ -53,15 +53,34 @@ const STEP_TITLES: Record<StepId, string> = {
   courses: "Course Configuration",
   payment: "Payment Plan Configuration",
   users: "User Onboarding",
+  review: "Review & Send Invite",
 };
 
 const STEP_CARDS: { step: number; id: StepId; title: string; icon: typeof Building2 }[] = [
-  { step: 1, id: "details", title: "Org Type Selection", icon: Building2 },
+  { step: 1, id: "details", title: "Org Details", icon: Building2 },
   { step: 2, id: "competency", title: "Competency", icon: Layers },
   { step: 3, id: "courses", title: "Course Selection", icon: GraduationCap },
   { step: 4, id: "payment", title: "Payment Plan", icon: CreditCard },
   { step: 5, id: "users", title: "User Onboarding", icon: Users },
 ];
+
+function ReviewRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-caption text-muted-foreground">{label}</span>
+      <span className="text-body-sm text-foreground">{value || "—"}</span>
+    </div>
+  );
+}
+
+function ReviewSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3 rounded-md border border-border p-4">
+      <h3 className="text-overline text-muted-foreground">{title}</h3>
+      {children}
+    </section>
+  );
+}
 
 type FormState = {
   orgType: OrganizationType | "";
@@ -243,6 +262,10 @@ export function AddOrganizationDialog({
     }
     if (step === "users") {
       if (csvError) return;
+      goToStep("review");
+      return;
+    }
+    if (step === "review") {
       const plan = PRICING_PLANS.find((p) => p.id === form.pricingPlanId);
       const newOrganization: Organization = {
         id: `org_${Date.now()}`,
@@ -312,6 +335,13 @@ export function AddOrganizationDialog({
     setCsvError("");
   }
 
+  function handleSkipUsers() {
+    updateField("csvFileName", "");
+    updateField("userEmails", []);
+    setCsvError("");
+    goToStep("review");
+  }
+
   function toggleCourse(courseId: string) {
     setForm((prev) => ({
       ...prev,
@@ -351,8 +381,10 @@ export function AddOrganizationDialog({
   }
 
   const stepIndex = STEP_ORDER.indexOf(step);
-  const isLastStep = step === "users";
+  const isLastStep = step === "review";
   const selectedFramework = frameworks.find((f) => f.id === form.competencyFrameworkId);
+  const selectedPlan = PRICING_PLANS.find((p) => p.id === form.pricingPlanId);
+  const selectedCourses = AVAILABLE_COURSES.filter((c) => form.selectedCourseIds.includes(c.id));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -947,6 +979,85 @@ export function AddOrganizationDialog({
               )}
             </div>
           )}
+
+          {step === "review" && (
+            <div className="mx-auto flex max-w-2xl flex-col gap-4">
+              <p className="text-body-sm text-muted-foreground">
+                Review the organization&apos;s configuration below. Clicking Send Invite will create the
+                organization and email the Organization Admin an invitation to activate their account.
+              </p>
+
+              <ReviewSection title="Organization Details">
+                <div className="grid grid-cols-2 gap-4">
+                  <ReviewRow label="Organization Name" value={form.name} />
+                  <ReviewRow
+                    label="Organization Type"
+                    value={form.orgType ? ORGANIZATION_TYPE_LABEL[form.orgType as OrganizationType] : ""}
+                  />
+                  <ReviewRow label="Industry / Domain" value={form.industry} />
+                  <ReviewRow label="Country" value={form.country} />
+                  <ReviewRow label="City" value={form.city} />
+                  <ReviewRow label="Region" value={form.region} />
+                  <ReviewRow label="Domain Details" value={form.domain} />
+                  <ReviewRow label="Organization Logo" value={form.logoFileName || "Not uploaded"} />
+                </div>
+                <Separator />
+                <div className="grid grid-cols-2 gap-4">
+                  <ReviewRow label="Primary Contact Name" value={form.contactName} />
+                  <ReviewRow label="Email Address" value={form.contactEmail} />
+                  <ReviewRow
+                    label="Phone Number"
+                    value={form.contactPhone ? `${form.contactCountryCode} ${form.contactPhone}` : ""}
+                  />
+                  <ReviewRow label="Designation" value={form.contactDesignation} />
+                </div>
+              </ReviewSection>
+
+              <ReviewSection title="Competency Configuration">
+                <ReviewRow label="Assigned Competency Framework" value={selectedFramework?.name} />
+              </ReviewSection>
+
+              <ReviewSection title="Course Configuration">
+                {selectedCourses.length === 0 ? (
+                  <p className="text-body-sm text-muted-foreground">No courses assigned.</p>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {selectedCourses.map((course) => (
+                      <li key={course.id} className="text-body-sm text-foreground">
+                        {course.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </ReviewSection>
+
+              <ReviewSection title="Subscription Configuration">
+                <div className="grid grid-cols-2 gap-4">
+                  <ReviewRow label="Assigned Plan" value={selectedPlan?.name} />
+                  <ReviewRow label="Number of Users" value={form.numberOfUsers} />
+                  <ReviewRow label="Subscription Start Date" value={form.startDate} />
+                  <ReviewRow label="Subscription Expiry Date" value={form.expiryDate} />
+                  <ReviewRow
+                    label="Applied Discount"
+                    value={form.discountPercent ? `${form.discountPercent}%` : "None"}
+                  />
+                </div>
+              </ReviewSection>
+
+              <ReviewSection title="User Upload Summary">
+                {form.userEmails.length === 0 ? (
+                  <p className="text-body-sm text-muted-foreground">
+                    No users uploaded. You can invite users later.
+                  </p>
+                ) : (
+                  <p className="text-body-sm text-foreground">
+                    {form.csvFileName} — {form.userEmails.length} user
+                    {form.userEmails.length === 1 ? "" : "s"} will be invited.
+                  </p>
+                )}
+              </ReviewSection>
+            </div>
+          )}
         </div>
 
         <div className="flex shrink-0 items-center justify-between border-t border-border px-6 py-4">
@@ -955,10 +1066,17 @@ export function AddOrganizationDialog({
             Close
           </Button>
           {!isCreatingCompetency && (
-            <Button onClick={handleNext}>
-              {isLastStep ? "Create Organization" : "Next"}
-              {!isLastStep && <ArrowRight className="h-4 w-4" />}
-            </Button>
+            <div className="flex items-center gap-2">
+              {step === "users" && (
+                <Button variant="ghost" onClick={handleSkipUsers}>
+                  Skip
+                </Button>
+              )}
+              <Button onClick={handleNext}>
+                {isLastStep ? "Send Invite" : "Next"}
+                {!isLastStep && <ArrowRight className="h-4 w-4" />}
+              </Button>
+            </div>
           )}
         </div>
       </DialogContent>

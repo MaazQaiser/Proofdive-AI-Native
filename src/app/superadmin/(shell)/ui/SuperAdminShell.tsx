@@ -11,8 +11,8 @@ type Props = { children: ReactNode };
 
 export function SuperAdminShell({ children }: Props) {
   return (
-    <div className="min-h-screen w-full min-w-[1200px] overflow-x-auto bg-background">
-      <header className="sticky top-0 z-20 flex h-14 items-end gap-6 border-b border-border bg-background px-6 print:hidden">
+    <div className="flex h-screen w-full min-w-[1200px] flex-col overflow-x-auto bg-background">
+      <header className="flex h-14 shrink-0 items-end gap-6 border-b border-border bg-background px-6 print:hidden">
         <Link
           href="/superadmin/overview"
           className="flex h-full shrink-0 items-center border-r border-border pr-6"
@@ -45,15 +45,7 @@ export function SuperAdminShell({ children }: Props) {
         </div>
       </header>
 
-        <main className="min-w-0 flex-1">
-          <header className="sticky top-0 z-20 -mx-6 mb-8 flex items-center justify-between gap-3 bg-[var(--app-bg)] px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-[var(--app-bg)]/90 print:hidden">
-            <div className="text-overline text-black">
-              PROOFDIVE · SUPER ADMIN
-            </div>
-          </header>
-          {children}
-        </main>
-      </div>
+      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
     </div>
   );
 }

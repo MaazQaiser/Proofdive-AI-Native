@@ -138,8 +138,8 @@ export function OrganizationsListScreen() {
   }
 
   return (
-    <div className="-m-6 flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
+    <div className="-m-6 flex h-full flex-col overflow-hidden">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-12 py-4">
         <h1 className="text-h6 text-foreground">Organizations</h1>
         <Button onClick={handleAddOrganization}>
           <Plus className="h-4 w-4" />
@@ -147,7 +147,7 @@ export function OrganizationsListScreen() {
         </Button>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-6 py-3">
+      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-12 py-3">
         <div className="relative w-full max-w-sm">
           <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -251,19 +251,19 @@ export function OrganizationsListScreen() {
           <table className="w-full caption-bottom text-sm">
             <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
               <TableRow>
-                <TableHead className="text-overline pl-6 text-muted-foreground">Organization</TableHead>
+                <TableHead className="text-overline pl-12 text-muted-foreground">Organization</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Type</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Country</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Subscription Plan</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Subscription Status</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Status</TableHead>
-                <TableHead className="text-overline pr-6 text-right text-muted-foreground">Actions</TableHead>
+                <TableHead className="text-overline pr-12 text-right text-muted-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pageRows.map((org) => (
                 <TableRow key={org.id}>
-                  <TableCell className="pl-6">
+                  <TableCell className="pl-12">
                     <button
                       type="button"
                       onClick={() => handleViewDetails(org)}
@@ -283,7 +283,7 @@ export function OrganizationsListScreen() {
                   <TableCell>
                     <OrganizationStatusPill status={org.status} />
                   </TableCell>
-                  <TableCell className="pr-6 text-right">
+                  <TableCell className="pr-12 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" aria-label={`Actions for ${org.name}`}>
@@ -310,7 +310,7 @@ export function OrganizationsListScreen() {
         )}
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border bg-background px-6 py-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border bg-background px-12 py-4">
         <div className="text-caption flex items-center gap-2 text-muted-foreground">
           <span>Rows per page</span>
           <Select
