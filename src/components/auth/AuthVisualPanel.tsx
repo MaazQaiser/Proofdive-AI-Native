@@ -1,35 +1,43 @@
 const ASSET_BASE = "/brand/login-signup%20assets";
 
-/** Natural width (px) the composition below was authored at — used as the
- * scale reference so it can shrink/grow to fill whatever width the flexible
- * left panel actually has, instead of clipping at a fixed size. */
+/** Natural width/height (px) the composition below was authored at — used as
+ * the scale reference so it can shrink/grow to fill whatever space the
+ * flexible left panel actually has, instead of clipping at a fixed size.
+ * Height spans from the panel top to the bottom of the "lines" graphic
+ * (524 + 596), which is where the source design's canvas bottom fell too. */
 const NATURAL_WIDTH = 1019;
-
-const SCALE = `scale(calc(100cqw / ${NATURAL_WIDTH}px))`;
+const NATURAL_HEIGHT = 1120;
 
 /**
  * Left-hand decorative panel for the auth split-screen layout (Login/Signup).
  * Positions are pixel-exact against the Figma spec (1920w canvas); the banner
  * asset already excludes the portion that bleeds past the page's left edge.
  *
- * The banner+headline and the outline-square "lines" graphic scale together
- * (same width-based factor, via container query units) but are anchored as
- * two separate groups — top and bottom — rather than one rigid composition.
- * In the source design the lines graphic's bottom edge sits flush with the
- * canvas bottom; anchoring it from the panel's bottom instead of the top
- * keeps that true at any panel height, instead of leaving a gap below it
- * whenever the panel is taller than the scaled composition.
+ * The whole composition scales as one rigid unit — never independently, or
+ * the banner and the "lines" graphic can drift apart (leaving a gap) or
+ * toward each other (overlapping) depending on panel proportions. The scale
+ * factor is capped by both the panel's width AND height (like `object-fit:
+ * contain`), so it never needs more vertical space than is actually
+ * available, and the whole group is anchored to the panel's bottom so any
+ * leftover space appears above it instead of below — matching how the
+ * "lines" graphic's bottom edge sits flush with the canvas bottom in the
+ * source design.
  */
 export function AuthVisualPanel() {
   return (
     <div
       className="relative hidden flex-1 overflow-hidden lg:block"
-      style={{ containerType: "inline-size" }}
+      style={{ containerType: "size" }}
       aria-hidden
     >
       <div
-        className="absolute top-0 left-0"
-        style={{ width: NATURAL_WIDTH, transformOrigin: "top left", transform: SCALE }}
+        className="absolute bottom-0 left-0"
+        style={{
+          width: NATURAL_WIDTH,
+          height: NATURAL_HEIGHT,
+          transformOrigin: "bottom left",
+          transform: `scale(min(calc(100cqw / ${NATURAL_WIDTH}px), calc(100cqh / ${NATURAL_HEIGHT}px)))`,
+        }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -45,17 +53,11 @@ export function AuthVisualPanel() {
           <br />
           grounded in proof.
         </p>
-      </div>
-
-      <div
-        className="absolute bottom-0 left-0"
-        style={{ width: NATURAL_WIDTH, transformOrigin: "bottom left", transform: SCALE }}
-      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={`${ASSET_BASE}/lines.svg`}
           alt=""
-          className="absolute bottom-0 left-4 h-auto w-[650px] max-w-none"
+          className="absolute top-[524px] left-4 h-auto w-[650px] max-w-none"
         />
       </div>
     </div>
