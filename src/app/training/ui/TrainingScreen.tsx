@@ -182,7 +182,7 @@ export function TrainingScreen() {
         summary: "Align stakeholders, manage resistance, and move things forward together.",
         badge: "People",
         duration: "40 min",
-        suggestion: "Interview question: Describe a time you aligned stakeholders who disagreed—what did you do first?",
+        suggestion: "Interview question: Describe a time you aligned stakeholders who disagreed. What did you do first?",
         accent: { from: "#10B981", to: "#22D3EE" },
         courseId: "competency-pillars",
       },
@@ -237,8 +237,8 @@ export function TrainingScreen() {
         <div className="pb-44">
           <Card>
             <CardBody>
-              <h2 className="text-4xl font-extrabold tracking-tight">First, set a target role.</h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--app-muted)]">
+              <h2 className="text-h4">First, set a target role.</h2>
+              <p className="mt-3 text-caption leading-6 text-[var(--app-muted)]">
                 Training is personalized per role. Once you pick a role, I’ll generate modules and track your progress.
               </p>
               <div className="mt-6 flex gap-2">
@@ -282,16 +282,16 @@ export function TrainingScreen() {
                           onClick={() => setSelectedCourseId(course.id)}
                           className="rounded-[22px] border border-white/50 bg-white px-5 py-5 text-left shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70"
                         >
-                          <div className="text-lg font-extrabold tracking-tight">{course.title}</div>
-                          <div className="mt-2 text-sm leading-6 text-[var(--app-muted)]">
+                          <div className="text-h6">{course.title}</div>
+                          <div className="mt-2 text-caption leading-6 text-[var(--app-muted)]">
                             {course.subtitle}
                           </div>
                           <div className="mt-4">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-[var(--app-muted)]">
+                              <span className="text-overline text-[var(--app-muted)]">
                                 {pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started"}
                               </span>
-                              <span className="text-xs font-bold tabular-nums text-gray-700">{pct}%</span>
+                              <span className="text-overline text-gray-700">{pct}%</span>
                             </div>
                             <div
                               className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/10"
@@ -314,10 +314,10 @@ export function TrainingScreen() {
 
                   {true ? (
                         <section aria-label="Suggested for you" className="px-1">
-                          <div className="text-sm font-extrabold tracking-tight text-gray-900">
+                          <div className="text-caption font-semibold text-gray-900">
                             Suggested for you
                           </div>
-                          <div className="mt-1 text-xs leading-5 text-[var(--app-muted)]">
+                          <div className="mt-1 text-caption leading-5 text-[var(--app-muted)]">
                             Based on your recent session, these will help you improve where it matters most.
                           </div>
                           <div className="mt-3 flex flex-col gap-3">
@@ -339,19 +339,19 @@ export function TrainingScreen() {
                                     aria-hidden
                                   >
                                     <div className="absolute inset-0 bg-black/10" />
-                                    <div className="absolute bottom-2 left-2 inline-flex items-center rounded-lg bg-white/80 px-2 py-1 text-[10px] font-extrabold tracking-tight text-gray-900">
+                                    <div className="absolute bottom-2 left-2 inline-flex items-center rounded-lg bg-white/80 px-2 py-1 text-overline text-gray-900">
                                       {pill.duration}
                                     </div>
                                   </div>
 
                                   <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center justify-between gap-2">
-                                      <div className="text-sm font-extrabold tracking-tight">{pill.title}</div>
-                                      <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-2.5 py-1 text-[11px] font-semibold tracking-tight text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                                      <div className="text-caption font-semibold">{pill.title}</div>
+                                      <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-2.5 py-1 text-overline text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                                         {pill.badge}
                                       </span>
                                     </div>
-                                    <div className="mt-1 text-xs leading-5 text-[var(--app-muted)]">
+                                    <div className="mt-1 text-caption leading-5 text-[var(--app-muted)]">
                                       {pill.summary}
                                     </div>
                                   </div>
@@ -378,7 +378,7 @@ export function TrainingScreen() {
                     type="button"
                     variant="ghost"
                     onClick={() => setSelectedCourseId(null)}
-                    className="-ml-1 !h-9 inline-flex items-center gap-1 !px-2 !text-sm font-bold"
+                    className="-ml-1 !h-9 inline-flex items-center gap-1 !px-2 !text-caption font-semibold"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -396,21 +396,21 @@ export function TrainingScreen() {
                     </svg>
                     Back
                   </Button>
-                  <h2 className="mt-4 text-left text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+                  <h2 className="text-h4 mt-4 text-left">
                     {COURSE_ENTRY_HEADING}
                   </h2>
-                  <div className="mt-4 text-2xl font-extrabold tracking-tight sm:text-3xl">
+                  <div className="text-h5 mt-4">
                     {selectedCourse.title}
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-[var(--app-muted)]">{selectedCourse.subtitle}</p>
+                  <p className="mt-2 text-caption leading-6 text-[var(--app-muted)]">{selectedCourse.subtitle}</p>
                   <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-3 py-1 text-xs font-semibold tracking-tight text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                    <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-3 py-1 text-overline text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                       {selectedCourse.duration}
                     </span>
-                    <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-3 py-1 text-xs font-semibold tracking-tight text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                    <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-3 py-1 text-overline text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                       {selectedCourse.checkpoints} touch points
                     </span>
-                    <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-3 py-1 text-xs font-semibold tracking-tight text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                    <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-3 py-1 text-overline text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
                       {selectedCourse.chapters.length} chapters
                     </span>
                   </div>
@@ -420,10 +420,10 @@ export function TrainingScreen() {
                     return (
                       <div className="mt-5 max-w-md">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-[var(--app-muted)]">
+                          <span className="text-overline text-[var(--app-muted)]">
                             {pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started"}
                           </span>
-                          <span className="text-xs font-bold tabular-nums text-gray-700">{pct}%</span>
+                          <span className="text-overline text-gray-700">{pct}%</span>
                         </div>
                         <div
                           className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/10"
@@ -443,7 +443,7 @@ export function TrainingScreen() {
                   })()}
 
                   <div className="mt-8">
-                    <div className="text-xs font-semibold tracking-[0.18em] text-[var(--app-muted)]">
+                    <div className="text-overline text-[var(--app-muted)]">
                       CHAPTERS
                     </div>
                     <div className="mt-3 flex w-full flex-col gap-3">
@@ -463,16 +463,16 @@ export function TrainingScreen() {
                               aria-hidden
                             >
                               <div className="absolute inset-0 bg-black/10" />
-                              <div className="absolute bottom-1.5 left-1.5 inline-flex items-center rounded-lg bg-white/80 px-2 py-1 text-[10px] font-extrabold tracking-tight text-gray-900">
+                              <div className="absolute bottom-1.5 left-1.5 inline-flex items-center rounded-lg bg-white/80 px-2 py-1 text-overline text-gray-900">
                                 {ch.duration}
                               </div>
                             </div>
 
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-extrabold tracking-tight">
+                              <div className="text-caption font-semibold">
                                 {idx + 1}. {ch.title}
                               </div>
-                              <div className="mt-1 text-xs leading-5 text-[var(--app-muted)]">{ch.summary}</div>
+                              <div className="mt-1 text-caption leading-5 text-[var(--app-muted)]">{ch.summary}</div>
                             </div>
                           </div>
                         </div>

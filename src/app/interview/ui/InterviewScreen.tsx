@@ -242,17 +242,17 @@ export function InterviewScreen() {
           <div className="mx-auto w-[800px] max-w-full text-left">
           {showPostJourneyMockLanding ? (
             <>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-xs font-extrabold tracking-tight text-gray-800">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-overline text-gray-800">
                 <span>Mock interview</span>
                 <span className="h-3 w-px bg-black/[.12]" />
                 <span>Ready for you</span>
               </div>
 
-              <h2 className="mt-6 text-[40px] font-extrabold leading-[1.08] tracking-tight sm:text-[44px]">
+              <h2 className="text-h3 mt-6 leading-[1.08]">
                 Hey {name}, glad to see you back
               </h2>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--app-muted)]">
-                You’ve completed training and crafted your story — it’s time to take a full mock
+              <p className="mt-4 max-w-2xl text-body-sm leading-7 text-[var(--app-muted)]">
+                You’ve completed training and crafted your story. It’s time to take a full mock
                 interview. Pick how you want to practice below.
               </p>
 
@@ -264,14 +264,14 @@ export function InterviewScreen() {
                 >
                   <div className="flex w-full flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-base font-extrabold tracking-tight text-black">
+                      <div className="text-body-sm font-semibold text-black">
                         Take a 30-minute mock interview
                       </div>
-                      <div className="mt-1 text-sm leading-6 text-[var(--app-muted)]">
+                      <div className="mt-1 text-caption leading-6 text-[var(--app-muted)]">
                         Full session covering all competency pillars, aligned with your storyboard.
                       </div>
                     </div>
-                    <span className="shrink-0 rounded-full border border-black/10 bg-black/[.04] px-3 py-1 text-xs font-extrabold text-gray-800">
+                    <span className="shrink-0 rounded-full border border-black/10 bg-black/[.04] px-3 py-1 text-overline text-gray-800">
                       30 min
                     </span>
                   </div>
@@ -285,14 +285,14 @@ export function InterviewScreen() {
                   >
                     <div className="flex w-full flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="text-base font-extrabold tracking-tight text-black">
+                        <div className="text-body-sm font-semibold text-black">
                           Take a short interview
                         </div>
-                        <div className="mt-1 text-sm leading-6 text-[var(--app-muted)]">
+                        <div className="mt-1 text-caption leading-6 text-[var(--app-muted)]">
                           Focus on selected competency pillars when you have limited time.
                         </div>
                       </div>
-                      <span className="shrink-0 rounded-full border border-black/10 bg-white/60 px-3 py-1 text-xs font-extrabold text-gray-800">
+                      <span className="shrink-0 rounded-full border border-black/10 bg-white/60 px-3 py-1 text-overline text-gray-800">
                         Short
                       </span>
                     </div>
@@ -305,7 +305,7 @@ export function InterviewScreen() {
                   type="button"
                   onClick={() => setRecentStatsOpen((o) => !o)}
                   aria-expanded={recentStatsOpen}
-                  className="flex w-full items-center justify-between gap-3 text-left text-base font-extrabold text-black transition hover:text-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)]"
+                  className="flex w-full items-center justify-between gap-3 text-left text-body-sm font-semibold text-black transition hover:text-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)]"
                 >
                   <span className="underline decoration-black/20 underline-offset-[6px]">
                     View my recent interview stats
@@ -335,26 +335,26 @@ export function InterviewScreen() {
                         key={c.key}
                         className="flex flex-col rounded-[18px] border border-white/50 bg-white p-5 shadow-[0_12px_30px_rgba(0,0,0,0.06)]"
                       >
-                        <div className="text-xs font-extrabold tracking-[0.18em] text-[var(--app-muted)]">
+                        <div className="text-overline text-[var(--app-muted)]">
                           ROLE
                         </div>
-                        <div className="mt-1 text-lg font-extrabold tracking-tight text-black">
+                        <div className="text-body font-semibold mt-1 text-black">
                           {c.roleTitle}
                         </div>
-                        <div className="mt-4 text-xs font-extrabold tracking-[0.18em] text-[var(--app-muted)]">
+                        <div className="mt-4 text-overline text-[var(--app-muted)]">
                           SESSION SCORE
                         </div>
-                        <div className="mt-1 text-2xl font-extrabold tabular-nums tracking-tight text-black">
+                        <div className="text-h5 mt-1 leading-none tabular-nums text-black">
                           {c.scoreText}
-                          <span className="text-base font-extrabold text-[var(--app-muted)]"> / 5</span>
+                          <span className="text-body-sm text-[var(--app-muted)]"> / 5</span>
                         </div>
-                        <div className="mt-1 text-xs font-semibold text-[var(--app-muted)]">
+                        <div className="mt-1 text-overline text-[var(--app-muted)]">
                           {c.status}
                         </div>
-                        <div className="mt-4 text-xs font-extrabold tracking-[0.18em] text-[var(--app-muted)]">
+                        <div className="mt-4 text-overline text-[var(--app-muted)]">
                           SESSION TYPE
                         </div>
-                        <div className="mt-1 text-sm font-bold text-black">{c.sessionType}</div>
+                        <div className="mt-1 text-caption font-semibold text-black">{c.sessionType}</div>
                         <div className="mt-4 flex-1" />
                         <Button
                           type="button"
@@ -375,17 +375,17 @@ export function InterviewScreen() {
             </>
           ) : (
             <>
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-xs font-extrabold tracking-tight text-gray-800">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-overline text-gray-800">
             <span>Duration</span>
             <span className="h-3 w-px bg-black/[.12]" />
             <span>10 min</span>
           </div>
 
-          <h2 className="mt-6 text-[44px] font-extrabold leading-[1.05] tracking-tight">
+          <h2 className="text-h3 mt-6 leading-[1.05]">
             Hey {name}, welcome to your first Mock Interview
           </h2>
 
-          <p className="mt-4 max-w-xl text-base leading-7 text-[var(--app-muted)]">
+          <p className="mt-4 max-w-xl text-body-sm leading-7 text-[var(--app-muted)]">
             This is a first mock interview. You’ll be judged based on the Proofdive Competency
             Engine.{" "}
             <button
@@ -422,7 +422,7 @@ export function InterviewScreen() {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  <div className="min-w-0 text-sm leading-6 text-[var(--app-muted)]">
+                  <div className="min-w-0 text-caption leading-6 text-[var(--app-muted)]">
                     Using the job description from your profile to tailor this interview.
                   </div>
                 </div>
@@ -430,10 +430,10 @@ export function InterviewScreen() {
                 <>
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <div className="text-base font-extrabold tracking-tight text-black">
+                      <div className="text-body-sm font-semibold text-black">
                         Would you like to add a job description for this interview?
                       </div>
-                      <div className="mt-1 text-sm leading-6 text-[var(--app-muted)]">
+                      <div className="mt-1 text-caption leading-6 text-[var(--app-muted)]">
                         Uploading it helps tailor the interview.
                       </div>
                     </div>
@@ -460,7 +460,7 @@ export function InterviewScreen() {
                   </div>
 
                   {jobDescriptionName ? (
-                    <div className="mt-3 text-sm text-[var(--app-muted)]">{jobDescriptionName}</div>
+                    <div className="mt-3 text-caption text-[var(--app-muted)]">{jobDescriptionName}</div>
                   ) : null}
                 </>
               )}
@@ -468,10 +468,10 @@ export function InterviewScreen() {
               <div className="mt-5 border-t border-white/50 pt-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="text-sm font-extrabold tracking-tight text-black">
+                    <div className="text-caption font-semibold text-black">
                       Enable camera
                     </div>
-                    <div className="mt-1 text-sm leading-6 text-[var(--app-muted)]">
+                    <div className="mt-1 text-caption leading-6 text-[var(--app-muted)]">
                       Optional: it captures video for gesture and presence for detailed analytics.
                     </div>
                   </div>
@@ -539,11 +539,11 @@ export function InterviewScreen() {
             className="w-full max-w-lg rounded-[24px] bg-white p-6 shadow-[0_26px_80px_rgba(0,0,0,0.20)] sm:p-8"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">SHORT SESSION</div>
-            <h2 id="pillar-pick-title" className="mt-2 text-2xl font-extrabold tracking-tight text-black">
+            <div className="text-overline text-gray-500">SHORT SESSION</div>
+            <h2 id="pillar-pick-title" className="text-h5 mt-2 text-black">
               Choose competency areas
             </h2>
-            <p className="mt-2 text-sm leading-6 text-[var(--app-muted)]">
+            <p className="mt-2 text-caption leading-6 text-[var(--app-muted)]">
               Select one or more pillars. The short interview will emphasize those areas.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -555,13 +555,13 @@ export function InterviewScreen() {
                     type="button"
                     onClick={() => toggleSelectivePillar(id)}
                     className={cn(
-                      "rounded-2xl border px-4 py-3 text-left text-sm font-extrabold tracking-tight transition",
+                      "rounded-2xl border px-4 py-3 text-left text-caption font-semibold transition",
                       on
                         ? "border-black bg-black text-white"
                         : "border-white/50 bg-white/80 text-black hover:bg-white",
                     )}
                   >
-                    <span className="block text-[10px] font-bold uppercase tracking-[0.18em] text-current opacity-70">
+                    <span className="block text-overline uppercase text-current opacity-70">
                       {on ? "Selected" : "Tap to add"}
                     </span>
                     <span className="mt-1 block">{PILLAR_LABEL[id]}</span>
@@ -570,7 +570,7 @@ export function InterviewScreen() {
               })}
             </div>
             {pillarPickError ? (
-              <p className="mt-4 text-sm font-semibold text-red-600" role="alert">
+              <p className="mt-4 text-caption font-semibold text-red-600" role="alert">
                 {pillarPickError}
               </p>
             ) : null}
@@ -604,16 +604,16 @@ export function InterviewScreen() {
         >
           <div className="w-full max-w-2xl rounded-[24px] bg-white shadow-[0_26px_80px_rgba(0,0,0,0.20)]">
             <div className="p-6 sm:p-8">
-              <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">
+              <div className="text-overline text-gray-500">
                 BEFORE WE BEGIN
               </div>
-              <div className="mt-3 text-3xl font-extrabold tracking-tight text-black">
+              <div className="text-h5 mt-3 text-black">
                 Interview Consent & Instructions
               </div>
 
-              <div className="mt-6 space-y-1.5 text-sm leading-6 text-[var(--app-muted)]">
+              <div className="mt-6 space-y-1.5 text-caption leading-6 text-[var(--app-muted)]">
                 {sessionKind === "selective_pillar" && pendingSelectivePillars && pendingSelectivePillars.length > 0 ? (
-                  <div className="rounded-[16px] border border-black/10 bg-black/[0.04] p-4 text-sm font-semibold text-black">
+                  <div className="rounded-[16px] border border-black/10 bg-black/[0.04] p-4 text-caption font-semibold text-black">
                     Selected focus:{" "}
                     {pendingSelectivePillars.map((id) => PILLAR_LABEL[id]).join(" · ")}
                   </div>
@@ -629,7 +629,7 @@ export function InterviewScreen() {
                   Focus on your individual contribution, not just the team.
                 </div>
                 <div className="rounded-[16px] border border-white/50 bg-white/40 p-4">
-                  Position yourself properly if your camera is on — sit centered, well-lit, and not too far.
+                  Position yourself properly if your camera is on. Sit centered, well-lit, and not too far.
                 </div>
                 <div className="rounded-[16px] border border-white/50 bg-white/40 px-4 py-1">
                   Ensure a clean, plain background with minimal distractions.
@@ -637,7 +637,7 @@ export function InterviewScreen() {
               </div>
 
               <div className="mt-7">
-                <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">
+                <div className="text-overline text-gray-500">
                   SESSION OPTIONS
                 </div>
 
@@ -648,10 +648,10 @@ export function InterviewScreen() {
                     className="flex w-full items-start justify-between gap-4 rounded-[18px] border border-white/50 bg-white px-4 py-4 text-left hover:bg-white/50 active:bg-white/70"
                   >
                     <div className="min-w-0">
-                      <div className="text-sm font-extrabold tracking-tight text-black">
+                      <div className="text-caption font-semibold text-black">
                         Cancel recording
                       </div>
-                      <div className="mt-1 text-sm leading-6 text-[var(--app-muted)]">
+                      <div className="mt-1 text-caption leading-6 text-[var(--app-muted)]">
                         Session runs without audio / video capture
                       </div>
                     </div>
@@ -677,10 +677,10 @@ export function InterviewScreen() {
                     className="flex w-full items-start justify-between gap-4 rounded-[18px] border border-white/50 bg-white px-4 py-4 text-left hover:bg-white/50 active:bg-white/70"
                   >
                     <div className="min-w-0">
-                      <div className="text-sm font-extrabold tracking-tight text-black">
+                      <div className="text-caption font-semibold text-black">
                         Turn off camera
                       </div>
-                      <div className="mt-1 text-sm leading-6 text-[var(--app-muted)]">
+                      <div className="mt-1 text-caption leading-6 text-[var(--app-muted)]">
                         Disables gesture and body movement analysis
                       </div>
                     </div>
@@ -769,14 +769,14 @@ export function InterviewScreen() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/[0.08] px-4 py-3">
               <span
                 id="interview-intro-video-title"
-                className="min-w-0 flex-1 truncate text-sm font-bold text-black"
+                className="min-w-0 flex-1 truncate text-caption font-semibold text-black"
               >
                 Learn about Proofdive
               </span>
               <button
                 type="button"
                 onClick={closeIntroLearnModal}
-                className="inline-flex h-9 min-w-[72px] shrink-0 items-center justify-center rounded-full border border-black/10 bg-black/[0.04] px-3 text-sm font-bold text-black transition hover:bg-black/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15"
+                className="inline-flex h-9 min-w-[72px] shrink-0 items-center justify-center rounded-full border border-black/10 bg-black/[0.04] px-3 text-caption font-semibold text-black transition hover:bg-black/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15"
               >
                 Close
               </button>

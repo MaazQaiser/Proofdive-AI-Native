@@ -84,7 +84,7 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
     pushUser(opener);
     window.setTimeout(() => {
       pushAssistant(
-        "Great — I’ll be your AI coach. What new role are you planning for? Type a job title, for example Senior Product Manager, Data Engineer, or Staff Software Engineer.",
+        "Great, I’ll be your AI coach. What new role are you planning for? Type a job title, for example Senior Product Manager, Data Engineer, or Staff Software Engineer.",
       );
     }, AI_DELAY_MS);
   }, [pushAssistant, pushUser]);
@@ -109,7 +109,7 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
       if (planPlannedStep === "next_actions") {
         pushUser(t);
         window.setTimeout(() => {
-          pushAssistant("Use the options above, or type another question here — expanded coaching is on the way.");
+          pushAssistant("Use the options above, or type another question here. Expanded coaching is on the way.");
         }, AI_DELAY_MS);
         return;
       }
@@ -142,7 +142,7 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
       pushUser(t);
       window.setTimeout(() => {
         pushAssistant(
-          "Thanks for your message. A fuller AI coach is on the way — for a guided start, use **Plan new Role** in the quick prompts above the field.",
+          "Thanks for your message. A fuller AI coach is on the way. For a guided start, use **Plan new Role** in the quick prompts above the field.",
         );
       }, AI_DELAY_MS);
     },
@@ -184,12 +184,12 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
             <div
               className={cn(
                 m.role === "user"
-                  ? "max-w-[min(100%,32rem)] rounded-2xl rounded-br-md bg-black px-3.5 py-2.5 text-sm font-medium leading-6 text-white [word-break:break-word]"
+                  ? "max-w-[min(100%,32rem)] rounded-2xl rounded-br-md bg-black px-3.5 py-2.5 text-body-sm leading-6 text-white [word-break:break-word]"
                   : "w-full min-w-0 max-w-[min(100%,32rem)]",
               )}
             >
               {m.role === "assistant" ? (
-                <p className="whitespace-pre-wrap text-left text-sm font-medium leading-6 text-gray-800 [word-break:break-word]">
+                <p className="whitespace-pre-wrap text-left text-body-sm leading-6 text-gray-800 [word-break:break-word]">
                   {formatAssistantText(m.text)}
                 </p>
               ) : (
@@ -205,7 +205,7 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
                     }
                     className={cn(
                       "flex w-full items-center justify-between gap-2 rounded-2xl border border-white/60",
-                      "bg-white/50 px-4 py-3 text-left text-sm font-extrabold text-gray-900",
+                      "bg-white/50 px-4 py-3 text-left text-body-sm font-semibold text-gray-900",
                       "shadow-sm transition hover:bg-white/80",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                     )}
@@ -218,7 +218,7 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
                     onClick={() => setShowGuidedJourneySteps(true)}
                     className={cn(
                       "flex w-full items-center justify-between gap-2 rounded-2xl border border-white/60",
-                      "bg-white/50 px-4 py-3 text-left text-sm font-extrabold text-gray-900",
+                      "bg-white/50 px-4 py-3 text-left text-body-sm font-semibold text-gray-900",
                       "shadow-sm transition hover:bg-white/80",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
                     )}
@@ -228,10 +228,10 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
                   </button>
                   {showGuidedJourneySteps ? (
                     <div className="mt-4 w-full min-w-0 border-t border-slate-300/80 pt-4">
-                      <h3 className="text-left text-base font-extrabold leading-snug tracking-tight text-gray-900">
+                      <h3 className="text-h6 text-left leading-snug text-gray-900">
                         Here is the guided journey
                       </h3>
-                      <p className="mt-1 text-left text-sm leading-5 text-[var(--app-muted)]">
+                      <p className="mt-1 text-left text-caption leading-5 text-[var(--app-muted)]">
                         Follow the path, then go for your mock interview.
                       </p>
                       <div className="mt-4 flex w-full min-w-0 flex-col">
@@ -323,18 +323,18 @@ function GuidedJourneyStepRow({
   return (
     <div className="w-full min-w-0 py-3">
       <div className="flex w-full min-w-0 items-start justify-between gap-2">
-        <h4 className="min-w-0 flex-1 text-left text-sm font-extrabold text-gray-900 [word-break:break-word]">
+        <h4 className="min-w-0 flex-1 text-left text-caption font-semibold text-gray-900 [word-break:break-word]">
           {title}
         </h4>
         <Link
           href={actionHref}
-          className="inline-flex shrink-0 items-center gap-1.5 text-sm font-extrabold text-slate-700 no-underline transition hover:text-slate-900"
+          className="inline-flex shrink-0 items-center gap-1.5 text-caption font-semibold text-slate-700 no-underline transition hover:text-slate-900"
         >
           {actionLabel}
           <ArrowUpIcon />
         </Link>
       </div>
-      <p className="mt-0.5 text-left text-sm font-normal text-[var(--app-muted)]">{body}</p>
+      <p className="mt-0.5 text-left text-caption text-[var(--app-muted)]">{body}</p>
     </div>
   );
 }

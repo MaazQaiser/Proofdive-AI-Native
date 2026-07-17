@@ -25,7 +25,7 @@ export function DateRangeFilter({ value, onChange, options }: Props) {
             onClick={() => onChange(option.value)}
             aria-pressed={active}
             className={cn(
-              "rounded-full px-4 py-1.5 text-sm font-semibold tracking-tight transition",
+              "rounded-full px-4 py-1.5 text-caption transition",
               active
                 ? "bg-white text-black shadow-sm"
                 : "text-[var(--app-muted)] hover:text-black",

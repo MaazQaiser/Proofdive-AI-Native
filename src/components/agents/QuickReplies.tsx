@@ -20,9 +20,9 @@ export function QuickReplies({
           onClick={() => onPick(opt.value)}
           className="rounded-[16px] border border-[#E2E8F0]/90 bg-white/60 px-4 py-4 text-left shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition hover:bg-white/70 active:bg-white/80"
         >
-          <div className="text-sm font-extrabold tracking-tight">{opt.label}</div>
+          <div className="text-caption">{opt.label}</div>
           {opt.hint ? (
-            <div className="mt-1 text-xs text-[var(--app-muted)]">{opt.hint}</div>
+            <div className="mt-1 text-overline text-[var(--app-muted)]">{opt.hint}</div>
           ) : null}
         </button>
       ))}

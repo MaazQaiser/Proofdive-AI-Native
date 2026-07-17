@@ -45,7 +45,15 @@ export function SuperAdminShell({ children }: Props) {
         </div>
       </header>
 
-      <main className="min-w-0 p-6">{children}</main>
+        <main className="min-w-0 flex-1">
+          <header className="sticky top-0 z-20 -mx-6 mb-8 flex items-center justify-between gap-3 bg-[var(--app-bg)] px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-[var(--app-bg)]/90 print:hidden">
+            <div className="text-overline text-black">
+              PROOFDIVE · SUPER ADMIN
+            </div>
+          </header>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { Button } from "@/components/Button";
-import { cn } from "@/components/cn";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
+import { LogoSymbol } from "@/components/ui/logo-symbol";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { writeJson } from "@/lib/storage";
+import { cn } from "@/lib/utils";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -41,12 +44,6 @@ function LinkedInIcon({ className }: { className?: string }) {
   );
 }
 
-const oauthBtn =
-  "flex h-11 w-full items-center justify-center gap-2 rounded-md border border-black/[0.12] bg-white text-sm font-semibold text-black transition hover:bg-black/[0.03] active:bg-black/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15";
-
-const field =
-  "h-11 w-full rounded-md border border-black/[0.12] bg-white px-3 text-sm outline-none transition placeholder:text-black/35 focus:border-black/25 focus:ring-1 focus:ring-black/15";
-
 export default function SignupPage() {
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
@@ -62,114 +59,123 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-[540px] flex-col justify-center px-6 py-12 sm:px-8">
-      <Logo size="xs" />
-      <h1 className="mt-6 text-2xl font-bold tracking-tight text-black">Sign up</h1>
-
-      <button
-        type="button"
-        className={cn(oauthBtn, "mt-8")}
-        onClick={() => guardConsent() && router.push("/onboarding")}
-      >
-        <GoogleIcon />
-        Continue with Google
-      </button>
-      <button
-        type="button"
-        className={cn(oauthBtn, "mt-2.5")}
-        onClick={() => guardConsent() && router.push("/onboarding")}
-      >
-        <LinkedInIcon />
-        Continue with LinkedIn
-      </button>
-
-      <p
-        className="my-8 flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-black/40 before:h-px before:flex-1 before:bg-black/[0.12] before:content-[''] after:h-px after:flex-1 after:bg-black/[0.12] after:content-['']"
-        role="separator"
-      >
-        or
-      </p>
-
-      <form
-        className="space-y-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!guardConsent()) return;
-          router.push("/onboarding");
-        }}
-      >
-        <input
-          name="email"
-          type="email"
-          autoComplete="email"
-          placeholder="Email"
-          className={field}
-          required
-        />
-        <input
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          placeholder="Password"
-          className={field}
-          required
-          minLength={8}
-        />
-        <Button type="submit" className="!h-11 !w-full !rounded-md !px-4">
-          Create account
+    <div className="min-h-screen w-full bg-background text-foreground">
+      <header className="flex items-center justify-between border-b border-border px-6 py-4 sm:px-8">
+        <Link href="/">
+          <Logo size="xxs" />
+        </Link>
+        <Button asChild size="sm" className="rounded-lg px-4 text-overline">
+          <Link href="/login">Log In</Link>
         </Button>
-      </form>
+      </header>
 
-      <label className="mt-4 flex cursor-pointer items-start gap-2.5 text-sm text-black/60">
-        <input
-          type="checkbox"
-          checked={agreed}
-          onChange={(e) => {
-            setAgreed(e.target.checked);
-            if (e.target.checked) setShowAgreeError(false);
+      <main className="mx-auto flex w-full max-w-[524px] flex-col items-center px-6 py-16 text-center sm:px-8">
+        <div className="flex h-[72px] w-[72px] items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+          <LogoSymbol className="h-9 w-9" />
+        </div>
+        <h1 className="text-subheading mt-6 text-extended-dark-cyan">
+          Signup
+        </h1>
+
+        <form
+          className="mt-8 w-full space-y-3 text-left"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!guardConsent()) return;
+            router.push("/onboarding");
           }}
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-black/25 accent-black"
-        />
-        <span>
-          By signing up, I agree to the{" "}
-          <Link
-            href="/terms"
-            target="_blank"
-            onClick={(e) => e.stopPropagation()}
-            className="font-semibold text-black underline-offset-2 hover:underline"
-          >
-            terms and conditions
-          </Link>{" "}
-          and{" "}
-          <Link
-            href="/privacy"
-            target="_blank"
-            onClick={(e) => e.stopPropagation()}
-            className="font-semibold text-black underline-offset-2 hover:underline"
-          >
-            privacy policy
-          </Link>
-          .
-        </span>
-      </label>
-      {showAgreeError ? (
-        <p className="mt-1.5 text-xs font-medium text-red-500" role="alert">
-          Please agree to the terms and conditions and privacy policy to continue.
-        </p>
-      ) : null}
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor="signup-email">Email</Label>
+            <Input
+              id="signup-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="Enter your email"
+              className="h-14"
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="signup-password">Password</Label>
+            <Input
+              id="signup-password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Create a password"
+              className="h-14"
+              required
+              minLength={8}
+            />
+          </div>
 
-      <p className="mt-8 text-center text-sm text-black/55">
-        Already have an account?{" "}
-        <Link href="/login" className="font-semibold text-black underline-offset-2 hover:underline">
-          Log in
-        </Link>
-      </p>
+          <label className="flex cursor-pointer items-start gap-2.5 pt-1 text-caption text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => {
+                setAgreed(e.target.checked);
+                if (e.target.checked) setShowAgreeError(false);
+              }}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-primary"
+            />
+            <span>
+              By signing up, I agree to the{" "}
+              <Link
+                href="/terms"
+                target="_blank"
+                onClick={(e) => e.stopPropagation()}
+                className="font-semibold text-foreground underline-offset-2 hover:underline"
+              >
+                terms and conditions
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/privacy"
+                target="_blank"
+                onClick={(e) => e.stopPropagation()}
+                className="font-semibold text-foreground underline-offset-2 hover:underline"
+              >
+                privacy policy
+              </Link>
+              .
+            </span>
+          </label>
+          {showAgreeError ? (
+            <p className="text-left text-overline text-destructive" role="alert">
+              Please agree to the terms and conditions and privacy policy to continue.
+            </p>
+          ) : null}
+          <Button type="submit" className="text-body h-14 w-full">
+            Create account
+          </Button>
+        </form>
 
-      <p className="mt-6 text-center text-sm text-black/45">
-        <Link href="/" className="hover:text-black hover:underline">
-          Back to home
-        </Link>
-      </p>
-    </main>
+        <p className="text-body mt-4 text-primary">Or sign in with</p>
+
+        <div className="mt-4 w-full space-y-2.5">
+          <Button
+            type="button"
+            variant="outline"
+            className="text-body relative h-14 w-full"
+            onClick={() => guardConsent() && router.push("/onboarding")}
+          >
+            <GoogleIcon className="absolute left-4 top-1/2 -translate-y-1/2" />
+            <span className="font-normal text-[#242524]">Google</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="text-body relative h-14 w-full"
+            onClick={() => guardConsent() && router.push("/onboarding")}
+          >
+            <LinkedInIcon className="absolute left-4 top-1/2 -translate-y-1/2" />
+            <span className="font-normal text-[#242524]">LinkedIn</span>
+          </Button>
+        </div>
+      </main>
+    </div>
   );
 }

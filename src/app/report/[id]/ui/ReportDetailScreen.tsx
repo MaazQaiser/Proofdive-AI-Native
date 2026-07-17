@@ -116,8 +116,8 @@ function SectionTitle({
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
-        <div className="text-2xl font-extrabold tracking-tight text-black">{title}</div>
-        {subtitle ? <div className="mt-1 text-sm text-[var(--app-muted)]">{subtitle}</div> : null}
+        <div className="text-h5 text-black">{title}</div>
+        {subtitle ? <div className="mt-1 text-caption text-[var(--app-muted)]">{subtitle}</div> : null}
       </div>
       {right ? <div className="shrink-0">{right}</div> : null}
     </div>
@@ -225,10 +225,10 @@ function DriverCard({
                 <Icon name={driver.icon} />
               </span>
               <div className="min-w-0">
-                <div className="truncate text-base font-extrabold tracking-tight text-black">
+                <div className="truncate text-body-sm font-semibold text-black">
                   {driver.shortTitle}
                 </div>
-                <div className="truncate text-xs font-extrabold tracking-[0.18em] text-gray-500">
+                <div className="truncate text-overline text-gray-500">
                   {driver.fullTitle}
                 </div>
               </div>
@@ -236,12 +236,12 @@ function DriverCard({
           </div>
 
           <div className="shrink-0 text-right">
-            <div className={cn("text-sm font-extrabold tracking-tight", scoreTextClasses(score))}>
+            <div className={cn("text-caption font-semibold", scoreTextClasses(score))}>
               {score.toFixed(1)} / 5
             </div>
             <div
               className={cn(
-                "mt-1 inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-extrabold",
+                "mt-1 inline-flex items-center rounded-full border px-2.5 py-1 text-overline",
                 badgeClasses(driver.status),
               )}
             >
@@ -258,7 +258,7 @@ function DriverCard({
             <button
               type="button"
               onClick={onToggle}
-              className="inline-flex items-center gap-2 text-sm font-extrabold text-black underline decoration-black/20 underline-offset-4 hover:decoration-black/40"
+              className="inline-flex items-center gap-2 text-caption font-semibold text-black underline decoration-black/20 underline-offset-4 hover:decoration-black/40"
               aria-expanded={expanded}
             >
               See the breakdown
@@ -283,8 +283,8 @@ function DriverCard({
             <div className="mt-4 space-y-2">
               {driver.subSkills.map((s) => (
                 <div key={s.name} className="flex items-center justify-between gap-3">
-                  <div className="min-w-0 truncate text-sm text-black">{s.name}</div>
-                  <div className={cn("shrink-0 text-sm font-extrabold", scoreTextClasses(s.score))}>
+                  <div className="min-w-0 truncate text-caption text-black">{s.name}</div>
+                  <div className={cn("shrink-0 text-caption font-semibold", scoreTextClasses(s.score))}>
                     {s.score.toFixed(1)}/5
                   </div>
                 </div>
@@ -319,10 +319,10 @@ function QuestionRow({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-xs font-extrabold text-gray-800">
+                <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-overline text-gray-800">
                   {q.facet}
                 </span>
-                <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/60 px-3 py-1 text-xs font-extrabold text-gray-800">
+                <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/60 px-3 py-1 text-overline text-gray-800">
                   <span className={cn("h-2 w-2 rounded-full", driverAccentDot(q.driver))} />
                   {q.driver === "thinking"
                     ? "Thinking"
@@ -332,7 +332,7 @@ function QuestionRow({
                         ? "People"
                         : "Mastery"}
                 </span>
-                <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-xs font-extrabold text-gray-800">
+                <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-overline text-gray-800">
                   {fmtDuration(q.timeSeconds)}
                   {q.idealRangeSeconds ? (
                     <span className="text-gray-500">
@@ -343,19 +343,19 @@ function QuestionRow({
                 </span>
               </div>
 
-              <div className="mt-3 text-sm font-extrabold tracking-tight text-black">
+              <div className="mt-3 text-body-sm font-semibold text-black">
                 Q{q.index}. “{q.text}”
               </div>
             </div>
 
             <div className="flex shrink-0 items-center gap-2 sm:gap-3">
               <div className="text-right">
-                <div className={cn("text-sm font-extrabold tracking-tight", scoreTextClasses(q.score))}>
+                <div className={cn("text-caption font-semibold", scoreTextClasses(q.score))}>
                   {q.score.toFixed(1)}/5
                 </div>
                 <div
                   className={cn(
-                    "mt-1 inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-extrabold",
+                    "mt-1 inline-flex items-center rounded-full border px-2.5 py-1 text-overline",
                     badgeClasses(q.status),
                   )}
                 >
@@ -386,13 +386,13 @@ function QuestionRow({
           <CardBody className="p-5">
             <div className="grid gap-5 lg:grid-cols-2">
               <div className="min-w-0">
-                <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">YOUR ANSWER</div>
-                <blockquote className="mt-2 rounded-[18px] border border-white/60 bg-white/50 p-4 text-sm leading-6 text-black">
+                <div className="text-overline text-gray-500">YOUR ANSWER</div>
+                <blockquote className="mt-2 rounded-[18px] border border-white/60 bg-white/50 p-4 text-caption leading-6 text-black">
                   {q.answer}
                 </blockquote>
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">
+                <div className="text-overline text-gray-500">
                   AREAS FOR IMPROVEMENT
                 </div>
                 <div className="mt-3 grid gap-3">
@@ -401,10 +401,10 @@ function QuestionRow({
                       key={imp.title}
                       className="rounded-[18px] border border-white/60 bg-white/50 p-4"
                     >
-                      <div className="text-sm font-extrabold tracking-tight text-black">
+                      <div className="text-caption font-semibold text-black">
                         {imp.title}
                       </div>
-                      <div className="mt-1 text-sm leading-6 text-[var(--app-muted)]">
+                      <div className="mt-1 text-caption leading-6 text-[var(--app-muted)]">
                         {imp.detail}
                       </div>
                     </div>
@@ -456,7 +456,7 @@ export function ReportDetailScreen({ reportId }: Props) {
         <div className="pb-44">
           <GlassCard>
             <CardBody>
-              <div className="text-2xl font-extrabold tracking-tight text-black">Loading report…</div>
+              <div className="text-h5 text-black">Loading report…</div>
             </CardBody>
           </GlassCard>
         </div>
@@ -472,8 +472,8 @@ export function ReportDetailScreen({ reportId }: Props) {
         <div className="pb-44">
           <GlassCard>
             <CardBody>
-              <div className="text-3xl font-extrabold tracking-tight text-black">Report not found</div>
-              <div className="mt-3 max-w-2xl text-sm leading-6 text-[var(--app-muted)]">
+              <div className="text-h4 text-black">Report not found</div>
+              <div className="mt-3 max-w-2xl text-caption leading-6 text-[var(--app-muted)]">
                 This report id doesn’t exist on this device yet. If you just finished an interview,
                 try ending the session again to generate a report.
               </div>
@@ -501,19 +501,19 @@ export function ReportDetailScreen({ reportId }: Props) {
         <div className="sticky top-[72px] z-10 -mx-6 border-b border-white/50 bg-[var(--app-bg)]/85 px-6 py-3 backdrop-blur">
           <div className="flex min-w-0 flex-wrap items-center gap-3">
             <div className="flex items-baseline gap-2">
-              <div className={cn("text-sm font-extrabold", scoreTextClasses(overall))}>
+              <div className={cn("text-caption font-semibold", scoreTextClasses(overall))}>
                 {overall.toFixed(1)} / 5.0
               </div>
               <div
                 className={cn(
-                  "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-extrabold",
+                  "inline-flex items-center rounded-full border px-2.5 py-1 text-overline",
                   badgeClasses(overallLabel),
                 )}
               >
                 {overallLabel}
               </div>
             </div>
-            <div className="text-xs font-extrabold tracking-tight text-gray-600">
+            <div className="text-overline text-gray-600">
               {report.meta.questionCount} questions · {fmtDuration(report.meta.durationSeconds)}
               {report.meta.hasAudio ? " · Audio" : ""}
               {report.meta.hasVideo ? " · Video" : ""}
@@ -527,7 +527,7 @@ export function ReportDetailScreen({ reportId }: Props) {
           <div className="min-w-0 flex-1">
             <Link
               href={`/coach?final=1&report=${encodeURIComponent(reportId)}`}
-              className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-black/65 transition hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)]"
+              className="mb-3 inline-flex items-center gap-1.5 text-caption font-semibold text-black/65 transition hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)]"
             >
               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0" aria-hidden>
                 <path
@@ -540,26 +540,26 @@ export function ReportDetailScreen({ reportId }: Props) {
               </svg>
               Go to home page
             </Link>
-            <h1 className="text-3xl font-extrabold tracking-tight text-black sm:text-4xl">
+            <h1 className="text-h4 text-black">
               {report.meta.heroVariant === "first_start"
                 ? "You're off to a strong start. Let's prepare more!"
                 : "Good news! You're improving your interview readiness score."}
             </h1>
-            <div className="mt-2 max-w-3xl text-sm leading-6 text-[var(--app-muted)]">
+            <div className="mt-2 max-w-3xl text-caption leading-6 text-[var(--app-muted)]">
               Here&apos;s a detailed breakdown report and analytics of your mock interview for{" "}
               <span className="font-extrabold text-black">{report.meta.roleTitle}</span>.
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-xs font-extrabold text-gray-800">
+              <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-overline text-gray-800">
                 {report.meta.interviewName}
               </span>
-              <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-xs font-extrabold text-gray-800">
+              <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-overline text-gray-800">
                 {fmtDate(report.meta.createdAt)}
               </span>
-              <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-xs font-extrabold text-gray-800">
+              <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-overline text-gray-800">
                 {fmtDuration(report.meta.durationSeconds)}
               </span>
-              <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-xs font-extrabold text-gray-800">
+              <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-overline text-gray-800">
                 {report.meta.questionCount} questions
               </span>
             </div>
@@ -587,30 +587,30 @@ export function ReportDetailScreen({ reportId }: Props) {
               <CardBody className="p-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">
+                    <div className="text-overline text-gray-500">
                       OVERALL PERFORMANCE
                     </div>
                     <div className="mt-3 flex items-end gap-3">
-                      <div className={cn("text-5xl font-extrabold tracking-tight", scoreTextClasses(overall))}>
+                      <div className={cn("text-h3", scoreTextClasses(overall))}>
                         {overall.toFixed(1)}
                       </div>
-                      <div className="pb-1 text-sm font-extrabold text-gray-600">Out of 5.0</div>
+                      <div className="pb-1 text-caption font-semibold text-gray-600">Out of 5.0</div>
                     </div>
                     <div className="mt-3 flex items-center gap-3">
-                      <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">OVERALL VERDICT</div>
+                      <div className="text-overline text-gray-500">OVERALL VERDICT</div>
                       <div
                         className={cn(
-                          "inline-flex items-center rounded-full border px-3 py-1 text-xs font-extrabold",
+                          "inline-flex items-center rounded-full border px-3 py-1 text-overline",
                           badgeClasses(report.overallStatus),
                         )}
                       >
                         {report.overallStatus}
                       </div>
                     </div>
-                    <div className="mt-4 text-base font-extrabold tracking-tight text-black">
+                    <div className="mt-4 text-body-sm font-semibold text-black">
                       {report.headline}
                     </div>
-                    <div className="mt-2 max-w-3xl text-sm leading-6 text-[var(--app-muted)]">
+                    <div className="mt-2 max-w-3xl text-caption leading-6 text-[var(--app-muted)]">
                       {report.summary}
                     </div>
                   </div>
@@ -641,7 +641,7 @@ export function ReportDetailScreen({ reportId }: Props) {
               <details className="open:[&_summary_svg]:rotate-180">
                 <summary className="cursor-pointer list-none">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-base font-extrabold tracking-tight text-black">
+                    <div className="text-body-sm font-semibold text-black">
                       View all competency areas
                     </div>
                     <svg
@@ -661,7 +661,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                   </div>
                 </summary>
 
-                <div className="mt-4 text-sm leading-6 text-[var(--app-muted)]">
+                <div className="mt-4 text-caption leading-6 text-[var(--app-muted)]">
                   Each pillar has an overall score. The driver cards above show the top-level rating, and the breakdown
                   shows per–sub-skill detail.
                 </div>
@@ -672,20 +672,20 @@ export function ReportDetailScreen({ reportId }: Props) {
                       <CardBody className="p-5">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="text-sm font-extrabold tracking-tight text-black">{d.fullTitle}</div>
-                            <div className="mt-1 text-xs font-extrabold tracking-[0.22em] text-gray-500">
+                            <div className="text-caption font-semibold text-black">{d.fullTitle}</div>
+                            <div className="mt-1 text-overline text-gray-500">
                               PILLAR SCORE
                             </div>
                           </div>
-                          <div className={cn("shrink-0 text-sm font-extrabold", scoreTextClasses(d.score))}>
+                          <div className={cn("shrink-0 text-caption font-semibold", scoreTextClasses(d.score))}>
                             {d.score.toFixed(1)}/5
                           </div>
                         </div>
                         <div className="mt-4 space-y-2">
                           {d.subSkills.map((s) => (
                             <div key={s.name} className="flex items-center justify-between gap-3">
-                              <div className="min-w-0 truncate text-sm text-black">{s.name}</div>
-                              <div className={cn("shrink-0 text-sm font-extrabold", scoreTextClasses(s.score))}>
+                              <div className="min-w-0 truncate text-caption text-black">{s.name}</div>
+                              <div className={cn("shrink-0 text-caption font-semibold", scoreTextClasses(s.score))}>
                                 {s.score.toFixed(1)}/5
                               </div>
                             </div>
@@ -704,14 +704,14 @@ export function ReportDetailScreen({ reportId }: Props) {
           <GlassCardSection>
             <CardBody className="p-6">
               <SectionTitle title={report.narrative.title} subtitle={report.narrative.subtitle} />
-              <div className="mt-4 max-w-4xl text-sm leading-6 text-[var(--app-muted)]">
+              <div className="mt-4 max-w-4xl text-caption leading-6 text-[var(--app-muted)]">
                 {report.narrative.paragraph}
               </div>
               <div className="mt-6 flex flex-wrap gap-2">
-                <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-xs font-extrabold text-gray-800">
+                <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-overline text-gray-800">
                   Strongest: {report.highlightChips.strongest}
                 </span>
-                <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-xs font-extrabold text-gray-800">
+                <span className="rounded-full border border-black/10 bg-white/60 px-3 py-1 text-overline text-gray-800">
                   Biggest gap: {report.highlightChips.biggestGap}
                 </span>
               </div>
@@ -720,7 +720,7 @@ export function ReportDetailScreen({ reportId }: Props) {
         </section>
 
         <section className="mt-10">
-          <SectionTitle title="Your answers — question by question" subtitle="Expand any row to see your answer and coaching opportunities." />
+          <SectionTitle title="Your answers, question by question" subtitle="Expand any row to see your answer and coaching opportunities." />
           <div className="mt-4 grid gap-4">
             {report.questions.map((q) => (
               <QuestionRow
@@ -747,41 +747,41 @@ export function ReportDetailScreen({ reportId }: Props) {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <button
                         type="button"
-                        className="inline-flex items-center gap-2 rounded-full bg-black/80 px-4 py-2 text-sm font-extrabold text-white hover:bg-black/70"
+                        className="inline-flex items-center gap-2 rounded-full bg-black/80 px-4 py-2 text-caption font-semibold text-white hover:bg-black/70"
                         onClick={() => window.alert("Player is a v1 stub.")}
                       >
                         <span className="h-2 w-2 rounded-full bg-teal-400" aria-hidden="true" />
                         Play
                       </button>
                     </div>
-                    <div className="absolute bottom-3 left-3 rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-gray-800">
+                    <div className="absolute bottom-3 left-3 rounded-full bg-white/70 px-3 py-1 text-overline text-gray-800">
                       {fmtDuration(report.meta.durationSeconds)}
                     </div>
                   </div>
 
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-white/60 bg-white/50 p-4">
-                    <div className="flex items-center gap-2 text-xs font-extrabold text-gray-700">
+                    <div className="flex items-center gap-2 text-overline text-gray-700">
                       <span className="rounded-full border border-black/10 bg-white/70 px-3 py-1">±10s</span>
                       <span className="rounded-full border border-black/10 bg-white/70 px-3 py-1">1×</span>
                       <span className="rounded-full border border-black/10 bg-white/70 px-3 py-1">PiP</span>
                     </div>
-                    <div className="text-xs font-extrabold text-gray-600">Scrubber (stub)</div>
+                    <div className="text-overline text-gray-600">Scrubber (stub)</div>
                   </div>
                 </div>
 
                 <div className="min-w-0">
                   <div className="rounded-[24px] border border-white/60 bg-white/50 p-4">
-                    <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">TRANSCRIPT</div>
+                    <div className="text-overline text-gray-500">TRANSCRIPT</div>
                     <div className="mt-3 max-h-[320px] space-y-3 overflow-auto pr-1">
                       {report.transcript.map((line, idx) => (
                         <div key={idx} className="rounded-[18px] border border-white/60 bg-white/60 p-3">
                           <div className="flex items-center justify-between gap-3">
-                            <div className="text-xs font-extrabold text-gray-800">{line.speaker}</div>
-                            <div className="text-xs font-extrabold text-gray-500">{fmtDuration(line.timeSeconds)}</div>
+                            <div className="text-overline text-gray-800">{line.speaker}</div>
+                            <div className="text-overline text-gray-500">{fmtDuration(line.timeSeconds)}</div>
                           </div>
-                          <div className="mt-2 text-sm leading-6 text-black">{line.text}</div>
+                          <div className="mt-2 text-caption leading-6 text-black">{line.text}</div>
                           {line.flag ? (
-                            <div className="mt-2 inline-flex items-center rounded-full border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-[11px] font-extrabold text-rose-900">
+                            <div className="mt-2 inline-flex items-center rounded-full border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-overline text-rose-900">
                               {line.flag}
                             </div>
                           ) : null}
@@ -804,42 +804,42 @@ export function ReportDetailScreen({ reportId }: Props) {
               />
 
               <div className="mt-6 rounded-[24px] border border-white/60 bg-white/50 p-5">
-                <h3 className="text-base font-extrabold tracking-tight text-black">
+                <h3 className="text-body-sm font-semibold text-black">
                   The AI coach has picked the weakest question to help you improve.
                 </h3>
 
                 {spotlightQuestion ? (
-                  <div className="mt-4 text-sm font-extrabold tracking-tight text-black">
+                  <div className="mt-4 text-body-sm font-semibold text-black">
                     “{spotlightQuestion.text}”
                   </div>
                 ) : null}
 
                 <div className="mt-5 grid gap-4 lg:grid-cols-2">
                   <div>
-                    <div className="flex items-center gap-2 text-xs font-extrabold tracking-[0.22em] text-gray-500">
+                    <div className="flex items-center gap-2 text-overline text-gray-500">
                       <span className="inline-flex h-2 w-2 rounded-full bg-black/40" aria-hidden="true" />
                       YOUR ANSWER
                     </div>
-                    <blockquote className="mt-2 rounded-[18px] border border-white/60 bg-white/70 p-4 text-sm leading-6 text-black">
+                    <blockquote className="mt-2 rounded-[18px] border border-white/60 bg-white/70 p-4 text-caption leading-6 text-black">
                       {report.spotlight.yourAnswer}
                     </blockquote>
                   </div>
                   <div>
-                    <div className="flex items-center gap-2 text-xs font-extrabold tracking-[0.22em] text-gray-500">
+                    <div className="flex items-center gap-2 text-overline text-gray-500">
                       <span className="inline-flex h-2 w-2 rounded-full bg-teal-500" aria-hidden="true" />
                       COACH REWRITE
                     </div>
-                    <blockquote className="mt-2 whitespace-pre-line rounded-[18px] border border-teal-500/20 bg-teal-500/10 p-4 text-sm leading-6 text-black">
+                    <blockquote className="mt-2 whitespace-pre-line rounded-[18px] border border-teal-500/20 bg-teal-500/10 p-4 text-caption leading-6 text-black">
                       {report.spotlight.coachRewrite}
                     </blockquote>
                   </div>
                 </div>
 
                 <div className="mt-5">
-                  <div className="text-xs font-extrabold tracking-[0.22em] text-gray-500">
+                  <div className="text-overline text-gray-500">
                     WHY THIS VERSION IS STRONGER
                   </div>
-                  <ul className="mt-3 grid gap-2 text-sm leading-6 text-black">
+                  <ul className="mt-3 grid gap-2 text-caption leading-6 text-black">
                     {report.spotlight.whyStronger.map((s) => (
                       <li key={s} className="flex gap-2">
                         <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-teal-500" aria-hidden="true" />
@@ -853,8 +853,8 @@ export function ReportDetailScreen({ reportId }: Props) {
               <div className="mt-6 grid gap-4 lg:grid-cols-2">
                 <GlassCard className="border-white/70">
                   <CardBody className="p-5">
-                    <div className="text-sm font-extrabold tracking-tight text-black">Body language</div>
-                    <ul className="mt-3 space-y-2 text-sm leading-6 text-[var(--app-muted)]">
+                    <div className="text-caption font-semibold text-black">Body language</div>
+                    <ul className="mt-3 space-y-2 text-caption leading-6 text-[var(--app-muted)]">
                       {report.spotlight.delivery.bodyLanguage.map((s) => (
                         <li key={s} className="flex gap-2">
                           <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-black/30" aria-hidden="true" />
@@ -867,8 +867,8 @@ export function ReportDetailScreen({ reportId }: Props) {
 
                 <GlassCard className="border-white/70">
                   <CardBody className="p-5">
-                    <div className="text-sm font-extrabold tracking-tight text-black">Grammar & phrasing</div>
-                    <ul className="mt-3 space-y-2 text-sm leading-6 text-[var(--app-muted)]">
+                    <div className="text-caption font-semibold text-black">Grammar & phrasing</div>
+                    <ul className="mt-3 space-y-2 text-caption leading-6 text-[var(--app-muted)]">
                       {report.spotlight.delivery.grammarPhrasing.map((s) => (
                         <li key={s} className="flex gap-2">
                           <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-black/30" aria-hidden="true" />
@@ -881,10 +881,10 @@ export function ReportDetailScreen({ reportId }: Props) {
 
                 <GlassCard className="border-white/70">
                   <CardBody className="p-5">
-                    <div className="text-sm font-extrabold tracking-tight text-black">
+                    <div className="text-caption font-semibold text-black">
                       Gestures & interview presence
                     </div>
-                    <ul className="mt-3 space-y-2 text-sm leading-6 text-[var(--app-muted)]">
+                    <ul className="mt-3 space-y-2 text-caption leading-6 text-[var(--app-muted)]">
                       {report.spotlight.delivery.gesturesPresence.map((s) => (
                         <li key={s} className="flex gap-2">
                           <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-black/30" aria-hidden="true" />
@@ -897,12 +897,12 @@ export function ReportDetailScreen({ reportId }: Props) {
 
                 <GlassCard className="border-white/70">
                   <CardBody className="p-5">
-                    <div className="text-sm font-extrabold tracking-tight text-black">Filler words & pacing</div>
-                    <div className="mt-3 text-sm leading-6 text-[var(--app-muted)]">
+                    <div className="text-caption font-semibold text-black">Filler words & pacing</div>
+                    <div className="mt-3 text-caption leading-6 text-[var(--app-muted)]">
                       {report.spotlight.delivery.fillerPacing.summary}
                     </div>
-                    <div className="mt-4 text-sm font-extrabold tracking-tight text-black">On-camera presence</div>
-                    <div className="mt-2 text-sm leading-6 text-[var(--app-muted)]">
+                    <div className="mt-4 text-caption font-semibold text-black">On-camera presence</div>
+                    <div className="mt-2 text-caption leading-6 text-[var(--app-muted)]">
                       {report.spotlight.delivery.fillerPacing.onCameraPresence}
                     </div>
                   </CardBody>
@@ -920,16 +920,16 @@ export function ReportDetailScreen({ reportId }: Props) {
               <div className="mt-6 grid gap-4 lg:grid-cols-4">
                 <GlassCard className="lg:col-span-2">
                   <CardBody className="p-5">
-                    <div className="inline-flex items-center rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 text-xs font-extrabold text-teal-900">
+                    <div className="inline-flex items-center rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 text-overline text-teal-900">
                       Featured
                     </div>
-                    <div className="mt-3 text-lg font-extrabold tracking-tight text-black">
+                    <div className="mt-3 text-h6 text-black">
                       {report.trainings.featured.title}
                     </div>
-                    <div className="mt-2 text-sm leading-6 text-[var(--app-muted)]">
+                    <div className="mt-2 text-caption leading-6 text-[var(--app-muted)]">
                       {report.trainings.featured.description}
                     </div>
-                    <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-extrabold text-gray-700">
+                    <div className="mt-4 flex flex-wrap items-center gap-2 text-overline text-gray-700">
                       <span className="rounded-full border border-black/10 bg-white/70 px-3 py-1">
                         {report.trainings.featured.pillar}
                       </span>
@@ -943,7 +943,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                     <div className="mt-4">
                       <Link
                         href={report.trainings.featured.href}
-                        className="text-sm font-extrabold text-black underline decoration-black/20 underline-offset-4 hover:decoration-black/40"
+                        className="text-caption font-semibold text-black underline decoration-black/20 underline-offset-4 hover:decoration-black/40"
                       >
                         Start training
                       </Link>
@@ -954,18 +954,18 @@ export function ReportDetailScreen({ reportId }: Props) {
                 {report.trainings.more.map((t) => (
                   <GlassCard key={t.id}>
                     <CardBody className="p-5">
-                      <div className="flex flex-wrap items-center gap-2 text-xs font-extrabold text-gray-700">
+                      <div className="flex flex-wrap items-center gap-2 text-overline text-gray-700">
                         <span className="rounded-full border border-black/10 bg-white/70 px-3 py-1">{t.pillar}</span>
                         <span className="rounded-full border border-black/10 bg-white/70 px-3 py-1">
                           {t.durationMinutes} min
                         </span>
                       </div>
-                      <div className="mt-3 text-base font-extrabold tracking-tight text-black">{t.title}</div>
-                      <div className="mt-2 text-sm leading-6 text-[var(--app-muted)]">{t.description}</div>
+                      <div className="mt-3 text-body-sm font-semibold text-black">{t.title}</div>
+                      <div className="mt-2 text-caption leading-6 text-[var(--app-muted)]">{t.description}</div>
                       <div className="mt-4">
                         <Link
                           href={t.href}
-                          className="text-sm font-extrabold text-black underline decoration-black/20 underline-offset-4 hover:decoration-black/40"
+                          className="text-caption font-semibold text-black underline decoration-black/20 underline-offset-4 hover:decoration-black/40"
                         >
                           Start training
                         </Link>

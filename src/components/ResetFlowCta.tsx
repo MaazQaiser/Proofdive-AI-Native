@@ -22,7 +22,7 @@ export function ResetFlowCta() {
     <button
       type="button"
       onClick={reset}
-      className="fixed bottom-4 left-4 z-50 text-xs font-semibold text-gray-500 underline decoration-black/30 underline-offset-4 transition hover:text-gray-600 print:hidden"
+      className="fixed bottom-4 left-4 z-50 text-overline text-gray-500 underline decoration-black/30 underline-offset-4 transition hover:text-gray-600 print:hidden"
       aria-label="Reset flow"
     >
       Reset flow

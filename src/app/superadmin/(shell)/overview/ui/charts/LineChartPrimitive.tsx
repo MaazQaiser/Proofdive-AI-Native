@@ -38,7 +38,7 @@ export function LineChartPrimitive({ series, labels, height = 220, yFormatter }:
         {series.map((s) => (
           <div
             key={s.key}
-            className="flex items-center gap-1.5 text-xs font-semibold text-[var(--app-muted)]"
+            className="flex items-center gap-1.5 text-overline text-[var(--app-muted)]"
           >
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
             {s.label}
