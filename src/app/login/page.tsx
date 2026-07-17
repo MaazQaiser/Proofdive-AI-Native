@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { AuthVisualPanel } from "@/components/auth/AuthVisualPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
-import { LogoSymbol } from "@/components/ui/logo-symbol";
 import { cn } from "@/lib/utils";
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -45,101 +45,124 @@ export default function LoginPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground">
-      <header className="flex items-center justify-between border-b border-border px-6 py-4 sm:px-8">
+    <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-white">
+      <header className="relative z-10 flex h-20 shrink-0 items-center px-12">
         <Link href="/">
           <Logo size="xxs" />
         </Link>
-        <Button asChild size="sm" className="rounded-lg px-4 text-overline">
-          <Link href="/signup">Sign Up</Link>
-        </Button>
       </header>
 
-      <main className="mx-auto flex w-full max-w-[524px] flex-col items-center px-6 py-16 text-center sm:px-8">
-        <div className="flex h-[72px] w-[72px] items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-          <LogoSymbol className="h-9 w-9" />
-        </div>
-        <h1 className="text-subheading mt-6 text-extended-dark-cyan">
-          Login
-        </h1>
+      <div className="relative flex flex-1 overflow-hidden">
+        <AuthVisualPanel />
 
-        <form
-          className="mt-8 w-full space-y-3 text-left"
-          onSubmit={(e) => {
-            e.preventDefault();
-            router.push("/onboarding");
-          }}
-        >
-          <div className="space-y-1.5">
-            <Label htmlFor="login-email">Email</Label>
-            <Input
-              id="login-email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="Enter your email"
-              className="h-14"
-              required
-            />
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="login-password">Password</Label>
-              <Link
-                href="/forgot-password"
-                className="text-overline text-primary hover:underline"
-              >
-                Forgot password?
-              </Link>
+        <div className="flex w-full items-center justify-center px-6 py-16 lg:w-[731px] lg:shrink-0 lg:px-12">
+          <div className="flex w-full max-w-[524px] flex-col items-start gap-3">
+            <div className="flex w-full flex-col items-center">
+              <h1 className="text-subheading text-center font-medium text-extended-dark-cyan">Login</h1>
             </div>
-            <Input
-              id="login-password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Enter your password"
-              className="h-14"
-              required
-            />
+            <div className="flex w-full flex-col items-center">
+              <p className="text-center text-[22px] leading-10 font-medium tracking-[-0.88px] text-muted-foreground">
+                To access your account
+              </p>
+            </div>
+
+            <form
+              className="flex w-full flex-col gap-[26px]"
+              onSubmit={(e) => {
+                e.preventDefault();
+                router.push("/onboarding");
+              }}
+            >
+              <div className="flex w-full flex-col gap-4">
+                <div className="flex w-full flex-col gap-[5px]">
+                  <Label htmlFor="login-email" className="text-caption font-normal text-foreground">
+                    Email
+                  </Label>
+                  <Input
+                    id="login-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="Enter your email"
+                    className="h-14 rounded-lg border-border px-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
+                    required
+                  />
+                </div>
+                <div className="flex w-full flex-col gap-[5px]">
+                  <div className="flex w-full items-center justify-between">
+                    <Label htmlFor="login-password" className="text-caption font-normal text-foreground">
+                      Password
+                    </Label>
+                    <Link href="/forgot-password" className="text-caption font-medium text-primary hover:underline">
+                      Forgot Password?
+                    </Link>
+                  </div>
+                  <Input
+                    id="login-password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="Password"
+                    className="h-14 rounded-lg border-border px-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
+                    required
+                  />
+                </div>
+              </div>
+              <Button type="submit" className="h-14 w-full rounded-lg text-lg font-medium">
+                Login
+              </Button>
+            </form>
+
+            <div className="flex w-full flex-col items-center pt-1">
+              <p className="text-center text-lg text-primary">Or sign in with</p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => router.push("/onboarding")}
+              className="relative flex w-full items-center justify-center rounded-lg border border-border bg-white px-5 py-4 hover:bg-muted"
+            >
+              <GoogleIcon className="absolute top-1/2 left-5 -translate-y-1/2" />
+              <span className="text-lg font-medium text-foreground">Google</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/onboarding")}
+              className="relative flex w-full items-center justify-center rounded-lg border border-border bg-white px-5 py-4 hover:bg-muted"
+            >
+              <LinkedInIcon className="absolute top-1/2 left-5 -translate-y-1/2" />
+              <span className="text-lg font-medium text-foreground">LinkedIn</span>
+            </button>
+
+            <div className="flex w-full flex-col items-center pt-1">
+              <p className="text-center text-lg">
+                <span className="text-muted-foreground">Do not have an account? </span>
+                <Link href="/signup" className="font-medium text-primary hover:underline">
+                  Sign up
+                </Link>
+              </p>
+            </div>
+
+            <div className="flex w-full flex-col items-center pt-4">
+              <button
+                type="button"
+                onClick={() => router.push("/superadmin/overview")}
+                className="text-caption text-muted-foreground/70 hover:text-foreground hover:underline"
+              >
+                Super Admin login →
+              </button>
+            </div>
           </div>
-          <Button type="submit" className="text-body h-14 w-full">
-            Sign in
-          </Button>
-        </form>
-
-        <p className="text-body mt-4 text-primary">Or sign in with</p>
-
-        <div className="mt-4 w-full space-y-2.5">
-          <Button
-            type="button"
-            variant="outline"
-            className="text-body relative h-14 w-full"
-            onClick={() => router.push("/onboarding")}
-          >
-            <GoogleIcon className="absolute left-4 top-1/2 -translate-y-1/2" />
-            <span className="font-normal text-[#242524]">Google</span>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="text-body relative h-14 w-full"
-            onClick={() => router.push("/onboarding")}
-          >
-            <LinkedInIcon className="absolute left-4 top-1/2 -translate-y-1/2" />
-            <span className="font-normal text-[#242524]">LinkedIn</span>
-          </Button>
         </div>
+      </div>
 
-        <p className="mt-8 text-caption text-muted-foreground/70">
-          <button
-            type="button"
-            onClick={() => router.push("/superadmin/overview")}
-            className="hover:text-foreground hover:underline"
-          >
-            Super Admin login →
-          </button>
-        </p>
-      </main>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/brand/login-signup%20assets/Background%20gradient.png"
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute right-0 bottom-0 w-[1276px] max-w-none"
+      />
     </div>
   );
 }

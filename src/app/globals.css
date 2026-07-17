@@ -4,6 +4,44 @@
    `dark:` variant defaults to a media query otherwise. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Gilroy — brand display font, used for the auth-page split-screen headline
+   only (all other type uses --font-sans/Inter). */
+@font-face {
+  font-family: "Gilroy";
+  src: url("/brand/fonts/Gilroy-Light.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gilroy";
+  src: url("/brand/fonts/Gilroy-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gilroy";
+  src: url("/brand/fonts/Gilroy-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gilroy";
+  src: url("/brand/fonts/Gilroy-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gilroy";
+  src: url("/brand/fonts/Gilroy-Heavy.woff") format("woff");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --app-bg: #f2f2f3;
   --app-surface: #ffffff;
@@ -249,6 +287,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   --font-sans: var(--font-sans);
+  --font-gilroy: "Gilroy", var(--font-sans), sans-serif;
 }
 
 /* Typography utilities — one class per Figma text style, applying size,
