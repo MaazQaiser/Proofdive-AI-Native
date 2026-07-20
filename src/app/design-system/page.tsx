@@ -1,6 +1,6 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { ArrowUp, BookOpen, Download, UserCheck } from "lucide-react";
 import { useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -13,6 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CardButton } from "@/components/ui/card-button";
+import { Chatbox } from "@/components/ui/chatbox";
+import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo, type LogoSize } from "@/components/ui/logo";
@@ -24,8 +27,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { SelectionChip } from "@/components/ui/selection-chip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+
+const CHIP_OPTIONS = ["Product Designer", "UX Researcher", "UI Engineer"];
 
 type PairToken = {
   title: string;
@@ -287,6 +293,9 @@ function Section({
 
 export default function DesignSystemPage() {
   const [dark, setDark] = useState(false);
+  const [selectedChip, setSelectedChip] = useState(CHIP_OPTIONS[0]);
+  const [chatValue, setChatValue] = useState("");
+  const [attachedFileName, setAttachedFileName] = useState<string | null>(null);
 
   return (
     <div className={cn(dark && "dark")}>
@@ -513,6 +522,94 @@ export default function DesignSystemPage() {
                     </Avatar>
                     <span className="text-body-sm">ProofDive User</span>
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          </Section>
+
+          <Separator />
+
+          <Section
+            title="Onboarding components"
+            description="Pixel-exact ports of the Figma 'Components' section (node 38:55), for the onboarding flow redesign."
+          >
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Icon button</CardTitle>
+                  <CardDescription>Solid and ghost, default and disabled</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center gap-3">
+                  <IconButton aria-label="Send">
+                    <ArrowUp />
+                  </IconButton>
+                  <IconButton aria-label="Send" disabled>
+                    <ArrowUp />
+                  </IconButton>
+                  <IconButton variant="ghost" aria-label="Record">
+                    <ArrowUp />
+                  </IconButton>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Selection chip</CardTitle>
+                  <CardDescription>Default, hover (try it), selected</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center gap-3">
+                  {CHIP_OPTIONS.map((option) => (
+                    <SelectionChip
+                      key={option}
+                      selected={selectedChip === option}
+                      onClick={() => setSelectedChip(option)}
+                    >
+                      {option}
+                    </SelectionChip>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Chatbox</CardTitle>
+                  <CardDescription>
+                    Empty / filled / upload states driven by real input — type or attach a
+                    file to see it change
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Chatbox
+                    value={chatValue}
+                    onValueChange={setChatValue}
+                    onSend={() => setChatValue("")}
+                    attachedFileName={attachedFileName}
+                    onUploadClick={() => setAttachedFileName("Job Description.pdf")}
+                    onRemoveFile={() => setAttachedFileName(null)}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Card button</CardTitle>
+                  <CardDescription>Primary and gray variants</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-4">
+                  <CardButton
+                    className="max-w-[392px]"
+                    variant="primary"
+                    icon={<BookOpen />}
+                    title="Storyboard"
+                    subtitle="Build your career storyboard"
+                  />
+                  <CardButton
+                    className="max-w-[392px]"
+                    variant="gray"
+                    icon={<UserCheck />}
+                    title="Start mock interview"
+                    subtitle="Evaluate yourself for UX role"
+                  />
                 </CardContent>
               </Card>
             </div>

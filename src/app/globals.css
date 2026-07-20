@@ -97,6 +97,10 @@
   --extended-cyan-green: #062C35;
   --extended-dark-cyan-green: #042027;
   --extended-dark-cyan: #01161B;
+  /* Onboarding agent heading color — Figma-authored, not part of the
+     extended-* brand ramp (used specifically for the agent's greeting
+     heading text, e.g. onboarding). */
+  --heading-teal: #094149;
   --brand-100: #0E9AB5;
   --brand-200: #26A4BC;
   --brand-300: #3EAEC4;
@@ -154,6 +158,7 @@
   --extended-cyan-green: #062C35;
   --extended-dark-cyan-green: #042027;
   --extended-dark-cyan: #01161B;
+  --heading-teal: #094149;
   --brand-100: #22D3EE;
   --brand-200: #1FBED6;
   --brand-300: #1BA9BE;
@@ -218,6 +223,19 @@
   --text-overline-weight: 500;
   --text-overline-tracking: 0.5px;
 
+  /* Onboarding agent prompt styles — Figma "Onboarding Flow" (node 43:82):
+     the agent's big greeting heading and the question line beneath it.
+     Distinct from h1-h6/subheading since neither matches (52px/400 and
+     32px/400 aren't on that scale). Both are Inter Regular (confirmed via
+     Figma's own typography inspector panel) — inherited from --font-sans,
+     no font-family override needed for either. */
+  --text-agent-heading-size: 52px;
+  --text-agent-heading-weight: 400;
+  --text-agent-heading-tracking: -1.04px;
+  --text-agent-question-size: 32px;
+  --text-agent-question-weight: 400;
+  --text-agent-question-tracking: 0px;
+
   /* Logo scale - exact Figma values */
   --logo-xxl: 80px;
   --logo-xl: 72px;
@@ -266,6 +284,7 @@
   --color-extended-cyan-green: var(--extended-cyan-green);
   --color-extended-dark-cyan-green: var(--extended-dark-cyan-green);
   --color-extended-dark-cyan: var(--extended-dark-cyan);
+  --color-heading-teal: var(--heading-teal);
   --color-brand-100: var(--brand-100);
   --color-brand-200: var(--brand-200);
   --color-brand-300: var(--brand-300);
@@ -351,6 +370,18 @@
   font-size: var(--text-overline-size);
   font-weight: var(--text-overline-weight);
   letter-spacing: var(--text-overline-tracking);
+}
+@utility text-agent-heading {
+  font-size: var(--text-agent-heading-size);
+  font-weight: var(--text-agent-heading-weight);
+  letter-spacing: var(--text-agent-heading-tracking);
+  line-height: 1.2;
+}
+@utility text-agent-question {
+  font-size: var(--text-agent-question-size);
+  font-weight: var(--text-agent-question-weight);
+  letter-spacing: var(--text-agent-question-tracking);
+  line-height: 1.3;
 }
 
 /* Icon size scale — use instead of arbitrary size-N utilities so icon sizing
