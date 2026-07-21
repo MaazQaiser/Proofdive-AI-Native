@@ -579,8 +579,8 @@ export function CoachHome() {
           >
             {showWelcomeLanding ? (
               <>
-                <h2 className="text-h3 leading-[52px]">Welcome to Proofdive</h2>
-                <h4 className="mt-1 mb-[14px] text-h4 leading-[52px]">
+                <h2 className="text-agent-heading text-heading-teal">Welcome to Proofdive</h2>
+                <h4 className="mt-1 mb-[14px] text-agent-question text-text-primary">
                   Let&apos;s get interview ready
                 </h4>
                 <p className="mt-2 max-w-xl text-left text-body leading-7 text-text-secondary">
@@ -606,7 +606,7 @@ export function CoachHome() {
               </>
             ) : showJourneyColumn ? (
               <>
-                <h2 className="text-h3 leading-[52px]">
+                <h2 className="text-agent-heading text-heading-teal">
                   {(() => {
                     const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                     if (isRoadmapCoach) return "Here is your guided journey";
@@ -614,7 +614,7 @@ export function CoachHome() {
                     return "You're off to a strong start.";
                   })()}
                 </h2>
-                <h4 className="mt-1 mb-[14px] text-h4 leading-[52px]">
+                <h4 className="mt-1 mb-[14px] text-agent-question text-text-primary">
                   {(() => {
                     const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                     if (isRoadmapCoach) return "Follow the path, then go for your mock interview.";

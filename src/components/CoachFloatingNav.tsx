@@ -34,7 +34,7 @@ export function CoachFloatingNav() {
 
   return (
     <nav aria-label="Coach shortcuts" className="fixed left-3 top-1/2 z-50 -translate-y-1/2 print:hidden">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 rounded-full border border-border bg-card p-1 shadow-sm">
         {items.map((it) => {
           const Icon = it.icon;
           const isActive = pathname === it.base || Boolean(pathname?.startsWith(`${it.base}/`));

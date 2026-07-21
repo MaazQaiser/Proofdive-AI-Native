@@ -18,7 +18,7 @@ export function AppShell({ children }: Props) {
         </Link>
         <AppShellHeaderRoleSelector />
       </header>
-      <div className="mx-auto flex w-full max-w-6xl gap-10 px-6 pb-10 pt-3">
+      <div className="mx-auto flex w-full max-w-6xl gap-10 pt-3 pr-6 pb-10 pl-20">
         <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>

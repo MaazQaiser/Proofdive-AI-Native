@@ -156,6 +156,8 @@ type TypeStyle = {
   size: string;
   weight: string;
   tracking: string;
+  /** Defaults to text-foreground when omitted. */
+  colorClassName?: string;
   note?: string;
 };
 
@@ -214,6 +216,25 @@ const TYPE_STYLES: TypeStyle[] = [
     size: "12px",
     weight: "500",
     tracking: "0.5px",
+  },
+  {
+    key: "agent-heading",
+    className: "text-agent-heading",
+    label: "Agent heading",
+    size: "52px",
+    weight: "400",
+    tracking: "-1.04px",
+    colorClassName: "text-heading-teal",
+    note: "Big greeting headline — used by onboarding's agent prompt and the Coach dashboard hero. Always paired with text-heading-teal (#094149), not text-foreground.",
+  },
+  {
+    key: "agent-question",
+    className: "text-agent-question",
+    label: "Agent question",
+    size: "32px",
+    weight: "400",
+    tracking: "-0.64px",
+    note: "The question/subtext line beneath an agent heading. Pairs with text-text-primary.",
   },
 ];
 
@@ -368,7 +389,7 @@ export default function DesignSystemPage() {
             <div className="space-y-6">
               {TYPE_STYLES.map((style) => (
                 <div key={style.key} className="border-b border-border pb-6 last:border-b-0">
-                  <p className={cn(style.className, "text-foreground")}>
+                  <p className={cn(style.className, style.colorClassName ?? "text-foreground")}>
                     The quick brown fox jumps over the lazy dog
                   </p>
                   <p className="text-caption text-muted-foreground mt-2">
