@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
-import { Button } from "@/components/Button";
-import { Card, CardBody } from "@/components/Card";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { TrainingChapterOneJourney } from "@/app/training/ui/TrainingChapterOneJourney";
 import {
   COURSE_ENTRY_HEADING,
@@ -236,20 +238,20 @@ export function TrainingScreen() {
         <CoachFloatingNav />
         <div className="pb-44">
           <Card>
-            <CardBody>
-              <h2 className="text-h4">First, set a target role.</h2>
-              <p className="mt-3 text-caption leading-6 text-[var(--app-muted)]">
+            <CardHeader>
+              <h3 className="text-h6">First, set a target role.</h3>
+              <p className="mt-1 text-caption text-text-secondary">
                 Training is personalized per role. Once you pick a role, I’ll generate modules and track your progress.
               </p>
-              <div className="mt-6 flex gap-2">
-                <Link href="/onboarding">
-                  <Button>Go to onboarding</Button>
-                </Link>
-                <Link href="/coach?journey=1">
-                  <Button variant="secondary">Back to Coach</Button>
-                </Link>
-              </div>
-            </CardBody>
+            </CardHeader>
+            <CardContent className="flex gap-2">
+              <Link href="/onboarding">
+                <Button>Go to onboarding</Button>
+              </Link>
+              <Link href="/coach?journey=1">
+                <Button variant="outline">Back to Coach</Button>
+              </Link>
+            </CardContent>
           </Card>
         </div>
         <CoachBottomChatBar />
@@ -269,6 +271,9 @@ export function TrainingScreen() {
                   promptKey="training-module-pick"
                   prompt={entryIntro(name)}
                   ariaLabel="Training prompt"
+                  headingClassName="text-agent-heading text-heading-teal"
+                  subtextClassName="mt-16 text-agent-question text-text-primary"
+                  mode="word"
                 />
                 <div className="mx-auto mt-6 w-[800px] max-w-full space-y-6">
                   <div className="grid grid-cols-2 gap-4">
@@ -280,32 +285,24 @@ export function TrainingScreen() {
                           key={course.id}
                           type="button"
                           onClick={() => setSelectedCourseId(course.id)}
-                          className="rounded-[22px] border border-white/50 bg-white px-5 py-5 text-left shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70"
+                          className="rounded-xl border border-border bg-card px-5 py-5 text-left shadow-sm transition hover:bg-muted"
                         >
                           <div className="text-h6">{course.title}</div>
-                          <div className="mt-2 text-caption leading-6 text-[var(--app-muted)]">
+                          <div className="mt-2 text-caption leading-6 text-text-secondary">
                             {course.subtitle}
                           </div>
                           <div className="mt-4">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-overline text-[var(--app-muted)]">
+                              <span className="text-overline text-text-secondary">
                                 {pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started"}
                               </span>
-                              <span className="text-overline text-gray-700">{pct}%</span>
+                              <span className="text-overline text-text-secondary">{pct}%</span>
                             </div>
-                            <div
-                              className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/10"
-                              role="progressbar"
-                              aria-valuenow={pct}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
+                            <ProgressBar
+                              value={pct}
+                              className="mt-1.5"
                               aria-label={`${course.title} progress`}
-                            >
-                              <div
-                                className="h-full rounded-full bg-black transition-[width] duration-300 ease-out"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
+                            />
                           </div>
                         </button>
                       );
@@ -314,10 +311,10 @@ export function TrainingScreen() {
 
                   {true ? (
                         <section aria-label="Suggested for you" className="px-1">
-                          <div className="text-caption font-semibold text-gray-900">
+                          <div className="text-caption font-semibold text-text-primary">
                             Suggested for you
                           </div>
-                          <div className="mt-1 text-caption leading-5 text-[var(--app-muted)]">
+                          <div className="mt-1 text-caption leading-5 text-text-secondary">
                             Based on your recent session, these will help you improve where it matters most.
                           </div>
                           <div className="mt-3 flex flex-col gap-3">
@@ -326,7 +323,7 @@ export function TrainingScreen() {
                                 key={pill.id}
                                 type="button"
                                 onClick={() => setSelectedCourseId(pill.courseId)}
-                                className="group w-full rounded-2xl border border-white/50 bg-white px-4 py-4 text-left shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition hover:bg-white/70"
+                                className="group w-full rounded-xl border border-border bg-card px-4 py-4 text-left shadow-sm transition hover:bg-muted"
                               >
                                 <div className="flex items-start gap-4">
                                   <div
@@ -339,7 +336,7 @@ export function TrainingScreen() {
                                     aria-hidden
                                   >
                                     <div className="absolute inset-0 bg-black/10" />
-                                    <div className="absolute bottom-2 left-2 inline-flex items-center rounded-lg bg-white/80 px-2 py-1 text-overline text-gray-900">
+                                    <div className="absolute bottom-2 left-2 inline-flex items-center rounded-lg bg-white/80 px-2 py-1 text-overline text-text-primary">
                                       {pill.duration}
                                     </div>
                                   </div>
@@ -347,11 +344,11 @@ export function TrainingScreen() {
                                   <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                       <div className="text-caption font-semibold">{pill.title}</div>
-                                      <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-2.5 py-1 text-overline text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                                      <Badge variant="outline" className="border-border">
                                         {pill.badge}
-                                      </span>
+                                      </Badge>
                                     </div>
-                                    <div className="mt-1 text-caption leading-5 text-[var(--app-muted)]">
+                                    <div className="mt-1 text-caption leading-5 text-text-secondary">
                                       {pill.summary}
                                     </div>
                                   </div>
@@ -377,8 +374,9 @@ export function TrainingScreen() {
                   <Button
                     type="button"
                     variant="ghost"
+                    size="sm"
                     onClick={() => setSelectedCourseId(null)}
-                    className="-ml-1 !h-9 inline-flex items-center gap-1 !px-2 !text-caption font-semibold"
+                    className="-ml-1 gap-1 px-2 text-caption font-semibold"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -402,17 +400,17 @@ export function TrainingScreen() {
                   <div className="text-h5 mt-4">
                     {selectedCourse.title}
                   </div>
-                  <p className="mt-2 text-caption leading-6 text-[var(--app-muted)]">{selectedCourse.subtitle}</p>
+                  <p className="mt-2 text-caption leading-6 text-text-secondary">{selectedCourse.subtitle}</p>
                   <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-3 py-1 text-overline text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                    <Badge variant="outline" className="border-border">
                       {selectedCourse.duration}
-                    </span>
-                    <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-3 py-1 text-overline text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                    </Badge>
+                    <Badge variant="outline" className="border-border">
                       {selectedCourse.checkpoints} touch points
-                    </span>
-                    <span className="inline-flex items-center rounded-full border border-white/70 bg-white px-3 py-1 text-overline text-gray-800 shadow-[0_4px_14px_rgba(0,0,0,0.06)]">
+                    </Badge>
+                    <Badge variant="outline" className="border-border">
                       {selectedCourse.chapters.length} chapters
-                    </span>
+                    </Badge>
                   </div>
 
                   {(() => {
@@ -420,41 +418,29 @@ export function TrainingScreen() {
                     return (
                       <div className="mt-5 max-w-md">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-overline text-[var(--app-muted)]">
+                          <span className="text-overline text-text-secondary">
                             {pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started"}
                           </span>
-                          <span className="text-overline text-gray-700">{pct}%</span>
+                          <span className="text-overline text-text-secondary">{pct}%</span>
                         </div>
-                        <div
-                          className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/10"
-                          role="progressbar"
-                          aria-valuenow={pct}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-label="Course progress"
-                        >
-                          <div
-                            className="h-full rounded-full bg-black transition-[width] duration-300 ease-out"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
+                        <ProgressBar value={pct} className="mt-1.5" aria-label="Course progress" />
                       </div>
                     );
                   })()}
 
                   <div className="mt-8">
-                    <div className="text-overline text-[var(--app-muted)]">
+                    <div className="text-overline text-text-secondary">
                       CHAPTERS
                     </div>
                     <div className="mt-3 flex w-full flex-col gap-3">
                       {selectedCourse.chapters.map((ch, idx) => (
                         <div
                           key={`${selectedCourse.id}-ch-${idx}`}
-                          className="w-full rounded-2xl border border-white/50 bg-white px-5 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.06)]"
+                          className="w-full rounded-xl border border-border bg-card px-5 py-4 shadow-sm"
                         >
                           <div className="flex items-start gap-4">
                             <div
-                              className="relative h-14 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100"
+                              className="relative h-14 w-16 shrink-0 overflow-hidden rounded-xl bg-muted"
                               style={{
                                 backgroundImage: `url("${ch.imageUrl}")`,
                                 backgroundSize: "cover",
@@ -463,7 +449,7 @@ export function TrainingScreen() {
                               aria-hidden
                             >
                               <div className="absolute inset-0 bg-black/10" />
-                              <div className="absolute bottom-1.5 left-1.5 inline-flex items-center rounded-lg bg-white/80 px-2 py-1 text-overline text-gray-900">
+                              <div className="absolute bottom-1.5 left-1.5 inline-flex items-center rounded-lg bg-white/80 px-2 py-1 text-overline text-text-primary">
                                 {ch.duration}
                               </div>
                             </div>
@@ -472,7 +458,7 @@ export function TrainingScreen() {
                               <div className="text-caption font-semibold">
                                 {idx + 1}. {ch.title}
                               </div>
-                              <div className="mt-1 text-caption leading-5 text-[var(--app-muted)]">{ch.summary}</div>
+                              <div className="mt-1 text-caption leading-5 text-text-secondary">{ch.summary}</div>
                             </div>
                           </div>
                         </div>
