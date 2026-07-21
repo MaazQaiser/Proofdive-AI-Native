@@ -2,22 +2,14 @@ import { Bell, CircleHelp, Settings } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Logo } from "@/components/ui/logo";
 import { Separator } from "@/components/ui/separator";
 import { ORG_ADMIN_DEMO_ORG } from "@/lib/orgAdminDemo";
 
 import { OrgAdminTopNav } from "./OrgAdminTopNav";
+import { OrgAdminUserMenu } from "./OrgAdminUserMenu";
 
 type Props = { children: ReactNode };
-
-function initialsFor(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return parts
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
 
 export function OrgAdminShell({ children }: Props) {
   return (
@@ -44,11 +36,7 @@ export function OrgAdminShell({ children }: Props) {
               <Bell className="h-4 w-4" />
             </Link>
           </div>
-          <Avatar className="mb-2.5 h-8 w-8">
-            <AvatarFallback className="bg-muted text-muted-foreground text-caption font-medium">
-              {initialsFor(ORG_ADMIN_DEMO_ORG.contactName)}
-            </AvatarFallback>
-          </Avatar>
+          <OrgAdminUserMenu />
         </div>
       </header>
 
