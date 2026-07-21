@@ -223,8 +223,9 @@
   --text-overline-weight: 500;
   --text-overline-tracking: 0.5px;
 
-  /* Onboarding agent prompt styles — Figma "Onboarding Flow" (node 43:82):
-     the agent's big greeting heading and the question line beneath it.
+  /* Agent/hero greeting styles — originally Figma "Onboarding Flow" (node
+     43:82), now shared by any big greeting headline + question line (e.g.
+     onboarding's agent prompt, the Coach dashboard's hero heading).
      Distinct from h1-h6/subheading since neither matches (52px/400 and
      32px/400 aren't on that scale). Both are Inter Regular (confirmed via
      Figma's own typography inspector panel) — inherited from --font-sans,
@@ -234,7 +235,7 @@
   --text-agent-heading-tracking: -1.04px;
   --text-agent-question-size: 32px;
   --text-agent-question-weight: 400;
-  --text-agent-question-tracking: 0px;
+  --text-agent-question-tracking: -0.64px;
 
   /* Logo scale - exact Figma values */
   --logo-xxl: 80px;

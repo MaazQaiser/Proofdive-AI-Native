@@ -269,27 +269,33 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 w-full">
-      <div
-        className="mx-auto w-full max-w-[840px] px-6 pb-4"
-        role="region"
-        aria-labelledby={titleId}
-      >
-        <h2 id={titleId} className="sr-only">
-          AI Coach chat
-        </h2>
-        <ChatComposer
-          key={composerKey}
-          placeholder={placeholder}
-          quickPromptChips={showChips ? quickChips : undefined}
-          onQuickPromptChipSelect={onQuickPromptChipSelect}
-          onSend={onSend}
-          onUpload={planPlannedStep === "await_jd" ? onUpload : undefined}
-          showUploadButton={!inPlanNewRole || planPlannedStep === "await_jd"}
-          uploadAccept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          uploadMultiple={false}
-          thread={messageThread}
-          onThreadClose={messageThread ? handleThreadClose : undefined}
-        />
+      {/* Mirrors AppShell's frame (max-w-6xl, pl-20/pr-6 reserved for the nav
+          rail) so this fixed-position bar's centering axis matches the main
+          content column's — otherwise the two drift apart since this dock
+          lives outside AppShell's DOM tree and centers on the viewport. */}
+      <div className="mx-auto w-full max-w-6xl pr-6 pl-20">
+        <div
+          className="mx-auto w-full max-w-[840px] px-6 pb-4"
+          role="region"
+          aria-labelledby={titleId}
+        >
+          <h2 id={titleId} className="sr-only">
+            AI Coach chat
+          </h2>
+          <ChatComposer
+            key={composerKey}
+            placeholder={placeholder}
+            quickPromptChips={showChips ? quickChips : undefined}
+            onQuickPromptChipSelect={onQuickPromptChipSelect}
+            onSend={onSend}
+            onUpload={planPlannedStep === "await_jd" ? onUpload : undefined}
+            showUploadButton={!inPlanNewRole || planPlannedStep === "await_jd"}
+            uploadAccept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            uploadMultiple={false}
+            thread={messageThread}
+            onThreadClose={messageThread ? handleThreadClose : undefined}
+          />
+        </div>
       </div>
     </div>
   );
