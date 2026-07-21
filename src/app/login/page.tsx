@@ -143,13 +143,20 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <div className="flex w-full flex-col items-center pt-4">
+            <div className="flex w-full flex-col items-center gap-2 pt-4">
               <button
                 type="button"
                 onClick={() => router.push("/superadmin/overview")}
                 className="text-caption text-muted-foreground/70 hover:text-foreground hover:underline"
               >
                 Super Admin login →
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/orgadmin/accept-invite")}
+                className="text-caption text-muted-foreground/70 hover:text-foreground hover:underline"
+              >
+                Organization Admin login →
               </button>
             </div>
           </div>

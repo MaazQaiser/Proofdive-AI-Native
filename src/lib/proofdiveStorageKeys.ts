@@ -18,5 +18,23 @@ export const StorageKeys = {
   termsConsent: "proofdive.termsConsent.v1",
   /** Selected Daily/Weekly/Monthly granularity on the Super Admin dashboard. */
   superAdminDashboardDateRange: "proofdive.superAdmin.dashboardDateRange.v1",
+  /** Selected Daily/Weekly/Monthly granularity on the Org Admin dashboard. */
+  orgAdminDashboardDateRange: "proofdive.orgAdmin.dashboardDateRange.v1",
+  /** Partial<Organization> patch overlaid on ORG_ADMIN_DEMO_ORG by the Profile Details section. */
+  orgAdminProfileOverrides: "proofdive.orgAdmin.profileOverrides.v1",
+  /** Whether the Org Admin has requested account deletion (Revoke Consent / Delete Account). */
+  orgAdminAccountDeletionRequested: "proofdive.orgAdmin.accountDeletionRequested.v1",
+  /** Messages submitted via the Contact Support section. */
+  orgAdminSupportMessages: "proofdive.orgAdmin.supportMessages.v1",
+  /** Audit log entries shown on the Audit Logs section (seeded, then user-editable via remove/clear). */
+  orgAdminAuditLogEntries: "proofdive.orgAdmin.auditLogEntries.v1",
+  /** IDs of policy-update notices the Org Admin has acknowledged. */
+  orgAdminPolicyAcknowledgements: "proofdive.orgAdmin.policyAcknowledgements.v1",
+  /** Saved mock payment methods (Billing & Subscription section). */
+  orgAdminPaymentMethods: "proofdive.orgAdmin.paymentMethods.v1",
+  /** Mock invoice/payment history (Billing & Subscription section). */
+  orgAdminInvoices: "proofdive.orgAdmin.invoices.v1",
+  /** Per-module additional allocation purchased via "Purchase Module Add-Ons", keyed by module key. */
+  orgAdminBillingOverrides: "proofdive.orgAdmin.billingOverrides.v1",
 } as const;
 

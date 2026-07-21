@@ -1,44 +1,43 @@
-import { Card, CardBody } from "@/components/Card";
+import { GroupedBarChartPrimitive } from "@/components/dashboard/charts/GroupedBarChartPrimitive";
+import { formatCompactNumber } from "@/components/dashboard/format";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ActiveUserPoint } from "@/lib/superAdminMockData";
-
-import { GroupedBarChartPrimitive } from "./charts/GroupedBarChartPrimitive";
-import { formatCompactNumber } from "./format";
 
 type Props = { data: ActiveUserPoint[] };
 
 export function ActiveUserTrendChart({ data }: Props) {
   return (
     <Card>
-      <CardBody>
-        <h2 className="text-h6 text-black">Active User Trend</h2>
-        <p className="mt-0.5 text-caption text-[var(--app-muted)]">Platform engagement trends</p>
-        <div className="mt-4">
-          {data.length === 0 ? (
-            <p className="py-10 text-center text-caption text-[var(--app-muted)]">
-              No activity found for selected date range.
-            </p>
-          ) : (
-            <GroupedBarChartPrimitive
-              labels={data.map((d) => d.label)}
-              yFormatter={formatCompactNumber}
-              series={[
-                {
-                  key: "active",
-                  label: "Active Users",
-                  color: "#111827",
-                  values: data.map((d) => d.active),
-                },
-                {
-                  key: "inactive",
-                  label: "Inactive Users",
-                  color: "#d1d5db",
-                  values: data.map((d) => d.inactive),
-                },
-              ]}
-            />
-          )}
-        </div>
-      </CardBody>
+      <CardHeader>
+        <CardTitle>Active User Trend</CardTitle>
+        <CardDescription>Platform engagement trends</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {data.length === 0 ? (
+          <p className="py-10 text-center text-caption text-muted-foreground">
+            No activity found for selected date range.
+          </p>
+        ) : (
+          <GroupedBarChartPrimitive
+            labels={data.map((d) => d.label)}
+            yFormatter={formatCompactNumber}
+            series={[
+              {
+                key: "active",
+                label: "Active Users",
+                color: "var(--primary)",
+                values: data.map((d) => d.active),
+              },
+              {
+                key: "inactive",
+                label: "Inactive Users",
+                color: "var(--border)",
+                values: data.map((d) => d.inactive),
+              },
+            ]}
+          />
+        )}
+      </CardContent>
     </Card>
   );
 }
