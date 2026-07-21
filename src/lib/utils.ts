@@ -25,6 +25,8 @@ const customTwMerge = extendTailwindMerge({
             "body-sm",
             "caption",
             "overline",
+            "agent-heading",
+            "agent-question",
           ],
         },
       ],

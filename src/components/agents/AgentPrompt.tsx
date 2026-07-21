@@ -4,33 +4,43 @@ import { useState } from "react";
 
 import { TypingText } from "@/components/TypingText";
 import { splitPrompt } from "@/components/agents/splitPrompt";
+import { cn } from "@/lib/utils";
 
 type AgentPromptProps = {
   promptKey: string;
   prompt: string;
   ariaLabel?: string;
+  headingClassName?: string;
+  subtextClassName?: string;
+  /** Reveal one character at a time (default) or one whole word at a time. */
+  mode?: "char" | "word";
 };
 
 function AgentPromptInner({
   promptKey,
   prompt,
   ariaLabel = "Agent prompt",
+  headingClassName = "text-h3 leading-[1.05]",
+  subtextClassName = "mt-4 text-h4 leading-[48px] text-black/80",
+  mode = "char",
 }: AgentPromptProps) {
   const { heading: promptHeading, subtext: promptSubtext } = splitPrompt(prompt);
   const [revealPrompt, setRevealPrompt] = useState(false);
   const [headingDone, setHeadingDone] = useState(false);
 
   const headingText = promptHeading || prompt;
+  const charDelay = mode === "word" ? undefined : 52;
+  const wordDelay = mode === "word" ? 90 : undefined;
 
   return (
     <div className="relative w-full">
       {/* Height sizer: reserve final layout so typing doesn't reflow */}
       <div aria-hidden="true" className="pointer-events-none opacity-0">
-        <div className="whitespace-pre-wrap text-left text-h3 leading-[1.05]">
+        <div className={cn("whitespace-pre-wrap text-left", headingClassName)}>
           {headingText}
         </div>
         {promptSubtext ? (
-          <div className="mt-4 whitespace-pre-wrap text-left text-h4 leading-[48px] text-black/80">
+          <div className={cn("whitespace-pre-wrap text-left", subtextClassName)}>
             {promptSubtext}
           </div>
         ) : null}
@@ -47,24 +57,28 @@ function AgentPromptInner({
         }}
         aria-label={ariaLabel}
       >
-        <div className="whitespace-pre-wrap text-left text-h3 leading-[1.05]">
+        <div className={cn("whitespace-pre-wrap text-left", headingClassName)}>
           <TypingText
             key={`heading-${promptKey}`}
             text={headingText}
             reveal={revealPrompt}
             cursor={!revealPrompt}
-            baseCharDelayMs={52}
+            mode={mode}
+            baseCharDelayMs={charDelay}
+            baseWordDelayMs={wordDelay}
             onDone={() => setHeadingDone(true)}
           />
         </div>
         {promptSubtext && headingDone ? (
-          <div className="mt-4 whitespace-pre-wrap text-left text-h4 leading-[48px] text-black/80">
+          <div className={cn("whitespace-pre-wrap text-left", subtextClassName)}>
             <TypingText
               key={`subtext-${promptKey}`}
               text={promptSubtext}
               reveal={revealPrompt}
               cursor={!revealPrompt}
-              baseCharDelayMs={52}
+              mode={mode}
+              baseCharDelayMs={charDelay}
+              baseWordDelayMs={wordDelay}
               startDelayMs={260}
             />
           </div>

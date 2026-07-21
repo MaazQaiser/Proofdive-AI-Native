@@ -3,13 +3,20 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowUpRight, BookOpen, Info, Map } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
-import { CardBody, GlassCard } from "@/components/Card";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { cn } from "@/components/cn";
 import { CoachConversationalDock } from "@/components/coach/CoachConversationalDock";
 import type { ChatComposerQuickChip } from "@/components/chat/ChatComposer";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CardButton } from "@/components/ui/card-button";
+import { IconButton } from "@/components/ui/icon-button";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { Separator } from "@/components/ui/separator";
 import {
   createStoryboardDraft,
   normalizeStoryboardDocument,
@@ -156,23 +163,23 @@ function coachScoreBand(score: number): "red" | "amber" | "green" {
 }
 
 function coachReadinessBadgeClasses(label: ReadinessLabel) {
-  if (label === "Ready") return "bg-emerald-500/15 text-emerald-900 border border-emerald-500/20";
-  if (label === "Borderline") return "bg-amber-500/15 text-amber-900 border border-amber-500/20";
-  return "bg-rose-500/15 text-rose-900 border border-rose-500/20";
+  if (label === "Ready") return "border-scoring-green/20 bg-scoring-green/15 text-scoring-green";
+  if (label === "Borderline") return "border-scoring-yellow/20 bg-scoring-yellow/15 text-scoring-yellow";
+  return "border-scoring-red/20 bg-scoring-red/15 text-scoring-red";
 }
 
 function coachScoreTextClasses(score: number) {
   const b = coachScoreBand(score);
-  if (b === "green") return "text-emerald-700";
-  if (b === "amber") return "text-amber-700";
-  return "text-rose-700";
+  if (b === "green") return "text-scoring-green";
+  if (b === "amber") return "text-scoring-yellow";
+  return "text-scoring-red";
 }
 
 function coachScoreBarClasses(score: number) {
   const b = coachScoreBand(score);
-  if (b === "green") return "bg-emerald-500";
-  if (b === "amber") return "bg-amber-500";
-  return "bg-rose-500";
+  if (b === "green") return "bg-scoring-green border-scoring-green";
+  if (b === "amber") return "bg-scoring-yellow border-scoring-yellow";
+  return "bg-scoring-red border-scoring-red";
 }
 
 const ROLE_SUGGESTIONS = [
@@ -184,62 +191,18 @@ const ROLE_SUGGESTIONS = [
 ] as const;
 
 
-/** Heroicons 24 outline: arrow-up-right (Tailwind design system) */
-function ArrowUpRightIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
-      <path
-        d="M4.5 19.5L19.5 4.5M19.5 4.5H9.75M19.5 4.5V9.75"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-/** Minimal info icon (Heroicons-like) */
-function InfoIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
-      <path
-        d="M12 16.25V11.25"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 8.25h.01"
-        stroke="currentColor"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function PillarInfoIcon({ tooltip }: { tooltip: string }) {
   return (
     <button
       type="button"
       className={cn(
         "group relative inline-flex items-center justify-center rounded-md",
-        "text-gray-500/80 hover:text-gray-700",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+        "text-text-secondary hover:text-text-primary",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
       )}
       aria-label={tooltip}
     >
-      <InfoIcon className="h-4 w-4 shrink-0" />
+      <Info className="h-4 w-4 shrink-0" />
       <span
         className={cn(
           "pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2",
@@ -334,13 +297,13 @@ export function CoachHome() {
     const overall = interviewReadinessEmpty ? null : (journeyReadinessSnapshot?.overall ?? null);
     const overallText = overall == null ? "--" : overall.toFixed(1);
     const overallTextClass =
-      overall == null ? "text-gray-500" : coachScoreTextClasses(journeyReadinessSnapshot?.overall ?? 0);
+      overall == null ? "text-text-secondary" : coachScoreTextClasses(journeyReadinessSnapshot?.overall ?? 0);
 
     const band = interviewReadinessEmpty ? null : (journeyReadinessSnapshot?.band ?? null);
     const bandText = band ?? "--";
     const bandClass =
       band == null
-        ? "bg-rose-500/12 text-[#e60000]"
+        ? "bg-muted text-muted-foreground border-transparent"
         : coachReadinessBadgeClasses(journeyReadinessSnapshot?.band ?? "Not ready");
 
     const noteText = interviewReadinessEmpty
@@ -355,76 +318,51 @@ export function CoachHome() {
   const readinessCardEl = useMemo(() => {
     if (!showInterviewReadinessCard) return null;
     return (
-      <GlassCard className="w-full mt-6">
-        <Link
-          href={readinessSourceReport?.meta?.id ? `/report/${readinessSourceReport.meta.id}` : "/report"}
-          aria-label="Open report"
-          className={cn(
-            "absolute right-5 top-5 z-10 inline-flex items-center justify-center rounded-full p-1.5",
-            "text-gray-400 hover:text-gray-700 hover:bg-white/50 active:bg-white/70",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
-          )}
-        >
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden
-          >
-            <path
-              d="M7 17L17 7M17 7H10M17 7V14"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </Link>
-        <CardBody>
+      <Card className="mt-6 w-full">
+        <CardHeader className="flex-row items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h3 className="text-h6">Interview readiness</h3>
+            <p className="mt-1 text-caption text-text-secondary">
+              Mocks, trainings, and pillar balance at a glance.
+            </p>
+          </div>
+          <IconButton asChild variant="ghost" aria-label="Open report">
+            <Link href={readinessSourceReport?.meta?.id ? `/report/${readinessSourceReport.meta.id}` : "/report"}>
+              <ArrowUpRight />
+            </Link>
+          </IconButton>
+        </CardHeader>
+        <CardContent>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 lg:flex-1">
-              <h3 className="text-h6 pr-10">Interview readiness</h3>
-              <div className="mt-2 flex w-full flex-col gap-3">
-                <p className="text-body leading-6 text-[var(--app-muted)]">
-                  Mocks, trainings, and pillar balance at a glance.
-                </p>
-
-                <div className="flex shrink-0 flex-wrap items-end justify-start gap-1">
-                  <span
-                    className={cn(
-                      "text-h2 font-extrabold leading-none tabular-nums",
-                      readinessCardModel.overallTextClass,
-                    )}
-                  >
-                    {readinessCardModel.overallText}
-                  </span>
-                  <span className="pb-1.5 text-body-lg text-gray-500 tabular-nums">
-                    /{READINESS_MAX.toFixed(1)}
-                  </span>
-                </div>
-              </div>
-
-              <p className="mt-4 flex flex-wrap items-center gap-3 text-body leading-6 text-[var(--app-muted)]">
-                You’re currently on{" "}
+              <div className="flex shrink-0 flex-wrap items-end justify-start gap-1">
                 <span
                   className={cn(
-                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-body",
-                    readinessCardModel.bandClass,
+                    "text-h2 font-extrabold leading-none tabular-nums",
+                    readinessCardModel.overallTextClass,
                   )}
                 >
-                  {readinessCardModel.bandText}
+                  {readinessCardModel.overallText}
                 </span>
+                <span className="pb-1.5 text-body-lg text-text-secondary tabular-nums">
+                  /{READINESS_MAX.toFixed(1)}
+                </span>
+              </div>
+
+              <p className="mt-4 flex flex-wrap items-center gap-3 text-body leading-6 text-text-secondary">
+                You’re currently on{" "}
+                <Badge variant="outline" className={cn("text-body", readinessCardModel.bandClass)}>
+                  {readinessCardModel.bandText}
+                </Badge>
               </p>
 
               {readinessCardModel.noteText ? (
-                <p className="mt-5 text-body leading-7 text-[var(--app-muted)]">{readinessCardModel.noteText}</p>
+                <p className="mt-5 text-body leading-7 text-text-secondary">{readinessCardModel.noteText}</p>
               ) : null}
             </div>
 
             <div className="lg:w-[360px] lg:shrink-0">
-              <div className="mt-2 lg:mt-10 space-y-4">
+              <div className="mt-2 space-y-4 lg:mt-0">
                 {readinessCardModel.pillars.map(({ id, label, score }) => (
                   <div key={id}>
                     <div className="flex items-baseline justify-between gap-3">
@@ -435,31 +373,24 @@ export function CoachHome() {
                       <div
                         className={cn(
                           "shrink-0 text-caption tabular-nums",
-                          score == null ? "text-gray-500" : coachScoreTextClasses(score),
+                          score == null ? "text-text-secondary" : coachScoreTextClasses(score),
                         )}
                       >
                         {score == null ? "--" : score.toFixed(1)}
                       </div>
                     </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/60">
-                      <div
-                        className={cn(
-                          "h-full rounded-full",
-                          score == null ? "bg-black/70 w-0" : coachScoreBarClasses(score),
-                        )}
-                        style={
-                          score == null ? undefined : { width: `${Math.min(100, (score / READINESS_MAX) * 100)}%` }
-                        }
-                        aria-hidden
-                      />
-                    </div>
+                    <ProgressBar
+                      className="mt-2 h-1.5"
+                      value={score == null ? 0 : (score / READINESS_MAX) * 100}
+                      indicatorClassName={score == null ? "bg-border" : coachScoreBarClasses(score)}
+                    />
                   </div>
                 ))}
               </div>
             </div>
           </div>
-        </CardBody>
-      </GlassCard>
+        </CardContent>
+      </Card>
     );
   }, [readinessCardModel, readinessSourceReport?.meta?.id, showInterviewReadinessCard]);
 
@@ -652,34 +583,24 @@ export function CoachHome() {
                 <h4 className="mt-1 mb-[14px] text-h4 leading-[52px]">
                   Let&apos;s get interview ready
                 </h4>
-                <p className="mt-2 max-w-xl text-left text-body leading-7 text-[var(--app-muted)]">
+                <p className="mt-2 max-w-xl text-left text-body leading-7 text-text-secondary">
                   Choose a path to get started.
                 </p>
-                <div className="mt-8 flex w-full max-w-xl flex-col gap-4">
-                  <Link
+                <div className="mt-8 grid w-full max-w-xl grid-cols-1 gap-4 sm:grid-cols-2">
+                  <CardButton
                     href="/storyboard"
-                    className={cn(
-                      "flex w-full items-center justify-between gap-4 rounded-2xl border border-white/60 bg-white/45 px-5 py-4 text-left shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition hover:bg-white/70",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
-                    )}
-                  >
-                    <span className="text-body leading-6 text-gray-900">
-                      Would you like to start building your Storyboard?
-                    </span>
-                    <ArrowUpRightIcon className="h-5 w-5 shrink-0 text-gray-500" />
-                  </Link>
-                  <Link
+                    variant="primary"
+                    icon={<BookOpen />}
+                    title="Build your Storyboard"
+                    subtitle="Turn your experience into proof"
+                  />
+                  <CardButton
                     href="/coach?roadmap=1"
-                    className={cn(
-                      "flex w-full items-center justify-between gap-4 rounded-2xl border border-white/60 bg-white/45 px-5 py-4 text-left shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition hover:bg-white/70",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
-                    )}
-                  >
-                    <span className="text-body leading-6 text-gray-900">
-                      Plan a preparation road map for me
-                    </span>
-                    <ArrowUpRightIcon className="h-5 w-5 shrink-0 text-gray-500" />
-                  </Link>
+                    variant="gray"
+                    icon={<Map />}
+                    title="Plan my roadmap"
+                    subtitle="Get a personalized prep plan"
+                  />
                 </div>
                 {readinessCardEl}
               </>
@@ -689,7 +610,7 @@ export function CoachHome() {
                   {(() => {
                     const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                     if (isRoadmapCoach) return "Here is your guided journey";
-                    if (isFinalCoach) return isFirstStart ? "You're off to a strong start." : "Good New! you are Improving";
+                    if (isFinalCoach) return isFirstStart ? "You're off to a strong start." : "Good news, you're improving.";
                     return "You're off to a strong start.";
                   })()}
                 </h2>
@@ -698,15 +619,15 @@ export function CoachHome() {
                     const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                     if (isRoadmapCoach) return "Follow the path, then go for your mock interview.";
                     if (isFinalCoach) return isFirstStart
-                      ? "Let start with building a story which help you to improve."
-                      : "Focus on your weaker area's now to get it done.";
-                    return "Let start with building a story which help you to improve.";
+                      ? "Let's start building a story that'll help you improve."
+                      : "Focus on your weaker areas to get it done.";
+                    return "Let's start building a story that'll help you improve.";
                   })()}
                 </h4>
                 {readinessCardEl}
                 <div className="mt-4 w-full pt-0">
                   {!isRoadmapCoach ? (
-                    <p className="w-full text-left text-body-lg leading-7 text-[var(--app-muted)]">
+                    <p className="w-full text-left text-body-lg leading-7 text-text-secondary">
                       {(() => {
                         const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                         if (isFinalCoach) {
@@ -714,20 +635,15 @@ export function CoachHome() {
                             ? "Complete the guided journey to help you improve."
                             : "Based on your last session, let’s focus on strengthening your execution and depth.";
                         }
-                        return "Based on your last session Ai coach identified the areas to work on";
+                        return "Based on your last session, AI coach identified the areas to work on.";
                       })()}
                     </p>
                   ) : null}
 
-                  <div
-                    className={cn(
-                      "flex w-full flex-col gap-y-6 gap-x-8",
-                      isRoadmapCoach ? "mt-0" : "mt-6",
-                    )}
-                  >
-                    <div className="w-full">
-                      <CardBody className="p-0">
-                        <div className="flex items-start justify-between gap-4 rounded-[20px] transition-colors hover:bg-white/70">
+                  <Card className={cn("w-full", isRoadmapCoach ? "mt-0" : "mt-6")}>
+                    <CardContent className="flex w-full flex-col">
+                      <div className="w-full py-4 first:pt-0 last:pb-0">
+                        <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0 flex-1">
                             {(() => {
                               const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
@@ -753,31 +669,21 @@ export function CoachHome() {
                                       {showActionBadge ? (
                                         <span className="inline-flex items-center gap-2">
                                           <span>{title}</span>
-                                          <span className="inline-flex items-center rounded-full border border-black/10 bg-black/[.04] px-2.5 py-0.5 text-overline text-gray-800">
-                                            Action
-                                          </span>
+                                          <Badge variant="secondary">Action</Badge>
                                         </span>
                                       ) : (
                                         title
                                       )}
                                     </h3>
-                                    <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">{subtitle}</p>
+                                    <p className="mt-2 text-body-sm leading-6 text-text-secondary">{subtitle}</p>
                                     {showFirstStartProgress ? (
                                       <>
-                                        <div
-                                          className="mt-4 h-2.5 w-full max-w-md overflow-hidden rounded-full bg-black/10"
-                                          role="progressbar"
-                                          aria-valuenow={trainingPct}
-                                          aria-valuemin={0}
-                                          aria-valuemax={100}
+                                        <ProgressBar
+                                          className="mt-4 h-2.5 max-w-md"
+                                          value={trainingPct}
                                           aria-label="Training progress"
-                                        >
-                                          <div
-                                            className="h-full rounded-full bg-black transition-[width] duration-300 ease-out"
-                                            style={{ width: `${trainingPct}%` }}
-                                          />
-                                        </div>
-                                        <p className="mt-2 text-overline tabular-nums text-[var(--app-muted)]">
+                                        />
+                                        <p className="mt-2 text-overline tabular-nums text-text-secondary">
                                           {Math.round(trainingPct)}% done
                                         </p>
                                       </>
@@ -791,187 +697,162 @@ export function CoachHome() {
                                     {showActionBadge ? (
                                       <span className="inline-flex items-center gap-2">
                                         <span>{title}</span>
-                                        <span className="inline-flex items-center rounded-full border border-black/10 bg-black/[.04] px-2.5 py-0.5 text-overline text-gray-800">
-                                          Action
-                                        </span>
+                                        <Badge variant="secondary">Action</Badge>
                                       </span>
                                     ) : (
                                       title
                                     )}
                                   </h3>
-                                  <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">{subtitle}</p>
+                                  <p className="mt-2 text-body-sm leading-6 text-text-secondary">{subtitle}</p>
                                 </>
                               );
                             })()}
                           </div>
-                          <Link
-                            href="/training"
-                            className={cn(
-                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
-                              "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
-                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
-                            )}
-                          >
-                            {(() => {
-                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                              const isSecondInterview = isFinalCoach && !isFirstStart;
-                              if (isSecondInterview) return "Start learning";
-                              if (coachJourneyView === "journey" && isFirstStart && trainingContinue) {
-                                return "Continue learning";
-                              }
-                              return "Start learning";
-                            })()}
-                            <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
-                          </Link>
-                        </div>
-                      </CardBody>
-                    </div>
-                    <div className="h-px w-full bg-slate-300" aria-hidden />
-
-              <div className="w-full">
-                <CardBody className="p-0">
-                  <div className="flex items-start justify-between gap-4 rounded-[20px] transition-colors hover:bg-white/70">
-                    <div className="min-w-0 flex-1">
-                      {hasCraftedStoryboard ? (
-                        <>
-                          <h3 className="text-h6">
-                            {(() => {
-                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                              const isSecondInterview = isFinalCoach && !isFirstStart;
-                              return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
-                            })()}
-                          </h3>
-                          <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">
-                            {(() => {
-                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                              const isSecondInterview = isFinalCoach && !isFirstStart;
-                              if (!isSecondInterview) {
-                                return (
-                                  <>
-                                    Turn your experience into clear, structured answers.
-                                  </>
-                                );
-                              }
-                              return (
-                                <>
-                                  Add more depth around your{" "}
-                                  <span className="font-extrabold text-gray-900">decisions</span>,{" "}
-                                  <span className="font-extrabold text-gray-900">actions</span>, and{" "}
-                                  <span className="font-extrabold text-gray-900">impact</span>.
-                                </>
-                              );
-                            })()}
-                          </p>
-                          <div className="mt-3 flex flex-wrap items-baseline gap-2">
-                            <span className="text-caption text-gray-800">
-                              Here is your story score
-                            </span>
-                            <span className="text-h5 leading-none tabular-nums text-gray-900">
-                              {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
-                            </span>
-                            <span className="text-caption tabular-nums text-gray-500">/ 5</span>
-                          </div>
-                        </>
-                      ) : hasCreatedStoryboard ? (
-                        <>
-                          <h3 className="text-h6">
-                            {(() => {
-                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                              const isSecondInterview = isFinalCoach && !isFirstStart;
-                              return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
-                            })()}
-                          </h3>
-                          <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">
-                            Turn your experience into clear, structured answers. Add more detail to raise your story
-                            score.
-                          </p>
-                          <div className="mt-3 flex flex-wrap items-baseline gap-2">
-                            <span className="text-caption text-gray-800">
-                              Overall story score
-                            </span>
-                            <span className="text-h5 leading-none tabular-nums text-gray-900">
-                              {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
-                            </span>
-                            <span className="text-caption tabular-nums text-gray-500">/ 5</span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <h3 className="text-h6">
-                            {(() => {
-                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                              const isSecondInterview = isFinalCoach && !isFirstStart;
-                              return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
-                            })()}
-                          </h3>
-                          <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">
-                            Turn your experience into clear, structured answers.
-                          </p>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      {hasCraftedStoryboard ? (
-                        <Link
-                          href="/storyboard?new=1"
-                          className={cn(
-                            "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
-                            "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
-                          )}
-                        >
-                          Add another experience
-                          <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
-                        </Link>
-                      ) : (
-                        <>
-                          <Link
-                            href="/storyboard"
-                            className={cn(
-                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
-                              "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
-                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
-                            )}
-                          >
-                            {(() => {
-                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                              const isSecondInterview = isFinalCoach && !isFirstStart;
-                              return isSecondInterview ? "Add more" : "Start crafting";
-                            })()}
-                            <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
-                          </Link>
-                          {hasCreatedStoryboard ? (
-                            <Link
-                              href="/storyboard?new=1"
-                              className={cn(
-                                "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
-                                "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
-                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
-                              )}
-                            >
+                          <Button asChild variant="outline">
+                            <Link href="/training">
                               {(() => {
                                 const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                                 const isSecondInterview = isFinalCoach && !isFirstStart;
-                                return isSecondInterview ? "Add more" : "Add another experience";
+                                if (isSecondInterview) return "Start learning";
+                                if (coachJourneyView === "journey" && isFirstStart && trainingContinue) {
+                                  return "Continue learning";
+                                }
+                                return "Start learning";
                               })()}
-                              <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
+                              <ArrowUpRight />
                             </Link>
-                          ) : null}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </CardBody>
-              </div>
+                          </Button>
+                        </div>
+                      </div>
 
-                    <div className="h-px w-full bg-slate-300" aria-hidden />
+                      <Separator />
 
-                    <div className="w-full">
-                      <CardBody className="p-0">
-                        <div className="flex items-start justify-between gap-4 rounded-[20px] transition-colors hover:bg-white/70">
+                      <div className="w-full py-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0 flex-1">
+                            {hasCraftedStoryboard ? (
+                              <>
+                                <h3 className="text-h6">
+                                  {(() => {
+                                    const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                    const isSecondInterview = isFinalCoach && !isFirstStart;
+                                    return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
+                                  })()}
+                                </h3>
+                                <p className="mt-2 text-body-sm leading-6 text-text-secondary">
+                                  {(() => {
+                                    const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                    const isSecondInterview = isFinalCoach && !isFirstStart;
+                                    if (!isSecondInterview) {
+                                      return (
+                                        <>
+                                          Turn your experience into clear, structured answers.
+                                        </>
+                                      );
+                                    }
+                                    return (
+                                      <>
+                                        Add more depth around your{" "}
+                                        <span className="font-semibold text-text-primary">decisions</span>,{" "}
+                                        <span className="font-semibold text-text-primary">actions</span>, and{" "}
+                                        <span className="font-semibold text-text-primary">impact</span>.
+                                      </>
+                                    );
+                                  })()}
+                                </p>
+                                <div className="mt-3 flex flex-wrap items-baseline gap-2">
+                                  <span className="text-caption text-text-secondary">
+                                    Here is your story score
+                                  </span>
+                                  <span className="text-h5 leading-none tabular-nums text-text-primary">
+                                    {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
+                                  </span>
+                                  <span className="text-caption tabular-nums text-text-secondary">/ 5</span>
+                                </div>
+                              </>
+                            ) : hasCreatedStoryboard ? (
+                              <>
+                                <h3 className="text-h6">
+                                  {(() => {
+                                    const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                    const isSecondInterview = isFinalCoach && !isFirstStart;
+                                    return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
+                                  })()}
+                                </h3>
+                                <p className="mt-2 text-body-sm leading-6 text-text-secondary">
+                                  Turn your experience into clear, structured answers. Add more detail to raise your story
+                                  score.
+                                </p>
+                                <div className="mt-3 flex flex-wrap items-baseline gap-2">
+                                  <span className="text-caption text-text-secondary">
+                                    Overall story score
+                                  </span>
+                                  <span className="text-h5 leading-none tabular-nums text-text-primary">
+                                    {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
+                                  </span>
+                                  <span className="text-caption tabular-nums text-text-secondary">/ 5</span>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <h3 className="text-h6">
+                                  {(() => {
+                                    const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                    const isSecondInterview = isFinalCoach && !isFirstStart;
+                                    return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
+                                  })()}
+                                </h3>
+                                <p className="mt-2 text-body-sm leading-6 text-text-secondary">
+                                  Turn your experience into clear, structured answers.
+                                </p>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            {hasCraftedStoryboard ? (
+                              <Button asChild variant="outline">
+                                <Link href="/storyboard?new=1">
+                                  Add another experience
+                                  <ArrowUpRight />
+                                </Link>
+                              </Button>
+                            ) : (
+                              <>
+                                <Button asChild variant="outline">
+                                  <Link href="/storyboard">
+                                    {(() => {
+                                      const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                      const isSecondInterview = isFinalCoach && !isFirstStart;
+                                      return isSecondInterview ? "Add more" : "Start crafting";
+                                    })()}
+                                    <ArrowUpRight />
+                                  </Link>
+                                </Button>
+                                {hasCreatedStoryboard ? (
+                                  <Button asChild variant="outline">
+                                    <Link href="/storyboard?new=1">
+                                      {(() => {
+                                        const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                        const isSecondInterview = isFinalCoach && !isFirstStart;
+                                        return isSecondInterview ? "Add more" : "Add another experience";
+                                      })()}
+                                      <ArrowUpRight />
+                                    </Link>
+                                  </Button>
+                                ) : null}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="w-full py-4">
+                        <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0 flex-1">
                             <h3 className="text-h6">Experience bank</h3>
-                            <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">
+                            <p className="mt-2 text-body-sm leading-6 text-text-secondary">
                               {roleExperiences.length ? (
                                 <>
                                   {roleExperiences.length} experience{roleExperiences.length === 1 ? "" : "s"}{" "}
@@ -987,26 +868,19 @@ export function CoachHome() {
                               )}
                             </p>
                           </div>
-                          <Link
-                            href="/storyboard"
-                            className={cn(
-                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
-                              "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
-                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
-                            )}
-                          >
-                            {roleExperiences.length ? "Open Storyboard" : "Add an experience"}
-                            <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
-                          </Link>
+                          <Button asChild variant="outline">
+                            <Link href="/storyboard">
+                              {roleExperiences.length ? "Open Storyboard" : "Add an experience"}
+                              <ArrowUpRight />
+                            </Link>
+                          </Button>
                         </div>
-                      </CardBody>
-                    </div>
+                      </div>
 
-                    <div className="h-px w-full bg-slate-300" aria-hidden />
+                      <Separator />
 
-                    <div className="w-full">
-                      <CardBody className="p-0">
-                        <div className="flex items-start justify-between gap-4 rounded-[20px] transition-colors hover:bg-white/70">
+                      <div className="w-full py-4 last:pb-0">
+                        <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
                             <h3 className="text-h6">
                               {(() => {
@@ -1015,7 +889,7 @@ export function CoachHome() {
                                 return isSecondInterview ? "3. Practice with a focused mock" : "3. Take a mock interview";
                               })()}
                             </h3>
-                            <p className="mt-2 text-body-sm leading-6 text-[var(--app-muted)]">
+                            <p className="mt-2 text-body-sm leading-6 text-text-secondary">
                               {(() => {
                                 const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                                 const isSecondInterview = isFinalCoach && !isFirstStart;
@@ -1025,29 +899,24 @@ export function CoachHome() {
                                 return (
                                   <>
                                     Try a short interview focused on{" "}
-                                    <span className="font-extrabold text-gray-900">Action</span> and{" "}
-                                    <span className="font-extrabold text-gray-900">Mastery</span> pillars.
+                                    <span className="font-semibold text-text-primary">Action</span> and{" "}
+                                    <span className="font-semibold text-text-primary">Mastery</span> pillars.
                                   </>
                                 );
                               })()}
                             </p>
                           </div>
-                          <Link
-                            href="/interview?welcomeBack=1"
-                            className={cn(
-                              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-5 text-body-sm font-semibold tracking-tight transition",
-                              "bg-transparent text-gray-600 shadow-none hover:text-gray-900 hover:bg-white/70 active:bg-white",
-                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
-                            )}
-                          >
-                            Start interview
-                            <ArrowUpRightIcon className="h-4 w-4 shrink-0" />
-                          </Link>
+                          <Button asChild>
+                            <Link href="/interview?welcomeBack=1">
+                              Start interview
+                              <ArrowUpRight />
+                            </Link>
+                          </Button>
                         </div>
-                      </CardBody>
-                    </div>
-              </div>
-            </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </>
             ) : null}
           </div>

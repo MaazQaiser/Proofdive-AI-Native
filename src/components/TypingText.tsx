@@ -7,10 +7,21 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
 }
 
+/** Splits into reveal units: whole words (each carrying its trailing whitespace,
+ * so joining the units reconstructs `text` exactly) for "word" mode, or
+ * individual characters for "char" mode. */
+function toUnits(text: string, mode: "char" | "word"): string[] {
+  if (mode === "char") return Array.from(text);
+  return text.match(/\S+\s*/g) ?? [];
+}
+
 export type TypingTextProps = {
   text: string;
   startDelayMs?: number;
   baseCharDelayMs?: number;
+  baseWordDelayMs?: number;
+  /** Reveal one character at a time, or one whole word at a time. */
+  mode?: "char" | "word";
   jitter?: number; // 0.2 = ±20%
   cursor?: boolean;
   reveal?: boolean;
@@ -22,6 +33,8 @@ export function TypingText({
   text,
   startDelayMs = 0,
   baseCharDelayMs = 28,
+  baseWordDelayMs = 90,
+  mode = "char",
   jitter = 0.2,
   cursor = true,
   reveal = false,
@@ -29,6 +42,7 @@ export function TypingText({
   className,
 }: TypingTextProps) {
   const reducedMotion = useMemo(() => prefersReducedMotion(), []);
+  const units = useMemo(() => toUnits(text, mode), [text, mode]);
 
   const [shown, setShown] = useState("");
   const [done, setDone] = useState(false);
@@ -55,9 +69,11 @@ export function TypingText({
       return;
     }
 
+    const baseDelay = mode === "word" ? baseWordDelayMs : baseCharDelayMs;
+
     const tick = () => {
       const i = iRef.current;
-      if (i >= text.length) {
+      if (i >= units.length) {
         setDone(true);
         if (!doneNotifiedRef.current) {
           doneNotifiedRef.current = true;
@@ -66,19 +82,20 @@ export function TypingText({
         return;
       }
 
-      const nextChar = text[i] ?? "";
+      const nextUnit = units[i] ?? "";
       iRef.current = i + 1;
-      setShown(text.slice(0, i + 1));
+      setShown((prev) => prev + nextUnit);
 
+      const lastChar = nextUnit.trimEnd().slice(-1);
       const punctPause =
-        nextChar === "." || nextChar === "!" || nextChar === "?"
+        lastChar === "." || lastChar === "!" || lastChar === "?"
           ? 220
-          : nextChar === "," || nextChar === ";" || nextChar === ":"
+          : lastChar === "," || lastChar === ";" || lastChar === ":"
             ? 120
             : 0;
 
       const rand = 1 + (Math.random() * 2 - 1) * jitter;
-      const delay = Math.max(10, Math.round(baseCharDelayMs * rand + punctPause));
+      const delay = Math.max(10, Math.round(baseDelay * rand + punctPause));
       timeoutRef.current = window.setTimeout(tick, delay);
     };
 
@@ -87,7 +104,7 @@ export function TypingText({
     return () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
-  }, [text, startDelayMs, baseCharDelayMs, jitter, isInstant, onDone]);
+  }, [units, startDelayMs, baseCharDelayMs, baseWordDelayMs, mode, isInstant, onDone, jitter]);
 
   return (
     <span className={className} aria-label={text}>
@@ -96,4 +113,3 @@ export function TypingText({
     </span>
   );
 }
-

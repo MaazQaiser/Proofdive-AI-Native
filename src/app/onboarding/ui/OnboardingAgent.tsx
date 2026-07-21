@@ -3,11 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BookOpen, Home, MessageCircleQuestion, UserCheck } from "lucide-react";
 
 import type { ChatMessage } from "@/components/chat/chatTypes";
-import { ChatComposer } from "@/components/chat/ChatComposer";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
+import { CardButton } from "@/components/ui/card-button";
 import { Logo } from "@/components/ui/logo";
+import { SelectionChip } from "@/components/ui/selection-chip";
+import { OnboardingBackgroundGlow } from "@/app/onboarding/ui/OnboardingBackgroundGlow";
+import { OnboardingComposer } from "@/app/onboarding/ui/OnboardingComposer";
+import { OnboardingProgressHeader } from "@/app/onboarding/ui/OnboardingProgressHeader";
 import { makeId } from "@/lib/id";
 import { reportCountForRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -26,6 +31,22 @@ type Step =
   | "resume"
   | "industryVertical"
   | "done";
+
+/** Progress-bar fill per step — Figma's steps advance in clean 10% increments
+ * (confirmed 10% on name, 20% on role/chips-selection); branches that are
+ * alternatives to each other (experienceLevel/education) share a tier. */
+const STEP_PERCENT: Record<Step, number> = {
+  name: 10,
+  role: 20,
+  backgroundType: 30,
+  experienceLevel: 40,
+  education: 40,
+  lastWorkedAt: 50,
+  jobDescription: 60,
+  resume: 80,
+  industryVertical: 90,
+  done: 100,
+};
 
 export function OnboardingAgent() {
   const router = useRouter();
@@ -123,12 +144,12 @@ export function OnboardingAgent() {
 
     let firstContent: string;
     if (initialStep === "role") {
-      firstContent = `hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. i’m your onboarding agent.\n\nFirst up: what’s the role you’re preparing for?`;
+      firstContent = `Hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. I’m your onboarding agent.\n\nFirst up: what’s the role you’re preparing for?`;
     } else if (initialStep === "done") {
-      firstContent = `hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. i’m your onboarding agent.`;
+      firstContent = `Hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. I’m your onboarding agent.`;
     } else {
       firstContent =
-        "hey, welcome to proofdive. i’m your onboarding agent.\n\nWhat should I call you?";
+        "Hey, welcome to proofdive. I’m your onboarding agent.\n\nWhat should I call you?";
     }
 
     const base: ChatMessage[] = [
@@ -274,7 +295,7 @@ export function OnboardingAgent() {
       setDraft(next);
       push(
         "assistant",
-        `hey ${name}, welcome to proofdive.\n\nLet’s start with your story and get you interview-ready.\n\nFirst up: what’s the role you’re preparing for?`,
+        `Hey ${name}, welcome to proofdive. Let’s start.\n\nFirst up: what’s the role you’re preparing for?`,
       );
       setStep("role");
       return;
@@ -443,21 +464,18 @@ export function OnboardingAgent() {
   }
 
   return (
-    <div className="min-h-screen w-full">
-      <div className="mx-auto flex min-h-screen w-[800px] max-w-full flex-col pb-32 pt-10">
-        <div className="flex items-center justify-between gap-3 px-6">
+    <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-background">
+      <OnboardingBackgroundGlow />
+      <header className="relative z-10 flex h-20 w-full shrink-0 items-center px-12">
+        <Link href="/">
           <Logo size="xxs" />
-          {canGoBack ? (
-            <button
-              type="button"
-              onClick={goBack}
-              className="inline-flex items-center gap-1 text-caption text-gray-500 transition hover:text-gray-800"
-              aria-label="Go back to previous step"
-            >
-              ← Back
-            </button>
-          ) : null}
-        </div>
+        </Link>
+      </header>
+      <div className="relative mx-auto flex w-[800px] max-w-full flex-1 flex-col px-6 pb-32 pt-10">
+        <OnboardingProgressHeader
+          percent={STEP_PERCENT[step]}
+          onBack={canGoBack ? goBack : undefined}
+        />
 
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full">
@@ -466,170 +484,81 @@ export function OnboardingAgent() {
               promptKey={promptKey}
               prompt={prompt}
               ariaLabel="Onboarding prompt"
+              headingClassName="text-agent-heading text-heading-teal"
+              subtextClassName="mt-16 text-agent-question text-text-primary"
+              mode="word"
             />
-            <div className="mt-4 w-full text-left text-body-lg text-[var(--app-muted)]">
-              {quickReplies.length
-                ? "Type your answer, use voice, or pick an option."
-                : "Type your answer or use voice."}
-            </div>
             {step === "role" ? (
-              <div className="mt-6 w-full">
-                <div className="text-overline text-gray-600">
-                  SUGGESTED ROLES
+              <div className="mt-6 flex w-full flex-col gap-2">
+                <div className="text-body-sm font-semibold text-text-secondary">
+                  Trending roles
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2">
                   {suggestedRoles.map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => handleAnswer(r)}
-                      className="rounded-full border border-[#E2E8F0]/90 bg-white/60 px-4 py-2 text-caption shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition hover:bg-white/70 active:bg-white/80"
-                    >
+                    <SelectionChip key={r} onClick={() => handleAnswer(r)}>
                       {r}
-                    </button>
+                    </SelectionChip>
                   ))}
                 </div>
               </div>
             ) : null}
             {quickReplies.length ? (
-              <div className="mt-6 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
-                {quickReplies.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => handleAnswer(opt.value)}
-                    className="rounded-[16px] border border-[#E2E8F0]/90 bg-white/60 px-4 py-4 text-left shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition hover:bg-white/70 active:bg-white/80"
-                  >
-                    <div className="text-caption">
+              <div className="mt-6 flex w-full flex-col gap-2">
+                <div className="text-body-sm font-semibold text-text-secondary">
+                  Select one
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {quickReplies.map((opt) => (
+                    <SelectionChip key={opt.id} onClick={() => handleAnswer(opt.value)}>
                       {opt.label}
-                    </div>
-                    {opt.value === "skip" ? (
-                      <div className="mt-1 text-caption text-[var(--app-muted)]">
-                        I will share later
-                      </div>
-                    ) : null}
-                  </button>
-                ))}
+                    </SelectionChip>
+                  ))}
+                </div>
               </div>
             ) : null}
             {step === "done" ? (
               <div className="mt-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
-                <Link
-                  className="group rounded-[18px] border border-white/50 bg-black text-left text-white shadow-[0_12px_30px_rgba(0,0,0,0.10)] transition hover:bg-black/90 active:bg-black/80"
+                <CardButton
                   href="/storyboard"
-                >
-                  <div className="p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-h6">
-                        Story Board
-                      </div>
-                      <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition group-hover:bg-white/20 group-active:bg-white/30">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          aria-hidden="true"
-                          className="h-4 w-4"
-                        >
-                          <path
-                            d="M4 5h16M4 9h10M4 13h7M4 17h5"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    <div className="mt-1 text-caption text-white/75">
-                      Build your career story board
-                    </div>
-                  </div>
-                </Link>
+                  variant="primary"
+                  icon={<BookOpen />}
+                  title="Storyboard"
+                  subtitle="Build your career storyboard"
+                />
 
-                <Link
-                  className="group rounded-[18px] border border-white/50 bg-white text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white"
+                <CardButton
                   href="/interview"
-                >
-                  <div className="p-5">
-                    <div className="text-h6">
-                      Start a mock interview
-                    </div>
-                    <div className="mt-1 text-caption text-[var(--app-muted)]">
-                      Evaluate yourself for the {role || "selected role"}
-                    </div>
-                  </div>
-                </Link>
+                  variant="gray"
+                  icon={<UserCheck />}
+                  title="Start mock interview"
+                  subtitle={`Evaluate yourself for the ${role || "selected"} role`}
+                />
 
-                <button
-                  type="button"
-                  className="group w-full rounded-[18px] border border-white/50 bg-white text-left text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white"
+                <CardButton
+                  variant="gray"
+                  icon={<MessageCircleQuestion />}
+                  title="Learn more"
+                  subtitle="Learn about proofdive"
                   onClick={() => setIntroModalOpen(true)}
-                >
-                  <div className="p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-h6">
-                        Learn about Proofdive
-                      </div>
-                      <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/60 text-black transition group-hover:bg-white/80 group-active:bg-white">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          aria-hidden="true"
-                          className="h-4 w-4"
-                        >
-                          <path
-                            d="M10 8l6 4-6 4V8Z"
-                            fill="currentColor"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    <div className="mt-1 text-caption text-[var(--app-muted)]">
-                      Explore our competency engine in depth
-                    </div>
-                  </div>
-                </button>
+                />
 
-                <Link
-                  className="group w-full rounded-[18px] border border-white/50 bg-white text-left text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] transition hover:bg-white/70 active:bg-white"
+                <CardButton
                   href={homeHref}
-                >
-                  <div className="p-5">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-h6">
-                        Go to Home
-                      </div>
-                      <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/60 text-black transition group-hover:bg-white/80 group-active:bg-white">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          aria-hidden="true"
-                          className="h-4 w-4"
-                        >
-                          <path
-                            d="M9 6l6 6-6 6"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    <div className="mt-1 text-caption text-[var(--app-muted)]">
-                      Jump straight to your dashboard
-                    </div>
-                  </div>
-                </Link>
+                  variant="gray"
+                  icon={<Home />}
+                  title="Go to Home"
+                  subtitle="Jump to your dashboard"
+                />
               </div>
             ) : null}
 
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 z-40 w-full bg-[var(--app-bg)]">
+        <div className="fixed bottom-0 left-0 right-0 z-40 w-full">
           <div className="mx-auto w-full max-w-[840px] px-6 py-5">
-            <ChatComposer
-              placeholder="Reply (type or use voice)…"
+            <OnboardingComposer
+              placeholder="Reply (type here or use voice)"
               onSend={handleAnswer}
               showUploadButton={step === "jobDescription" || step === "resume"}
               uploadAccept=".pdf,.doc,.docx,.txt"
