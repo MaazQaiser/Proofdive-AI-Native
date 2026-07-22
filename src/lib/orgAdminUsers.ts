@@ -5,7 +5,6 @@ export type OrgAdminUser = {
   name: string;
   email: string;
   status: OrgAdminUserStatus;
-  phone: string;
   /** ISO date. */
   invitedDate: string;
   /** ISO date, null until the user is first activated. */
@@ -25,7 +24,6 @@ export const ORG_ADMIN_USERS: OrgAdminUser[] = [
     name: "John Doe",
     email: "john.doe@acmerobotics.com",
     status: "inactive",
-    phone: "555-0101",
     invitedDate: "2026-05-02",
     joinedDate: "2026-05-04",
   },
@@ -34,7 +32,6 @@ export const ORG_ADMIN_USERS: OrgAdminUser[] = [
     name: "Priya Sharma",
     email: "priya.sharma@acmerobotics.com",
     status: "active",
-    phone: "555-0102",
     invitedDate: "2026-05-10",
     joinedDate: "2026-05-11",
   },
@@ -43,7 +40,6 @@ export const ORG_ADMIN_USERS: OrgAdminUser[] = [
     name: "Miguel Santos",
     email: "miguel.santos@acmerobotics.com",
     status: "invited",
-    phone: "555-0103",
     invitedDate: "2026-07-15",
     joinedDate: null,
   },
@@ -52,7 +48,6 @@ export const ORG_ADMIN_USERS: OrgAdminUser[] = [
     name: "Amara Okafor",
     email: "amara.okafor@acmerobotics.com",
     status: "active",
-    phone: "555-0104",
     invitedDate: "2026-04-20",
     joinedDate: "2026-04-22",
   },
@@ -61,7 +56,6 @@ export const ORG_ADMIN_USERS: OrgAdminUser[] = [
     name: "Wei Chen",
     email: "wei.chen@acmerobotics.com",
     status: "invited",
-    phone: "555-0105",
     invitedDate: "2026-07-18",
     joinedDate: null,
   },
@@ -70,7 +64,6 @@ export const ORG_ADMIN_USERS: OrgAdminUser[] = [
     name: "Sara Ahmed",
     email: "sara.ahmed@acmerobotics.com",
     status: "active",
-    phone: "555-0106",
     invitedDate: "2026-03-01",
     joinedDate: "2026-03-02",
   },
@@ -79,7 +72,6 @@ export const ORG_ADMIN_USERS: OrgAdminUser[] = [
     name: "David Kim",
     email: "david.kim@acmerobotics.com",
     status: "inactive",
-    phone: "555-0107",
     invitedDate: "2026-02-14",
     joinedDate: "2026-02-16",
   },

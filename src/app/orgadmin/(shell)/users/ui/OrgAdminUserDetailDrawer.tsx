@@ -17,11 +17,10 @@ type FieldErrors = Record<string, string>;
 
 type FormState = {
   name: string;
-  phone: string;
 };
 
 function buildForm(user: OrgAdminUser): FormState {
-  return { name: user.name, phone: user.phone };
+  return { name: user.name };
 }
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -79,17 +78,15 @@ export function OrgAdminUserDetailDrawer({
   function handleSave() {
     if (!form || !user) return;
     const trimmedName = form.name.trim();
-    const trimmedPhone = form.phone.trim();
     const nextErrors: FieldErrors = {};
     if (!trimmedName) nextErrors.name = "Name is required.";
-    if (!trimmedPhone) nextErrors.phone = "Phone Number is required.";
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       return;
     }
 
-    onUpdate(user.id, { name: trimmedName, phone: trimmedPhone });
+    onUpdate(user.id, { name: trimmedName });
     setIsEditing(false);
     toast.success("User updated successfully.");
   }
@@ -125,7 +122,6 @@ export function OrgAdminUserDetailDrawer({
               <Separator />
 
               <div className="grid grid-cols-2 gap-4">
-                <DetailRow label="Phone Number" value={user.phone} />
                 <DetailRow label="Invited Date" value={user.invitedDate} />
                 <DetailRow label="Joined Date" value={user.joinedDate ?? "—"} />
               </div>
@@ -165,17 +161,6 @@ export function OrgAdminUserDetailDrawer({
               </div>
 
               <DetailRow label="Email" value={user.email} />
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="edit-user-phone">Phone Number</Label>
-                <Input
-                  id="edit-user-phone"
-                  value={form.phone}
-                  onChange={(e) => updateField("phone", e.target.value)}
-                  aria-invalid={!!errors.phone}
-                />
-                {errors.phone && <p className="text-caption text-destructive">{errors.phone}</p>}
-              </div>
 
               <Button onClick={handleSave} className="w-fit">
                 Save Changes
