@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AuthVisualPanel } from "@/components/auth/AuthVisualPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
@@ -97,13 +98,12 @@ export default function LoginPage() {
                       Forgot Password?
                     </Link>
                   </div>
-                  <Input
+                  <PasswordInput
                     id="login-password"
                     name="password"
-                    type="password"
                     autoComplete="current-password"
                     placeholder="Password"
-                    className="h-14 rounded-lg border-border px-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
+                    className="h-14 rounded-lg border-border pl-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
                     required
                   />
                 </div>

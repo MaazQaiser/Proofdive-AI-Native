@@ -7,6 +7,7 @@ import { useState } from "react";
 import { AuthVisualPanel } from "@/components/auth/AuthVisualPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -107,13 +108,12 @@ export default function SignupPage() {
                   <Label htmlFor="signup-password" className="text-caption font-normal text-foreground">
                     Password
                   </Label>
-                  <Input
+                  <PasswordInput
                     id="signup-password"
                     name="password"
-                    type="password"
                     autoComplete="new-password"
                     placeholder="Create a password"
-                    className="h-14 rounded-lg border-border px-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
+                    className="h-14 rounded-lg border-border pl-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
                     required
                     minLength={8}
                   />

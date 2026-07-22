@@ -8,6 +8,7 @@ import { AuthVisualPanel } from "@/components/auth/AuthVisualPanel";
 import { isPasswordStrong, PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/ui/logo";
 import { ORG_ADMIN_DEMO_ORG } from "@/lib/orgAdminDemo";
@@ -85,10 +86,9 @@ export default function OrgAdminAcceptInvitePage() {
                   <Label htmlFor="invite-password" className="text-caption font-normal text-foreground">
                     Password
                   </Label>
-                  <Input
+                  <PasswordInput
                     id="invite-password"
                     name="password"
-                    type="password"
                     autoComplete="new-password"
                     placeholder="Create a password"
                     value={password}
@@ -97,7 +97,7 @@ export default function OrgAdminAcceptInvitePage() {
                       setErrors((prev) => ({ ...prev, password: undefined }));
                     }}
                     aria-invalid={!!errors.password}
-                    className="h-14 rounded-lg border-border px-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
+                    className="h-14 rounded-lg border-border pl-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
                   />
                   <PasswordStrengthMeter password={password} />
                   {errors.password ? (
@@ -110,10 +110,9 @@ export default function OrgAdminAcceptInvitePage() {
                   <Label htmlFor="invite-confirm-password" className="text-caption font-normal text-foreground">
                     Confirm Password
                   </Label>
-                  <Input
+                  <PasswordInput
                     id="invite-confirm-password"
                     name="confirmPassword"
-                    type="password"
                     autoComplete="new-password"
                     placeholder="Re-enter your password"
                     value={confirmPassword}
@@ -122,7 +121,7 @@ export default function OrgAdminAcceptInvitePage() {
                       setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
                     }}
                     aria-invalid={!!errors.confirmPassword}
-                    className="h-14 rounded-lg border-border px-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
+                    className="h-14 rounded-lg border-border pl-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
                   />
                   {errors.confirmPassword ? (
                     <p className="text-overline text-destructive" role="alert">
