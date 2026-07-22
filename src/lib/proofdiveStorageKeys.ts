@@ -14,6 +14,12 @@ export const StorageKeys = {
   coachFinalReadinessReportId: "proofdive.coachFinalReadinessReportId.v1",
   /** Whether the user consents to their interview recordings being used to improve AI. */
   aiTrainingConsent: "proofdive.aiTrainingConsent.v1",
+  /** Every role the candidate has onboarded for, keyed implicitly by `targetRole`; `roleProfile` holds whichever one is currently active. */
+  savedRoles: "proofdive.savedRoles.v1",
+  /** Whether practice-reminder / score-update notifications are enabled for the candidate. */
+  candidateNotificationsEnabled: "proofdive.candidateNotificationsEnabled.v1",
+  /** Data URL of the candidate's uploaded profile photo, if any. */
+  candidateAvatarImage: "proofdive.candidateAvatarImage.v1",
   /** Whether the user has accepted the Terms of Service and Privacy Policy at signup. */
   termsConsent: "proofdive.termsConsent.v1",
   /** Selected Daily/Weekly/Monthly granularity on the Super Admin dashboard. */

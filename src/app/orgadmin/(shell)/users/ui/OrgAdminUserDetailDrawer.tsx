@@ -7,14 +7,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import {
-  ORG_ADMIN_USER_ROLE_LABEL,
-  type OrgAdminUser,
-  type OrgAdminUserRole,
-} from "@/lib/orgAdminUsers";
+import type { OrgAdminUser } from "@/lib/orgAdminUsers";
 
 import { OrgAdminUserStatusPill } from "./OrgAdminUserStatusPill";
 
@@ -22,12 +17,11 @@ type FieldErrors = Record<string, string>;
 
 type FormState = {
   name: string;
-  role: OrgAdminUserRole;
   phone: string;
 };
 
 function buildForm(user: OrgAdminUser): FormState {
-  return { name: user.name, role: user.role, phone: user.phone };
+  return { name: user.name, phone: user.phone };
 }
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -95,7 +89,7 @@ export function OrgAdminUserDetailDrawer({
       return;
     }
 
-    onUpdate(user.id, { name: trimmedName, role: form.role, phone: trimmedPhone });
+    onUpdate(user.id, { name: trimmedName, phone: trimmedPhone });
     setIsEditing(false);
     toast.success("User updated successfully.");
   }
@@ -131,7 +125,6 @@ export function OrgAdminUserDetailDrawer({
               <Separator />
 
               <div className="grid grid-cols-2 gap-4">
-                <DetailRow label="Role" value={ORG_ADMIN_USER_ROLE_LABEL[user.role]} />
                 <DetailRow label="Phone Number" value={user.phone} />
                 <DetailRow label="Invited Date" value={user.invitedDate} />
                 <DetailRow label="Joined Date" value={user.joinedDate ?? "—"} />
@@ -172,22 +165,6 @@ export function OrgAdminUserDetailDrawer({
               </div>
 
               <DetailRow label="Email" value={user.email} />
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="edit-user-role">Role</Label>
-                <Select value={form.role} onValueChange={(v) => updateField("role", v as OrgAdminUserRole)}>
-                  <SelectTrigger id="edit-user-role" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(ORG_ADMIN_USER_ROLE_LABEL) as OrgAdminUserRole[]).map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {ORG_ADMIN_USER_ROLE_LABEL[role]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="edit-user-phone">Phone Number</Label>

@@ -1,4 +1,4 @@
-import type { CarSnapshot, Experience, InterviewReport } from "@/lib/proofdiveTypes";
+import type { CarSnapshot, Experience, InterviewReport, RoleProfile } from "@/lib/proofdiveTypes";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 
 export function buildCarSnapshot(exp: Experience): CarSnapshot | null {
@@ -47,5 +47,43 @@ export function reportCountForRole(roleTitle: string): number {
   } catch {
     return 0;
   }
+}
+
+function roleKey(targetRole: string): string {
+  return targetRole.trim().toLowerCase();
+}
+
+/** Add or replace a saved role. `matchTitle` (if given) is matched instead of
+ * `profile.targetRole` — used when an edit renamed the role, so the original
+ * entry is replaced in place rather than duplicated. */
+export function upsertSavedRole(
+  roles: RoleProfile[],
+  profile: RoleProfile,
+  matchTitle?: string,
+): RoleProfile[] {
+  const key = roleKey(matchTitle ?? profile.targetRole);
+  const idx = roles.findIndex((r) => roleKey(r.targetRole) === key);
+  if (idx === -1) return [...roles, profile];
+  const next = [...roles];
+  next[idx] = profile;
+  return next;
+}
+
+export function removeSavedRole(roles: RoleProfile[], targetRole: string): RoleProfile[] {
+  const key = roleKey(targetRole);
+  return roles.filter((r) => roleKey(r.targetRole) !== key);
+}
+
+/** Saved roles for display, guaranteed to include the currently active role
+ * even if it hasn't been persisted into `savedRoles` yet (e.g. profiles
+ * finalized before this feature existed). Does not write to storage. */
+export function rolesWithActive(
+  roles: RoleProfile[],
+  active: RoleProfile | null,
+): RoleProfile[] {
+  if (!active?.targetRole?.trim()) return roles;
+  const key = roleKey(active.targetRole);
+  if (roles.some((r) => roleKey(r.targetRole) === key)) return roles;
+  return [...roles, active];
 }
 

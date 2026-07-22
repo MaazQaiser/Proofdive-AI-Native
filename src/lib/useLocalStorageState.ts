@@ -33,5 +33,5 @@ export function useLocalStorageState<T>(key: string, initialValue: T) {
     writeJson(key, value);
   }, [key, value, hydrated]);
 
-  return [value, setValue] as const;
+  return [value, setValue, hydrated] as const;
 }

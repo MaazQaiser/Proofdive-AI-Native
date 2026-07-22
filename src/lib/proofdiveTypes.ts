@@ -106,6 +106,8 @@ export type StoryboardFromCraft = { v: 1; role: string; at: string };
 
 export type RoleProfile = {
   name?: string;
+  /** Account-level, not role-specific — kept in sync across every entry in `savedRoles`. */
+  email?: string;
   targetRole: string;
   backgroundType?: "fresh_grad" | "under_grad" | "diploma_holder" | "experienced";
   experienceLevel?: "1-5" | "5-10" | "10+";
