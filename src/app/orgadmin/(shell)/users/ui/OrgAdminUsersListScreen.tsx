@@ -5,7 +5,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  KeyRound,
   MoreHorizontal,
   Plus,
   Search,
@@ -30,13 +29,9 @@ import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/compon
 import { buildSeedAuditLog, type AuditLogEntry } from "@/lib/orgAdminAuditLog";
 import { ORG_ADMIN_DEMO_ORG } from "@/lib/orgAdminDemo";
 import {
-  DEFAULT_ORG_ADMIN_PASSWORD_POLICY,
   ORG_ADMIN_USERS,
-  ORG_ADMIN_USER_ROLE_LABEL,
   ORG_ADMIN_USER_STATUS_LABEL,
-  type OrgAdminPasswordPolicy,
   type OrgAdminUser,
-  type OrgAdminUserRole,
   type OrgAdminUserStatus,
 } from "@/lib/orgAdminUsers";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -45,14 +40,12 @@ import { useLocalStorageState } from "@/lib/useLocalStorageState";
 import { AddUserDialog } from "./AddUserDialog";
 import { OrgAdminUserDetailDrawer } from "./OrgAdminUserDetailDrawer";
 import { OrgAdminUserStatusPill } from "./OrgAdminUserStatusPill";
-import { PasswordRulesDialog } from "./PasswordRulesDialog";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
 
 export function OrgAdminUsersListScreen() {
   const [users, setUsers] = useState<OrgAdminUser[]>(ORG_ADMIN_USERS);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<OrgAdminUserRole | "all">("all");
   const [statusFilter, setStatusFilter] = useState<OrgAdminUserStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(ROWS_PER_PAGE_OPTIONS[0]);
@@ -61,9 +54,7 @@ export function OrgAdminUsersListScreen() {
   );
   const [removeTarget, setRemoveTarget] = useState<OrgAdminUser | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isPasswordRulesOpen, setIsPasswordRulesOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [passwordPolicy, setPasswordPolicy] = useState<OrgAdminPasswordPolicy>(DEFAULT_ORG_ADMIN_PASSWORD_POLICY);
 
   const [, setAuditEntries] = useLocalStorageState<AuditLogEntry[]>(
     StorageKeys.orgAdminAuditLogEntries,
@@ -76,11 +67,10 @@ export function OrgAdminUsersListScreen() {
     const q = search.trim().toLowerCase();
     return users.filter((user) => {
       if (q && !user.name.toLowerCase().includes(q) && !user.email.toLowerCase().includes(q)) return false;
-      if (roleFilter !== "all" && user.role !== roleFilter) return false;
       if (statusFilter !== "all" && user.status !== statusFilter) return false;
       return true;
     });
-  }, [users, search, roleFilter, statusFilter]);
+  }, [users, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
   const currentPage = Math.min(page, totalPages);
@@ -169,10 +159,6 @@ export function OrgAdminUsersListScreen() {
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-12 py-4">
         <h1 className="text-h6 text-foreground">User Management</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setIsPasswordRulesOpen(true)}>
-            <KeyRound className="h-4 w-4" />
-            Password Rules
-          </Button>
           <Button onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="h-4 w-4" />
             Add User
@@ -194,25 +180,6 @@ export function OrgAdminUsersListScreen() {
           />
         </div>
         <Separator orientation="vertical" className="h-6" />
-        <Select
-          value={roleFilter}
-          onValueChange={(v) => {
-            setRoleFilter(v as OrgAdminUserRole | "all");
-            resetToFirstPage();
-          }}
-        >
-          <SelectTrigger size="sm" className="w-[150px]">
-            <SelectValue placeholder="Role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
-            {(Object.entries(ORG_ADMIN_USER_ROLE_LABEL) as [OrgAdminUserRole, string][]).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         <Select
           value={statusFilter}
           onValueChange={(v) => {
@@ -248,7 +215,6 @@ export function OrgAdminUsersListScreen() {
               <TableRow>
                 <TableHead className="text-overline pl-12 text-muted-foreground">Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Email</TableHead>
-                <TableHead className="text-overline text-muted-foreground">Role</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Status</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Invited Date</TableHead>
                 <TableHead className="text-overline pr-12 text-right text-muted-foreground">Actions</TableHead>
@@ -267,9 +233,6 @@ export function OrgAdminUsersListScreen() {
                     </button>
                   </TableCell>
                   <TableCell className="text-caption text-muted-foreground">{user.email}</TableCell>
-                  <TableCell className="text-caption text-muted-foreground">
-                    {ORG_ADMIN_USER_ROLE_LABEL[user.role]}
-                  </TableCell>
                   <TableCell>
                     <OrgAdminUserStatusPill status={user.status} />
                   </TableCell>
@@ -436,13 +399,6 @@ export function OrgAdminUsersListScreen() {
         onOpenChange={setIsAddDialogOpen}
         existingEmails={users.map((u) => u.email)}
         onCreate={handleCreateUsers}
-      />
-
-      <PasswordRulesDialog
-        open={isPasswordRulesOpen}
-        onOpenChange={setIsPasswordRulesOpen}
-        policy={passwordPolicy}
-        onSave={setPasswordPolicy}
       />
 
       <OrgAdminUserDetailDrawer

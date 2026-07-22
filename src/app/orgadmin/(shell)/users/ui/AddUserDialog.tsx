@@ -1,32 +1,16 @@
 "use client";
 
-import { FileSpreadsheet, Trash2, Upload } from "lucide-react";
+import { FileSpreadsheet, Plus, Trash2, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ORG_ADMIN_USER_ROLE_LABEL,
-  type OrgAdminUser,
-  type OrgAdminUserRole,
-} from "@/lib/orgAdminUsers";
+import type { OrgAdminUser } from "@/lib/orgAdminUsers";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-type FieldErrors = Record<string, string>;
-
-type SingleFormState = {
-  name: string;
-  email: string;
-  role: OrgAdminUserRole;
-  phone: string;
-};
-
-const INITIAL_SINGLE_FORM: SingleFormState = { name: "", email: "", role: "learner", phone: "" };
 
 function nameFromEmail(email: string): string {
   const localPart = email.split("@")[0] ?? email;
@@ -45,9 +29,9 @@ type AddUserDialogProps = {
 };
 
 export function AddUserDialog({ open, onOpenChange, existingEmails, onCreate }: AddUserDialogProps) {
-  const [mode, setMode] = useState<"single" | "bulk">("single");
-  const [form, setForm] = useState<SingleFormState>(INITIAL_SINGLE_FORM);
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const [mode, setMode] = useState<"manual" | "bulk">("manual");
+  const [emails, setEmails] = useState<string[]>([""]);
+  const [emailErrors, setEmailErrors] = useState<Array<string | undefined>>([undefined]);
 
   const [csvFileName, setCsvFileName] = useState("");
   const [csvEmails, setCsvEmails] = useState<string[]>([]);
@@ -55,22 +39,27 @@ export function AddUserDialog({ open, onOpenChange, existingEmails, onCreate }: 
 
   useEffect(() => {
     if (open) return;
-    setMode("single");
-    setForm(INITIAL_SINGLE_FORM);
-    setErrors({});
+    setMode("manual");
+    setEmails([""]);
+    setEmailErrors([undefined]);
     setCsvFileName("");
     setCsvEmails([]);
     setCsvError("");
   }, [open]);
 
-  function updateField<K extends keyof SingleFormState>(key: K, value: SingleFormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    setErrors((prev) => {
-      if (!prev[key]) return prev;
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
+  function updateEmailAt(index: number, value: string) {
+    setEmails((prev) => prev.map((email, i) => (i === index ? value : email)));
+    setEmailErrors((prev) => prev.map((error, i) => (i === index ? undefined : error)));
+  }
+
+  function addEmailField() {
+    setEmails((prev) => [...prev, ""]);
+    setEmailErrors((prev) => [...prev, undefined]);
+  }
+
+  function removeEmailField(index: number) {
+    setEmails((prev) => prev.filter((_, i) => i !== index));
+    setEmailErrors((prev) => prev.filter((_, i) => i !== index));
   }
 
   function handleCsvUpload(file: File | undefined) {
@@ -85,12 +74,14 @@ export function AddUserDialog({ open, onOpenChange, existingEmails, onCreate }: 
     reader.onload = () => {
       const text = String(reader.result ?? "");
       const existingLower = existingEmails.map((email) => email.toLowerCase());
-      const emails = text
+      const parsedEmails = text
         .split(/\r?\n/)
         .map((line) => line.split(",")[0]?.trim() ?? "")
         .filter((value) => EMAIL_PATTERN.test(value))
         .map((value) => value.toLowerCase());
-      const uniqueEmails = Array.from(new Set(emails)).filter((email) => !existingLower.includes(email));
+      const uniqueEmails = Array.from(new Set(parsedEmails)).filter(
+        (email) => !existingLower.includes(email),
+      );
       if (uniqueEmails.length === 0) {
         setCsvError("Please upload a valid CSV file with at least one new email address.");
         setCsvFileName("");
@@ -110,35 +101,54 @@ export function AddUserDialog({ open, onOpenChange, existingEmails, onCreate }: 
     setCsvError("");
   }
 
-  function handleSubmitSingle() {
-    const trimmedName = form.name.trim();
-    const trimmedEmail = form.email.trim();
-    const trimmedPhone = form.phone.trim();
-    const nextErrors: FieldErrors = {};
-    if (!trimmedName) nextErrors.name = "Name is required.";
-    if (!trimmedEmail) nextErrors.email = "Email is required.";
-    else if (!EMAIL_PATTERN.test(trimmedEmail)) nextErrors.email = "Enter a valid email address.";
-    else if (existingEmails.some((email) => email.toLowerCase() === trimmedEmail.toLowerCase()))
-      nextErrors.email = "A user with this email already exists.";
-    if (!trimmedPhone) nextErrors.phone = "Phone Number is required.";
+  function handleSubmitManual() {
+    const trimmedEmails = emails.map((email) => email.trim());
+    const nextErrors: Array<string | undefined> = trimmedEmails.map(() => undefined);
+    const seenLower = new Set<string>();
 
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
+    trimmedEmails.forEach((email, index) => {
+      if (!email) return;
+      if (!EMAIL_PATTERN.test(email)) {
+        nextErrors[index] = "Enter a valid email address.";
+        return;
+      }
+      const lower = email.toLowerCase();
+      if (existingEmails.some((existing) => existing.toLowerCase() === lower)) {
+        nextErrors[index] = "A user with this email already exists.";
+        return;
+      }
+      if (seenLower.has(lower)) {
+        nextErrors[index] = "You already entered this email address.";
+        return;
+      }
+      seenLower.add(lower);
+    });
+
+    const validEmails = trimmedEmails.filter(
+      (email, index) => email && !nextErrors[index],
+    );
+
+    if (validEmails.length === 0 && trimmedEmails.every((email) => !email)) {
+      nextErrors[0] = "Enter at least one email address.";
+    }
+
+    if (nextErrors.some(Boolean) || validEmails.length === 0) {
+      setEmailErrors(nextErrors);
       return;
     }
 
-    onCreate([
-      {
-        id: `orguser_${Date.now()}`,
-        name: trimmedName,
-        email: trimmedEmail,
-        role: form.role,
+    const invitedDate = new Date().toISOString().slice(0, 10);
+    onCreate(
+      validEmails.map((email, index) => ({
+        id: `orguser_${Date.now()}_${index}`,
+        name: nameFromEmail(email),
+        email,
         status: "invited",
-        phone: trimmedPhone,
-        invitedDate: new Date().toISOString().slice(0, 10),
+        phone: "",
+        invitedDate,
         joinedDate: null,
-      },
-    ]);
+      })),
+    );
   }
 
   function handleSubmitBulk() {
@@ -149,7 +159,6 @@ export function AddUserDialog({ open, onOpenChange, existingEmails, onCreate }: 
         id: `orguser_${Date.now()}_${index}`,
         name: nameFromEmail(email),
         email,
-        role: "learner",
         status: "invited",
         phone: "",
         invitedDate,
@@ -158,6 +167,8 @@ export function AddUserDialog({ open, onOpenChange, existingEmails, onCreate }: 
     );
   }
 
+  const validEmailCount = emails.filter((email) => EMAIL_PATTERN.test(email.trim())).length;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -165,10 +176,10 @@ export function AddUserDialog({ open, onOpenChange, existingEmails, onCreate }: 
           <DialogTitle>Add User</DialogTitle>
         </DialogHeader>
 
-        <Tabs value={mode} onValueChange={(v) => setMode(v as "single" | "bulk")}>
+        <Tabs value={mode} onValueChange={(v) => setMode(v as "manual" | "bulk")}>
           <TabsList className="w-full">
-            <TabsTrigger value="single" className="flex-1">
-              Invite Single User
+            <TabsTrigger value="manual" className="flex-1">
+              Add by Email
             </TabsTrigger>
             <TabsTrigger value="bulk" className="flex-1">
               Bulk Invite via CSV
@@ -176,54 +187,40 @@ export function AddUserDialog({ open, onOpenChange, existingEmails, onCreate }: 
           </TabsList>
         </Tabs>
 
-        {mode === "single" ? (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="add-user-name">Name</Label>
-              <Input
-                id="add-user-name"
-                value={form.name}
-                onChange={(e) => updateField("name", e.target.value)}
-                aria-invalid={!!errors.name}
-              />
-              {errors.name && <p className="text-caption text-destructive">{errors.name}</p>}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="add-user-email">Email</Label>
-              <Input
-                id="add-user-email"
-                type="email"
-                value={form.email}
-                onChange={(e) => updateField("email", e.target.value)}
-                aria-invalid={!!errors.email}
-              />
-              {errors.email && <p className="text-caption text-destructive">{errors.email}</p>}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="add-user-role">Role</Label>
-              <Select value={form.role} onValueChange={(v) => updateField("role", v as OrgAdminUserRole)}>
-                <SelectTrigger id="add-user-role" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(ORG_ADMIN_USER_ROLE_LABEL) as OrgAdminUserRole[]).map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {ORG_ADMIN_USER_ROLE_LABEL[role]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="add-user-phone">Phone Number</Label>
-              <Input
-                id="add-user-phone"
-                value={form.phone}
-                onChange={(e) => updateField("phone", e.target.value)}
-                aria-invalid={!!errors.phone}
-              />
-              {errors.phone && <p className="text-caption text-destructive">{errors.phone}</p>}
-            </div>
+        {mode === "manual" ? (
+          <div className="flex flex-col gap-3">
+            <Label>Email</Label>
+            {emails.map((email, index) => (
+              <div key={index} className="flex items-start gap-2">
+                <div className="flex-1">
+                  <Input
+                    type="email"
+                    placeholder="candidate@company.com"
+                    value={email}
+                    onChange={(e) => updateEmailAt(index, e.target.value)}
+                    aria-invalid={!!emailErrors[index]}
+                  />
+                  {emailErrors[index] && (
+                    <p className="mt-1 text-caption text-destructive">{emailErrors[index]}</p>
+                  )}
+                </div>
+                {emails.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeEmailField(index)}
+                    aria-label="Remove email"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" className="w-fit" onClick={addEmailField}>
+              <Plus className="h-4 w-4" />
+              Add another email
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -283,8 +280,10 @@ export function AddUserDialog({ open, onOpenChange, existingEmails, onCreate }: 
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          {mode === "single" ? (
-            <Button onClick={handleSubmitSingle}>Send Invite</Button>
+          {mode === "manual" ? (
+            <Button onClick={handleSubmitManual}>
+              {validEmailCount > 1 ? "Send Invites" : "Send Invite"}
+            </Button>
           ) : (
             <Button onClick={handleSubmitBulk} disabled={csvEmails.length === 0}>
               Send Invites

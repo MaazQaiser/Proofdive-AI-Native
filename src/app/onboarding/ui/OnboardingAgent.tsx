@@ -1,8 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { BookOpen, Home, MessageCircleQuestion, UserCheck } from "lucide-react";
 
 import type { ChatMessage } from "@/components/chat/chatTypes";
@@ -14,7 +22,7 @@ import { OnboardingBackgroundGlow } from "@/app/onboarding/ui/OnboardingBackgrou
 import { OnboardingComposer } from "@/app/onboarding/ui/OnboardingComposer";
 import { OnboardingProgressHeader } from "@/app/onboarding/ui/OnboardingProgressHeader";
 import { makeId } from "@/lib/id";
-import { reportCountForRole } from "@/lib/proofdiveLogic";
+import { reportCountForRole, upsertSavedRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type { RoleProfile } from "@/lib/proofdiveTypes";
 import { ONBOARDING_INTRO_VIDEO_SRC } from "@/lib/onboardingIntroVideo";
@@ -48,15 +56,137 @@ const STEP_PERCENT: Record<Step, number> = {
   done: 100,
 };
 
+type Draft = {
+  name: string;
+  targetRole: string;
+  backgroundType: NonNullable<RoleProfile["backgroundType"]> | "";
+  experienceLevel: NonNullable<RoleProfile["experienceLevel"]> | "";
+  education: string;
+  lastWorkedAt: string;
+  background: string;
+  jobDescription: string;
+  resume: string;
+  industryVertical: string;
+};
+
+/** Derives the starting step/draft/messages for a given (possibly still-null,
+ * pre-hydration) profile. Called once for the SSR-safe first render (profile
+ * is always null then — `useLocalStorageState` defers its localStorage read
+ * to an effect) and again once that read completes, so returning users don't
+ * get stuck on the "name" step forever. */
+function computeInitialOnboardingState(
+  profile: RoleProfile | null,
+  isEditMode: boolean,
+  isNewRoleMode: boolean,
+): { step: Step; draft: Draft; messages: ChatMessage[] } {
+  const step: Step = isNewRoleMode
+    ? profile?.name
+      ? "role"
+      : "name"
+    : isEditMode
+      ? "role"
+      : profile?.targetRole
+        ? "done"
+        : profile?.name
+          ? "role"
+          : "name";
+
+  const draft: Draft = {
+    name: profile?.name ?? "",
+    targetRole: isNewRoleMode ? "" : profile?.targetRole ?? "",
+    backgroundType: isNewRoleMode ? "" : profile?.backgroundType ?? "",
+    experienceLevel: isNewRoleMode ? "" : profile?.experienceLevel ?? "",
+    education: isNewRoleMode ? "" : profile?.education ?? "",
+    lastWorkedAt: isNewRoleMode ? "" : profile?.lastWorkedAt ?? "",
+    background: isNewRoleMode ? "" : profile?.background ?? "",
+    jobDescription: isNewRoleMode ? "" : profile?.jobDescription ?? "",
+    resume: isNewRoleMode ? "" : profile?.resume ?? "",
+    industryVertical: isNewRoleMode ? "" : profile?.industryVertical ?? "",
+  };
+
+  const namePart = profile?.name?.trim();
+  const hasTargetRole = !isNewRoleMode && !isEditMode && Boolean(profile?.targetRole?.trim());
+
+  let firstContent: string;
+  if (step === "role") {
+    firstContent = `Hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. I’m your onboarding agent.\n\nFirst up: what’s the role you’re preparing for?`;
+  } else if (step === "done") {
+    firstContent = `Hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. I’m your onboarding agent.`;
+  } else {
+    firstContent =
+      "Hey, welcome to proofdive. I’m your onboarding agent.\n\nWhat should I call you?";
+  }
+
+  const messages: ChatMessage[] = [
+    {
+      id: makeId(),
+      role: "assistant",
+      createdAt: new Date().toISOString(),
+      content: firstContent,
+    },
+  ];
+  if (hasTargetRole) {
+    messages.push({
+      id: makeId(),
+      role: "assistant",
+      createdAt: new Date().toISOString(),
+      content:
+        "Everything’s set. Start building your StoryBoard, practice your answers, or explore how ProofDive turns experience into proof.",
+    });
+  }
+
+  return { step, draft, messages };
+}
+
+/** `roleProfile` is always null until `useLocalStorageState` finishes reading
+ * localStorage one tick after mount (see its hydration-deferral comment). If
+ * the inner agent read it at that point, its `useState` lazy initializers —
+ * step/draft/messages — would freeze on the pre-hydration "no profile yet"
+ * shape forever, permanently bouncing returning users back to the "name"
+ * question. Gating the inner component's mount on hydration instead means its
+ * initializers see the real value on their very first run. */
 export function OnboardingAgent() {
+  const searchParams = useSearchParams();
+  const [roleProfile, setRoleProfile, roleProfileHydrated] = useLocalStorageState<
+    RoleProfile | null
+  >(StorageKeys.roleProfile, null);
+  const [, setSavedRoles] = useLocalStorageState<RoleProfile[]>(StorageKeys.savedRoles, []);
+
+  if (!roleProfileHydrated) {
+    return <div className="min-h-screen w-full" aria-hidden />;
+  }
+
+  return (
+    <OnboardingAgentInner
+      roleProfile={roleProfile}
+      setRoleProfile={setRoleProfile}
+      setSavedRoles={setSavedRoles}
+      isEditMode={searchParams.get("edit") === "1"}
+      isNewRoleMode={searchParams.get("newRole") === "1"}
+    />
+  );
+}
+
+function OnboardingAgentInner({
+  roleProfile,
+  setRoleProfile,
+  setSavedRoles,
+  isEditMode,
+  isNewRoleMode,
+}: {
+  roleProfile: RoleProfile | null;
+  setRoleProfile: Dispatch<SetStateAction<RoleProfile | null>>;
+  setSavedRoles: Dispatch<SetStateAction<RoleProfile[]>>;
+  isEditMode: boolean;
+  isNewRoleMode: boolean;
+}) {
   const router = useRouter();
   const [introModalOpen, setIntroModalOpen] = useState(false);
   const introVideoRef = useRef<HTMLVideoElement>(null);
 
-  const [roleProfile, setRoleProfile] = useLocalStorageState<RoleProfile | null>(
-    StorageKeys.roleProfile,
-    null,
-  );
+  /** The role title being edited, captured before any in-flow rename, so the
+   * matching `savedRoles` entry gets replaced in place rather than duplicated. */
+  const originalTitleRef = useRef(roleProfile?.targetRole ?? "");
 
   const closeIntroModal = useCallback(() => {
     const v = introVideoRef.current;
@@ -109,68 +239,15 @@ export function OnboardingAgent() {
     [],
   );
 
-  const [step, setStep] = useState<Step>(() => {
-    if (roleProfile?.targetRole) return "done";
-    return roleProfile?.name ? "role" : "name";
-  });
-  const [draft, setDraft] = useState<{
-    name: string;
-    targetRole: string;
-    backgroundType: NonNullable<RoleProfile["backgroundType"]> | "";
-    experienceLevel: NonNullable<RoleProfile["experienceLevel"]> | "";
-    education: string;
-    lastWorkedAt: string;
-    background: string;
-    jobDescription: string;
-    resume: string;
-    industryVertical: string;
-  }>(() => ({
-    name: roleProfile?.name ?? "",
-    targetRole: roleProfile?.targetRole ?? "",
-    backgroundType: roleProfile?.backgroundType ?? "",
-    experienceLevel: roleProfile?.experienceLevel ?? "",
-    education: roleProfile?.education ?? "",
-    lastWorkedAt: roleProfile?.lastWorkedAt ?? "",
-    background: roleProfile?.background ?? "",
-    jobDescription: roleProfile?.jobDescription ?? "",
-    resume: roleProfile?.resume ?? "",
-    industryVertical: roleProfile?.industryVertical ?? "",
-  }));
-
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    const namePart = roleProfile?.name?.trim();
-    const hasTargetRole = Boolean(roleProfile?.targetRole?.trim());
-    const initialStep: Step = hasTargetRole ? "done" : namePart ? "role" : "name";
-
-    let firstContent: string;
-    if (initialStep === "role") {
-      firstContent = `Hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. I’m your onboarding agent.\n\nFirst up: what’s the role you’re preparing for?`;
-    } else if (initialStep === "done") {
-      firstContent = `Hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. I’m your onboarding agent.`;
-    } else {
-      firstContent =
-        "Hey, welcome to proofdive. I’m your onboarding agent.\n\nWhat should I call you?";
-    }
-
-    const base: ChatMessage[] = [
-      {
-        id: makeId(),
-        role: "assistant",
-        createdAt: new Date().toISOString(),
-        content: firstContent,
-      },
-    ];
-    if (hasTargetRole) {
-      base.push({
-        id: makeId(),
-        role: "assistant",
-        createdAt: new Date().toISOString(),
-        content:
-          "Everything’s set. Start building your StoryBoard, practice your answers, or explore how ProofDive turns experience into proof.",
-      });
-    }
-    return base;
-  });
+  const [step, setStep] = useState<Step>(
+    () => computeInitialOnboardingState(roleProfile, isEditMode, isNewRoleMode).step,
+  );
+  const [draft, setDraft] = useState<Draft>(
+    () => computeInitialOnboardingState(roleProfile, isEditMode, isNewRoleMode).draft,
+  );
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    () => computeInitialOnboardingState(roleProfile, isEditMode, isNewRoleMode).messages,
+  );
 
   const role = roleProfile?.targetRole?.trim() ?? "";
 
@@ -182,7 +259,7 @@ export function OnboardingAgent() {
   }
 
   function finalizeProfile(nextDraft: typeof draft) {
-    setRoleProfile({
+    const finalized: RoleProfile = {
       name: nextDraft.name.trim() || undefined,
       targetRole: nextDraft.targetRole.trim(),
       backgroundType: nextDraft.backgroundType || undefined,
@@ -194,7 +271,20 @@ export function OnboardingAgent() {
       resume: nextDraft.resume.trim() || undefined,
       industryVertical: nextDraft.industryVertical.trim() || undefined,
       createdAt: roleProfile?.createdAt ?? new Date().toISOString(),
+    };
+
+    setSavedRoles((prev) => {
+      if (isEditMode) {
+        return upsertSavedRole(prev, finalized, originalTitleRef.current);
+      }
+      // Adding a role (or a first-time/legacy finalize): keep whatever was
+      // active under its own title before swapping the new one in.
+      const withPreviousActive = roleProfile?.targetRole?.trim()
+        ? upsertSavedRole(prev, roleProfile)
+        : prev;
+      return upsertSavedRole(withPreviousActive, finalized);
     });
+    setRoleProfile(finalized);
     push(
       "assistant",
       "Everything’s set. Start building your StoryBoard, practice your answers, or explore how ProofDive turns experience into proof.",

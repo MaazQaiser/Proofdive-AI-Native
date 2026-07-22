@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { type ChangeEvent, useMemo, useRef, useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import { Card, CardBody } from "@/components/Card";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { removeSavedRole, rolesWithActive, upsertSavedRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type { InterviewReport, RoleProfile } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
@@ -51,20 +52,28 @@ function SectionHeader({
   action,
 }: {
   title: string;
-  action?: { label: string; href: string };
+  action?: { label: string } & ({ href: string } | { onClick: () => void });
 }) {
   return (
     <>
       <div className="flex items-center justify-between px-6 pt-5 pb-4">
         <span className="text-h6">{title}</span>
-        {action && (
+        {action && "href" in action ? (
           <Link
             href={action.href}
             className="text-caption font-semibold text-[#0e7a6e] hover:opacity-80 transition"
           >
             {action.label}
           </Link>
-        )}
+        ) : action ? (
+          <button
+            type="button"
+            onClick={action.onClick}
+            className="text-caption font-semibold text-[#0e7a6e] hover:opacity-80 transition"
+          >
+            {action.label}
+          </button>
+        ) : null}
       </div>
       <div className="h-px bg-[var(--app-hairline)] mx-6" />
     </>
@@ -82,27 +91,182 @@ function InfoField({ label, value }: { label: string; value?: string }) {
   );
 }
 
+function EditField({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-overline uppercase text-[var(--app-muted)]">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-lg border border-[var(--app-hairline)] bg-[var(--app-surface)] px-3 py-2 text-caption font-semibold leading-snug outline-none transition focus:border-[#0d6b60] focus:ring-2 focus:ring-[#0d6b60]/20"
+      />
+    </label>
+  );
+}
+
+const CAREER_STAGE_OPTIONS: Array<{ value: NonNullable<RoleProfile["backgroundType"]>; label: string }> = [
+  { value: "fresh_grad", label: "Fresh grad" },
+  { value: "under_grad", label: "Under grad" },
+  { value: "diploma_holder", label: "Diploma holder" },
+  { value: "experienced", label: "Experienced professional" },
+];
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-overline uppercase text-[var(--app-muted)]">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-lg border border-[var(--app-hairline)] bg-[var(--app-surface)] px-3 py-2 text-caption font-semibold leading-snug outline-none transition focus:border-[#0d6b60] focus:ring-2 focus:ring-[#0d6b60]/20"
+      >
+        <option value="">—</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function PrefRow({
   label,
   description,
-  value,
+  href,
   last,
 }: {
   label: string;
   description: string;
-  value?: string;
+  href: string;
+  last?: boolean;
+}) {
+  return (
+    <>
+      <Link
+        href={href}
+        className="flex items-center justify-between gap-4 px-6 py-4 transition hover:bg-black/[.02]"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="text-caption font-semibold">{label}</div>
+          <div className="mt-0.5 text-caption text-[var(--app-muted)]">{description}</div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5 text-caption font-semibold text-[var(--app-muted)]">
+          <ChevronRightIcon />
+        </div>
+      </Link>
+      {!last && <div className="h-px bg-[var(--app-hairline)] mx-6" />}
+    </>
+  );
+}
+
+function ToggleSwitch({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onChange}
+      className={[
+        "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+        checked
+          ? "border-black/10 bg-black"
+          : "border-black/15 bg-white/60 hover:bg-white/80",
+      ].join(" ")}
+    >
+      <span
+        aria-hidden="true"
+        className={[
+          "inline-block h-5 w-5 transform rounded-full bg-white shadow-[0_6px_16px_rgba(0,0,0,0.12)] transition",
+          checked ? "translate-x-6" : "translate-x-1",
+        ].join(" ")}
+      />
+    </button>
+  );
+}
+
+function RoleRow({
+  profile,
+  isActive,
+  onSetActive,
+  onRemove,
+  last,
+}: {
+  profile: RoleProfile;
+  isActive: boolean;
+  onSetActive: () => void;
+  onRemove: () => void;
   last?: boolean;
 }) {
   return (
     <>
       <div className="flex items-center justify-between gap-4 px-6 py-4">
         <div className="min-w-0 flex-1">
-          <div className="text-caption font-semibold">{label}</div>
-          <div className="mt-0.5 text-caption text-[var(--app-muted)]">{description}</div>
+          <div className="flex items-center gap-2 text-caption font-semibold">
+            {profile.targetRole}
+            {isActive && (
+              <span className="rounded-full bg-[#0d6b60]/10 px-2 py-0.5 text-overline text-[#0d6b60]">
+                Active
+              </span>
+            )}
+          </div>
+          {profile.industryVertical && (
+            <div className="mt-0.5 text-caption text-[var(--app-muted)]">
+              {profile.industryVertical}
+            </div>
+          )}
         </div>
-        <div className="flex shrink-0 items-center gap-1.5 text-caption font-semibold text-[var(--app-muted)]">
-          {value && <span>{value}</span>}
-          <ChevronRightIcon />
+        <div className="flex shrink-0 items-center gap-2">
+          {!isActive && (
+            <button
+              type="button"
+              onClick={onSetActive}
+              className="rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface)] px-3 py-1.5 text-caption font-semibold shadow-sm transition hover:bg-black/[.03] active:bg-black/[.06]"
+            >
+              Set active
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onRemove}
+            disabled={isActive}
+            title={isActive ? "Switch to another role before removing this one" : undefined}
+            className="rounded-full border border-red-300 bg-transparent px-3 py-1.5 text-caption font-semibold text-red-500 transition hover:bg-red-50 active:bg-red-100 disabled:cursor-not-allowed disabled:border-black/10 disabled:text-black/30 disabled:hover:bg-transparent"
+          >
+            Remove
+          </button>
         </div>
       </div>
       {!last && <div className="h-px bg-[var(--app-hairline)] mx-6" />}
@@ -115,7 +279,14 @@ function PrefRow({
 export function ProfileScreen() {
   const router = useRouter();
 
-  const [roleProfile] = useLocalStorageState<RoleProfile | null>(StorageKeys.roleProfile, null);
+  const [roleProfile, setRoleProfile] = useLocalStorageState<RoleProfile | null>(
+    StorageKeys.roleProfile,
+    null,
+  );
+  const [savedRoles, setSavedRoles] = useLocalStorageState<RoleProfile[]>(
+    StorageKeys.savedRoles,
+    [],
+  );
   const [reports, setReports] = useLocalStorageState<Record<string, InterviewReport>>(
     StorageKeys.reports,
     {},
@@ -124,8 +295,106 @@ export function ProfileScreen() {
     StorageKeys.aiTrainingConsent,
     true,
   );
+  const [notificationsEnabled, setNotificationsEnabled] = useLocalStorageState<boolean>(
+    StorageKeys.candidateNotificationsEnabled,
+    true,
+  );
   const [recordingsCleared, setRecordingsCleared] = useState(false);
   const [deleteRequested, setDeleteRequested] = useState(false);
+
+  const [avatarImage, setAvatarImage] = useLocalStorageState<string | null>(
+    StorageKeys.candidateAvatarImage,
+    null,
+  );
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+  const [pendingAvatarImage, setPendingAvatarImage] = useState<string | null>(null);
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isEditingPersonalInfo, setIsEditingPersonalInfo] = useState(false);
+  const [personalInfoDraft, setPersonalInfoDraft] = useState<{
+    name: string;
+    email: string;
+    careerStage: RoleProfile["backgroundType"] | "";
+  }>({ name: "", email: "", careerStage: "" });
+  const [emailNotice, setEmailNotice] = useState<string | null>(null);
+
+  const roles = useMemo(() => rolesWithActive(savedRoles, roleProfile), [savedRoles, roleProfile]);
+
+  function handleSetActiveRole(profile: RoleProfile) {
+    setSavedRoles((prev) =>
+      roleProfile?.targetRole?.trim() ? upsertSavedRole(prev, roleProfile) : prev,
+    );
+    setRoleProfile(profile);
+    setEmailNotice(null);
+  }
+
+  function handleRemoveRole(targetRole: string) {
+    setSavedRoles((prev) => removeSavedRole(prev, targetRole));
+  }
+
+  function openAvatarDialog() {
+    setPendingAvatarImage(avatarImage);
+    setAvatarDialogOpen(true);
+  }
+
+  function handleAvatarFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") setPendingAvatarImage(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function saveAvatarImage() {
+    setAvatarImage(pendingAvatarImage);
+    setAvatarDialogOpen(false);
+  }
+
+  function startEditPersonalInfo() {
+    setPersonalInfoDraft({
+      name: roleProfile?.name ?? "",
+      email: roleProfile?.email ?? "",
+      careerStage: roleProfile?.backgroundType ?? "",
+    });
+    setEmailNotice(null);
+    setIsEditingPersonalInfo(true);
+  }
+
+  function savePersonalInfo() {
+    if (!roleProfile) return;
+    const trimmedName = personalInfoDraft.name.trim();
+    const trimmedEmail = personalInfoDraft.email.trim();
+
+    const updated: RoleProfile = {
+      ...roleProfile,
+      name: trimmedName || undefined,
+      email: trimmedEmail || undefined,
+      backgroundType: personalInfoDraft.careerStage || undefined,
+    };
+
+    setSavedRoles((prev) => {
+      const withActive = upsertSavedRole(prev, updated);
+      // Name/email/career stage are account-level, not per-role — keep every saved role in sync.
+      return withActive.map((r) => ({
+        ...r,
+        name: updated.name,
+        email: updated.email,
+        backgroundType: updated.backgroundType,
+      }));
+    });
+    setRoleProfile(updated);
+
+    const emailChanged = trimmedEmail !== (roleProfile.email ?? "").trim();
+    setEmailNotice(
+      emailChanged && trimmedEmail
+        ? `Verification email sent to ${trimmedEmail}. Please verify to confirm the change.`
+        : null,
+    );
+    setIsEditingPersonalInfo(false);
+  }
 
   const reportCount = Object.keys(reports ?? {}).length;
   const usageUsed = reportCount;
@@ -139,7 +408,12 @@ export function ProfileScreen() {
     ? labelBackgroundType(roleProfile.backgroundType)
     : undefined;
 
-  const subtitleParts = [careerStage, roleProfile?.targetRole].filter(Boolean);
+  const subtitleParts = [careerStage, roleProfile?.targetRole, roleProfile?.industryVertical].filter(
+    Boolean,
+  );
+
+  const careerStageChanged =
+    (personalInfoDraft.careerStage || "") !== (roleProfile?.backgroundType || "");
 
   return (
     <>
@@ -157,12 +431,22 @@ export function ProfileScreen() {
                   <div className="flex items-center gap-4">
                     {/* Avatar with pencil badge */}
                     <div className="relative shrink-0">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0d6b60] text-white text-h6 select-none">
-                        {avatarText}
+                      <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[#0d6b60] text-white text-h6 select-none">
+                        {avatarImage ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- locally-stored data URL, not an optimizable remote asset
+                          <img src={avatarImage} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          avatarText
+                        )}
                       </div>
-                      <div className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[var(--app-surface)] bg-white shadow-sm">
+                      <button
+                        type="button"
+                        onClick={openAvatarDialog}
+                        aria-label="Change profile photo"
+                        className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[var(--app-surface)] bg-white shadow-sm transition hover:bg-black/[.03]"
+                      >
                         <PencilIcon />
-                      </div>
+                      </button>
                     </div>
 
                     {/* Name + subtitle */}
@@ -176,14 +460,6 @@ export function ProfileScreen() {
                         </div>
                       )}
                     </div>
-
-                    {/* Edit profile button */}
-                    <Link href="/onboarding">
-                      <button className="inline-flex items-center gap-1.5 rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface)] px-4 py-2 text-caption font-semibold shadow-sm transition hover:bg-black/[.03] active:bg-black/[.06]">
-                        Edit profile
-                        <ArrowUpRightIcon />
-                      </button>
-                    </Link>
                   </div>
                 </CardBody>
               </Card>
@@ -192,42 +468,126 @@ export function ProfileScreen() {
               <Card>
                 <SectionHeader
                   title="Personal information"
-                  action={{ label: "Edit", href: "/onboarding" }}
+                  action={
+                    isEditingPersonalInfo
+                      ? undefined
+                      : { label: "Edit", onClick: startEditPersonalInfo }
+                  }
                 />
-                <div className="grid grid-cols-2 gap-x-6 gap-y-5 px-6 py-5">
-                  <InfoField label="Full name" value={roleProfile!.name} />
-                  <InfoField label="Email" />
-                  <InfoField label="Career stage" value={careerStage} />
-                  <InfoField label="Target role" value={roleProfile!.targetRole} />
-                  <InfoField label="Industry" />
-                  <InfoField
-                    label="Member since"
-                    value={roleProfile!.createdAt ? memberSince(roleProfile!.createdAt) : undefined}
-                  />
+                {isEditingPersonalInfo ? (
+                  <div className="px-6 py-5">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                      <EditField
+                        label="Full name"
+                        value={personalInfoDraft.name}
+                        onChange={(v) => setPersonalInfoDraft((d) => ({ ...d, name: v }))}
+                      />
+                      <EditField
+                        label="Email"
+                        type="email"
+                        value={personalInfoDraft.email}
+                        onChange={(v) => setPersonalInfoDraft((d) => ({ ...d, email: v }))}
+                      />
+                      <SelectField
+                        label="Career stage"
+                        value={personalInfoDraft.careerStage ?? ""}
+                        onChange={(v) =>
+                          setPersonalInfoDraft((d) => ({
+                            ...d,
+                            careerStage: v as RoleProfile["backgroundType"] | "",
+                          }))
+                        }
+                        options={CAREER_STAGE_OPTIONS}
+                      />
+                      <InfoField
+                        label="Member since"
+                        value={roleProfile!.createdAt ? memberSince(roleProfile!.createdAt) : undefined}
+                      />
+                    </div>
+                    {careerStageChanged && (
+                      <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-caption text-amber-800">
+                        Changing your career stage will also adjust your Storyboard, Training
+                        modules, and Mock Interview practice to match the new stage.
+                      </p>
+                    )}
+                    <div className="mt-5 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={savePersonalInfo}
+                        className="rounded-full bg-[#0d6b60] px-4 py-2 text-caption font-semibold text-white transition hover:bg-[#0d6b60]/90"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingPersonalInfo(false)}
+                        className="rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface)] px-4 py-2 text-caption font-semibold shadow-sm transition hover:bg-black/[.03] active:bg-black/[.06]"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-5 px-6 py-5">
+                    <InfoField label="Full name" value={roleProfile!.name} />
+                    <InfoField label="Email" value={roleProfile?.email} />
+                    <InfoField label="Career stage" value={careerStage} />
+                    <InfoField
+                      label="Member since"
+                      value={roleProfile!.createdAt ? memberSince(roleProfile!.createdAt) : undefined}
+                    />
+                  </div>
+                )}
+                {emailNotice && (
+                  <div className="px-6 pb-5">
+                    <p className="rounded-lg bg-[#0d6b60]/10 px-3 py-2 text-caption text-[#0d6b60]">
+                      {emailNotice}
+                    </p>
+                  </div>
+                )}
+              </Card>
+
+              {/* Roles card */}
+              <Card>
+                <div className="flex items-center justify-between px-6 pt-5 pb-4">
+                  <span className="text-h6">Roles you&apos;re preparing for</span>
+                  <Link
+                    href="/onboarding?newRole=1"
+                    className="text-caption font-semibold text-[#0e7a6e] hover:opacity-80 transition"
+                  >
+                    + Add role
+                  </Link>
                 </div>
+                <div className="h-px bg-[var(--app-hairline)] mx-6" />
+                {roles.map((r, i) => (
+                  <RoleRow
+                    key={r.targetRole.trim().toLowerCase()}
+                    profile={r}
+                    isActive={r.targetRole.trim().toLowerCase() === roleProfile!.targetRole.trim().toLowerCase()}
+                    onSetActive={() => handleSetActiveRole(r)}
+                    onRemove={() => handleRemoveRole(r.targetRole)}
+                    last={i === roles.length - 1}
+                  />
+                ))}
               </Card>
 
               {/* Preferences card */}
               <Card>
-                <SectionHeader
-                  title="Preferences"
-                  action={{ label: "Manage", href: "#" }}
-                />
-                <PrefRow
-                  label="Password"
-                  description="Change your password"
-                />
-                <PrefRow
-                  label="Notifications"
-                  description="Practice reminders and score updates"
-                  value="On"
-                />
-                <PrefRow
-                  label="Language"
-                  description="Interface and interview language"
-                  value="English"
-                  last
-                />
+                <SectionHeader title="Preferences" />
+                <PrefRow label="Password" description="Change your password" href="/profile/change-password" />
+                <div className="flex items-center justify-between gap-4 px-6 py-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-caption font-semibold">Notifications</div>
+                    <div className="mt-0.5 text-caption text-[var(--app-muted)]">
+                      Practice reminders and score updates
+                    </div>
+                  </div>
+                  <ToggleSwitch
+                    checked={notificationsEnabled}
+                    onChange={() => setNotificationsEnabled((v) => !v)}
+                    label="Practice reminders and score updates"
+                  />
+                </div>
               </Card>
 
               {/* Data & privacy card */}
@@ -242,28 +602,11 @@ export function ProfileScreen() {
                       Allow ProofDive to use your interview recordings to train and improve the AI.
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={aiTrainingConsent}
-                    aria-label="Use my recordings to improve AI"
-                    onClick={() => setAiTrainingConsent((v) => !v)}
-                    className={[
-                      "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
-                      aiTrainingConsent
-                        ? "border-black/10 bg-black"
-                        : "border-black/15 bg-white/60 hover:bg-white/80",
-                    ].join(" ")}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={[
-                        "inline-block h-5 w-5 transform rounded-full bg-white shadow-[0_6px_16px_rgba(0,0,0,0.12)] transition",
-                        aiTrainingConsent ? "translate-x-6" : "translate-x-1",
-                      ].join(" ")}
-                    />
-                  </button>
+                  <ToggleSwitch
+                    checked={aiTrainingConsent}
+                    onChange={() => setAiTrainingConsent((v) => !v)}
+                    label="Use my recordings to improve AI"
+                  />
                 </div>
                 <div className="h-px bg-[var(--app-hairline)] mx-6" />
 
@@ -395,6 +738,93 @@ export function ProfileScreen() {
           </Card>
         )}
       </AppShell>
+
+      {avatarDialogOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setAvatarDialogOpen(false)}
+          role="presentation"
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="avatar-dialog-title"
+            className="w-full max-w-sm rounded-2xl border border-black/10 bg-[var(--app-surface)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <span id="avatar-dialog-title" className="text-h6">
+                Update profile photo
+              </span>
+              <button
+                type="button"
+                onClick={() => setAvatarDialogOpen(false)}
+                aria-label="Close"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-black/50 transition hover:bg-black/[.05] hover:text-black"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+
+            <div className="mt-5 flex flex-col items-center gap-4">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-[#0d6b60] text-white text-h5 select-none">
+                {pendingAvatarImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- locally-stored data URL, not an optimizable remote asset
+                  <img src={pendingAvatarImage} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  avatarText
+                )}
+              </div>
+
+              <input
+                ref={avatarFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarFileChange}
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => avatarFileInputRef.current?.click()}
+                  className="rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface)] px-4 py-2 text-caption font-semibold shadow-sm transition hover:bg-black/[.03] active:bg-black/[.06]"
+                >
+                  Choose photo
+                </button>
+                {pendingAvatarImage && (
+                  <button
+                    type="button"
+                    onClick={() => setPendingAvatarImage(null)}
+                    className="rounded-full border border-red-300 bg-transparent px-4 py-2 text-caption font-semibold text-red-500 transition hover:bg-red-50 active:bg-red-100"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="text-center text-caption text-[var(--app-muted)]">
+                Stored locally in your browser for this prototype — not uploaded anywhere.
+              </p>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setAvatarDialogOpen(false)}
+                className="rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface)] px-4 py-2 text-caption font-semibold shadow-sm transition hover:bg-black/[.03] active:bg-black/[.06]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveAvatarImage}
+                className="rounded-full bg-[#0d6b60] px-4 py-2 text-caption font-semibold text-white transition hover:bg-[#0d6b60]/90"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -415,20 +845,6 @@ function ChevronRightIcon() {
   );
 }
 
-function ArrowUpRightIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5" aria-hidden>
-      <path
-        d="M4 12L12 4M12 4H6M12 4v6"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function PencilIcon() {
   return (
     <svg viewBox="0 0 12 12" fill="none" className="h-2.5 w-2.5 text-black/50" aria-hidden>
@@ -437,6 +853,19 @@ function PencilIcon() {
         stroke="currentColor"
         strokeWidth="1.2"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-4 w-4" aria-hidden>
+      <path
+        d="M4 4l8 8M12 4l-8 8"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
       />
     </svg>
   );
