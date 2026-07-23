@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { ArrowUpRight, BookOpen, Info, Map } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -24,7 +24,9 @@ import {
   type StoryboardDraftDocument,
   type StoryboardDraftStore,
 } from "@/lib/storyboardDraft";
+import { getReportById, latestReportOverallForRole, useLatestInterviewReport } from "@/lib/interviewReports";
 import { reportCountForRole } from "@/lib/proofdiveLogic";
+import { deriveJourneySignals } from "@/lib/recommendedNextStep";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { readJson } from "@/lib/storage";
 import { pickMostRecentForRole } from "@/lib/trainingJourneyProgress";
@@ -51,7 +53,6 @@ const COACH_AI_QUICK_CHIPS: ChatComposerQuickChip[] = [
     value: "Help me plan a new target role for my interview preparation.",
   },
   { label: "Add Another Experience", value: "I want to add another professional experience to my story." },
-  { label: "Ask for Guidance", value: "What guidance do you have for my interview prep journey?" },
 ];
 
 /** Session-only: this tab used `?welcome=1` (onboarding / interview skip). Used so stale localStorage `welcome` does not show on plain `/coach`. */
@@ -77,38 +78,6 @@ function pillarTooltip(id: (typeof DRIVER_ORDER)[number]): string {
   return "Craft mastery: role fundamentals, depth, and consistent high-quality work.";
 }
 
-function safeParseReportsMap(raw: string | null): Record<string, InterviewReport> {
-  try {
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, InterviewReport>;
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function pickLatestReport(map: Record<string, InterviewReport>): InterviewReport | null {
-  const list = Object.values(map);
-  if (list.length === 0) return null;
-  return [...list].sort(
-    (a, b) => new Date(b.meta.createdAt).getTime() - new Date(a.meta.createdAt).getTime(),
-  )[0] ?? null;
-}
-
-function latestReportOverallForRole(roleTitle: string): number | null {
-  if (typeof window === "undefined" || !roleTitle.trim()) return null;
-  const map = safeParseReportsMap(window.localStorage.getItem(StorageKeys.reports));
-  const list = Object.values(map).filter(
-    (r) => (r.meta?.roleTitle ?? "").trim() === roleTitle.trim(),
-  );
-  if (!list.length) return null;
-  return (
-    [...list].sort(
-      (a, b) => new Date(b.meta.createdAt).getTime() - new Date(a.meta.createdAt).getTime(),
-    )[0]?.overallScore ?? null
-  );
-}
-
 function readinessSnapshotFromReport(r: InterviewReport) {
   const pillars = [...r.drivers]
     .sort(
@@ -122,38 +91,6 @@ function readinessSnapshotFromReport(r: InterviewReport) {
     band: r.overallStatus,
     pillars,
   };
-}
-
-function useLatestInterviewReport(): InterviewReport | null {
-  const pathname = usePathname();
-  const [latest, setLatest] = useState<InterviewReport | null>(null);
-
-  const refresh = useCallback(() => {
-    if (typeof window === "undefined") return;
-    const map = safeParseReportsMap(window.localStorage.getItem(StorageKeys.reports));
-    setLatest(pickLatestReport(map));
-  }, []);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh, pathname]);
-
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === StorageKeys.reports || e.key === null) refresh();
-    };
-    const onVis = () => {
-      if (document.visibilityState === "visible") refresh();
-    };
-    window.addEventListener("storage", onStorage);
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      document.removeEventListener("visibilitychange", onVis);
-    };
-  }, [refresh]);
-
-  return latest;
 }
 
 function coachScoreBand(score: number): "red" | "amber" | "green" {
@@ -253,8 +190,7 @@ export function CoachHome() {
   const readinessSourceReport = useMemo(() => {
     if (coachJourneyView === "final") {
       if (!coachFinalReportId || typeof window === "undefined") return null;
-      const map = safeParseReportsMap(window.localStorage.getItem(StorageKeys.reports));
-      return map[coachFinalReportId] ?? null;
+      return getReportById(coachFinalReportId);
     }
     return latestInterviewReport;
   }, [coachJourneyView, coachFinalReportId, latestInterviewReport, pathname]);
@@ -445,8 +381,7 @@ export function CoachHome() {
     if (is("final")) {
       const rid = searchParams.get("report")?.trim();
       if (rid && typeof window !== "undefined") {
-        const map = safeParseReportsMap(window.localStorage.getItem(StorageKeys.reports));
-        if (map[rid]) {
+        if (getReportById(rid)) {
           sessionStorage.removeItem(COACH_WELCOME_ENTRY_SESSION_KEY);
           sessionStorage.removeItem(COACH_ROADMAP_ENTRY_SESSION_KEY);
           setCoachFinalReportId(rid);
@@ -485,8 +420,7 @@ export function CoachHome() {
       setCoachJourneyView("journey");
       return;
     }
-    const map = safeParseReportsMap(window.localStorage.getItem(StorageKeys.reports));
-    if (!map[coachFinalReportId]) {
+    if (!getReportById(coachFinalReportId)) {
       setCoachFinalReportId(null);
       setCoachJourneyView("journey");
     }
@@ -544,16 +478,16 @@ export function CoachHome() {
     return storyOverallScore;
   }, [storyOverallScore, role, latestInterviewReport]);
 
-  const hasCreatedStoryboard = useMemo(() => {
-    if (!role) return false;
-    if (fromCraft && fromCraft.v === 1 && fromCraft.role === role) return true;
-    if (roleExperiences.length > 0) return true;
-    return storyOverallScore > 0;
-  }, [role, fromCraft, storyOverallScore, roleExperiences.length]);
-
-  const hasCraftedStoryboard = useMemo(() => {
-    return Boolean(fromCraft && fromCraft.v === 1 && fromCraft.role === role);
-  }, [fromCraft, role]);
+  const { hasCraftedStoryboard, hasCreatedStoryboard } = useMemo(
+    () =>
+      deriveJourneySignals({
+        role,
+        fromCraft,
+        roleExperienceCount: roleExperiences.length,
+        storyOverallScore,
+      }),
+    [role, fromCraft, storyOverallScore, roleExperiences.length],
+  );
 
   function handleRoleChange(nextTargetRole: string) {
     const trimmed = nextTargetRole.trim();

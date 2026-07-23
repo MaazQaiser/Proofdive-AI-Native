@@ -42,5 +42,7 @@ export const StorageKeys = {
   orgAdminInvoices: "proofdive.orgAdmin.invoices.v1",
   /** Per-module additional allocation purchased via "Purchase Module Add-Ons", keyed by module key. */
   orgAdminBillingOverrides: "proofdive.orgAdmin.billingOverrides.v1",
+  /** Whether the candidate has ever seen the FAQ Assistant's first-open greeting — shown once, ever. */
+  faqAssistantGreetingSeen: "proofdive.faqAssistantGreetingSeen.v1",
 } as const;
 
