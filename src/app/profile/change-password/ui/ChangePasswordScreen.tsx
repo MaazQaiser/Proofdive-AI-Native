@@ -6,8 +6,9 @@ import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
-import { Card, CardBody } from "@/components/Card";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 
@@ -61,13 +62,12 @@ export function ChangePasswordScreen() {
       <AppShell>
         <div className="mx-auto w-full max-w-md">
           <Card>
-            <CardBody className="p-6">
-              <div className="text-h6">Change password</div>
-              <p className="mt-1 text-caption text-[var(--app-muted)]">
-                Enter your current password, then choose a new one.
-              </p>
-
-              <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+            <CardHeader>
+              <CardTitle>Change password</CardTitle>
+              <CardDescription>Enter your current password, then choose a new one.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="current-password">Current password</Label>
                   <PasswordInput
@@ -77,7 +77,7 @@ export function ChangePasswordScreen() {
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     aria-invalid={!!errors.current}
                   />
-                  {errors.current && <p className="text-caption text-red-500">{errors.current}</p>}
+                  {errors.current && <p className="text-caption text-destructive">{errors.current}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -89,7 +89,7 @@ export function ChangePasswordScreen() {
                     onChange={(e) => setNewPassword(e.target.value)}
                     aria-invalid={!!errors.next}
                   />
-                  {errors.next && <p className="text-caption text-red-500">{errors.next}</p>}
+                  {errors.next && <p className="text-caption text-destructive">{errors.next}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -101,25 +101,17 @@ export function ChangePasswordScreen() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     aria-invalid={!!errors.confirm}
                   />
-                  {errors.confirm && <p className="text-caption text-red-500">{errors.confirm}</p>}
+                  {errors.confirm && <p className="text-caption text-destructive">{errors.confirm}</p>}
                 </div>
 
                 <div className="mt-2 flex items-center gap-2">
-                  <button
-                    type="submit"
-                    className="rounded-full bg-[#0d6b60] px-4 py-2 text-caption font-semibold text-white transition hover:bg-[#0d6b60]/90"
-                  >
-                    Change password
-                  </button>
-                  <Link
-                    href="/profile"
-                    className="rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface)] px-4 py-2 text-caption font-semibold shadow-sm transition hover:bg-black/[.03] active:bg-black/[.06]"
-                  >
-                    Cancel
-                  </Link>
+                  <Button type="submit">Change password</Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/profile">Cancel</Link>
+                  </Button>
                 </div>
               </form>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       </AppShell>
