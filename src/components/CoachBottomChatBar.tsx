@@ -1,6 +1,10 @@
 "use client";
 
+import { CircleHelp } from "lucide-react";
+
 import { ChatComposer } from "@/components/chat/ChatComposer";
+import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
+import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
 
 type Props = {
   placeholder?: string;
@@ -21,6 +25,8 @@ export function CoachBottomChatBar({
   prefillKey,
   showUploadButton,
 }: Props = {}) {
+  const faq = useFaqAssistant();
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 w-full print:hidden">
       {/* Mirrors AppShell's frame (max-w-6xl, pl-20/pr-6 reserved for the nav
@@ -34,11 +40,30 @@ export function CoachBottomChatBar({
         <div className="mx-auto w-[800px] max-w-full pb-4">
           <ChatComposer
             key={prefillKey ?? "coach-bottom-chat-composer"}
-            placeholder={placeholder ?? "Ask AI Coach"}
+            placeholder={faq.isFaqMode ? "Select a question above" : (placeholder ?? "Ask AI Coach")}
             onSend={onSend ?? (() => {})}
-            disabled={disabled}
+            disabled={disabled || faq.isFaqMode}
             prefill={prefill}
-            showUploadButton={showUploadButton}
+            showUploadButton={faq.isFaqMode ? false : showUploadButton}
+            modeToggle={{
+              isActive: faq.isFaqMode,
+              icon: CircleHelp,
+              activeLabel: "FAQ Assistant",
+              onToggle: () => (faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode()),
+            }}
+            thread={
+              faq.isFaqMode ? (
+                <FaqAssistantThread
+                  screenData={faq.screenData}
+                  onSelectRootItem={faq.selectRootItem}
+                  onSelectFollowup={faq.selectFollowup}
+                  onBackToItemMenu={faq.backToItemMenu}
+                  onBackToRootMenu={faq.backToRootMenu}
+                />
+              ) : undefined
+            }
+            onThreadClose={faq.isFaqMode ? faq.exitFaqMode : undefined}
+            threadHeaderTitle="FAQ Assistant"
           />
         </div>
       </div>

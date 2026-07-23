@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { CircleHelp } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { ChatComposer, type ChatComposerQuickChip } from "@/components/chat/ChatComposer";
 import { cn } from "@/components/cn";
+import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
+import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
 
 type ChatRole = "user" | "assistant";
 
@@ -48,6 +51,8 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
   const [composerKey, setComposerKey] = useState(0);
   const [showGuidedJourneySteps, setShowGuidedJourneySteps] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
+
+  const faq = useFaqAssistant();
 
   const inPlanNewRole = planPlannedStep != null;
 
@@ -162,9 +167,10 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
     [planPlannedStep, pushAssistant, pushUser],
   );
 
-  const showChips = !inPlanNewRole;
-  const placeholder =
-    planPlannedStep === "await_role"
+  const showChips = !inPlanNewRole && !faq.isFaqMode;
+  const placeholder = faq.isFaqMode
+    ? "Select a question above"
+    : planPlannedStep === "await_role"
       ? "Type the role title you’re planning for…"
       : planPlannedStep === "await_jd"
         ? "Add job description, résumé notes, say skip, or use Upload…"
@@ -285,15 +291,35 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
           <ChatComposer
             key={composerKey}
             placeholder={placeholder}
+            disabled={faq.isFaqMode}
             quickPromptChips={showChips ? quickChips : undefined}
             onQuickPromptChipSelect={onQuickPromptChipSelect}
             onSend={onSend}
             onUpload={planPlannedStep === "await_jd" ? onUpload : undefined}
-            showUploadButton={!inPlanNewRole || planPlannedStep === "await_jd"}
+            showUploadButton={!faq.isFaqMode && (!inPlanNewRole || planPlannedStep === "await_jd")}
             uploadAccept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             uploadMultiple={false}
-            thread={messageThread}
-            onThreadClose={messageThread ? handleThreadClose : undefined}
+            modeToggle={{
+              isActive: faq.isFaqMode,
+              icon: CircleHelp,
+              activeLabel: "FAQ Assistant",
+              onToggle: () => (faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode()),
+            }}
+            thread={
+              faq.isFaqMode ? (
+                <FaqAssistantThread
+                  screenData={faq.screenData}
+                  onSelectRootItem={faq.selectRootItem}
+                  onSelectFollowup={faq.selectFollowup}
+                  onBackToItemMenu={faq.backToItemMenu}
+                  onBackToRootMenu={faq.backToRootMenu}
+                />
+              ) : (
+                messageThread
+              )
+            }
+            onThreadClose={faq.isFaqMode ? faq.exitFaqMode : messageThread ? handleThreadClose : undefined}
+            threadHeaderTitle={faq.isFaqMode ? "FAQ Assistant" : undefined}
           />
         </div>
       </div>

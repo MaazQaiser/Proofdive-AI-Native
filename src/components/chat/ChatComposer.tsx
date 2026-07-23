@@ -8,7 +8,7 @@ import {
   type ReactNode,
   type TransitionEvent,
 } from "react";
-import { ArrowUp, FileText, Mic, Paperclip, X } from "lucide-react";
+import { ArrowUp, FileText, Mic, Paperclip, X, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/components/cn";
 import { useSpeechDictation } from "@/components/chat/useSpeechDictation";
@@ -16,6 +16,18 @@ import { IconButton } from "@/components/ui/icon-button";
 import { SelectionChip } from "@/components/ui/selection-chip";
 
 export type ChatComposerQuickChip = { label: string; value: string; id?: string };
+
+/** A persistent, always-visible footer icon that toggles into a labeled pill once active —
+ * e.g. the FAQ Assistant entry point. Unlike `quickPromptChips`, this is never gated by
+ * focus, and (see render below) is deliberately never disabled by the composer's own
+ * `disabled` prop, since toggling it off is exactly how a caller un-disables the composer. */
+export type ChatComposerModeToggle = {
+  isActive: boolean;
+  icon: LucideIcon;
+  /** Shown next to the icon only while `isActive` is true. */
+  activeLabel: string;
+  onToggle: () => void;
+};
 
 export function ChatComposer({
   placeholder = "Type a message…",
@@ -28,6 +40,7 @@ export function ChatComposer({
   quickPromptChips,
   onQuickPromptChipSelect,
   showUploadButton = true,
+  modeToggle,
   /** Renders above the text field, inside the white composer card (e.g. in-thread chat). */
   thread,
   onThreadClose,
@@ -51,6 +64,8 @@ export function ChatComposer({
   quickPromptChips?: ChatComposerQuickChip[];
   /** If provided and returns `true`, the chip’s value is not prefilled (parent handles the action). */
   onQuickPromptChipSelect?: (chip: ChatComposerQuickChip) => boolean;
+  /** Persistent footer icon/pill toggle (e.g. FAQ Assistant) — see `ChatComposerModeToggle`. */
+  modeToggle?: ChatComposerModeToggle;
   thread?: ReactNode;
   /** Dismiss the in-card thread (e.g. clear messages); shows a close control when set. */
   onThreadClose?: () => void;
@@ -64,6 +79,14 @@ export function ChatComposer({
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const skipOpenOnNextFocusRef = useRef(false);
+
+  // A chip selection that hands off to a mode where `disabled` becomes true (e.g. FAQ
+  // Assistant) never gets to consume this flag via its own scheduled refocus (you can't
+  // focus a disabled textarea) — left stuck `true`, it would otherwise swallow the very
+  // next real focus once the composer re-enables. Clear it as soon as we go disabled.
+  useEffect(() => {
+    if (disabled) skipOpenOnNextFocusRef.current = false;
+  }, [disabled]);
 
   const appendFinalTranscript = useCallback((segment: string) => {
     setText((prev) => {
@@ -335,6 +358,30 @@ export function ChatComposer({
                 </button>
               ) : null}
               <div className="ml-auto flex shrink-0 items-center gap-2">
+                {modeToggle ? (
+                  modeToggle.isActive ? (
+                    <button
+                      type="button"
+                      onClick={modeToggle.onToggle}
+                      aria-label={`Exit ${modeToggle.activeLabel}`}
+                      className="flex h-7 shrink-0 items-center gap-1 rounded-full border border-[#D9D1CB] bg-[rgba(244,241,236,0.7)] py-1 pl-2 pr-1.5 backdrop-blur-[16px]"
+                    >
+                      <modeToggle.icon className="size-4 shrink-0" />
+                      <span className="text-text-primary px-0.5 text-xs leading-6 font-medium whitespace-nowrap">
+                        {modeToggle.activeLabel}
+                      </span>
+                      <X className="size-4 shrink-0" />
+                    </button>
+                  ) : (
+                    <IconButton
+                      variant="ghost"
+                      onClick={modeToggle.onToggle}
+                      aria-label={modeToggle.activeLabel}
+                    >
+                      <modeToggle.icon />
+                    </IconButton>
+                  )
+                ) : null}
                 <IconButton
                   variant="ghost"
                   disabled={disabled}
