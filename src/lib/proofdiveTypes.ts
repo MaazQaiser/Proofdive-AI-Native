@@ -1,3 +1,5 @@
+import type { CompetencyId } from "@/lib/storyboardDraft";
+
 /** Persisted in `interviewSessionPrefs` when the user starts a session from /interview. */
 export type InterviewSessionKind =
   | "first_time"
@@ -116,8 +118,12 @@ export type RoleProfile = {
   lastWorkedAt?: string;
   background?: string;
   jobDescription?: string;
+  /** Whether `jobDescription` was typed by the user or accepted as-is from the mock generator. */
+  jobDescriptionSource?: "user" | "generated";
   resume?: string;
   industryVertical?: string;
+  /** Core Four competency selection captured at onboarding — one per Success Driver minimum. */
+  coreFourCompetencies?: CompetencyId[];
   createdAt: string;
 };
 

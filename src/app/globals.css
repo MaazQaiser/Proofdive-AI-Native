@@ -328,6 +328,19 @@
 
   --font-sans: var(--font-sans);
   --font-gilroy: "Gilroy", var(--font-sans), sans-serif;
+
+  /* Skeleton-loader shimmer sweep — matches the Figma "Onboarding - Loading"
+     motion spec (2s, linear, infinite). */
+  --animate-shimmer-sweep: shimmer-sweep 2s linear infinite;
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* Typography utilities — one class per Figma text style, applying size,

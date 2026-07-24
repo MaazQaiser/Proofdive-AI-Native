@@ -26,7 +26,7 @@ export function OnboardingProgressHeader({
   homeHref,
 }: OnboardingProgressHeaderProps) {
   return (
-    <div className="flex w-full flex-col gap-3 py-2">
+    <div className="sticky top-0 z-20 flex w-full flex-col gap-3 bg-background/90 py-2 backdrop-blur-sm">
       <div className="flex w-full items-start justify-between">
         {homeHref ? (
           <Link
