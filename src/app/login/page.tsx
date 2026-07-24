@@ -108,7 +108,7 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="h-14 w-full rounded-lg text-lg font-medium">
+              <Button type="submit" className="h-14 w-full rounded-md text-lg font-medium">
                 Login
               </Button>
             </form>

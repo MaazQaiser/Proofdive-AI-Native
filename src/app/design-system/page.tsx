@@ -36,7 +36,17 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { SelectionChip } from "@/components/ui/selection-chip";
+import {
+  SuccessDriverCard,
+  SuccessDriverMark,
+} from "@/components/ui/success-driver-card";
+import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  SUCCESS_DRIVER_COLORS,
+  SUCCESS_DRIVER_ORDER,
+  SUCCESS_DRIVERS,
+} from "@/lib/successDrivers";
 import { cn } from "@/lib/utils";
 
 const CHIP_OPTIONS = ["Product Designer", "UX Researcher", "UI Engineer"];
@@ -396,6 +406,72 @@ export default function DesignSystemPage() {
             </div>
           </Section>
 
+          <Section
+            title="Success Drivers"
+            description="Four brand pillars with dedicated color tokens and symbols. Use SuccessDriverIcon beside headings, SuccessDriverMark for labeled rows, and SuccessDriverCard for pastel surfaces with a left-side blurred symbol + grain."
+          >
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {SUCCESS_DRIVER_ORDER.map((id) => {
+                const meta = SUCCESS_DRIVERS[id];
+                const colors = SUCCESS_DRIVER_COLORS[id];
+                return (
+                  <div key={id} className="flex flex-col gap-3 rounded-xl border border-border p-4">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          "inline-flex size-10 items-center justify-center rounded-xl border",
+                          colors.accentBg,
+                          colors.accent,
+                        )}
+                      >
+                        <SuccessDriverIcon driver={id} className="size-5" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-caption font-semibold text-foreground">
+                          {meta.shortLabel}
+                        </p>
+                        <p className="truncate text-overline text-muted-foreground">
+                          {meta.label}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {(
+                        [
+                          ["bg", colors.bg],
+                          ["symbol", colors.symbol.replace("text-", "bg-")],
+                          ["fg", colors.fg.replace("text-", "bg-")],
+                          ["accent", colors.accentDot],
+                        ] as const
+                      ).map(([name, swatch]) => (
+                        <div key={name} className="flex flex-col gap-1">
+                          <div
+                            className={cn("h-8 rounded-md border border-border", swatch)}
+                          />
+                          <span className="text-overline text-muted-foreground">{name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              {SUCCESS_DRIVER_ORDER.map((id) => (
+                <SuccessDriverCard
+                  key={id}
+                  driver={id}
+                  badge={SUCCESS_DRIVERS[id].shortLabel}
+                >
+                  <SuccessDriverMark driver={id} className="text-body-sm" />
+                  <p className="text-caption leading-5 text-text-secondary">
+                    {SUCCESS_DRIVERS[id].description}
+                  </p>
+                </SuccessDriverCard>
+              ))}
+            </div>
+          </Section>
+
           <Separator />
 
           <Section
@@ -704,18 +780,20 @@ export default function DesignSystemPage() {
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-4">
                   <CardButton
-                    className="max-w-[392px]"
+                    className="max-w-[280px]"
                     variant="primary"
                     icon={<BookOpen />}
                     title="Storyboard"
                     subtitle="Build your career storyboard"
+                    illustrationSrc="/brand/illustration%201.svg"
                   />
                   <CardButton
-                    className="max-w-[392px]"
+                    className="max-w-[280px]"
                     variant="gray"
                     icon={<UserCheck />}
-                    title="Start mock interview"
+                    title="Mock interview"
                     subtitle="Evaluate yourself for UX role"
+                    illustrationSrc="/brand/illustration%203.svg"
                   />
                 </CardContent>
               </Card>

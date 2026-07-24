@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
         <Link href="/">
           <Logo size="xxs" />
         </Link>
-        <Button asChild size="sm" className="rounded-lg px-4 text-overline">
+        <Button asChild size="sm" className="rounded-md px-4 text-overline">
           <Link href="/login">Log In</Link>
         </Button>
       </header>

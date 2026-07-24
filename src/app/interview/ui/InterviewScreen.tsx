@@ -11,6 +11,7 @@ import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { Switch } from "@/components/ui/switch";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type {
@@ -29,6 +30,7 @@ import {
   type StoryboardDraftDocument,
   type StoryboardDraftStore,
 } from "@/lib/storyboardDraft";
+import { SUCCESS_DRIVER_COLORS } from "@/lib/successDrivers";
 import { ONBOARDING_INTRO_VIDEO_SRC } from "@/lib/onboardingIntroVideo";
 import { hasCompletedAnyTrainingForRole } from "@/lib/trainingJourneyProgress";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
@@ -535,6 +537,7 @@ export function InterviewScreen() {
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {SELECTIVE_PILLAR_IDS.map((id) => {
                 const on = selectivePillarIds.includes(id);
+                const colors = SUCCESS_DRIVER_COLORS[id];
                 return (
                   <button
                     key={id}
@@ -543,14 +546,20 @@ export function InterviewScreen() {
                     className={cn(
                       "rounded-2xl border px-4 py-3 text-left text-caption font-semibold transition",
                       on
-                        ? "border-primary bg-primary text-primary-foreground"
+                        ? cn("border-transparent ring-2 ring-offset-2 ring-offset-background", colors.bg, colors.ring, colors.fg)
                         : "border-border bg-card text-text-primary hover:bg-muted",
                     )}
                   >
                     <span className="block text-overline uppercase text-current opacity-70">
                       {on ? "Selected" : "Tap to add"}
                     </span>
-                    <span className="mt-1 block">{PILLAR_LABEL[id]}</span>
+                    <span className="mt-2 flex items-center gap-2">
+                      <SuccessDriverIcon
+                        driver={id}
+                        className={cn("size-5", on ? colors.accent : "text-text-secondary")}
+                      />
+                      <span>{PILLAR_LABEL[id]}</span>
+                    </span>
                   </button>
                 );
               })}

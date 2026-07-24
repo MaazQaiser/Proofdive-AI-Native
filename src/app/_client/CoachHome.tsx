@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
-import { ArrowUpRight, BookOpen, Info, Map } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowUpRight, BookOpen, Info, Map, X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
@@ -14,9 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CardButton } from "@/components/ui/card-button";
-import { IconButton } from "@/components/ui/icon-button";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Separator } from "@/components/ui/separator";
+import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import {
   createStoryboardDraft,
   normalizeStoryboardDocument,
@@ -24,6 +24,12 @@ import {
   type StoryboardDraftDocument,
   type StoryboardDraftStore,
 } from "@/lib/storyboardDraft";
+import {
+  SUCCESS_DRIVER_COLORS,
+  SUCCESS_DRIVER_ORDER,
+  SUCCESS_DRIVERS,
+  type SuccessDriverId,
+} from "@/lib/successDrivers";
 import { getReportById, latestReportOverallForRole, useLatestInterviewReport } from "@/lib/interviewReports";
 import { reportCountForRole } from "@/lib/proofdiveLogic";
 import { deriveJourneySignals } from "@/lib/recommendedNextStep";
@@ -59,23 +65,19 @@ const COACH_AI_QUICK_CHIPS: ChatComposerQuickChip[] = [
 const COACH_WELCOME_ENTRY_SESSION_KEY = "proofdive.session.coachWelcomeEntry.v1";
 /** Session-only: this tab used `?roadmap=1` after welcome (prep roadmap). */
 const COACH_ROADMAP_ENTRY_SESSION_KEY = "proofdive.session.coachRoadmapEntry.v1";
+/** Session-only dismiss for the readiness empty-state banner. */
+const COACH_READINESS_BANNER_DISMISS_KEY = "proofdive.session.coachReadinessBannerDismissed.v1";
 
 const READINESS_MAX = 5;
 
-const DRIVER_ORDER = ["thinking", "action", "people", "mastery"] as const;
+const DRIVER_ORDER = SUCCESS_DRIVER_ORDER;
 
-function pillarTitle(id: (typeof DRIVER_ORDER)[number]): string {
-  if (id === "thinking") return "Power of Thinking";
-  if (id === "action") return "Power of Action";
-  if (id === "people") return "Power of People";
-  return "Power of Mastery";
+function pillarTitle(id: SuccessDriverId): string {
+  return SUCCESS_DRIVERS[id].label;
 }
 
-function pillarTooltip(id: (typeof DRIVER_ORDER)[number]): string {
-  if (id === "thinking") return "Clarity of thinking: structure, prioritization, and sound judgment under pressure.";
-  if (id === "action") return "Execution: ownership, speed, and delivering outcomes with constraints.";
-  if (id === "people") return "Collaboration: communication, influence, and working effectively with others.";
-  return "Craft mastery: role fundamentals, depth, and consistent high-quality work.";
+function pillarTooltip(id: SuccessDriverId): string {
+  return SUCCESS_DRIVERS[id].description;
 }
 
 function readinessSnapshotFromReport(r: InterviewReport) {
@@ -93,30 +95,10 @@ function readinessSnapshotFromReport(r: InterviewReport) {
   };
 }
 
-function coachScoreBand(score: number): "red" | "amber" | "green" {
-  if (score >= 3.5) return "green";
-  if (score >= 2.5) return "amber";
-  return "red";
-}
-
 function coachReadinessBadgeClasses(label: ReadinessLabel) {
   if (label === "Ready") return "border-scoring-green/20 bg-scoring-green/15 text-scoring-green";
   if (label === "Borderline") return "border-scoring-yellow/20 bg-scoring-yellow/15 text-scoring-yellow";
   return "border-scoring-red/20 bg-scoring-red/15 text-scoring-red";
-}
-
-function coachScoreTextClasses(score: number) {
-  const b = coachScoreBand(score);
-  if (b === "green") return "text-scoring-green";
-  if (b === "amber") return "text-scoring-yellow";
-  return "text-scoring-red";
-}
-
-function coachScoreBarClasses(score: number) {
-  const b = coachScoreBand(score);
-  if (b === "green") return "bg-scoring-green border-scoring-green";
-  if (b === "amber") return "bg-scoring-yellow border-scoring-yellow";
-  return "bg-scoring-red border-scoring-red";
 }
 
 const ROLE_SUGGESTIONS = [
@@ -127,6 +109,20 @@ const ROLE_SUGGESTIONS = [
   "Project Manager",
 ] as const;
 
+
+function pillarBarFill(id: SuccessDriverId): string {
+  const map: Record<SuccessDriverId, string> = {
+    thinking:
+      "bg-[linear-gradient(90deg,var(--driver-thinking-symbol),var(--driver-thinking-accent))]",
+    action:
+      "bg-[linear-gradient(90deg,var(--driver-action-symbol),var(--driver-action-accent))]",
+    people:
+      "bg-[linear-gradient(90deg,var(--driver-people-symbol),var(--driver-people-accent))]",
+    mastery:
+      "bg-[linear-gradient(90deg,var(--driver-mastery-symbol),var(--driver-mastery-accent))]",
+  };
+  return map[id];
+}
 
 function PillarInfoIcon({ tooltip }: { tooltip: string }) {
   return (
@@ -185,6 +181,21 @@ export function CoachHome() {
     StorageKeys.coachFinalReadinessReportId,
     null,
   );
+  const [readinessBannerDismissed, setReadinessBannerDismissed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setReadinessBannerDismissed(
+      sessionStorage.getItem(COACH_READINESS_BANNER_DISMISS_KEY) === "1",
+    );
+  }, []);
+
+  function dismissReadinessBanner() {
+    setReadinessBannerDismissed(true);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(COACH_READINESS_BANNER_DISMISS_KEY, "1");
+    }
+  }
 
   const latestInterviewReport = useLatestInterviewReport();
   const readinessSourceReport = useMemo(() => {
@@ -232,9 +243,6 @@ export function CoachHome() {
 
     const overall = interviewReadinessEmpty ? null : (journeyReadinessSnapshot?.overall ?? null);
     const overallText = overall == null ? "--" : overall.toFixed(1);
-    const overallTextClass =
-      overall == null ? "text-text-secondary" : coachScoreTextClasses(journeyReadinessSnapshot?.overall ?? 0);
-
     const band = interviewReadinessEmpty ? null : (journeyReadinessSnapshot?.band ?? null);
     const bandText = band ?? "--";
     const bandClass =
@@ -248,88 +256,141 @@ export function CoachHome() {
         ? null
         : "Complete a mock interview to see your readiness snapshot here (same scores as your report page).";
 
-    return { pillars, overall, overallText, overallTextClass, bandText, bandClass, noteText };
+    return { pillars, overall, overallText, bandText, bandClass, noteText };
   }, [interviewReadinessEmpty, journeyReadinessSnapshot]);
 
   const readinessCardEl = useMemo(() => {
     if (!showInterviewReadinessCard) return null;
     return (
-      <Card className="mt-6 w-full">
-        <CardHeader className="flex-row items-start justify-between gap-4">
+      <Card className="mt-6 w-full overflow-hidden">
+        <CardHeader className="pb-2">
           <div className="min-w-0">
-            <h3 className="text-h6">Interview readiness</h3>
-            <p className="mt-1 text-caption text-text-secondary">
+            <h3 className="text-h4 text-extended-dark-cyan">Interview readiness</h3>
+            <p className="mt-1.5 text-caption text-text-secondary">
               Mocks, trainings, and pillar balance at a glance.
             </p>
           </div>
-          <IconButton asChild variant="ghost" aria-label="Open report">
-            <Link href={readinessSourceReport?.meta?.id ? `/report/${readinessSourceReport.meta.id}` : "/report"}>
-              <ArrowUpRight />
-            </Link>
-          </IconButton>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0 lg:flex-1">
-              <div className="flex shrink-0 flex-wrap items-end justify-start gap-1">
-                <span
-                  className={cn(
-                    "text-h2 font-extrabold leading-none tabular-nums",
-                    readinessCardModel.overallTextClass,
-                  )}
-                >
-                  {readinessCardModel.overallText}
-                </span>
-                <span className="pb-1.5 text-body-lg text-text-secondary tabular-nums">
-                  /{READINESS_MAX.toFixed(1)}
-                </span>
-              </div>
-
-              <p className="mt-4 flex flex-wrap items-center gap-3 text-body leading-6 text-text-secondary">
-                You’re currently on{" "}
-                <Badge variant="outline" className={cn("text-body", readinessCardModel.bandClass)}>
-                  {readinessCardModel.bandText}
-                </Badge>
-              </p>
-
-              {readinessCardModel.noteText ? (
-                <p className="mt-5 text-body leading-7 text-text-secondary">{readinessCardModel.noteText}</p>
-              ) : null}
+        <CardContent className="pt-2">
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-border pb-8">
+            <div className="flex items-end gap-1.5">
+              <span
+                className={cn(
+                  "font-gilroy text-[clamp(3.5rem,8vw,5.5rem)] font-normal leading-none tracking-[-0.06em] tabular-nums",
+                  readinessCardModel.overall == null
+                    ? "text-extended-dark-cyan/35"
+                    : "text-extended-dark-cyan",
+                )}
+              >
+                {readinessCardModel.overallText}
+              </span>
+              <span className="mb-2 text-[clamp(1.25rem,2.5vw,1.75rem)] font-normal tabular-nums text-text-secondary">
+                /{READINESS_MAX.toFixed(1)}
+              </span>
             </div>
+            <p className="mb-2 flex flex-wrap items-center gap-2.5 text-body text-text-secondary">
+              You’re currently
+              <Badge
+                variant="outline"
+                className={cn("rounded-full text-caption", readinessCardModel.bandClass)}
+              >
+                {readinessCardModel.bandText}
+              </Badge>
+            </p>
+          </div>
 
-            <div className="lg:w-[360px] lg:shrink-0">
-              <div className="mt-2 space-y-4 lg:mt-0">
-                {readinessCardModel.pillars.map(({ id, label, score }) => (
-                  <div key={id}>
-                    <div className="flex items-baseline justify-between gap-3">
-                      <div className="min-w-0 text-caption flex items-center gap-1">
-                        <span className="min-w-0 truncate">{label}</span>
-                        <PillarInfoIcon tooltip={pillarTooltip(id)} />
-                      </div>
-                      <div
-                        className={cn(
-                          "shrink-0 text-caption tabular-nums",
-                          score == null ? "text-text-secondary" : coachScoreTextClasses(score),
-                        )}
-                      >
-                        {score == null ? "--" : score.toFixed(1)}
-                      </div>
-                    </div>
-                    <ProgressBar
-                      className="mt-2 h-1.5"
-                      value={score == null ? 0 : (score / READINESS_MAX) * 100}
-                      indicatorClassName={score == null ? "bg-border" : coachScoreBarClasses(score)}
+          <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+            {readinessCardModel.pillars.map(({ id, score }) => {
+              const meta = SUCCESS_DRIVERS[id];
+              const colors = SUCCESS_DRIVER_COLORS[id];
+              const pct =
+                score == null ? 0 : Math.min(100, Math.max(0, (score / READINESS_MAX) * 100));
+              const display =
+                score == null ? "--" : score.toFixed(1).replace(/\.0$/, "");
+
+              return (
+                <div key={id} className="min-w-0">
+                  <div
+                    className={cn(
+                      "mb-4 inline-flex size-11 items-center justify-center rounded-md",
+                      colors.bg,
+                    )}
+                    aria-hidden
+                  >
+                    <SuccessDriverIcon
+                      driver={id}
+                      className={cn("size-6", colors.accent)}
                     />
                   </div>
-                ))}
-              </div>
-            </div>
+
+                  <div className="mb-2 flex items-center justify-between text-overline tabular-nums text-text-secondary">
+                    <span>0</span>
+                    <span>{READINESS_MAX.toFixed(0)}</span>
+                  </div>
+                  <div
+                    className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={READINESS_MAX}
+                    aria-valuenow={score ?? 0}
+                    aria-label={meta.label}
+                  >
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-[width] duration-500 ease-out",
+                        score == null ? "bg-border" : pillarBarFill(id),
+                      )}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+
+                  <div className="mt-4 flex items-end gap-0.5">
+                    <span
+                      className={cn(
+                        "font-gilroy text-[clamp(2.25rem,4vw,3rem)] font-normal leading-none tracking-[-0.04em] tabular-nums",
+                        score == null ? "text-extended-dark-cyan/35" : colors.fg,
+                      )}
+                    >
+                      {display}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex min-w-0 items-center gap-1.5">
+                    <span className={cn("truncate text-body-sm font-semibold", colors.fg)}>
+                      {meta.label}
+                    </span>
+                    <PillarInfoIcon tooltip={pillarTooltip(id)} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
     );
-  }, [readinessCardModel, readinessSourceReport?.meta?.id, showInterviewReadinessCard]);
+  }, [readinessCardModel, showInterviewReadinessCard]);
 
+  const readinessNoteBanner =
+    showInterviewReadinessCard &&
+    readinessCardModel.noteText &&
+    !readinessBannerDismissed ? (
+      <div
+        role="status"
+        className="mt-6 flex w-full items-start gap-3 rounded-lg border border-extended-light-cyan bg-extended-light-cyan/50 px-4 py-3"
+      >
+        <p className="min-w-0 flex-1 text-body-sm leading-6 text-extended-green-blue">
+          {readinessCardModel.noteText}
+        </p>
+        <button
+          type="button"
+          onClick={dismissReadinessBanner}
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-extended-green-blue transition hover:bg-extended-light-cyan hover:text-extended-dark-cyan focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          aria-label="Dismiss readiness tip"
+        >
+          <X className="size-4" />
+        </button>
+      </div>
+    ) : null;
   useEffect(() => {
     const is = (k: string) => {
       const v = searchParams.get(k);
@@ -525,17 +586,20 @@ export function CoachHome() {
                     href="/storyboard"
                     variant="primary"
                     icon={<BookOpen />}
-                    title="Build your Storyboard"
+                    title="Storyboard"
                     subtitle="Turn your experience into proof"
+                    illustrationSrc="/brand/illustration%201.svg"
                   />
                   <CardButton
                     href="/coach?roadmap=1"
                     variant="gray"
                     icon={<Map />}
-                    title="Plan my roadmap"
+                    title="Roadmap"
                     subtitle="Get a personalized prep plan"
+                    illustrationSrc="/brand/illustration%202.svg"
                   />
                 </div>
+                {readinessNoteBanner}
                 {readinessCardEl}
               </>
             ) : showJourneyColumn ? (
@@ -558,6 +622,7 @@ export function CoachHome() {
                     return "Let's start building a story that'll help you improve.";
                   })()}
                 </h4>
+                {readinessNoteBanner}
                 {readinessCardEl}
                 <div className="mt-4 w-full pt-0">
                   {!isRoadmapCoach ? (

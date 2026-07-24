@@ -34,7 +34,14 @@ export function CoachFloatingNav() {
 
   return (
     <nav aria-label="Coach shortcuts" className="fixed left-3 top-1/2 z-50 -translate-y-1/2 print:hidden">
-      <div className="flex flex-col gap-1 rounded-full border border-border bg-card p-1">
+      {/* Glass shell — same frosted fill + cyan gradient ring as SelectionChip
+       * (double-background border trick so the ring can be a gradient). */}
+      <div
+        className={cn(
+          "flex flex-col gap-1 rounded-full border border-transparent p-1 backdrop-blur-[9px]",
+          "[background:linear-gradient(rgba(255,255,255,0.72),rgba(255,255,255,0.72))_padding-box,linear-gradient(180deg,#f2f2f2,var(--extended-light-cyan)_41%,#fff)_border-box]",
+        )}
+      >
         {items.map((it) => {
           const Icon = it.icon;
           const isActive = pathname === it.base || Boolean(pathname?.startsWith(`${it.base}/`));
@@ -53,7 +60,7 @@ export function CoachFloatingNav() {
                   "grid h-11 w-11 place-items-center rounded-full p-1 transition-colors",
                   isActive
                     ? "bg-primary text-primary-foreground"
-                    : "text-primary hover:bg-muted",
+                    : "text-primary hover:bg-[var(--extended-light-cyan)]",
                 )}
                 aria-hidden
               >

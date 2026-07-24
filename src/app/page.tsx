@@ -3,25 +3,44 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 
+/**
+ * First-page landing — single composition: design-system base fill + brand
+ * pattern PNG at 32% opacity. No split-screen.
+ */
 export default function Home() {
   return (
-    <div className="min-h-screen w-full bg-background px-6 py-10 text-foreground">
-      <div className="mx-0 flex min-h-[calc(100vh-5rem)] max-w-[800px] flex-col items-start justify-center text-left md:pl-[180px]">
-        <Logo size="xs" />
-        <h1 className="mt-5 w-full text-h1">
-          Turn your experience into interview-ready proof.
-        </h1>
-        <p className="mt-5 text-body-lg leading-7 text-muted-foreground">
-          Practice with AI, improve your answers, and see exactly what to work on
-          next.
-        </p>
+    <main className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/pattern-bg-light.png"
+          alt=""
+          className="absolute inset-0 size-full object-cover opacity-[0.32] motion-safe:animate-landing-fade"
+        />
+      </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-start gap-3">
-          <Button asChild size="lg" className="h-11 px-6">
-            <Link href="/login">Let&apos;s get started</Link>
-          </Button>
+      <div className="relative z-10 mx-0 flex min-h-screen max-w-[800px] flex-col items-start justify-center px-6 py-16 text-left sm:px-10 md:pl-[clamp(2rem,12vw,11.25rem)]">
+        <div className="motion-safe:animate-landing-rise flex w-full flex-col items-start">
+          <Logo size="lg" />
+          <h1 className="mt-8 w-full font-gilroy text-[clamp(2.25rem,4.2vw,3.25rem)] font-bold leading-[1.12] tracking-[-0.04em]">
+            <span className="block text-[#033B4F]">Turn your experience into</span>
+            <span className="block text-[#0E9AB5]">interview-ready proof.</span>
+          </h1>
+          <p className="mt-5 max-w-[28rem] text-body-lg leading-7 text-text-secondary">
+            Practice with AI, improve your answers, and see exactly what to work
+            on next.
+          </p>
+          <div className="mt-9 motion-safe:animate-landing-cta">
+            <Button
+              asChild
+              size="lg"
+                className="h-12 rounded-md px-7 text-base font-medium"
+            >
+              <Link href="/login">Let&apos;s get started</Link>
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
