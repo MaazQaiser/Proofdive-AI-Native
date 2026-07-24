@@ -45,11 +45,13 @@
 :root {
   --app-bg: #f2f2f3;
   --app-surface: #ffffff;
+  /* Nested-card surface — one step down from --app-surface (white), used for
+     a flat card-inside-card layer instead of a shadow-based elevation cue. */
+  --app-surface-nested: #f5f5f4;
   --app-fg: #000000;
   --app-muted: rgba(0, 0, 0, 0.62);
   --app-hairline: rgba(0, 0, 0, 0.12);
-  --app-shadow: 0 26px 80px rgba(0, 0, 0, 0.08);
-  --app-shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.08);
+  --app-hairline-strong: rgba(0, 0, 0, 0.16);
 }
 
 /* ==========================================================
@@ -60,9 +62,11 @@
 :root {
   --background: #F5F5F3;
   --foreground: #0E0E0E;
-  --card: #F5F5F3;
+  /* White, one step lighter than --background, so a bordered/shadowless card
+     still reads as a distinct surface against the page. */
+  --card: #FFFFFF;
   --card-foreground: #0E0E0E;
-  --popover: #F5F5F3;
+  --popover: #FFFFFF;
   --popover-foreground: #0E0E0E;
   /* Primary button color — brand teal (matches --ring/--brand-100). Text is
      near-white per the Figma auth-page spec: contrast against #0E9AB5 is
@@ -176,28 +180,34 @@
 }
 
 /* Typography & logo scale (mode-independent).
-   NOTE: h1/subheading/body are exact Figma values. h2-h6, body-lg, body-sm,
+   NOTE: subheading/body are exact Figma values. h2-h6, body-lg, body-sm,
    caption, overline are interpolated to fill gaps Figma didn't define -
-   confirm with design before shipping. */
+   confirm with design before shipping.
+   H1 is a deliberate deviation from the original Figma spec (was 80px/700,
+   -4px tracking): it now reuses the Agent Heading style (52px/400/-1.04px)
+   because the bold 80px slab read too heavy. H2-H6 are rescaled to match
+   (~0.65x of their old size, tracking scaled the same way) and dropped from
+   700/600 to a uniform 500, so the whole scale reads as one consistent,
+   editorial (non-bold) system instead of H1 being the odd one out. */
 :root {
-  --text-h1-size: 80px;
-  --text-h1-weight: 700;
-  --text-h1-tracking: -4px;
-  --text-h2-size: 64px;
-  --text-h2-weight: 700;
-  --text-h2-tracking: -4px;
-  --text-h3-size: 48px;
-  --text-h3-weight: 700;
-  --text-h3-tracking: -4px;
-  --text-h4-size: 36px;
-  --text-h4-weight: 600;
-  --text-h4-tracking: -3px;
-  --text-h5-size: 28px;
-  --text-h5-weight: 600;
-  --text-h5-tracking: -2px;
-  --text-h6-size: 22px;
-  --text-h6-weight: 600;
-  --text-h6-tracking: -1px;
+  --text-h1-size: 52px;
+  --text-h1-weight: 400;
+  --text-h1-tracking: -1.04px;
+  --text-h2-size: 42px;
+  --text-h2-weight: 500;
+  --text-h2-tracking: -2.6px;
+  --text-h3-size: 32px;
+  --text-h3-weight: 500;
+  --text-h3-tracking: -2.6px;
+  --text-h4-size: 24px;
+  --text-h4-weight: 500;
+  --text-h4-tracking: -2px;
+  --text-h5-size: 18px;
+  --text-h5-weight: 500;
+  --text-h5-tracking: -1.3px;
+  --text-h6-size: 14px;
+  --text-h6-weight: 500;
+  --text-h6-tracking: -0.65px;
   /* Updated to 36px per the Figma auth-page spec (was 48px) - this is the
      "Sub heading" style used for page headings (e.g. "Login" / "Signup").
      Tracking is -4% of size (Figma's actual convention), not a flat -4px -
@@ -226,8 +236,10 @@
   /* Agent/hero greeting styles — originally Figma "Onboarding Flow" (node
      43:82), now shared by any big greeting headline + question line (e.g.
      onboarding's agent prompt, the Coach dashboard's hero heading).
-     Distinct from h1-h6/subheading since neither matches (52px/400 and
-     32px/400 aren't on that scale). Both are Inter Regular (confirmed via
+     text-h1 above is intentionally identical to agent-heading (52px/400/
+     -1.04px) — h1 was rescaled to match this style. agent-question
+     (32px/400) is still distinct from h3, which shares its 32px size but
+     keeps h3's own bold weight. Both are Inter Regular (confirmed via
      Figma's own typography inspector panel) — inherited from --font-sans,
      no font-family override needed for either. */
   --text-agent-heading-size: 52px;

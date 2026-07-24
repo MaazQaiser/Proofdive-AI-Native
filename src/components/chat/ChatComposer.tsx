@@ -249,15 +249,15 @@ export function ChatComposer({
             />
           ) : null}
           {thread ? (
-            <div className="flex w-full min-h-0 max-h-[min(380px,42dvh)] flex-1 flex-col border-b border-black/[0.06]">
+            <div className="flex w-full min-h-0 max-h-[min(380px,42dvh)] flex-1 flex-col border-b border-border">
               <div
-                className="flex shrink-0 items-center justify-between gap-2 border-b border-black/[0.06] pl-1 pr-0.5"
+                className="flex shrink-0 items-center justify-between gap-2 border-b border-border pl-1 pr-0.5"
                 role="group"
                 aria-label="AI Coach header"
               >
                 <div className="flex min-w-0 items-center gap-2 pl-1">
-                  <StarInCircleIcon className="h-4 w-4 text-amber-500" />
-                  <span className="text-caption text-gray-900">
+                  <StarInCircleIcon className="h-4 w-4 text-scoring-yellow" />
+                  <span className="text-caption text-text-primary">
                     {threadHeaderTitle}
                   </span>
                 </div>
@@ -265,7 +265,7 @@ export function ChatComposer({
                   <button
                     type="button"
                     onClick={onThreadClose}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-black/5 hover:text-gray-800 active:bg-black/10"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary active:bg-muted"
                     aria-label="Close"
                   >
                     <X className="h-4 w-4" />
@@ -288,7 +288,7 @@ export function ChatComposer({
             onChange={(e) => handleTextChange(e.target.value)}
             placeholder={placeholder}
             className={cn(
-              "text-text-primary placeholder:text-text-secondary min-h-12 w-full resize-none bg-transparent px-4 py-3 text-sm leading-[1.25] outline-none disabled:cursor-not-allowed disabled:opacity-60",
+              "text-text-primary placeholder:text-text-secondary min-h-12 w-full resize-none bg-transparent px-4 py-3 text-body-sm leading-[1.25] outline-none disabled:cursor-not-allowed disabled:opacity-60",
               thread ? "shrink-0 rounded-none rounded-b-[20px] pt-3" : "rounded-[20px]",
             )}
             rows={1}
@@ -308,10 +308,10 @@ export function ChatComposer({
               {pendingUploads.map((file) => (
                 <div
                   key={`${file.name}-${file.lastModified}`}
-                  className="flex w-fit min-w-16 shrink-0 items-center gap-1 rounded-lg border border-[#D9D1CB] bg-[rgba(244,241,236,0.7)] px-1.5 py-1 backdrop-blur-[16px]"
+                  className="flex w-fit min-w-16 shrink-0 items-center gap-1 rounded-lg border border-border bg-muted/70 px-1.5 py-1 backdrop-blur-[16px]"
                 >
                   <FileText className="size-4 shrink-0" />
-                  <span className="text-text-primary px-1 text-xs leading-6 font-medium whitespace-nowrap">
+                  <span className="text-text-primary px-1 text-overline font-medium leading-6 whitespace-nowrap">
                     {file.name}
                   </span>
                   <button
@@ -352,7 +352,7 @@ export function ChatComposer({
                   className="text-text-primary hover:bg-muted flex min-w-16 shrink-0 items-center justify-center gap-1 rounded-full px-2 py-0.5 disabled:pointer-events-none disabled:opacity-50"
                 >
                   <Paperclip className="size-4 shrink-0" />
-                  <span className="px-1 text-xs leading-6 font-medium whitespace-nowrap">
+                  <span className="px-1 text-overline font-medium leading-6 whitespace-nowrap">
                     Upload
                   </span>
                 </button>
@@ -364,10 +364,10 @@ export function ChatComposer({
                       type="button"
                       onClick={modeToggle.onToggle}
                       aria-label={`Exit ${modeToggle.activeLabel}`}
-                      className="flex h-7 shrink-0 items-center gap-1 rounded-full border border-[#D9D1CB] bg-[rgba(244,241,236,0.7)] py-1 pl-2 pr-1.5 backdrop-blur-[16px]"
+                      className="flex h-7 shrink-0 items-center gap-1 rounded-full border border-border bg-muted/70 py-1 pl-2 pr-1.5 backdrop-blur-[16px]"
                     >
                       <modeToggle.icon className="size-4 shrink-0" />
-                      <span className="text-text-primary px-0.5 text-xs leading-6 font-medium whitespace-nowrap">
+                      <span className="text-text-primary px-0.5 text-overline font-medium leading-6 whitespace-nowrap">
                         {modeToggle.activeLabel}
                       </span>
                       <X className="size-4 shrink-0" />

@@ -285,7 +285,7 @@ export function TrainingScreen() {
                           key={course.id}
                           type="button"
                           onClick={() => setSelectedCourseId(course.id)}
-                          className="rounded-xl border border-border bg-card px-5 py-5 text-left shadow-sm transition hover:bg-muted"
+                          className="rounded-xl border border-border bg-card px-5 py-5 text-left transition hover:bg-muted"
                         >
                           <div className="text-h6">{course.title}</div>
                           <div className="mt-2 text-caption leading-6 text-text-secondary">
@@ -323,7 +323,7 @@ export function TrainingScreen() {
                                 key={pill.id}
                                 type="button"
                                 onClick={() => setSelectedCourseId(pill.courseId)}
-                                className="group w-full rounded-xl border border-border bg-card px-4 py-4 text-left shadow-sm transition hover:bg-muted"
+                                className="group w-full rounded-xl border border-border bg-card px-4 py-4 text-left transition hover:bg-muted"
                               >
                                 <div className="flex items-start gap-4">
                                   <div
@@ -436,7 +436,7 @@ export function TrainingScreen() {
                       {selectedCourse.chapters.map((ch, idx) => (
                         <div
                           key={`${selectedCourse.id}-ch-${idx}`}
-                          className="w-full rounded-xl border border-border bg-card px-5 py-4 shadow-sm"
+                          className="w-full rounded-xl border border-border bg-card px-5 py-4"
                         >
                           <div className="flex items-start gap-4">
                             <div

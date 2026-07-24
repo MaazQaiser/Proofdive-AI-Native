@@ -99,7 +99,7 @@ export function DonutChartPrimitive({ modules, size = 320, valueFormatter }: Pro
             const point = polarToCartesian(cx, cy, tooltipRadius, hoveredArc.midAngle);
             return (
               <div
-                className="pointer-events-none absolute z-10 min-w-max -translate-x-1/2 -translate-y-1/2 rounded-md border border-border bg-popover px-2.5 py-1.5 text-overline shadow-md"
+                className="pointer-events-none absolute z-10 min-w-max -translate-x-1/2 -translate-y-1/2 rounded-md border border-border bg-popover px-2.5 py-1.5 text-overline"
                 style={{ left: `${(point.x / size) * 100}%`, top: `${(point.y / size) * 100}%` }}
               >
                 <p className="font-medium text-foreground">{hoveredArc.module.label}</p>

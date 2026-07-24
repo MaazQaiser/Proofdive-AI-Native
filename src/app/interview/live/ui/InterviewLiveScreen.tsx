@@ -527,48 +527,48 @@ export function InterviewLiveScreen() {
               </div>
             ) : null}
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-overline text-gray-800">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-overline text-[var(--app-muted)]">
+            <span className="h-2 w-2 rounded-full bg-scoring-green" />
             <span>{formatTimer(secondsLeft)}</span>
           </div>
         </div>
 
         <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <div className="relative aspect-video w-full overflow-hidden rounded-[24px] bg-white shadow-[0_26px_80px_rgba(0,0,0,0.10)]">
+            <div className="relative aspect-video w-full overflow-hidden rounded-[24px] border border-[var(--app-hairline)] bg-white">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-caption font-semibold text-gray-800">
+                  <div className="text-caption font-semibold text-[var(--app-fg)]">
                     AI Interviewer
                   </div>
                   <div className="mt-2 text-overline text-[var(--app-muted)]">Video feed placeholder</div>
                 </div>
               </div>
               <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-overline text-white">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="h-2 w-2 rounded-full bg-scoring-green" />
                 <span>Speaking</span>
               </div>
             </div>
           </div>
 
           <div className="flex flex-col gap-4">
-            <div className="relative aspect-video w-full overflow-hidden rounded-[24px] bg-white shadow-[0_26px_80px_rgba(0,0,0,0.10)]">
+            <div className="relative aspect-video w-full overflow-hidden rounded-[24px] border border-[var(--app-hairline)] bg-white">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-caption font-semibold text-gray-800">
+                  <div className="text-caption font-semibold text-[var(--app-fg)]">
                     {name}
                   </div>
                   <div className="mt-2 text-overline text-[var(--app-muted)]">Camera preview placeholder</div>
                 </div>
               </div>
               <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-overline text-white">
-                <span className={cn("h-2 w-2 rounded-full", micOn ? "bg-emerald-400" : "bg-rose-400")} />
+                <span className={cn("h-2 w-2 rounded-full", micOn ? "bg-scoring-green" : "bg-scoring-red")} />
                 <span>{micOn ? "Mic on" : "Mic off"}</span>
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-white/50 bg-white p-4 shadow-[0_14px_40px_rgba(0,0,0,0.06)]">
-              <div className="text-overline text-gray-500">
+            <div className="rounded-[24px] border border-[var(--app-hairline)] bg-white p-4">
+              <div className="text-overline text-[var(--app-muted)]">
                 NOTES
               </div>
               <div className="mt-2 text-caption text-[var(--app-muted)]">
@@ -579,14 +579,14 @@ export function InterviewLiveScreen() {
         </div>
 
         <div className="fixed bottom-4 left-0 right-0 z-50 px-6">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-[999px] border border-white/50 bg-white/80 px-3 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.08)] backdrop-blur">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-full border border-[var(--app-hairline-strong)] bg-white/80 px-3 py-3 backdrop-blur">
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setMicOn((v) => !v)}
                 className={cn(
                   "inline-flex h-11 w-11 items-center justify-center rounded-full transition",
-                  micOn ? "bg-white/60 hover:bg-white/80" : "bg-rose-500/90 hover:bg-rose-500",
+                  micOn ? "bg-white/60 hover:bg-white/80" : "bg-destructive/90 hover:bg-destructive",
                 )}
                 disabled={isEnding}
                 aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
@@ -615,7 +615,7 @@ export function InterviewLiveScreen() {
                 onClick={() => setCamOn((v) => !v)}
                 className={cn(
                   "inline-flex h-11 w-11 items-center justify-center rounded-full transition",
-                  camOn ? "bg-white/60 hover:bg-white/80" : "bg-rose-500/90 hover:bg-rose-500",
+                  camOn ? "bg-white/60 hover:bg-white/80" : "bg-destructive/90 hover:bg-destructive",
                 )}
                 disabled={isEnding}
                 aria-label={camOn ? "Turn camera off" : "Turn camera on"}
@@ -640,7 +640,7 @@ export function InterviewLiveScreen() {
               </button>
             </div>
 
-            <div className="hidden text-overline text-gray-500 sm:block">
+            <div className="hidden text-overline text-[var(--app-muted)] sm:block">
               {formatTimer(secondsLeft)} remaining
             </div>
 
@@ -650,7 +650,7 @@ export function InterviewLiveScreen() {
                 setIsEnding(true);
               }}
               disabled={isEnding}
-              className="rounded-full bg-rose-500 px-6 text-white hover:bg-rose-500/90 active:bg-rose-500/80"
+              className="rounded-full bg-destructive px-6 text-white hover:bg-destructive/90 active:bg-destructive/80"
             >
               {isEnding ? "Ending…" : "End"}
             </Button>
@@ -663,7 +663,7 @@ export function InterviewLiveScreen() {
           <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-6 py-10">
             <div className="flex items-center gap-2">
               <Logo size="xxs" />
-              <span className="text-overline text-gray-500">
+              <span className="text-overline text-[var(--app-muted)]">
                 REPORT
               </span>
             </div>
@@ -678,8 +678,8 @@ export function InterviewLiveScreen() {
             </div>
 
             <div className="mt-10 grid gap-4 lg:grid-cols-2">
-              <div className="rounded-[24px] border border-white/50 bg-white p-5 shadow-[0_14px_40px_rgba(0,0,0,0.06)]">
-                <div className="text-overline text-gray-500">
+              <div className="rounded-[24px] border border-[var(--app-hairline)] bg-white p-5">
+                <div className="text-overline text-[var(--app-muted)]">
                   PROGRESS
                 </div>
                 <div className="mt-4 space-y-3">
@@ -692,7 +692,7 @@ export function InterviewLiveScreen() {
                           <div
                             className={cn(
                               "truncate text-caption font-semibold",
-                              done ? "text-black" : active ? "text-black" : "text-gray-500",
+                              done || active ? "text-[var(--app-fg)]" : "text-[var(--app-muted)]",
                             )}
                           >
                             {label}
@@ -702,10 +702,10 @@ export function InterviewLiveScreen() {
                           className={cn(
                             "h-2 w-2 rounded-full",
                             done
-                              ? "bg-emerald-500"
+                              ? "bg-scoring-green"
                               : active
-                                ? "bg-black animate-pulse"
-                                : "bg-black/30",
+                                ? "bg-primary animate-pulse"
+                                : "bg-[var(--app-hairline-strong)]",
                           )}
                         />
                       </div>
@@ -714,8 +714,8 @@ export function InterviewLiveScreen() {
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-white/50 bg-white p-5 shadow-[0_14px_40px_rgba(0,0,0,0.06)]">
-                <div className="text-overline text-gray-500">
+              <div className="rounded-[24px] border border-[var(--app-hairline)] bg-white p-5">
+                <div className="text-overline text-[var(--app-muted)]">
                   COMPETENCY MAPPING
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -725,10 +725,10 @@ export function InterviewLiveScreen() {
                       <div
                         key={c}
                         className={cn(
-                          "rounded-[14px] border px-3 py-3 text-overline transition",
+                          "rounded-2xl border px-3 py-3 text-overline transition",
                           filled
-                            ? "border-emerald-500/30 bg-emerald-500/10 text-black"
-                            : "border-white/50 bg-white/40 text-gray-600",
+                            ? "border-scoring-green/30 bg-scoring-green/10 text-[var(--app-fg)]"
+                            : "border-[var(--app-hairline)] bg-[var(--app-surface-nested)] text-[var(--app-muted)]",
                         )}
                       >
                         {c}
@@ -739,7 +739,7 @@ export function InterviewLiveScreen() {
               </div>
             </div>
 
-            <div className="mt-auto pt-10 text-overline text-gray-500">
+            <div className="mt-auto pt-10 text-overline text-[var(--app-muted)]">
               You’ll be redirected to home automatically.
             </div>
           </div>

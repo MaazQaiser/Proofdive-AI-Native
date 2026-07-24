@@ -12,8 +12,16 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardNested,
 } from "@/components/ui/card";
 import { CardButton } from "@/components/ui/card-button";
+import {
+  Card as AppCard,
+  CardBody as AppCardBody,
+  GlassCard,
+  NestedCard,
+} from "@/components/Card";
+import { Button as AppButton } from "@/components/Button";
 import { Chatbox } from "@/components/ui/chatbox";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
@@ -53,14 +61,14 @@ const PAIR_TOKENS: PairToken[] = [
     title: "Card",
     bgVar: "--card",
     fgVar: "--card-foreground",
-    light: { bg: "#F5F5F3", fg: "#0E0E0E" },
+    light: { bg: "#FFFFFF", fg: "#0E0E0E" },
     dark: { bg: "#01161B", fg: "#22D3EE" },
   },
   {
     title: "Popover",
     bgVar: "--popover",
     fgVar: "--popover-foreground",
-    light: { bg: "#F5F5F3", fg: "#0E0E0E" },
+    light: { bg: "#FFFFFF", fg: "#0E0E0E" },
     dark: { bg: "#042027", fg: "#22D3EE" },
   },
   {
@@ -162,12 +170,20 @@ type TypeStyle = {
 };
 
 const TYPE_STYLES: TypeStyle[] = [
-  { key: "h1", className: "text-h1", label: "H1", size: "80px", weight: "700", tracking: "-4px" },
-  { key: "h2", className: "text-h2", label: "H2", size: "64px", weight: "700", tracking: "-4px" },
-  { key: "h3", className: "text-h3", label: "H3", size: "48px", weight: "700", tracking: "-4px" },
-  { key: "h4", className: "text-h4", label: "H4", size: "36px", weight: "600", tracking: "-3px" },
-  { key: "h5", className: "text-h5", label: "H5", size: "28px", weight: "600", tracking: "-2px" },
-  { key: "h6", className: "text-h6", label: "H6", size: "22px", weight: "600", tracking: "-1px" },
+  {
+    key: "h1",
+    className: "text-h1",
+    label: "H1",
+    size: "52px",
+    weight: "400",
+    tracking: "-1.04px",
+    note: "Reuses the Agent heading style below (same size/weight/tracking, but text-foreground instead of text-heading-teal) — the old 80px/700 slab read too heavy.",
+  },
+  { key: "h2", className: "text-h2", label: "H2", size: "42px", weight: "500", tracking: "-2.6px" },
+  { key: "h3", className: "text-h3", label: "H3", size: "32px", weight: "500", tracking: "-2.6px" },
+  { key: "h4", className: "text-h4", label: "H4", size: "24px", weight: "500", tracking: "-2px" },
+  { key: "h5", className: "text-h5", label: "H5", size: "18px", weight: "500", tracking: "-1.3px" },
+  { key: "h6", className: "text-h6", label: "H6", size: "14px", weight: "500", tracking: "-0.65px" },
   {
     key: "subheading",
     className: "text-subheading",
@@ -545,6 +561,74 @@ export default function DesignSystemPage() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          </Section>
+
+          <Separator />
+
+          <Section
+            title="Surfaces & elevation"
+            description="No drop shadows anywhere in the app. Elevation is communicated with a hairline border, and hierarchy inside a surface comes from nesting a flatter card inside it — not from a shadow."
+          >
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Card + CardNested</CardTitle>
+                  <CardDescription>shadcn/ui side — src/components/ui/card.tsx</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CardNested className="p-4">
+                    <p className="text-body-sm font-medium text-foreground">Nested surface</p>
+                    <p className="text-caption text-muted-foreground mt-1">
+                      bg-surface + border-border. One flat step down from the card, no shadow.
+                    </p>
+                  </CardNested>
+                </CardContent>
+              </Card>
+
+              <AppCard>
+                <AppCardBody>
+                  <p className="text-overline text-[var(--app-muted)]">APP CARD + NESTEDCARD</p>
+                  <p className="mt-1 text-body-sm font-medium">
+                    Custom system — src/components/Card.tsx
+                  </p>
+                  <NestedCard className="mt-4 p-4">
+                    <p className="text-caption font-semibold text-gray-900">Nested surface</p>
+                    <p className="text-caption text-[var(--app-muted)] mt-1">
+                      --app-surface-nested + --app-hairline border. Used for score rows, quiz
+                      options, and section headers inside a Card (see Storyboard and Training).
+                    </p>
+                  </NestedCard>
+                  <p className="mt-4 text-caption text-[var(--app-muted)]">
+                    Light-mode only — the --app-* tokens have no .dark override yet, unlike the
+                    shadcn tokens above, so this card stays light when you toggle dark mode.
+                  </p>
+                </AppCardBody>
+              </AppCard>
+
+              <div className="rounded-lg bg-[linear-gradient(135deg,var(--brand-100),var(--brand-500))] p-6 lg:col-span-2">
+                <GlassCard className="p-6">
+                  <p className="text-overline text-[var(--app-muted)]">GLASSCARD</p>
+                  <p className="mt-1 text-body-sm">
+                    Frosted/translucent variant for surfaces over a photo or colored background
+                    (shown here on a brand-gradient backdrop). Border-only, no shadow — same rule
+                    as every other surface.
+                  </p>
+                </GlassCard>
+              </div>
+            </div>
+          </Section>
+
+          <Separator />
+
+          <Section
+            title="App buttons"
+            description="Custom pill buttons used across onboarding, storyboard, interview and training — src/components/Button.tsx. Distinct from the shadcn Button above; not yet unified."
+          >
+            <div className="flex flex-wrap items-center gap-3">
+              <AppButton variant="primary">Primary</AppButton>
+              <AppButton variant="secondary">Secondary</AppButton>
+              <AppButton variant="ghost">Ghost</AppButton>
             </div>
           </Section>
 

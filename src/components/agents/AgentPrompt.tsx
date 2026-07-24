@@ -21,7 +21,7 @@ function AgentPromptInner({
   prompt,
   ariaLabel = "Agent prompt",
   headingClassName = "text-h3 leading-[1.05]",
-  subtextClassName = "mt-4 text-h4 leading-[48px] text-black/80",
+  subtextClassName = "mt-4 text-h4 leading-[48px] text-[var(--app-fg)]/80",
   mode = "char",
 }: AgentPromptProps) {
   const { heading: promptHeading, subtext: promptSubtext } = splitPrompt(prompt);
@@ -29,8 +29,8 @@ function AgentPromptInner({
   const [headingDone, setHeadingDone] = useState(false);
 
   const headingText = promptHeading || prompt;
-  const charDelay = mode === "word" ? undefined : 52;
-  const wordDelay = mode === "word" ? 90 : undefined;
+  const charDelay = mode === "word" ? undefined : 22;
+  const wordDelay = mode === "word" ? 55 : undefined;
 
   return (
     <div className="relative w-full">

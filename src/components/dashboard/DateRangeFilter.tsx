@@ -27,10 +27,10 @@ export function DateRangeFilter<G extends string>({ value, onChange, options }: 
             onClick={() => onChange(option.value)}
             aria-pressed={active}
             className={cn(
-              "rounded-full px-4 py-1.5 text-caption transition",
+              "rounded-full border px-4 py-1.5 text-caption transition",
               active
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
+                ? "border-border bg-card text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             {option.label}

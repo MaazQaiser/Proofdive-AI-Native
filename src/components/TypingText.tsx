@@ -89,9 +89,9 @@ export function TypingText({
       const lastChar = nextUnit.trimEnd().slice(-1);
       const punctPause =
         lastChar === "." || lastChar === "!" || lastChar === "?"
-          ? 220
+          ? 130
           : lastChar === "," || lastChar === ";" || lastChar === ":"
-            ? 120
+            ? 70
             : 0;
 
       const rand = 1 + (Math.random() * 2 - 1) * jitter;

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, type ReactElement } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
-import { Card, CardBody } from "@/components/Card";
+import { Card, CardBody, NestedCard } from "@/components/Card";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
@@ -510,8 +510,8 @@ Start simple. What's something you worked on that stands out?`,
   return (
     <AppShell>
       <CoachFloatingNav />
-      <div className="pb-44">
-        <div className="mx-auto w-[800px] max-w-full">
+      <div className="flex w-full flex-col gap-8 pb-44 xl:flex-row xl:items-start xl:gap-8">
+        <div className="min-w-0 flex-1">
           <div className="p-0">
                 {postCraftHome ? (
                   <div className="mx-auto w-[672px] max-w-full space-y-6">
@@ -519,14 +519,14 @@ Start simple. What's something you worked on that stands out?`,
                       <h2 className="text-h4 text-left">
                         Hey {firstName}, we’ve crafted a story.
                       </h2>
-                      <p className="text-body-lg font-semibold text-left text-black/80">
-                        For the role of <span className="text-gray-900">{role}</span>
+                      <p className="text-body-lg font-semibold text-left text-[var(--app-fg)]/80">
+                        For the role of <span className="text-[var(--app-fg)]">{role}</span>
                       </p>
                       <p className="text-caption text-left leading-6 text-[var(--app-muted)]">
                         You can still add more to your story to get better results.
                       </p>
                     </div>
-                    <Card className="shadow-none">
+                    <Card>
                       <CardBody>
                         <div className="text-overline text-[var(--app-muted)]">
                           YOUR STORYBOARD
@@ -534,7 +534,7 @@ Start simple. What's something you worked on that stands out?`,
                         <div className="mt-2 text-h6">
                           Your storyboard for {role} is ready to review.
                         </div>
-                        <div className="mt-5 flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/50 bg-white/50 px-4 py-3">
+                        <NestedCard className="mt-5 flex flex-wrap items-end justify-between gap-3 px-4 py-3">
                           <div>
                             <div className="text-caption font-semibold">Overall story score</div>
                             <div className="text-overline text-[var(--app-muted)]">
@@ -550,7 +550,7 @@ Start simple. What's something you worked on that stands out?`,
                               / 5
                             </span>
                           </div>
-                        </div>
+                        </NestedCard>
                         <div className="mt-4 flex flex-wrap gap-2">
                           <Button type="button" onClick={() => router.push("/storyboard/crafting")}>
                             View story
@@ -586,6 +586,8 @@ Start simple. What's something you worked on that stands out?`,
                       promptKey={storyPromptKey}
                       prompt={storyPrompt}
                       ariaLabel="Storyboard prompt"
+                      headingClassName="text-agent-heading text-heading-teal"
+                      subtextClassName="mt-4 text-agent-question text-text-primary"
                     />
                     {storyStep === 6 && craftUi !== "ready" ? (
                       <div className="mx-auto mt-8 w-[672px] max-w-full">
@@ -616,7 +618,7 @@ Start simple. What's something you worked on that stands out?`,
                     ) : null}
                     {storyStep === 6 && craftUi === "ready" ? (
                       <div className="mx-auto mt-8 w-[672px] max-w-full">
-                        <Card className="shadow-none">
+                        <Card>
                           <CardBody>
                             <div className="text-overline text-[var(--app-muted)]">
                               YOUR STORYBOARD
@@ -624,7 +626,7 @@ Start simple. What's something you worked on that stands out?`,
                             <div className="mt-2 text-h6">
                               Your storyboard for {role} is here.
                             </div>
-                            <div className="mt-5 flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-white/50 bg-white/50 px-4 py-3">
+                            <NestedCard className="mt-5 flex flex-wrap items-end justify-between gap-3 px-4 py-3">
                               <div>
                                 <div className="text-caption font-semibold">Overall story score</div>
                                 <div className="text-overline text-[var(--app-muted)]">
@@ -640,7 +642,7 @@ Start simple. What's something you worked on that stands out?`,
                                   / 5
                                 </span>
                               </div>
-                            </div>
+                            </NestedCard>
                             <div className="mt-4 flex flex-wrap gap-2">
                               <Button
                                 type="button"
@@ -676,7 +678,7 @@ Start simple. What's something you worked on that stands out?`,
                       </div>
                     ) : null}
                     {statusLine ? (
-                      <p className="mx-auto mt-6 w-[672px] max-w-full text-caption leading-6 text-gray-800">
+                      <p className="mx-auto mt-6 w-[672px] max-w-full text-caption leading-6 text-[var(--app-fg)]/80">
                         {statusLine}
                       </p>
                     ) : null}
@@ -684,10 +686,9 @@ Start simple. What's something you worked on that stands out?`,
                 )}
           </div>
         </div>
-      </div>
 
-      {/* ── fixed right panel ── */}
-      <div className="fixed right-4 top-16 bottom-24 w-[320px] space-y-3 overflow-y-auto pr-8">
+        {/* ── story sidebar ── */}
+        <div className="w-full space-y-3 xl:sticky xl:top-24 xl:w-[320px] xl:shrink-0 xl:max-h-[calc(100vh-17rem)] xl:overflow-y-auto xl:pr-2">
               <div className="flex items-end justify-between gap-3">
                 <div>
                   <div className="text-overline text-[var(--app-muted)]">
@@ -697,7 +698,7 @@ Start simple. What's something you worked on that stands out?`,
                 <button
                   type="button"
                   aria-label="Add experience"
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-black text-white transition hover:bg-black/80 active:bg-black/70"
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/80 active:bg-primary/70"
                   onClick={() => {
                     setPendingNewEntry(true);
                     setSelectedId(null);
@@ -730,8 +731,10 @@ Start simple. What's something you worked on that stands out?`,
                       >
                         <Card
                           className={[
-                            "shadow-none transition",
-                            isActive ? "ring-2 ring-black/70" : "hover:ring-2 hover:ring-black/10",
+                            "transition",
+                            isActive
+                              ? "border-primary ring-2 ring-primary/40"
+                              : "hover:border-[var(--app-hairline-strong)] hover:ring-2 hover:ring-primary/10",
                           ].join(" ")}
                         >
                           <CardBody className="p-4">
@@ -747,12 +750,12 @@ Start simple. What's something you worked on that stands out?`,
                     );
                   })
                 ) : (
-                  <Card className="shadow-none">
+                  <Card>
                     <CardBody className="p-4">
                       <div className="text-body font-semibold">No experiences yet</div>
                       <div className="mt-1 text-caption leading-5 text-[var(--app-muted)]">
                         Start by sharing an experience in the chat. To add another one later, just say{" "}
-                        <span className="font-extrabold text-gray-900">“Add new experience”</span>.
+                        <span className="font-extrabold text-[var(--app-fg)]">“Add new experience”</span>.
                       </div>
                     </CardBody>
                   </Card>
@@ -762,21 +765,21 @@ Start simple. What's something you worked on that stands out?`,
               <div className="pt-2 text-overline text-[var(--app-muted)]">
                 YOUR STORY DRAFT
               </div>
-              <Card className="shadow-none">
+              <Card>
                 <CardBody className="space-y-3 p-5">
                   {isDraftUpdating ? (
                     <div className="space-y-3">
-                      <div className="h-5 w-44 animate-pulse rounded-lg bg-black/10" />
+                      <div className="h-5 w-44 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
                       <div className="space-y-2">
-                        <div className="h-4 w-full animate-pulse rounded-lg bg-black/10" />
-                        <div className="h-4 w-11/12 animate-pulse rounded-lg bg-black/10" />
-                        <div className="h-4 w-9/12 animate-pulse rounded-lg bg-black/10" />
+                        <div className="h-4 w-full animate-pulse rounded-lg bg-[var(--app-hairline)]" />
+                        <div className="h-4 w-11/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
+                        <div className="h-4 w-9/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
                       </div>
                     </div>
                   ) : (
                     <>
                       <div className="text-body font-semibold">{storyQuick.title}</div>
-                      <div className="whitespace-pre-wrap text-caption leading-6 text-black/80">
+                      <div className="whitespace-pre-wrap text-caption leading-6 text-[var(--app-fg)]/80">
                         {storyQuick.body}
                       </div>
                     </>
@@ -787,15 +790,15 @@ Start simple. What's something you worked on that stands out?`,
               <div className="pt-2 text-overline text-[var(--app-muted)]">
                 SUGGESTIONS
               </div>
-              <Card className="shadow-none">
+              <Card>
                 <CardBody className="space-y-3 p-5">
                   {isDraftUpdating ? (
                     <div className="space-y-2">
-                      <div className="h-5 w-full animate-pulse rounded-lg bg-black/10" />
-                      <div className="h-5 w-10/12 animate-pulse rounded-lg bg-black/10" />
+                      <div className="h-5 w-full animate-pulse rounded-lg bg-[var(--app-hairline)]" />
+                      <div className="h-5 w-10/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
                     </div>
                   ) : activeSuggestion ? (
-                    <div className="text-caption leading-6 text-gray-900">
+                    <div className="text-caption leading-6 text-[var(--app-fg)]">
                       {typeof activeSuggestion === "string"
                         ? emphasizeSuggestionText(activeSuggestion)
                         : activeSuggestion}
@@ -807,6 +810,7 @@ Start simple. What's something you worked on that stands out?`,
                   )}
                 </CardBody>
               </Card>
+        </div>
       </div>
       <CoachBottomChatBar
         placeholder={postCraftHome ? "Add another experience to start a new story…" : composerPlaceholder}

@@ -190,12 +190,12 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
             <div
               className={cn(
                 m.role === "user"
-                  ? "max-w-[min(100%,32rem)] rounded-2xl rounded-br-md bg-black px-3.5 py-2.5 text-body-sm leading-6 text-white [word-break:break-word]"
+                  ? "max-w-[min(100%,32rem)] rounded-2xl rounded-br-md bg-[var(--app-fg)] px-3.5 py-2.5 text-body-sm leading-6 text-white [word-break:break-word]"
                   : "w-full min-w-0 max-w-[min(100%,32rem)]",
               )}
             >
               {m.role === "assistant" ? (
-                <p className="whitespace-pre-wrap text-left text-body-sm leading-6 text-gray-800 [word-break:break-word]">
+                <p className="whitespace-pre-wrap text-left text-body-sm leading-6 text-[var(--app-fg)] [word-break:break-word]">
                   {formatAssistantText(m.text)}
                 </p>
               ) : (
@@ -210,10 +210,10 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
                         : "/interview?first=1"
                     }
                     className={cn(
-                      "flex w-full items-center justify-between gap-2 rounded-2xl border border-white/60",
-                      "bg-white/50 px-4 py-3 text-left text-body-sm font-semibold text-gray-900",
-                      "shadow-sm transition hover:bg-white/80",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+                      "flex w-full items-center justify-between gap-2 rounded-2xl border border-[var(--app-hairline)]",
+                      "bg-white px-4 py-3 text-left text-body-sm font-semibold text-[var(--app-fg)]",
+                      "transition hover:border-[var(--app-hairline-strong)]",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]/40",
                     )}
                   >
                     <span>Take a quick interview against this new role</span>
@@ -223,18 +223,18 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
                     type="button"
                     onClick={() => setShowGuidedJourneySteps(true)}
                     className={cn(
-                      "flex w-full items-center justify-between gap-2 rounded-2xl border border-white/60",
-                      "bg-white/50 px-4 py-3 text-left text-body-sm font-semibold text-gray-900",
-                      "shadow-sm transition hover:bg-white/80",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3EC878]/40",
+                      "flex w-full items-center justify-between gap-2 rounded-2xl border border-[var(--app-hairline)]",
+                      "bg-white px-4 py-3 text-left text-body-sm font-semibold text-[var(--app-fg)]",
+                      "transition hover:border-[var(--app-hairline-strong)]",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]/40",
                     )}
                   >
                     <span>Create a guide plan to prepare for this role</span>
                     <ArrowUpIcon />
                   </button>
                   {showGuidedJourneySteps ? (
-                    <div className="mt-4 w-full min-w-0 border-t border-slate-300/80 pt-4">
-                      <h3 className="text-h6 text-left leading-snug text-gray-900">
+                    <div className="mt-4 w-full min-w-0 border-t border-[var(--app-hairline)] pt-4">
+                      <h3 className="text-h6 text-left leading-snug text-[var(--app-fg)]">
                         Here is the guided journey
                       </h3>
                       <p className="mt-1 text-left text-caption leading-5 text-[var(--app-muted)]">
@@ -247,14 +247,14 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
                           actionHref="/training"
                           actionLabel="Start learning"
                         />
-                        <div className="h-px w-full bg-slate-300" aria-hidden />
+                        <div className="h-px w-full bg-[var(--app-hairline)]" aria-hidden />
                         <GuidedJourneyStepRow
                           title="2. Craft your story"
                           body="Turn your experience into clear, structured answers."
                           actionHref="/storyboard"
                           actionLabel="Create my story"
                         />
-                        <div className="h-px w-full bg-slate-300" aria-hidden />
+                        <div className="h-px w-full bg-[var(--app-hairline)]" aria-hidden />
                         <GuidedJourneyStepRow
                           title="3. Take a mock interview"
                           body="Practice with a 30-minute, real-world interview."
@@ -329,7 +329,7 @@ export function CoachConversationalDock({ quickChips, onAdoptPlannedRole }: Prop
 
 function ArrowUpIcon() {
   return (
-    <svg className="h-4 w-4 shrink-0 text-gray-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <svg className="h-4 w-4 shrink-0 text-[var(--app-muted)]" viewBox="0 0 24 24" fill="none" aria-hidden>
       <path
         d="M7 17L17 7M17 7H10M17 7V14"
         stroke="currentColor"
@@ -355,12 +355,12 @@ function GuidedJourneyStepRow({
   return (
     <div className="w-full min-w-0 py-3">
       <div className="flex w-full min-w-0 items-start justify-between gap-2">
-        <h4 className="min-w-0 flex-1 text-left text-caption font-semibold text-gray-900 [word-break:break-word]">
+        <h4 className="min-w-0 flex-1 text-left text-caption font-semibold text-[var(--app-fg)] [word-break:break-word]">
           {title}
         </h4>
         <Link
           href={actionHref}
-          className="inline-flex shrink-0 items-center gap-1.5 text-caption font-semibold text-slate-700 no-underline transition hover:text-slate-900"
+          className="inline-flex shrink-0 items-center gap-1.5 text-caption font-semibold text-[var(--app-muted)] no-underline transition hover:text-[var(--app-fg)]"
         >
           {actionLabel}
           <ArrowUpIcon />

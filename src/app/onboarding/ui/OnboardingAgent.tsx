@@ -668,11 +668,11 @@ function OnboardingAgentInner({
             role="dialog"
             aria-modal="true"
             aria-labelledby="intro-video-title"
-            className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-black/10 bg-[var(--app-surface)] shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
+            className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-[var(--app-hairline)] bg-[var(--app-surface)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/[0.08] px-4 py-3">
-              <span id="intro-video-title" className="min-w-0 flex-1 truncate text-caption text-black">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--app-hairline)] px-4 py-3">
+              <span id="intro-video-title" className="min-w-0 flex-1 truncate text-caption text-[var(--app-fg)]">
                 Learn about Proofdive
               </span>
               <div className="flex shrink-0 items-center gap-2">
@@ -680,14 +680,14 @@ function OnboardingAgentInner({
                   type="button"
                   onClick={skipIntroAndOpenCoachWelcome}
                   aria-label="Skip intro and open coach welcome"
-                  className="inline-flex h-9 items-center justify-center rounded-full px-3 text-caption text-black/60 transition hover:bg-black/[0.05] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 sm:px-4"
+                  className="inline-flex h-9 items-center justify-center rounded-full px-3 text-caption text-[var(--app-muted)] transition hover:bg-[var(--app-hairline)] hover:text-[var(--app-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]/30 sm:px-4"
                 >
                   Skip & Go to home
                 </button>
                 <button
                   type="button"
                   onClick={closeIntroModal}
-                  className="inline-flex h-9 min-w-[72px] items-center justify-center rounded-full border border-black/10 bg-black/[0.04] px-3 text-caption text-black transition hover:bg-black/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15"
+                  className="inline-flex h-9 min-w-[72px] items-center justify-center rounded-full border border-[var(--app-hairline)] bg-[var(--app-hairline)] px-3 text-caption text-[var(--app-fg)] transition hover:bg-[var(--app-hairline-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]/30"
                 >
                   Close
                 </button>
