@@ -1,63 +1,42 @@
-const ASSET_BASE = "/brand/login-signup%20assets";
-
-/** Natural width/height (px) the composition below was authored at — used as
- * the scale reference so it can shrink/grow to fill whatever space the
- * flexible left panel actually has, instead of clipping at a fixed size.
- * Height spans from the panel top to the bottom of the "lines" graphic
- * (524 + 596), which is where the source design's canvas bottom fell too. */
-const NATURAL_WIDTH = 1019;
-const NATURAL_HEIGHT = 1120;
+const ASSET_BASE = "/brand";
 
 /**
  * Left-hand decorative panel for the auth split-screen layout (Login/Signup).
- * Positions are pixel-exact against the Figma spec (1920w canvas); the banner
- * asset already excludes the portion that bleeds past the page's left edge.
+ * Matches Figma's "leftpanel" (node 148:207 in the Login frame): it and the
+ * form column are equal `flex-1` siblings — not a fixed-width form pinned to
+ * the screen edge — so the whitespace on either side of the form stays
+ * balanced at any viewport width. `max-w-[1027px]` mirrors Figma's cap so
+ * this panel doesn't keep growing past its designed size on ultrawide
+ * screens (see the form column's matching `min-w` in login/signup pages).
  *
- * The whole composition scales as one rigid unit — never independently, or
- * the banner and the "lines" graphic can drift apart (leaving a gap) or
- * toward each other (overlapping) depending on panel proportions. The scale
- * factor is capped by both the panel's width AND height (like `object-fit:
- * contain`), so it never needs more vertical space than is actually
- * available, and the whole group is anchored to the panel's bottom so any
- * leftover space appears above it instead of below — matching how the
- * "lines" graphic's bottom edge sits flush with the canvas bottom in the
- * source design.
+ * Per the source frame's raw geometry (leftpanel 960×1120 @ 1920w): the
+ * rectangle sits ~5% down from the top and the lines graphic sits flush
+ * against the bottom, with the gap between them absorbing whatever vertical
+ * space is left — `justify-between` on a full-height column reproduces that
+ * without hard-coding a gap that would only be correct at one exact height.
+ *
+ * The headline ("Stories that sell, grounded in proof.") is baked into the
+ * rectangle asset as a flattened export — there's no separate live text
+ * layer in the source design.
  */
 export function AuthVisualPanel() {
   return (
     <div
-      className="relative hidden flex-1 overflow-hidden lg:block"
-      style={{ containerType: "size" }}
+      className="relative hidden max-w-[1027px] flex-1 overflow-hidden lg:flex lg:flex-col"
       aria-hidden
     >
-      <div
-        className="absolute bottom-0 left-0"
-        style={{
-          width: NATURAL_WIDTH,
-          height: NATURAL_HEIGHT,
-          transformOrigin: "bottom left",
-          transform: `scale(min(calc(100cqw / ${NATURAL_WIDTH}px), calc(100cqh / ${NATURAL_HEIGHT}px)))`,
-        }}
-      >
+      <div className="flex flex-1 flex-col justify-between pt-[5%]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`${ASSET_BASE}/rectangle.svg`}
+          src={`${ASSET_BASE}/stories%20that%20sell%20rectangle.png`}
           alt=""
-          className="absolute top-12 left-0 h-auto w-[1019px] max-w-none"
+          className="h-auto w-[97%]"
         />
-        <p
-          className="absolute top-[113px] left-[82px] w-[603px] text-[72px] leading-[1.25] text-black"
-          style={{ fontFamily: "var(--font-gilroy)", fontWeight: 400 }}
-        >
-          Stories that sell,
-          <br />
-          grounded in proof.
-        </p>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`${ASSET_BASE}/lines.svg`}
+          src={`${ASSET_BASE}/login%20lines.png`}
           alt=""
-          className="absolute top-[524px] left-4 h-auto w-[650px] max-w-none"
+          className="ml-[4%] h-auto w-[63%]"
         />
       </div>
     </div>

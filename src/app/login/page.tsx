@@ -56,7 +56,7 @@ export default function LoginPage() {
       <div className="relative flex flex-1 overflow-hidden">
         <AuthVisualPanel />
 
-        <div className="flex w-full items-center justify-center px-6 py-16 lg:w-[731px] lg:shrink-0 lg:px-12">
+        <div className="flex w-full flex-1 items-center justify-center px-6 py-16 lg:min-w-[938px]">
           <div className="flex w-full max-w-[524px] flex-col items-start gap-3">
             <div className="flex w-full flex-col items-center">
               <h1 className="text-subheading text-center font-medium text-extended-dark-cyan">Login</h1>
@@ -113,24 +113,20 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="flex w-full flex-col items-center pt-1">
-              <p className="text-center text-lg text-primary">Or sign in with</p>
-            </div>
-
             <button
               type="button"
               onClick={() => router.push("/onboarding")}
-              className="relative flex w-full items-center justify-center rounded-lg border border-border bg-white px-5 py-4 hover:bg-muted"
+              className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-white px-5 py-4 hover:bg-muted"
             >
-              <GoogleIcon className="absolute top-1/2 left-5 -translate-y-1/2" />
+              <GoogleIcon />
               <span className="text-lg font-medium text-foreground">Google</span>
             </button>
             <button
               type="button"
               onClick={() => router.push("/onboarding")}
-              className="relative flex w-full items-center justify-center rounded-lg border border-border bg-white px-5 py-4 hover:bg-muted"
+              className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-white px-5 py-4 hover:bg-muted"
             >
-              <LinkedInIcon className="absolute top-1/2 left-5 -translate-y-1/2" />
+              <LinkedInIcon />
               <span className="text-lg font-medium text-foreground">LinkedIn</span>
             </button>
 
