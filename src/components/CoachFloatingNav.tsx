@@ -34,7 +34,7 @@ export function CoachFloatingNav() {
 
   return (
     <nav aria-label="Coach shortcuts" className="fixed left-3 top-1/2 z-50 -translate-y-1/2 print:hidden">
-      <div className="flex flex-col gap-1 rounded-full border border-border bg-card p-1 shadow-sm">
+      <div className="flex flex-col gap-1 rounded-full border border-border bg-card p-1">
         {items.map((it) => {
           const Icon = it.icon;
           const isActive = pathname === it.base || Boolean(pathname?.startsWith(`${it.base}/`));
@@ -62,7 +62,7 @@ export function CoachFloatingNav() {
               <span
                 className={cn(
                   "pointer-events-none absolute left-full top-1/2 z-10 ml-2 -translate-y-1/2",
-                  "whitespace-nowrap rounded-full bg-foreground px-2.5 py-1 text-overline text-background shadow-lg",
+                  "whitespace-nowrap rounded-full bg-foreground px-2.5 py-1 text-overline text-background",
                   "opacity-0 translate-x-1 transition",
                   "group-hover:opacity-100 group-hover:translate-x-0",
                 )}

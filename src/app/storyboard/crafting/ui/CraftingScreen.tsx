@@ -11,7 +11,7 @@ import {
 
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
-import { Card, CardBody } from "@/components/Card";
+import { Card, CardBody, NestedCard } from "@/components/Card";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { Logo } from "@/components/ui/logo";
@@ -38,7 +38,7 @@ import { useLocalStorageState } from "@/lib/useLocalStorageState";
 const PILLAR_ORDER: PillarId[] = ["thinking", "action", "people", "mastery"];
 
 const TA =
-  "min-h-24 w-full rounded-2xl border border-white/50 bg-white px-4 py-3 text-caption leading-6 text-gray-800 outline-none ring-0 placeholder:text-[var(--app-muted)] disabled:cursor-not-allowed disabled:opacity-60";
+  "min-h-24 w-full rounded-2xl border border-[var(--app-hairline)] bg-white px-4 py-3 text-caption leading-6 text-[var(--app-fg)] outline-none ring-0 placeholder:text-[var(--app-muted)] disabled:cursor-not-allowed disabled:opacity-60 focus:border-[var(--app-hairline-strong)]";
 
 export function CraftingScreen() {
   const router = useRouter();
@@ -195,7 +195,7 @@ export function CraftingScreen() {
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <Link
             href="/coach?journey=1"
-            className="inline-flex items-center gap-1.5 text-caption font-semibold text-black/65 transition hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)] print:hidden"
+            className="inline-flex items-center gap-1.5 text-caption font-semibold text-[var(--app-fg)]/65 transition hover:text-[var(--app-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-fg)]/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)] print:hidden"
           >
             <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0" aria-hidden>
               <path
@@ -222,7 +222,7 @@ export function CraftingScreen() {
             </p>
           </div>
 
-          <Card className="shadow-[var(--app-shadow-soft)]">
+          <Card>
             <CardBody>
               <div className="text-overline text-[var(--app-muted)]">
                 STORY STRENGTH
@@ -245,8 +245,8 @@ export function CraftingScreen() {
                 </div>
               </div>
 
-              <details className="mt-6 border-t border-white/50 pt-4" open>
-                <summary className="cursor-pointer list-none text-caption font-semibold text-gray-900 [&::-webkit-details-marker]:hidden">
+              <details className="mt-6 border-t border-[var(--app-hairline)] pt-4" open>
+                <summary className="cursor-pointer list-none text-caption font-semibold text-[var(--app-fg)] [&::-webkit-details-marker]:hidden">
                   <span className="inline-flex items-center gap-2">
                     Pillar scores
                     <span className="text-overline text-[var(--app-muted)]">
@@ -256,9 +256,9 @@ export function CraftingScreen() {
                 </summary>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   {byPillar.map(({ id, v }) => (
-                    <div
+                    <NestedCard
                       key={id}
-                      className="flex items-center justify-between gap-2 rounded-2xl border border-white/50 bg-white/60 px-3 py-2.5"
+                      className="flex items-center justify-between gap-2 px-3 py-2.5"
                     >
                       <div className="min-w-0">
                         <div className="truncate text-caption font-semibold">
@@ -270,7 +270,7 @@ export function CraftingScreen() {
                         {v.toFixed(1)}
                         <span className="text-caption text-[var(--app-muted)]"> / 5</span>
                       </div>
-                    </div>
+                    </NestedCard>
                   ))}
                 </div>
               </details>
@@ -347,7 +347,7 @@ export function CraftingScreen() {
             );
           })}
 
-          <div className="space-y-3 border-t border-white/40 pt-6 print:hidden">
+          <div className="space-y-3 border-t border-[var(--app-hairline)] pt-6 print:hidden">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-caption leading-6 text-[var(--app-muted)]">
                 Continue building in Storyboard or save this draft to the browser.
@@ -392,8 +392,8 @@ function DraftSectionCard({
   const [draftInput, setDraftInput] = useState("");
 
   return (
-    <div className="overflow-hidden rounded-[22px] border border-white/50 bg-white shadow-[var(--app-shadow-soft)]">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/50 bg-[var(--app-surface)] px-4 py-3">
+    <Card className="overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--app-hairline)] bg-[var(--app-surface-nested)] px-4 py-3">
         <div>
           <div className="text-overline uppercase text-[var(--app-muted)]">
             {pillarLabel}
@@ -403,7 +403,7 @@ function DraftSectionCard({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span
-            className="inline-flex items-center rounded-full bg-black px-2.5 py-0.5 text-overline text-white"
+            className="inline-flex items-center rounded-full bg-[var(--app-fg)] px-2.5 py-0.5 text-overline text-white"
             title="Strength score (0–5), based on how complete the CAR is (placeholder)."
           >
             Strength {score} / 5
@@ -442,13 +442,13 @@ function DraftSectionCard({
                   value={draftInput}
                   onChange={(e) => setDraftInput(e.target.value)}
                   placeholder="Type here..."
-                  className="w-full rounded-xl border-2 border-black/20 bg-white px-3 py-2 pr-12 text-caption text-gray-800 outline-none placeholder:text-[var(--app-muted)] focus:border-black/40"
+                  className="w-full rounded-xl border-2 border-[var(--app-hairline-strong)] bg-white px-3 py-2 pr-12 text-caption text-[var(--app-fg)] outline-none placeholder:text-[var(--app-muted)] focus:border-[var(--app-fg)]/40"
                 />
                 <button
                   type="button"
                   aria-label="Send quick change"
                   title="Send quick change"
-                  className="absolute right-1.5 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border border-black bg-black text-white transition hover:bg-black/90"
+                  className="absolute right-1.5 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl bg-primary text-primary-foreground transition hover:bg-primary/90"
                 >
                   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
                     <path
@@ -465,7 +465,7 @@ function DraftSectionCard({
           </div>
         ) : null}
       </div>
-    </div>
+    </Card>
   );
 }
 

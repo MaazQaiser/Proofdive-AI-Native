@@ -211,7 +211,7 @@ export function OrgAdminUsersListScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 bg-background shadow-[0_1px_2px_rgba(0,0,0,0.08)]">
+            <TableHeader className="sticky top-0 z-10 border-b border-border bg-background">
               <TableRow>
                 <TableHead className="text-overline pl-12 text-muted-foreground">Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Email</TableHead>

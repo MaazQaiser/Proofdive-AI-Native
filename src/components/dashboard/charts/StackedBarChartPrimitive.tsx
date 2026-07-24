@@ -99,7 +99,7 @@ export function StackedBarChartPrimitive({ series, labels, height = 220, yFormat
       </svg>
       {hoverIndex !== null ? (
         <div
-          className="pointer-events-none absolute z-10 min-w-max -translate-x-1/2 -translate-y-[calc(100%+8px)] rounded-md border border-border bg-popover px-2.5 py-1.5 text-overline shadow-md"
+          className="pointer-events-none absolute z-10 min-w-max -translate-x-1/2 -translate-y-[calc(100%+8px)] rounded-md border border-border bg-popover px-2.5 py-1.5 text-overline"
           style={{
             left: `${((PADDING.left + hoverIndex * groupWidth + groupWidth / 2) / WIDTH) * 100}%`,
             top: `${(PADDING.top / height) * 100}%`,

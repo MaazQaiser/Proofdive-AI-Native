@@ -51,9 +51,9 @@ function Chatbox({
       )}
     >
       {attachedFileName && (
-        <div className="flex w-fit min-w-16 shrink-0 items-center gap-1 rounded-lg border border-[#D9D1CB] bg-[rgba(244,241,236,0.7)] px-1.5 py-1 backdrop-blur-[16px]">
+        <div className="flex w-fit min-w-16 shrink-0 items-center gap-1 rounded-lg border border-border bg-muted/70 px-1.5 py-1 backdrop-blur-[16px]">
           <FileText className="size-4 shrink-0" />
-          <span className="text-text-primary px-1 text-xs leading-6 font-medium whitespace-nowrap">
+          <span className="text-text-primary px-1 text-overline font-medium leading-6 whitespace-nowrap">
             {attachedFileName}
           </span>
           <button
@@ -74,7 +74,7 @@ function Chatbox({
           placeholder={placeholder}
           disabled={disabled}
           rows={2}
-          className="text-text-primary placeholder:text-text-secondary w-full flex-1 resize-none bg-transparent text-sm leading-[1.25] outline-none disabled:opacity-50"
+          className="text-text-primary placeholder:text-text-secondary w-full flex-1 resize-none bg-transparent text-body-sm leading-[1.25] outline-none disabled:opacity-50"
           {...textareaProps}
         />
 
@@ -87,7 +87,7 @@ function Chatbox({
               className="text-text-primary hover:bg-muted flex min-w-16 shrink-0 items-center justify-center gap-1 rounded-full px-2 py-0.5 disabled:pointer-events-none disabled:opacity-50"
             >
               <Paperclip className="size-4 shrink-0" />
-              <span className="px-1 text-xs leading-6 font-medium whitespace-nowrap">
+              <span className="px-1 text-overline font-medium leading-6 whitespace-nowrap">
                 Upload
               </span>
             </button>

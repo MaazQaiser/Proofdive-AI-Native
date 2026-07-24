@@ -11,6 +11,7 @@ import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type {
   InterviewReport,
@@ -262,7 +263,7 @@ export function InterviewScreen() {
                 <button
                   type="button"
                   onClick={() => openConsent("full_competency")}
-                  className="group w-full cursor-pointer rounded-xl border border-border bg-card p-5 text-left shadow-sm transition hover:bg-muted"
+                  className="group w-full cursor-pointer rounded-xl border border-border bg-card p-5 text-left transition hover:bg-muted"
                 >
                   <div className="flex w-full flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -283,7 +284,7 @@ export function InterviewScreen() {
                   <button
                     type="button"
                     onClick={openSelectivePillarPicker}
-                    className="group w-full cursor-pointer rounded-xl border border-border bg-card p-5 pr-16 text-left shadow-sm transition hover:bg-muted"
+                    className="group w-full cursor-pointer rounded-xl border border-border bg-card p-5 pr-16 text-left transition hover:bg-muted"
                   >
                     <div className="flex w-full flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -475,27 +476,12 @@ export function InterviewScreen() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={cameraEnabled}
-                    onClick={() => setCameraEnabled((v) => !v)}
-                    className={[
-                      "relative mt-1 inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
-                      cameraEnabled
-                        ? "border-primary bg-primary"
-                        : "border-border bg-muted hover:bg-muted/80",
-                    ].join(" ")}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={[
-                        "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition",
-                        cameraEnabled ? "translate-x-6" : "translate-x-1",
-                      ].join(" ")}
-                    />
-                  </button>
+                  <Switch
+                    checked={cameraEnabled}
+                    onCheckedChange={setCameraEnabled}
+                    className="mt-1"
+                    aria-label="Enable camera"
+                  />
                 </div>
               </div>
               </CardContent>
@@ -536,7 +522,7 @@ export function InterviewScreen() {
           }}
         >
           <div
-            className="w-full max-w-lg rounded-[24px] bg-card p-6 shadow-[0_26px_80px_rgba(0,0,0,0.20)] sm:p-8"
+            className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 sm:p-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-overline text-text-secondary">SHORT SESSION</div>
@@ -602,7 +588,7 @@ export function InterviewScreen() {
           aria-modal="true"
           aria-label="Interview Consent & Instructions"
         >
-          <div className="w-full max-w-2xl rounded-[24px] bg-card shadow-[0_26px_80px_rgba(0,0,0,0.20)]">
+          <div className="w-full max-w-2xl rounded-3xl border border-border bg-card">
             <div className="p-6 sm:p-8">
               <div className="text-overline text-text-secondary">
                 BEFORE WE BEGIN
@@ -613,25 +599,25 @@ export function InterviewScreen() {
 
               <div className="mt-6 space-y-1.5 text-caption leading-6 text-text-secondary">
                 {sessionKind === "selective_pillar" && pendingSelectivePillars && pendingSelectivePillars.length > 0 ? (
-                  <div className="rounded-[16px] border border-border bg-muted p-4 text-caption font-semibold text-text-primary">
+                  <div className="rounded-2xl border border-border bg-muted p-4 text-caption font-semibold text-text-primary">
                     Selected focus:{" "}
                     {pendingSelectivePillars.map((id) => PILLAR_LABEL[id]).join(" · ")}
                   </div>
                 ) : null}
-                <div className="mb-0 rounded-[16px] border border-border bg-muted p-4">
+                <div className="mb-0 rounded-2xl border border-border bg-muted p-4">
                   Structure your answers using the <span className="font-bold text-text-primary">CAR</span>{" "}
                   method (Context, Action, Result).
                 </div>
-                <div className="rounded-[16px] border border-border bg-muted p-4">
+                <div className="rounded-2xl border border-border bg-muted p-4">
                   Keep responses clear and concise (1–2 minutes max).
                 </div>
-                <div className="rounded-[16px] border border-border bg-muted p-4">
+                <div className="rounded-2xl border border-border bg-muted p-4">
                   Focus on your individual contribution, not just the team.
                 </div>
-                <div className="rounded-[16px] border border-border bg-muted p-4">
+                <div className="rounded-2xl border border-border bg-muted p-4">
                   Position yourself properly if your camera is on. Sit centered, well-lit, and not too far.
                 </div>
-                <div className="rounded-[16px] border border-border bg-muted px-4 py-1">
+                <div className="rounded-2xl border border-border bg-muted px-4 py-1">
                   Ensure a clean, plain background with minimal distractions.
                 </div>
               </div>
@@ -664,7 +650,7 @@ export function InterviewScreen() {
                     >
                       <div
                         className={[
-                          "h-5 w-5 rounded-full bg-white shadow-sm transition",
+                          "h-5 w-5 rounded-full bg-white transition",
                           cancelRecording ? "translate-x-5" : "translate-x-0.5",
                         ].join(" ")}
                       />
@@ -693,7 +679,7 @@ export function InterviewScreen() {
                     >
                       <div
                         className={[
-                          "h-5 w-5 rounded-full bg-white shadow-sm transition",
+                          "h-5 w-5 rounded-full bg-white transition",
                           turnOffCamera ? "translate-x-5" : "translate-x-0.5",
                         ].join(" ")}
                       />
@@ -763,7 +749,7 @@ export function InterviewScreen() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="interview-intro-video-title"
-            className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
+            className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-border bg-card"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">

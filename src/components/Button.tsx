@@ -11,14 +11,14 @@ export function Button({ className, variant = "primary", ...props }: Props) {
     <button
       className={cn(
         "inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 text-body transition",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]/40",
         "disabled:cursor-not-allowed disabled:opacity-40",
         variant === "primary" &&
-          "bg-black text-white hover:bg-black/90 active:bg-black/80",
+          "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80",
         variant === "secondary" &&
-          "bg-white text-black shadow-[0_12px_30px_rgba(0,0,0,0.08)] hover:bg-black/[.03] active:bg-black/[.06]",
+          "border border-[var(--app-hairline)] bg-white text-[var(--app-fg)] hover:bg-black/[.03] active:bg-black/[.06]",
         variant === "ghost" &&
-          "bg-transparent text-black/70 hover:text-black hover:bg-black/[.03] active:bg-black/[.06]",
+          "bg-transparent text-[var(--app-fg)]/70 hover:text-[var(--app-fg)] hover:bg-black/[.03] active:bg-black/[.06]",
         className,
       )}
       {...props}

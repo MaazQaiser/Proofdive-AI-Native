@@ -108,7 +108,7 @@ export function LineChartPrimitive({ series, labels, height = 220, yFormatter }:
       </svg>
       {hoverIndex !== null ? (
         <div
-          className="pointer-events-none absolute z-10 min-w-max -translate-x-1/2 -translate-y-[calc(100%+8px)] rounded-md border border-border bg-popover px-2.5 py-1.5 text-overline shadow-md"
+          className="pointer-events-none absolute z-10 min-w-max -translate-x-1/2 -translate-y-[calc(100%+8px)] rounded-md border border-border bg-popover px-2.5 py-1.5 text-overline"
           style={{ left: `${(xFor(hoverIndex) / WIDTH) * 100}%`, top: `${(yFor(Math.max(...series.map((s) => s.values[hoverIndex] ?? 0))) / height) * 100}%` }}
         >
           <p className="font-medium text-foreground">{labels[hoverIndex]}</p>
