@@ -8,10 +8,11 @@ import {
   type ReactNode,
   type TransitionEvent,
 } from "react";
-import { ArrowUp, FileText, Mic, Paperclip, X, type LucideIcon } from "lucide-react";
+import { X, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/components/cn";
 import { useSpeechDictation } from "@/components/chat/useSpeechDictation";
+import { Chatbox } from "@/components/ui/chatbox";
 import { IconButton } from "@/components/ui/icon-button";
 import { SelectionChip } from "@/components/ui/selection-chip";
 
@@ -197,6 +198,74 @@ export function ChatComposer({
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 
+  const modeToggleControl = modeToggle ? (
+    modeToggle.isActive ? (
+      <button
+        type="button"
+        onClick={modeToggle.onToggle}
+        aria-label={`Exit ${modeToggle.activeLabel}`}
+        className="flex h-7 shrink-0 items-center gap-1 rounded-full border border-border bg-muted/70 py-1 pl-2 pr-1.5 backdrop-blur-[16px]"
+      >
+        <modeToggle.icon className="size-4 shrink-0" />
+        <span className="text-text-primary px-0.5 text-overline font-medium leading-6 whitespace-nowrap">
+          {modeToggle.activeLabel}
+        </span>
+        <X className="size-4 shrink-0" />
+      </button>
+    ) : (
+      <IconButton
+        variant="ghost"
+        onClick={modeToggle.onToggle}
+        aria-label={modeToggle.activeLabel}
+      >
+        <modeToggle.icon />
+      </IconButton>
+    )
+  ) : null;
+
+  const threadLeading = thread ? (
+    <div className="flex w-full min-h-0 max-h-[min(380px,42dvh)] flex-1 flex-col border-b border-border">
+      <div
+        className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-5"
+        role="group"
+        aria-label="AI Coach header"
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <StarInCircleIcon className="h-4 w-4 text-scoring-yellow" />
+          <span className="text-caption text-text-primary">{threadHeaderTitle}</span>
+        </div>
+        {onThreadClose ? (
+          <button
+            type="button"
+            onClick={onThreadClose}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary active:bg-muted"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
+      </div>
+      <div
+        className="w-full min-h-0 flex-1 overflow-y-auto scroll-smooth px-5 py-2"
+        tabIndex={0}
+        role="log"
+        aria-relevant="additions"
+      >
+        {thread}
+      </div>
+    </div>
+  ) : null;
+
+  const voiceStatus = voiceError ? (
+    <p className="text-caption text-destructive" role="status">
+      {voiceError}
+    </p>
+  ) : !isSupported ? (
+    <p className="text-caption text-text-secondary">
+      Voice needs Chrome, Edge, or Safari (not Firefox).
+    </p>
+  ) : null;
+
   return (
     <div className={cn("flex items-end gap-2", !!thread && "max-h-[600px] w-full min-h-0")}>
       <div className={cn("flex min-w-0 flex-1 flex-col gap-2", !!thread && "min-h-0 max-h-full")}>
@@ -225,187 +294,64 @@ export function ChatComposer({
             ))}
           </div>
         ) : null}
-        <div
-          className={cn(
-            "min-w-0 min-h-0 flex-1 overflow-hidden rounded-[20px] border border-border bg-(--base)/60 backdrop-blur-[42px]",
-            !!thread && "flex min-h-0 flex-col",
-          )}
-        >
-          {showUploadButton ? (
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept={uploadAccept}
-              multiple={uploadMultiple}
-              onChange={(e) => {
-                const files = Array.from(e.currentTarget.files ?? []);
-                if (files.length) {
-                  setPendingUploads((prev) => (uploadMultiple ? [...prev, ...files] : files));
-                  onUpload?.(files);
-                }
-                e.currentTarget.value = "";
-              }}
-            />
-          ) : null}
-          {thread ? (
-            <div className="flex w-full min-h-0 max-h-[min(380px,42dvh)] flex-1 flex-col border-b border-border">
-              <div
-                className="flex shrink-0 items-center justify-between gap-2 border-b border-border pl-1 pr-0.5"
-                role="group"
-                aria-label="AI Coach header"
-              >
-                <div className="flex min-w-0 items-center gap-2 pl-1">
-                  <StarInCircleIcon className="h-4 w-4 text-scoring-yellow" />
-                  <span className="text-caption text-text-primary">
-                    {threadHeaderTitle}
-                  </span>
-                </div>
-                {onThreadClose ? (
-                  <button
-                    type="button"
-                    onClick={onThreadClose}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary active:bg-muted"
-                    aria-label="Close"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : null}
-              </div>
-              <div
-                className="w-full min-h-0 flex-1 overflow-y-auto scroll-smooth px-3 py-2"
-                tabIndex={0}
-                role="log"
-                aria-relevant="additions"
-              >
-                {thread}
-              </div>
-            </div>
-          ) : null}
-          <textarea
-            ref={inputRef}
-            value={displayText}
-            onChange={(e) => handleTextChange(e.target.value)}
-            placeholder={placeholder}
-            className={cn(
-              "text-text-primary placeholder:text-text-secondary min-h-12 w-full resize-none bg-transparent px-4 py-3 text-body-sm leading-[1.25] outline-none disabled:cursor-not-allowed disabled:opacity-60",
-              thread ? "shrink-0 rounded-none rounded-b-[20px] pt-3" : "rounded-[20px]",
-            )}
-            rows={1}
-            disabled={disabled}
-            onFocus={handleTextareaFocus}
-            onBlur={handleTextareaBlur}
-            onKeyDown={(e) => {
+
+        {showUploadButton ? (
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept={uploadAccept}
+            multiple={uploadMultiple}
+            onChange={(e) => {
+              const files = Array.from(e.currentTarget.files ?? []);
+              if (files.length) {
+                setPendingUploads((prev) => (uploadMultiple ? [...prev, ...files] : files));
+                onUpload?.(files);
+              }
+              e.currentTarget.value = "";
+            }}
+          />
+        ) : null}
+
+        <Chatbox
+          className={cn(!!thread && "min-h-0 flex-1")}
+          value={displayText}
+          onValueChange={handleTextChange}
+          onSend={send}
+          placeholder={placeholder}
+          disabled={disabled}
+          showUploadAction={showUploadButton}
+          onUploadClick={() => fileInputRef.current?.click()}
+          attachedFiles={pendingUploads.map((file) => ({
+            id: `${file.name}-${file.lastModified}`,
+            name: file.name,
+          }))}
+          onRemoveAttachedFile={(id) =>
+            setPendingUploads((prev) =>
+              prev.filter((f) => `${f.name}-${f.lastModified}` !== id),
+            )
+          }
+          onMicClick={() => {
+            if (isListening) stop();
+            else void start();
+          }}
+          isListening={isListening}
+          leading={threadLeading}
+          footerTrailing={modeToggleControl}
+          status={voiceStatus}
+          textareaRef={inputRef}
+          textareaProps={{
+            onFocus: handleTextareaFocus,
+            onBlur: handleTextareaBlur,
+            onKeyDown: (e) => {
               if (disabled) return;
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 send();
               }
-            }}
-          />
-          {pendingUploads.length ? (
-            <div className="flex flex-col gap-2 px-4 pb-2">
-              {pendingUploads.map((file) => (
-                <div
-                  key={`${file.name}-${file.lastModified}`}
-                  className="flex w-fit min-w-16 shrink-0 items-center gap-1 rounded-lg border border-border bg-muted/70 px-1.5 py-1 backdrop-blur-[16px]"
-                >
-                  <FileText className="size-4 shrink-0" />
-                  <span className="text-text-primary px-1 text-overline font-medium leading-6 whitespace-nowrap">
-                    {file.name}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label={`Remove ${file.name}`}
-                    title="Remove"
-                    onClick={() =>
-                      setPendingUploads((prev) =>
-                        prev.filter(
-                          (f) => !(f.name === file.name && f.lastModified === file.lastModified),
-                        ),
-                      )
-                    }
-                    className="flex size-4 shrink-0 items-center justify-center"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : null}
-          <div className="flex flex-col gap-1 px-4 pb-3">
-            {voiceError ? (
-              <p className="text-caption text-destructive" role="status">
-                {voiceError}
-              </p>
-            ) : !isSupported ? (
-              <p className="text-caption text-text-secondary">
-                Voice needs Chrome, Edge, or Safari (not Firefox).
-              </p>
-            ) : null}
-            <div className="flex h-7 w-full items-center">
-              {showUploadButton ? (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={disabled}
-                  className="text-text-primary hover:bg-muted flex min-w-16 shrink-0 items-center justify-center gap-1 rounded-full px-2 py-0.5 disabled:pointer-events-none disabled:opacity-50"
-                >
-                  <Paperclip className="size-4 shrink-0" />
-                  <span className="px-1 text-overline font-medium leading-6 whitespace-nowrap">
-                    Upload
-                  </span>
-                </button>
-              ) : null}
-              <div className="ml-auto flex shrink-0 items-center gap-2">
-                {modeToggle ? (
-                  modeToggle.isActive ? (
-                    <button
-                      type="button"
-                      onClick={modeToggle.onToggle}
-                      aria-label={`Exit ${modeToggle.activeLabel}`}
-                      className="flex h-7 shrink-0 items-center gap-1 rounded-full border border-border bg-muted/70 py-1 pl-2 pr-1.5 backdrop-blur-[16px]"
-                    >
-                      <modeToggle.icon className="size-4 shrink-0" />
-                      <span className="text-text-primary px-0.5 text-overline font-medium leading-6 whitespace-nowrap">
-                        {modeToggle.activeLabel}
-                      </span>
-                      <X className="size-4 shrink-0" />
-                    </button>
-                  ) : (
-                    <IconButton
-                      variant="ghost"
-                      onClick={modeToggle.onToggle}
-                      aria-label={modeToggle.activeLabel}
-                    >
-                      <modeToggle.icon />
-                    </IconButton>
-                  )
-                ) : null}
-                <IconButton
-                  variant="ghost"
-                  disabled={disabled}
-                  onClick={() => {
-                    if (isListening) stop();
-                    else void start();
-                  }}
-                  aria-label={isListening ? "Stop voice" : "Start voice"}
-                  className={isListening ? "bg-primary text-primary-foreground" : undefined}
-                >
-                  <Mic />
-                </IconButton>
-                <IconButton
-                  variant="solid"
-                  disabled={disabled}
-                  onClick={send}
-                  aria-label="Send"
-                >
-                  <ArrowUp />
-                </IconButton>
-              </div>
-            </div>
-          </div>
-        </div>
+            },
+          }}
+        />
       </div>
     </div>
   );

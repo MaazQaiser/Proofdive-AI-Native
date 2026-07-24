@@ -34,8 +34,8 @@ export function CoachBottomChatBar({
           content column's — otherwise the two drift apart since this bar
           lives outside AppShell's DOM tree and centers on the viewport.
           No background here (matches CoachConversationalDock) — the
-          ChatComposer card itself is translucent/blurred and should float
-          over the page content, not sit inside an opaque footer strip. */}
+          ChatComposer (design-system Chatbox) floats over the page content
+          rather than sitting inside an opaque footer strip. */}
       <div className="mx-auto max-w-6xl pr-6 pl-20">
         <div className="mx-auto w-[800px] max-w-full pb-4">
           <ChatComposer

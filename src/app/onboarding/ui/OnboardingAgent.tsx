@@ -14,7 +14,6 @@ import { Logo } from "@/components/ui/logo";
 import { SelectionChip } from "@/components/ui/selection-chip";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
 import { OnboardingBackgroundGlow } from "@/app/onboarding/ui/OnboardingBackgroundGlow";
-import { OnboardingComposer } from "@/app/onboarding/ui/OnboardingComposer";
 import { OnboardingProgressHeader } from "@/app/onboarding/ui/OnboardingProgressHeader";
 import { makeId } from "@/lib/id";
 import { reportCountForRole, upsertSavedRole } from "@/lib/proofdiveLogic";
@@ -598,42 +597,43 @@ function OnboardingAgentInner({
 
         <div className="fixed bottom-0 left-0 right-0 z-40 w-full">
           <div className="mx-auto w-full max-w-[800px] px-6 py-5">
-            {step === "done" ? (
-              <ChatComposer
-                placeholder={faq.isFaqMode ? "Select a question above" : "Reply (type here or use voice)"}
-                onSend={handleAnswer}
-                disabled={faq.isFaqMode}
-                uploadAccept=".pdf,.doc,.docx,.txt"
-                onUpload={handleUpload}
-                showUploadButton={!faq.isFaqMode}
-                modeToggle={{
-                  isActive: faq.isFaqMode,
-                  icon: CircleHelp,
-                  activeLabel: "FAQ Assistant",
-                  onToggle: () => (faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode()),
-                }}
-                thread={
-                  faq.isFaqMode ? (
-                    <FaqAssistantThread
-                      screenData={faq.screenData}
-                      onSelectRootItem={faq.selectRootItem}
-                      onSelectFollowup={faq.selectFollowup}
-                      onBackToItemMenu={faq.backToItemMenu}
-                      onBackToRootMenu={faq.backToRootMenu}
-                    />
-                  ) : undefined
-                }
-                onThreadClose={faq.isFaqMode ? faq.exitFaqMode : undefined}
-                threadHeaderTitle="FAQ Assistant"
-              />
-            ) : (
-              <OnboardingComposer
-                placeholder="Reply (type here or use voice)"
-                onSend={handleAnswer}
-                uploadAccept=".pdf,.doc,.docx,.txt"
-                onUpload={handleUpload}
-              />
-            )}
+            <ChatComposer
+              placeholder={
+                step === "done" && faq.isFaqMode
+                  ? "Select a question above"
+                  : "Reply (type here or use voice)"
+              }
+              onSend={handleAnswer}
+              disabled={step === "done" && faq.isFaqMode}
+              uploadAccept=".pdf,.doc,.docx,.txt"
+              onUpload={handleUpload}
+              showUploadButton={!(step === "done" && faq.isFaqMode)}
+              modeToggle={
+                step === "done"
+                  ? {
+                      isActive: faq.isFaqMode,
+                      icon: CircleHelp,
+                      activeLabel: "FAQ Assistant",
+                      onToggle: () => (faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode()),
+                    }
+                  : undefined
+              }
+              thread={
+                step === "done" && faq.isFaqMode ? (
+                  <FaqAssistantThread
+                    screenData={faq.screenData}
+                    onSelectRootItem={faq.selectRootItem}
+                    onSelectFollowup={faq.selectFollowup}
+                    onBackToItemMenu={faq.backToItemMenu}
+                    onBackToRootMenu={faq.backToRootMenu}
+                  />
+                ) : undefined
+              }
+              onThreadClose={
+                step === "done" && faq.isFaqMode ? faq.exitFaqMode : undefined
+              }
+              threadHeaderTitle="FAQ Assistant"
+            />
           </div>
         </div>
       </div>
