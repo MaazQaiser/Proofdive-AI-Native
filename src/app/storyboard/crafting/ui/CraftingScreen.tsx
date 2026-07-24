@@ -15,6 +15,7 @@ import { Card, CardBody, NestedCard } from "@/components/Card";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { Logo } from "@/components/ui/logo";
+import { SuccessDriverMark } from "@/components/ui/success-driver-card";
 import { buildCarSnapshot } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import {
@@ -31,11 +32,12 @@ import {
   pillarStrength,
   strengthScore,
 } from "@/lib/storyboardDraft";
+import { SUCCESS_DRIVER_ORDER } from "@/lib/successDrivers";
 import type { Experience, RoleProfile, StoryboardFromCraft } from "@/lib/proofdiveTypes";
 import { writeJson } from "@/lib/storage";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 
-const PILLAR_ORDER: PillarId[] = ["thinking", "action", "people", "mastery"];
+const PILLAR_ORDER = SUCCESS_DRIVER_ORDER;
 
 const TA =
   "min-h-24 w-full rounded-2xl border border-[var(--app-hairline)] bg-white px-4 py-3 text-caption leading-6 text-[var(--app-fg)] outline-none ring-0 placeholder:text-[var(--app-muted)] disabled:cursor-not-allowed disabled:opacity-60 focus:border-[var(--app-hairline-strong)]";
@@ -195,7 +197,7 @@ export function CraftingScreen() {
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <Link
             href="/coach?journey=1"
-            className="inline-flex items-center gap-1.5 text-caption font-semibold text-[var(--app-fg)]/65 transition hover:text-[var(--app-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-fg)]/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)] print:hidden"
+            className="inline-flex items-center gap-1.5 text-caption font-semibold text-[var(--app-fg)]/65 transition hover:text-[var(--app-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-fg)]/15 focus-visible:ring-offset-2 focus-visible:ring-offset-background print:hidden"
           >
             <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0" aria-hidden>
               <path
@@ -261,10 +263,14 @@ export function CraftingScreen() {
                       className="flex items-center justify-between gap-2 px-3 py-2.5"
                     >
                       <div className="min-w-0">
-                        <div className="truncate text-caption font-semibold">
-                          {PILLAR_LABEL[id]}
+                        <SuccessDriverMark
+                          driver={id}
+                          className="text-caption"
+                          iconClassName="size-4"
+                        />
+                        <div className="mt-0.5 text-overline text-[var(--app-muted)]">
+                          Mean / 5
                         </div>
-                        <div className="text-overline text-[var(--app-muted)]">Mean / 5</div>
                       </div>
                       <div className="shrink-0 text-body font-semibold">
                         {v.toFixed(1)}
@@ -314,6 +320,7 @@ export function CraftingScreen() {
                       <DraftSectionCard
                         key={spec.id}
                         pillarLabel={PILLAR_LABEL[spec.pillar]}
+                        driver={spec.pillar}
                         displayTitle={spec.title}
                         idLabel={spec.id}
                         score={strengthScore(s.car)}
@@ -373,6 +380,7 @@ export function CraftingScreen() {
 
 function DraftSectionCard({
   pillarLabel,
+  driver,
   displayTitle,
   idLabel,
   score,
@@ -381,6 +389,7 @@ function DraftSectionCard({
   children,
 }: {
   pillarLabel: string;
+  driver?: PillarId;
   displayTitle: string;
   idLabel: string;
   score: number;
@@ -395,9 +404,17 @@ function DraftSectionCard({
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--app-hairline)] bg-[var(--app-surface-nested)] px-4 py-3">
         <div>
-          <div className="text-overline uppercase text-[var(--app-muted)]">
-            {pillarLabel}
-          </div>
+          {driver ? (
+            <SuccessDriverMark
+              driver={driver}
+              className="text-overline uppercase"
+              iconClassName="size-3.5"
+            />
+          ) : (
+            <div className="text-overline uppercase text-[var(--app-muted)]">
+              {pillarLabel}
+            </div>
+          )}
           <h3 className="text-h6">{displayTitle}</h3>
           <div className="mt-0.5 text-overline text-[var(--app-muted)]">id: {idLabel}</div>
         </div>

@@ -3,16 +3,16 @@ import type { HTMLAttributes } from "react";
 import { cn } from "@/components/cn";
 
 const glassCardClassName =
-  "relative overflow-hidden rounded-[24px] border border-white bg-[linear-gradient(90deg,rgba(255,255,255,0.24)_0%,rgba(255,255,255,0.6)_99.92%)] backdrop-blur-[21px]";
+  "relative overflow-hidden rounded-lg border border-white bg-[linear-gradient(90deg,rgba(255,255,255,0.24)_0%,rgba(255,255,255,0.6)_99.92%)] backdrop-blur-[21px]";
 
 const glassCardSectionClassName =
-  "relative overflow-x-clip overflow-y-visible rounded-[24px] border border-white bg-[linear-gradient(90deg,rgba(255,255,255,0.24)_0%,rgba(255,255,255,0.6)_99.92%)] backdrop-blur-[21px]";
+  "relative overflow-x-clip overflow-y-visible rounded-lg border border-white bg-[linear-gradient(90deg,rgba(255,255,255,0.24)_0%,rgba(255,255,255,0.6)_99.92%)] backdrop-blur-[21px]";
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "rounded-[28px] border border-[var(--app-hairline)] bg-[var(--app-surface)]",
+        "rounded-lg border border-[var(--app-hairline)] bg-[var(--app-surface)]",
         className,
       )}
       {...props}
@@ -59,7 +59,7 @@ export function NestedCard({
   return (
     <div
       className={cn(
-        "rounded-[20px] border border-[var(--app-hairline)] bg-[var(--app-surface-nested)]",
+        "rounded-md border border-[var(--app-hairline)] bg-[var(--app-surface-nested)]",
         className,
       )}
       {...props}

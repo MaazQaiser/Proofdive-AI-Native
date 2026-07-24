@@ -37,7 +37,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[var(--app-bg)] text-[var(--app-fg)]">
+      <body className="min-h-full flex flex-col bg-background text-foreground">
         <IconDefaultsProvider>
           {children}
           <ResetFlowCta />

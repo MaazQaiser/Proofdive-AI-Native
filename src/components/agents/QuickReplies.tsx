@@ -18,7 +18,7 @@ export function QuickReplies({
           key={opt.id}
           type="button"
           onClick={() => onPick(opt.value)}
-          className="rounded-[16px] border border-[var(--app-hairline)] bg-white/60 px-4 py-4 text-left transition hover:border-[var(--app-hairline-strong)] hover:bg-white/70 active:bg-white/80"
+          className="rounded-lg border border-[var(--app-hairline)] bg-white/60 px-4 py-4 text-left transition hover:border-[var(--app-hairline-strong)] hover:bg-white/70 active:bg-white/80"
         >
           <div className="text-caption">{opt.label}</div>
           {opt.hint ? (

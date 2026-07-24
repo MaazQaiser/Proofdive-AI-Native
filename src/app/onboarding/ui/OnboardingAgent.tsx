@@ -2,24 +2,50 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { type Dispatch, type SetStateAction, useMemo, useRef, useState } from "react";
-import { BookOpen, CircleHelp, UserCheck } from "lucide-react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  ArrowRight,
+  BookOpen,
+  CircleHelp,
+  Home,
+  Pencil,
+  UserCheck,
+  WandSparkles,
+} from "lucide-react";
 
 import type { ChatMessage } from "@/components/chat/chatTypes";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { ChatComposer } from "@/components/chat/ChatComposer";
+import { Button } from "@/components/ui/button";
 import { CardButton } from "@/components/ui/card-button";
+import { Textarea } from "@/components/ui/textarea";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
 import { Logo } from "@/components/ui/logo";
-import { SelectionChip } from "@/components/ui/selection-chip";
+import {
+  SelectionChip,
+  selectionChipVariants,
+} from "@/components/ui/selection-chip";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
-import { OnboardingBackgroundGlow } from "@/app/onboarding/ui/OnboardingBackgroundGlow";
 import { OnboardingProgressHeader } from "@/app/onboarding/ui/OnboardingProgressHeader";
 import { makeId } from "@/lib/id";
 import { reportCountForRole, upsertSavedRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type { RoleProfile } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import {
+  coreFourValidationError,
+  suggestCoreFour,
+} from "@/lib/coreFourSuggestion";
+import { generateMockJobDescription } from "@/lib/jobDescriptionMock";
+import { cn } from "@/lib/utils";
+import type { CompetencyId } from "@/lib/storyboardDraft";
+import { CoreFourSelectionPanel } from "@/app/onboarding/ui/CoreFourSelectionPanel";
 
 type Step =
   | "name"
@@ -28,9 +54,10 @@ type Step =
   | "experienceLevel"
   | "education"
   | "lastWorkedAt"
+  | "industryVertical"
   | "jobDescription"
   | "resume"
-  | "industryVertical"
+  | "coreFourSelection"
   | "done";
 
 /** Progress-bar fill per step — the very first question (name) starts the
@@ -45,9 +72,10 @@ const STEP_PERCENT: Record<Step, number> = {
   experienceLevel: 30,
   education: 30,
   lastWorkedAt: 40,
-  jobDescription: 50,
-  resume: 70,
-  industryVertical: 80,
+  industryVertical: 50,
+  jobDescription: 60,
+  resume: 75,
+  coreFourSelection: 90,
   done: 100,
 };
 
@@ -60,8 +88,10 @@ type Draft = {
   lastWorkedAt: string;
   background: string;
   jobDescription: string;
+  jobDescriptionSource: "user" | "generated";
   resume: string;
   industryVertical: string;
+  coreFourCompetencies: CompetencyId[];
 };
 
 /** Derives the starting step/draft/messages for a given (possibly still-null,
@@ -88,19 +118,26 @@ function computeInitialOnboardingState(
 
   const draft: Draft = {
     name: profile?.name ?? "",
-    targetRole: isNewRoleMode ? "" : profile?.targetRole ?? "",
-    backgroundType: isNewRoleMode ? "" : profile?.backgroundType ?? "",
-    experienceLevel: isNewRoleMode ? "" : profile?.experienceLevel ?? "",
-    education: isNewRoleMode ? "" : profile?.education ?? "",
-    lastWorkedAt: isNewRoleMode ? "" : profile?.lastWorkedAt ?? "",
-    background: isNewRoleMode ? "" : profile?.background ?? "",
-    jobDescription: isNewRoleMode ? "" : profile?.jobDescription ?? "",
-    resume: isNewRoleMode ? "" : profile?.resume ?? "",
-    industryVertical: isNewRoleMode ? "" : profile?.industryVertical ?? "",
+    targetRole: isNewRoleMode ? "" : (profile?.targetRole ?? ""),
+    backgroundType: isNewRoleMode ? "" : (profile?.backgroundType ?? ""),
+    experienceLevel: isNewRoleMode ? "" : (profile?.experienceLevel ?? ""),
+    education: isNewRoleMode ? "" : (profile?.education ?? ""),
+    lastWorkedAt: isNewRoleMode ? "" : (profile?.lastWorkedAt ?? ""),
+    background: isNewRoleMode ? "" : (profile?.background ?? ""),
+    jobDescription: isNewRoleMode ? "" : (profile?.jobDescription ?? ""),
+    jobDescriptionSource: isNewRoleMode
+      ? "user"
+      : (profile?.jobDescriptionSource ?? "user"),
+    resume: isNewRoleMode ? "" : (profile?.resume ?? ""),
+    industryVertical: isNewRoleMode ? "" : (profile?.industryVertical ?? ""),
+    coreFourCompetencies: isNewRoleMode
+      ? []
+      : (profile?.coreFourCompetencies ?? []),
   };
 
   const namePart = profile?.name?.trim();
-  const hasTargetRole = !isNewRoleMode && !isEditMode && Boolean(profile?.targetRole?.trim());
+  const hasTargetRole =
+    !isNewRoleMode && !isEditMode && Boolean(profile?.targetRole?.trim());
 
   let firstContent: string;
   if (step === "role") {
@@ -142,10 +179,12 @@ function computeInitialOnboardingState(
  * initializers see the real value on their very first run. */
 export function OnboardingAgent() {
   const searchParams = useSearchParams();
-  const [roleProfile, setRoleProfile, roleProfileHydrated] = useLocalStorageState<
-    RoleProfile | null
-  >(StorageKeys.roleProfile, null);
-  const [, setSavedRoles] = useLocalStorageState<RoleProfile[]>(StorageKeys.savedRoles, []);
+  const [roleProfile, setRoleProfile, roleProfileHydrated] =
+    useLocalStorageState<RoleProfile | null>(StorageKeys.roleProfile, null);
+  const [, setSavedRoles] = useLocalStorageState<RoleProfile[]>(
+    StorageKeys.savedRoles,
+    [],
+  );
 
   if (!roleProfileHydrated) {
     return <div className="min-h-screen w-full" aria-hidden />;
@@ -185,7 +224,9 @@ function OnboardingAgentInner({
    * first-time welcome intro and land directly on the module hub. */
   const homeHref = useMemo(() => {
     const roleTitle = roleProfile?.targetRole?.trim() ?? "";
-    return reportCountForRole(roleTitle) > 0 ? "/coach?journey=1" : "/coach?welcome=1";
+    return reportCountForRole(roleTitle) > 0
+      ? "/coach?journey=1"
+      : "/coach?welcome=1";
   }, [roleProfile]);
 
   const suggestedRoles = useMemo(
@@ -200,14 +241,26 @@ function OnboardingAgentInner({
   );
 
   const [step, setStep] = useState<Step>(
-    () => computeInitialOnboardingState(roleProfile, isEditMode, isNewRoleMode).step,
+    () =>
+      computeInitialOnboardingState(roleProfile, isEditMode, isNewRoleMode)
+        .step,
   );
   const [draft, setDraft] = useState<Draft>(
-    () => computeInitialOnboardingState(roleProfile, isEditMode, isNewRoleMode).draft,
+    () =>
+      computeInitialOnboardingState(roleProfile, isEditMode, isNewRoleMode)
+        .draft,
   );
   const [messages, setMessages] = useState<ChatMessage[]>(
-    () => computeInitialOnboardingState(roleProfile, isEditMode, isNewRoleMode).messages,
+    () =>
+      computeInitialOnboardingState(roleProfile, isEditMode, isNewRoleMode)
+        .messages,
   );
+  const [generatedJdDraft, setGeneratedJdDraft] = useState<string | null>(null);
+  const [isGeneratingJd, setIsGeneratingJd] = useState(false);
+  const [jdVariant, setJdVariant] = useState(0);
+  const [isEditingJd, setIsEditingJd] = useState(false);
+  const [editedJdText, setEditedJdText] = useState("");
+  const [coreFourError, setCoreFourError] = useState<string | null>(null);
 
   const role = roleProfile?.targetRole?.trim() ?? "";
 
@@ -228,8 +281,14 @@ function OnboardingAgentInner({
       lastWorkedAt: nextDraft.lastWorkedAt.trim() || undefined,
       background: nextDraft.background.trim() || undefined,
       jobDescription: nextDraft.jobDescription.trim() || undefined,
+      jobDescriptionSource: nextDraft.jobDescription.trim()
+        ? nextDraft.jobDescriptionSource
+        : undefined,
       resume: nextDraft.resume.trim() || undefined,
       industryVertical: nextDraft.industryVertical.trim() || undefined,
+      coreFourCompetencies: nextDraft.coreFourCompetencies.length
+        ? nextDraft.coreFourCompetencies
+        : undefined,
       createdAt: roleProfile?.createdAt ?? new Date().toISOString(),
     };
 
@@ -252,6 +311,115 @@ function OnboardingAgentInner({
     setStep("done");
   }
 
+  function jdMockInput() {
+    return {
+      targetRole: draft.targetRole,
+      backgroundType: draft.backgroundType,
+      experienceLevel: draft.experienceLevel,
+      industryVertical: draft.industryVertical,
+    };
+  }
+
+  function handleGenerateJd() {
+    setGeneratedJdDraft(null);
+    setIsGeneratingJd(true);
+    const input = jdMockInput();
+    window.setTimeout(() => {
+      setJdVariant(0);
+      setGeneratedJdDraft(generateMockJobDescription(input, 0));
+      setIsGeneratingJd(false);
+    }, 1400);
+  }
+
+  function handleRegenerateJd() {
+    setGeneratedJdDraft(null);
+    setIsGeneratingJd(true);
+    const input = jdMockInput();
+    const v = jdVariant + 1;
+    window.setTimeout(() => {
+      setJdVariant(v);
+      setGeneratedJdDraft(generateMockJobDescription(input, v));
+      setIsGeneratingJd(false);
+    }, 1400);
+  }
+
+  function acceptGeneratedJobDescription(text: string) {
+    push("user", "📝 Used the system-generated draft job description.");
+    const next = {
+      ...draft,
+      jobDescription: text,
+      jobDescriptionSource: "generated" as const,
+    };
+    setDraft(next);
+    setGeneratedJdDraft(null);
+    push(
+      "assistant",
+      "Got it. If you also have a resume, drop it here. It's totally optional, but it helps me prep you way better for this role.",
+    );
+    setStep("resume");
+  }
+
+  function startEditingJd(text: string) {
+    setEditedJdText(text);
+    setIsEditingJd(true);
+  }
+
+  function cancelEditingJd() {
+    setIsEditingJd(false);
+  }
+
+  function confirmEditedJd() {
+    const text = editedJdText.trim();
+    if (!text) return;
+    push("user", "📝 Edited the system-generated draft before using it.");
+    const next = {
+      ...draft,
+      jobDescription: text,
+      jobDescriptionSource: "user" as const,
+    };
+    setDraft(next);
+    setIsEditingJd(false);
+    setGeneratedJdDraft(null);
+    push(
+      "assistant",
+      "Got it. If you also have a resume, drop it here. It's totally optional, but it helps me prep you way better for this role.",
+    );
+    setStep("resume");
+  }
+
+  function toggleCoreFourCompetency(id: CompetencyId) {
+    setCoreFourError(null);
+    setDraft((d) => {
+      const has = d.coreFourCompetencies.includes(id);
+      return {
+        ...d,
+        coreFourCompetencies: has
+          ? d.coreFourCompetencies.filter((x) => x !== id)
+          : [...d.coreFourCompetencies, id],
+      };
+    });
+  }
+
+  function resetCoreFourToSuggested() {
+    setCoreFourError(null);
+    setDraft((d) => ({
+      ...d,
+      coreFourCompetencies: suggestCoreFour({
+        targetRole: d.targetRole,
+        jobDescription: d.jobDescription,
+      }),
+    }));
+  }
+
+  function confirmCoreFour() {
+    const err = coreFourValidationError(draft.coreFourCompetencies);
+    if (err) {
+      setCoreFourError(err);
+      return;
+    }
+    finalizeProfile(draft);
+  }
+
   const lastAssistantMessage = useMemo(
     () => [...messages].reverse().find((m) => m.role === "assistant"),
     [messages],
@@ -265,7 +433,11 @@ function OnboardingAgentInner({
           { id: "fresh", label: "Fresh grad", value: "fresh_grad" },
           { id: "undergrad", label: "Under grad", value: "under_grad" },
           { id: "diploma", label: "Diploma holder", value: "diploma_holder" },
-          { id: "exp", label: "Experienced professional", value: "experienced" },
+          {
+            id: "exp",
+            label: "Experienced professional",
+            value: "experienced",
+          },
         ]
       : step === "experienceLevel"
         ? [
@@ -290,7 +462,8 @@ function OnboardingAgentInner({
   /** Steps whose only chip is "Skip" offer no real choice — "Select one"
    * doesn't fit since there's nothing to select between; the copy should
    * point back at the free-text answer instead. */
-  const isSkipOnlyStep = quickReplies.length === 1 && quickReplies[0].id === "skip";
+  const isSkipOnlyStep =
+    quickReplies.length === 1 && quickReplies[0].id === "skip";
   const quickReplyHeading = isSkipOnlyStep ? "Reply or skip." : "Select one";
 
   function who() {
@@ -309,11 +482,15 @@ function OnboardingAgentInner({
         return "backgroundType";
       case "lastWorkedAt":
         return "experienceLevel";
+      case "industryVertical":
+        return draft.backgroundType === "experienced"
+          ? "lastWorkedAt"
+          : "education";
       case "jobDescription":
-        return draft.backgroundType === "experienced" ? "lastWorkedAt" : "education";
+        return "industryVertical";
       case "resume":
         return "jobDescription";
-      case "industryVertical":
+      case "coreFourSelection":
         return "resume";
       default:
         return null;
@@ -328,6 +505,10 @@ function OnboardingAgentInner({
   function goBack() {
     const prevStep = getPrevStep(step);
     if (!prevStep) return;
+    setGeneratedJdDraft(null);
+    setIsGeneratingJd(false);
+    setIsEditingJd(false);
+    setCoreFourError(null);
     setMessages((prev) => prev.slice(0, -2));
     setStep(prevStep);
   }
@@ -368,7 +549,10 @@ function OnboardingAgentInner({
       }
 
       if (cleaned.length < 2) {
-        push("assistant", `${who()}What job role are you preparing for? (e.g., Product Manager)`);
+        push(
+          "assistant",
+          `${who()}What job role are you preparing for? (e.g., Product Manager)`,
+        );
         return;
       }
 
@@ -425,7 +609,9 @@ function OnboardingAgentInner({
 
     if (step === "experienceLevel") {
       const v = cleaned.replace(/\s+/g, "");
-      const experienceLevel: NonNullable<RoleProfile["experienceLevel"]> | null =
+      const experienceLevel: NonNullable<
+        RoleProfile["experienceLevel"]
+      > | null =
         v === "1-5" || v === "1–5"
           ? "1-5"
           : v === "5-10" || v === "5–10"
@@ -451,9 +637,9 @@ function OnboardingAgentInner({
       setDraft(next);
       push(
         "assistant",
-        `${who()}One more thing.\n\nDrop in the job description you're targeting: this one's required so I can tailor everything around it.`,
+        "Good progress! Which industry vertical are you targeting? Pick one below or type your own.",
       );
-      setStep("jobDescription");
+      setStep("industryVertical");
       return;
     }
 
@@ -462,7 +648,18 @@ function OnboardingAgentInner({
       setDraft(next);
       push(
         "assistant",
-        `${who()}One more thing.\n\nDrop in the job description you're targeting: this one's required so I can tailor everything around it.`,
+        "Good progress! Which industry vertical are you targeting? Pick one below or type your own.",
+      );
+      setStep("industryVertical");
+      return;
+    }
+
+    if (step === "industryVertical") {
+      const next = { ...draft, industryVertical: isSkip ? "" : cleaned };
+      setDraft(next);
+      push(
+        "assistant",
+        `${who()}One more thing.\n\nDrop in the job description you're targeting: this one's required so I can tailor everything around it. Or ask me to generate a draft for you.`,
       );
       setStep("jobDescription");
       return;
@@ -472,12 +669,17 @@ function OnboardingAgentInner({
       if (isSkip || !cleaned) {
         push(
           "assistant",
-          "The job description is required. Paste it in or upload the file, and I'll take it from there.",
+          "The job description is required. Paste it in, upload the file, or ask me to generate a draft.",
         );
         return;
       }
-      const next = { ...draft, jobDescription: cleaned };
+      const next = {
+        ...draft,
+        jobDescription: cleaned,
+        jobDescriptionSource: "user" as const,
+      };
       setDraft(next);
+      setGeneratedJdDraft(null);
       push(
         "assistant",
         "Got it. If you also have a resume, drop it here. It's totally optional, but it helps me prep you way better for this role.",
@@ -488,19 +690,18 @@ function OnboardingAgentInner({
 
     if (step === "resume") {
       const next = { ...draft, resume: isSkip ? "" : cleaned };
-      setDraft(next);
+      const suggested = suggestCoreFour({
+        targetRole: next.targetRole,
+        jobDescription: next.jobDescription,
+      });
+      const withSuggestion = { ...next, coreFourCompetencies: suggested };
+      setDraft(withSuggestion);
+      setCoreFourError(null);
       push(
         "assistant",
-        "Almost there! Which industry vertical are you targeting? Pick one below or type your own.",
+        "I've suggested a Core Four based on your job description — adjust if you'd like, then confirm.",
       );
-      setStep("industryVertical");
-      return;
-    }
-
-    if (step === "industryVertical") {
-      const next = { ...draft, industryVertical: isSkip ? "" : cleaned };
-      setDraft(next);
-      finalizeProfile(next);
+      setStep("coreFourSelection");
       return;
     }
 
@@ -519,19 +720,22 @@ function OnboardingAgentInner({
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-background">
-      <OnboardingBackgroundGlow />
-      <header className="relative z-10 flex h-20 w-full shrink-0 items-center px-12">
-        <Link href="/">
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background">
+      <header className="relative z-10 flex h-14 w-full shrink-0 items-center border-b border-border bg-background px-6">
+        <Link
+          href="/"
+          className="flex h-full shrink-0 items-center border-r border-border pr-6"
+        >
           <Logo size="xxs" />
         </Link>
       </header>
-      <div className="relative mx-auto flex w-[800px] max-w-full flex-1 flex-col px-6 pb-32 pt-4">
-        <OnboardingProgressHeader
-          percent={STEP_PERCENT[step]}
-          onBack={canGoBack ? goBack : undefined}
-          homeHref={step === "done" ? homeHref : undefined}
-        />
+      <div className="relative z-[2] mx-auto flex w-[800px] max-w-full flex-1 flex-col px-6 pb-32 pt-4">
+        {step !== "done" ? (
+          <OnboardingProgressHeader
+            percent={STEP_PERCENT[step]}
+            onBack={canGoBack ? goBack : undefined}
+          />
+        ) : null}
 
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full">
@@ -565,38 +769,147 @@ function OnboardingAgentInner({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {quickReplies.map((opt) => (
-                    <SelectionChip key={opt.id} onClick={() => handleAnswer(opt.value)}>
+                    <SelectionChip
+                      key={opt.id}
+                      onClick={() => handleAnswer(opt.value)}
+                    >
                       {opt.label}
                     </SelectionChip>
                   ))}
                 </div>
               </div>
             ) : null}
+            {step === "jobDescription" ? (
+              isGeneratingJd ? (
+                <JdGeneratingSkeleton />
+              ) : generatedJdDraft ? (
+                <div className="mt-6 flex w-full flex-col gap-4">
+                  <div className="flex flex-col gap-1">
+                    <h2 className="text-h2 text-heading-teal">
+                      AI-generated draft
+                    </h2>
+                    <p className="text-body-sm text-text-secondary">
+                      {isEditingJd
+                        ? "Edit the text below, then confirm."
+                        : "Not an employer-authored JD — review before continuing."}
+                    </p>
+                  </div>
+                  {isEditingJd ? (
+                    <Textarea
+                      value={editedJdText}
+                      onChange={(e) => setEditedJdText(e.target.value)}
+                      className="min-h-64 w-full resize-y text-body-sm text-text-primary"
+                      autoFocus
+                    />
+                  ) : (
+                    <div className="whitespace-pre-wrap text-body-sm text-text-primary">
+                      {generatedJdDraft}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {isEditingJd ? (
+                      <>
+                        <Button
+                          onClick={confirmEditedJd}
+                          className="gap-1.5 rounded-md bg-[linear-gradient(135deg,var(--brand-100),var(--brand-500))] text-primary-foreground hover:opacity-90"
+                        >
+                          Use this draft
+                          <ArrowRight className="size-4" />
+                        </Button>
+                        <SelectionChip onClick={cancelEditingJd}>
+                          Cancel
+                        </SelectionChip>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          onClick={() =>
+                            acceptGeneratedJobDescription(generatedJdDraft)
+                          }
+                          className="gap-1.5 rounded-md bg-[linear-gradient(135deg,var(--brand-100),var(--brand-500))] text-primary-foreground hover:opacity-90"
+                        >
+                          Use this draft
+                          <ArrowRight className="size-4" />
+                        </Button>
+                        <SelectionChip
+                          onClick={() => startEditingJd(generatedJdDraft)}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Pencil className="size-4" />
+                            Edit before using
+                          </span>
+                        </SelectionChip>
+                        <SelectionChip onClick={handleRegenerateJd}>
+                          <span className="flex items-center gap-1.5">
+                            <WandSparkles className="size-4" />
+                            Regenerate
+                          </span>
+                        </SelectionChip>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6 flex w-full flex-col gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <SelectionChip onClick={handleGenerateJd}>
+                      <span className="flex items-center gap-1.5">
+                        <PencilSparklesIcon className="size-4" />
+                        Generate a draft JD for me
+                      </span>
+                    </SelectionChip>
+                  </div>
+                </div>
+              )
+            ) : null}
+            {step === "coreFourSelection" ? (
+              <CoreFourSelectionPanel
+                selected={draft.coreFourCompetencies}
+                onToggle={toggleCoreFourCompetency}
+                onConfirm={confirmCoreFour}
+                onResetToSuggested={resetCoreFourToSuggested}
+                error={coreFourError}
+              />
+            ) : null}
             {step === "done" ? (
-              <div className="mt-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="mt-8 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
                 <CardButton
                   href="/storyboard"
                   variant="primary"
                   icon={<BookOpen />}
                   title="Storyboard"
                   subtitle="Build your career storyboard"
+                  illustrationSrc="/brand/illustration%201.svg"
                 />
 
                 <CardButton
                   href="/interview"
                   variant="gray"
                   icon={<UserCheck />}
-                  title="Start mock interview"
+                  title="Mock interview"
                   subtitle={`Evaluate yourself for the ${role || "selected"} role`}
+                  illustrationSrc="/brand/illustration%203.svg"
                 />
               </div>
             ) : null}
-
           </div>
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 z-40 w-full">
-          <div className="mx-auto w-full max-w-[800px] px-6 py-5">
+          <div className="mx-auto flex w-full max-w-[800px] flex-col gap-2 px-6 py-5">
+            {step === "done" ? (
+              <div className="flex flex-wrap gap-2 px-0.5">
+                <Link
+                  href={homeHref}
+                  className={cn(selectionChipVariants())}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Home className="size-4" />
+                    Go to Home
+                  </span>
+                </Link>
+              </div>
+            ) : null}
             <ChatComposer
               placeholder={
                 step === "done" && faq.isFaqMode
@@ -604,17 +917,29 @@ function OnboardingAgentInner({
                   : "Reply (type here or use voice)"
               }
               onSend={handleAnswer}
-              disabled={step === "done" && faq.isFaqMode}
+              disabled={
+                step === "coreFourSelection" ||
+                isEditingJd ||
+                (step === "done" && faq.isFaqMode)
+              }
               uploadAccept=".pdf,.doc,.docx,.txt"
               onUpload={handleUpload}
-              showUploadButton={!(step === "done" && faq.isFaqMode)}
+              showUploadButton={
+                !(
+                  step === "coreFourSelection" ||
+                  isEditingJd ||
+                  (step === "done" && faq.isFaqMode)
+                )
+              }
+              backgroundGlowIntensity="full"
               modeToggle={
                 step === "done"
                   ? {
                       isActive: faq.isFaqMode,
                       icon: CircleHelp,
                       activeLabel: "FAQ Assistant",
-                      onToggle: () => (faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode()),
+                      onToggle: () =>
+                        faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode(),
                     }
                   : undefined
               }
@@ -638,5 +963,57 @@ function OnboardingAgentInner({
         </div>
       </div>
     </div>
+  );
+}
+
+/** Skeleton loader shown while the mock JD generator "thinks" — Figma "Onboarding - Loading"
+ * (node 43:87). Bar widths/heights mirror the design's two line-pairs; the shimmer sweep
+ * reuses the design's motion timing (2s, linear, infinite) via `animate-shimmer-sweep`. */
+function JdGeneratingSkeleton() {
+  const shimmerBar =
+    "rounded-full bg-[linear-gradient(90deg,var(--brand-100),var(--brand-400),var(--brand-700),var(--brand-1000),var(--brand-700),var(--brand-400),var(--brand-100))] bg-[length:200%_100%] animate-shimmer-sweep";
+  return (
+    <div
+      className="mt-6 flex w-full flex-col gap-6"
+      role="status"
+      aria-label="Generating a draft job description"
+    >
+      <div className="flex flex-col gap-3">
+        <div className={cn("h-6 w-full", shimmerBar)} />
+        <div className={cn("h-6 w-1/2", shimmerBar)} />
+      </div>
+      <div className="flex flex-col gap-2">
+        <div className={cn("h-4 w-full", shimmerBar)} />
+        <div className={cn("h-4 w-1/2", shimmerBar)} />
+      </div>
+    </div>
+  );
+}
+
+/** lucide "pencil-sparkles" — not yet in the installed lucide-react version, inlined here. */
+function PencilSparklesIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M10 3H8" />
+      <path d="m15.007 5.008 3.987 3.986" />
+      <path d="M20 15v4" />
+      <path d="M21.174 6.813a2.82 2.82 0 0 0-3.986-3.987L3.842 16.175a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+      <path d="M22 17h-4" />
+      <path d="M4 5v4" />
+      <path d="M6 7H2" />
+      <path d="M9 2v2" />
+    </svg>
   );
 }

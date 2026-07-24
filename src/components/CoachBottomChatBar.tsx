@@ -15,6 +15,11 @@ type Props = {
   prefillKey?: string;
   /** Hides the attachment control when nothing in this flow is actually uploadable. Defaults to shown. */
   showUploadButton?: boolean;
+  /**
+   * When set (e.g. storyboard's flush 400px right rail), reserves that width on
+   * xl+ from the viewport edge so the composer centers in the main Q&A column.
+   */
+  rightPanelMaxWidth?: number;
 };
 
 export function CoachBottomChatBar({
@@ -24,49 +29,61 @@ export function CoachBottomChatBar({
   prefill,
   prefillKey,
   showUploadButton,
+  rightPanelMaxWidth,
 }: Props = {}) {
   const faq = useFaqAssistant();
 
+  const composer = (
+    <ChatComposer
+      key={prefillKey ?? "coach-bottom-chat-composer"}
+      placeholder={faq.isFaqMode ? "Select a question above" : (placeholder ?? "Ask AI Coach")}
+      onSend={onSend ?? (() => {})}
+      disabled={disabled || faq.isFaqMode}
+      prefill={prefill}
+      showUploadButton={faq.isFaqMode ? false : showUploadButton}
+      modeToggle={{
+        isActive: faq.isFaqMode,
+        icon: CircleHelp,
+        activeLabel: "FAQ Assistant",
+        onToggle: () => (faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode()),
+      }}
+      thread={
+        faq.isFaqMode ? (
+          <FaqAssistantThread
+            screenData={faq.screenData}
+            onSelectRootItem={faq.selectRootItem}
+            onSelectFollowup={faq.selectFollowup}
+            onBackToItemMenu={faq.backToItemMenu}
+            onBackToRootMenu={faq.backToRootMenu}
+          />
+        ) : undefined
+      }
+      onThreadClose={faq.isFaqMode ? faq.exitFaqMode : undefined}
+      threadHeaderTitle="FAQ Assistant"
+    />
+  );
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 w-full print:hidden">
-      {/* Mirrors AppShell's frame (max-w-6xl, pl-20/pr-6 reserved for the nav
-          rail) so this fixed-position bar's centering axis matches the main
-          content column's — otherwise the two drift apart since this bar
-          lives outside AppShell's DOM tree and centers on the viewport.
-          No background here (matches CoachConversationalDock) — the
-          ChatComposer (design-system Chatbox) floats over the page content
-          rather than sitting inside an opaque footer strip. */}
-      <div className="mx-auto max-w-6xl pr-6 pl-20">
-        <div className="mx-auto w-[800px] max-w-full pb-4">
-          <ChatComposer
-            key={prefillKey ?? "coach-bottom-chat-composer"}
-            placeholder={faq.isFaqMode ? "Select a question above" : (placeholder ?? "Ask AI Coach")}
-            onSend={onSend ?? (() => {})}
-            disabled={disabled || faq.isFaqMode}
-            prefill={prefill}
-            showUploadButton={faq.isFaqMode ? false : showUploadButton}
-            modeToggle={{
-              isActive: faq.isFaqMode,
-              icon: CircleHelp,
-              activeLabel: "FAQ Assistant",
-              onToggle: () => (faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode()),
-            }}
-            thread={
-              faq.isFaqMode ? (
-                <FaqAssistantThread
-                  screenData={faq.screenData}
-                  onSelectRootItem={faq.selectRootItem}
-                  onSelectFollowup={faq.selectFollowup}
-                  onBackToItemMenu={faq.backToItemMenu}
-                  onBackToRootMenu={faq.backToRootMenu}
-                />
-              ) : undefined
-            }
-            onThreadClose={faq.isFaqMode ? faq.exitFaqMode : undefined}
-            threadHeaderTitle="FAQ Assistant"
+      {/* Mirrors AppShell's frame so this fixed bar's centering axis matches
+          the main content column. When a flush right panel is present, reserve
+          its width from the viewport edge instead of capping at max-w-6xl. */}
+      {rightPanelMaxWidth ? (
+        <div className="flex w-full pl-20">
+          <div className="min-w-0 flex-1 pr-6">
+            <div className="mx-auto w-[800px] max-w-full pb-4">{composer}</div>
+          </div>
+          <div
+            className="hidden shrink-0 xl:block"
+            style={{ width: rightPanelMaxWidth, maxWidth: rightPanelMaxWidth }}
+            aria-hidden
           />
         </div>
-      </div>
+      ) : (
+        <div className="mx-auto max-w-6xl pr-6 pl-20">
+          <div className="mx-auto w-[800px] max-w-full pb-4">{composer}</div>
+        </div>
+      )}
     </div>
   );
 }

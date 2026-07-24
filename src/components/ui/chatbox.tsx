@@ -3,6 +3,7 @@ import { ArrowUp, FileText, Mic, Paperclip, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/icon-button";
+import { VoiceWaveVisualizer } from "@/components/chat/VoiceWaveVisualizer";
 
 export type ChatboxAttachedFile = {
   id: string;
@@ -121,7 +122,7 @@ function Chatbox({
           ref={textareaRef}
           value={value}
           onChange={(e) => onValueChange(e.target.value)}
-          placeholder={placeholder}
+          placeholder={isListening ? "Speak now…" : placeholder}
           disabled={disabled}
           rows={2}
           className="text-text-primary placeholder:text-text-secondary w-full flex-1 resize-none bg-transparent text-body-sm leading-[1.25] outline-none disabled:cursor-not-allowed disabled:opacity-50"
@@ -147,11 +148,13 @@ function Chatbox({
 
             <div className="ml-auto flex shrink-0 items-center gap-2">
               {footerTrailing}
+              {isListening ? <VoiceWaveVisualizer /> : null}
               <IconButton
                 variant="ghost"
                 onClick={onMicClick}
                 disabled={disabled}
                 aria-label={isListening ? "Stop voice" : "Record voice reply"}
+                aria-pressed={isListening}
                 className={isListening ? "bg-primary text-primary-foreground" : undefined}
               >
                 <Mic />
@@ -176,14 +179,14 @@ function Chatbox({
     <div
       data-slot="chatbox"
       className={cn(
-        "relative w-full max-w-[800px] rounded-[20px] p-px [background:linear-gradient(180deg,#f2f2f2,var(--extended-light-cyan)_41%,#fff)]",
+        "relative w-full max-w-[800px] rounded-lg p-px [background:linear-gradient(180deg,#f2f2f2,var(--extended-light-cyan)_41%,#fff)]",
         hasLeading && "flex min-h-0 flex-col",
         className,
       )}
     >
       <div
         className={cn(
-          "flex w-full flex-col rounded-[19px] backdrop-blur-[42px] [background:linear-gradient(90deg,rgba(255,255,255,0.4)_0%,rgba(255,255,255,0.72)_100%)]",
+          "flex w-full flex-col rounded-[calc(var(--radius-lg)-1px)] backdrop-blur-[42px] [background:linear-gradient(90deg,rgba(255,255,255,0.4)_0%,rgba(255,255,255,0.72)_100%)]",
           hasLeading
             ? "min-h-0 flex-1 gap-0 overflow-hidden"
             : "gap-2.5 px-5 py-4",

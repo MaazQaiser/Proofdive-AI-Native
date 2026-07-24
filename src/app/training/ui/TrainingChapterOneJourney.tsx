@@ -185,7 +185,7 @@ export function TrainingChapterOneJourney({
   }, [phase]);
 
   return (
-    <div className="mx-auto mt-6 w-full max-w-[672px]">
+    <div className="mt-6 w-full">
       <div>
         <div className="flex items-center gap-2">
           <button
@@ -236,14 +236,14 @@ export function TrainingChapterOneJourney({
               <Card>
                 <CardBody className="p-4">
                   <div className="mb-4">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-end justify-between gap-3">
                       <span className="text-overline text-[var(--app-muted)]">Module progress</span>
-                      <span className="text-overline text-[var(--app-muted)]">
+                      <div className="text-[32px] leading-none font-semibold text-heading-teal">
                         {percentForTrainingPhase(phase)}%
-                      </span>
+                      </div>
                     </div>
                     <div
-                      className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--app-hairline)]"
+                      className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[var(--app-hairline)]"
                       role="progressbar"
                       aria-valuenow={percentForTrainingPhase(phase)}
                       aria-valuemin={0}
@@ -320,8 +320,15 @@ export function TrainingChapterOneJourney({
                 {phase === "video" ? (
                   <Card>
                     <CardBody className="p-5 sm:p-6">
-                      <div className="aspect-video w-full overflow-hidden rounded-2xl bg-[var(--app-surface-nested)]">
-                        <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
+                      <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-[var(--app-surface-nested)]">
+                        <div
+                          className="absolute inset-0 bg-cover bg-center opacity-40"
+                          style={{
+                            backgroundImage: 'url("/brand/training-campaign-3.png")',
+                          }}
+                          aria-hidden
+                        />
+                        <div className="relative flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
                           <button
                             type="button"
                             onClick={() => setVideoStarted(true)}
@@ -387,7 +394,7 @@ export function TrainingChapterOneJourney({
                       {QUIZ.map((item, qi) => (
                         <fieldset
                           key={qi}
-                          className="rounded-[20px] border border-[var(--app-hairline)] bg-[var(--app-surface-nested)] p-4"
+                          className="rounded-lg border border-[var(--app-hairline)] bg-[var(--app-surface-nested)] p-4"
                         >
                           <legend className="text-body-sm font-semibold text-[var(--app-fg)]">
                             {qi + 1}. {item.q}

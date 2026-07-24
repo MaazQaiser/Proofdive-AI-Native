@@ -507,310 +507,305 @@ Start simple. What's something you worked on that stands out?`,
     );
   }
 
-  return (
-    <AppShell>
-      <CoachFloatingNav />
-      <div className="flex w-full flex-col gap-8 pb-44 xl:flex-row xl:items-start xl:gap-8">
-        <div className="min-w-0 flex-1">
-          <div className="p-0">
-                {postCraftHome ? (
-                  <div className="mx-auto w-[672px] max-w-full space-y-6">
-                    <div className="space-y-3">
-                      <h2 className="text-h4 text-left">
-                        Hey {firstName}, we’ve crafted a story.
-                      </h2>
-                      <p className="text-body-lg font-semibold text-left text-[var(--app-fg)]/80">
-                        For the role of <span className="text-[var(--app-fg)]">{role}</span>
-                      </p>
-                      <p className="text-caption text-left leading-6 text-[var(--app-muted)]">
-                        You can still add more to your story to get better results.
-                      </p>
-                    </div>
-                    <Card>
-                      <CardBody>
-                        <div className="text-overline text-[var(--app-muted)]">
-                          YOUR STORYBOARD
-                        </div>
-                        <div className="mt-2 text-h6">
-                          Your storyboard for {role} is ready to review.
-                        </div>
-                        <NestedCard className="mt-5 flex flex-wrap items-end justify-between gap-3 px-4 py-3">
-                          <div>
-                            <div className="text-caption font-semibold">Overall story score</div>
-                            <div className="text-overline text-[var(--app-muted)]">
-                              Mean of 12 competencies (0–5)
-                            </div>
-                          </div>
-                          <div
-                            className="text-h5"
-                            title="Mean of 12 competency sections in your draft, or latest mock interview overall if the draft is still empty"
-                          >
-                            {storyScoreForCard.toFixed(1)}
-                            <span className="pl-1 text-body text-[var(--app-muted)]">
-                              / 5
-                            </span>
-                          </div>
-                        </NestedCard>
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <Button type="button" onClick={() => router.push("/storyboard/crafting")}>
-                            View story
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => router.push("/storyboard/crafting?print=1")}
-                          >
-                            Download
-                          </Button>
-                        </div>
-                      </CardBody>
-                    </Card>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="w-full"
-                      onClick={() => {
-                        setFromCraft(null);
-                        setPendingNewEntry(true);
-                        setSelectedId(null);
-                        setStatusLine(null);
-                        setCraftUi("idle");
-                      }}
-                    >
-                      Add another experience
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <AgentPrompt
-                      promptKey={storyPromptKey}
-                      prompt={storyPrompt}
-                      ariaLabel="Storyboard prompt"
-                      headingClassName="text-agent-heading text-heading-teal"
-                      subtextClassName="mt-4 text-agent-question text-text-primary"
-                    />
-                    {storyStep === 6 && craftUi !== "ready" ? (
-                      <div className="mx-auto mt-8 w-[672px] max-w-full">
-                        <Button
-                          className="w-full"
-                          type="button"
-                          onClick={startCrafting}
-                          disabled={craftUi === "crafting"}
-                        >
-                          Craft my story
-                        </Button>
-                        <div className="mt-3">
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            className="w-full"
-                            onClick={() => {
-                              setPendingNewEntry(true);
-                              setSelectedId(null);
-                              setStatusLine(null);
-                              setCraftUi("idle");
-                            }}
-                          >
-                            Add another experience
-                          </Button>
-                        </div>
-                      </div>
-                    ) : null}
-                    {storyStep === 6 && craftUi === "ready" ? (
-                      <div className="mx-auto mt-8 w-[672px] max-w-full">
-                        <Card>
-                          <CardBody>
-                            <div className="text-overline text-[var(--app-muted)]">
-                              YOUR STORYBOARD
-                            </div>
-                            <div className="mt-2 text-h6">
-                              Your storyboard for {role} is here.
-                            </div>
-                            <NestedCard className="mt-5 flex flex-wrap items-end justify-between gap-3 px-4 py-3">
-                              <div>
-                                <div className="text-caption font-semibold">Overall story score</div>
-                                <div className="text-overline text-[var(--app-muted)]">
-                                  Mean of 12 competencies (0–5)
-                                </div>
-                              </div>
-                              <div
-                                className="text-h5"
-                                title="Mean strength across the 12 competency sections, or latest mock interview if draft is empty"
-                              >
-                                {storyScoreForCard.toFixed(1)}
-                                <span className="pl-1 text-body text-[var(--app-muted)]">
-                                  / 5
-                                </span>
-                              </div>
-                            </NestedCard>
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              <Button
-                                type="button"
-                                onClick={() => router.push("/storyboard/crafting")}
-                              >
-                                View story
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={() => router.push("/storyboard/crafting?print=1")}
-                              >
-                                Download
-                              </Button>
-                            </div>
-                          </CardBody>
-                        </Card>
-                        <div className="mt-6 w-full">
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            className="w-full"
-                            onClick={() => {
-                              setPendingNewEntry(true);
-                              setSelectedId(null);
-                              setStatusLine(null);
-                              setCraftUi("idle");
-                            }}
-                          >
-                            Add another experience
-                          </Button>
-                        </div>
-                      </div>
-                    ) : null}
-                    {statusLine ? (
-                      <p className="mx-auto mt-6 w-[672px] max-w-full text-caption leading-6 text-[var(--app-fg)]/80">
-                        {statusLine}
-                      </p>
-                    ) : null}
-                  </>
-                )}
-          </div>
+  const storyboardRightPanel = (
+    <div className="space-y-3">
+      <div className="flex items-end justify-between gap-3">
+        <div className="text-overline text-[var(--app-muted)]">
+          EXPERIENCE BANK
         </div>
+        <button
+          type="button"
+          aria-label="Add experience"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/80 active:bg-primary/70"
+          onClick={() => {
+            setPendingNewEntry(true);
+            setSelectedId(null);
+            setStatusLine(null);
+            setCraftUi("idle");
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-3.5 w-3.5">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
 
-        {/* ── story sidebar ── */}
-        <div className="w-full space-y-3 xl:sticky xl:top-24 xl:w-[320px] xl:shrink-0 xl:max-h-[calc(100vh-17rem)] xl:overflow-y-auto xl:pr-2">
-              <div className="flex items-end justify-between gap-3">
-                <div>
-                  <div className="text-overline text-[var(--app-muted)]">
-                    EXPERIENCE BANK
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  aria-label="Add experience"
-                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/80 active:bg-primary/70"
-                  onClick={() => {
-                    setPendingNewEntry(true);
-                    setSelectedId(null);
-                    setStatusLine(null);
-                    setCraftUi("idle");
-                  }}
+      <div className="space-y-2">
+        {roleExperiences.length ? (
+          roleExperiences.map((e, idx) => {
+            const isActive = e.id === activeExperienceId && !pendingNewEntry;
+            const n = String(idx + 1).padStart(2, "0");
+            return (
+              <button
+                key={e.id}
+                type="button"
+                className="block w-full text-left"
+                onClick={() => {
+                  setPendingNewEntry(false);
+                  setSelectedId(e.id);
+                  setStatusLine(null);
+                  setCraftUi("idle");
+                }}
+              >
+                <Card
+                  className={[
+                    "transition",
+                    isActive
+                      ? "border-primary ring-2 ring-primary/40"
+                      : "hover:border-[var(--app-hairline-strong)] hover:ring-2 hover:ring-primary/10",
+                  ].join(" ")}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-3.5 w-3.5">
-                    <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                  </svg>
-                </button>
+                  <CardBody className="p-4">
+                    <div className="text-overline text-[var(--app-muted)]">
+                      EXPERIENCE {n}
+                    </div>
+                    <div className="mt-1 text-caption font-semibold">
+                      {e.title || `Experience ${n}`}
+                    </div>
+                  </CardBody>
+                </Card>
+              </button>
+            );
+          })
+        ) : (
+          <Card>
+            <CardBody className="p-4">
+              <div className="text-body font-semibold">No experiences yet</div>
+              <div className="mt-1 text-caption leading-5 text-[var(--app-muted)]">
+                Start by sharing an experience in the chat. To add another one later, just say{" "}
+                <span className="font-extrabold text-[var(--app-fg)]">“Add new experience”</span>.
               </div>
+            </CardBody>
+          </Card>
+        )}
+      </div>
 
+      <div className="pt-2 text-overline text-[var(--app-muted)]">
+        YOUR STORY DRAFT
+      </div>
+      <Card>
+        <CardBody className="space-y-3 p-5">
+          {isDraftUpdating ? (
+            <div className="space-y-3">
+              <div className="h-5 w-44 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
               <div className="space-y-2">
-                {roleExperiences.length ? (
-                  roleExperiences.map((e, idx) => {
-                    const isActive = e.id === activeExperienceId && !pendingNewEntry;
-                    const n = String(idx + 1).padStart(2, "0");
-                    return (
-                      <button
-                        key={e.id}
-                        type="button"
-                        className="block w-full text-left"
-                        onClick={() => {
-                          setPendingNewEntry(false);
-                          setSelectedId(e.id);
-                          setStatusLine(null);
-                          setCraftUi("idle");
-                        }}
+                <div className="h-4 w-full animate-pulse rounded-lg bg-[var(--app-hairline)]" />
+                <div className="h-4 w-11/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
+                <div className="h-4 w-9/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="text-body font-semibold">{storyQuick.title}</div>
+              <div className="whitespace-pre-wrap text-caption leading-6 text-[var(--app-fg)]/80">
+                {storyQuick.body}
+              </div>
+            </>
+          )}
+        </CardBody>
+      </Card>
+
+      <div className="pt-2 text-overline text-[var(--app-muted)]">
+        SUGGESTIONS
+      </div>
+      <Card>
+        <CardBody className="space-y-3 p-5">
+          {isDraftUpdating ? (
+            <div className="space-y-2">
+              <div className="h-5 w-full animate-pulse rounded-lg bg-[var(--app-hairline)]" />
+              <div className="h-5 w-10/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
+            </div>
+          ) : activeSuggestion ? (
+            <div className="text-caption leading-6 text-[var(--app-fg)]">
+              {typeof activeSuggestion === "string"
+                ? emphasizeSuggestionText(activeSuggestion)
+                : activeSuggestion}
+            </div>
+          ) : (
+            <div className="text-caption leading-6 text-[var(--app-muted)]">
+              Keep going. I’ll suggest the next best detail to add.
+            </div>
+          )}
+        </CardBody>
+      </Card>
+    </div>
+  );
+
+  return (
+    <AppShell rightPanel={storyboardRightPanel} rightPanelMaxWidth={400}>
+      <CoachFloatingNav />
+      <div className="mx-auto w-[800px] max-w-full">
+        {postCraftHome ? (
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <h2 className="text-h4 text-left">
+                Hey {firstName}, we’ve crafted a story.
+              </h2>
+              <p className="text-body-lg font-semibold text-left text-[var(--app-fg)]/80">
+                For the role of <span className="text-[var(--app-fg)]">{role}</span>
+              </p>
+              <p className="text-caption text-left leading-6 text-[var(--app-muted)]">
+                You can still add more to your story to get better results.
+              </p>
+            </div>
+            <Card>
+              <CardBody>
+                <div className="text-overline text-[var(--app-muted)]">
+                  YOUR STORYBOARD
+                </div>
+                <div className="mt-2 text-h6">
+                  Your storyboard for {role} is ready to review.
+                </div>
+                <NestedCard className="mt-5 flex flex-wrap items-end justify-between gap-3 px-4 py-3">
+                  <div>
+                    <div className="text-caption font-semibold">Overall story score</div>
+                    <div className="text-overline text-[var(--app-muted)]">
+                      Mean of 12 competencies (0–5)
+                    </div>
+                  </div>
+                  <div
+                    className="text-h5"
+                    title="Mean of 12 competency sections in your draft, or latest mock interview overall if the draft is still empty"
+                  >
+                    {storyScoreForCard.toFixed(1)}
+                    <span className="pl-1 text-body text-[var(--app-muted)]">
+                      / 5
+                    </span>
+                  </div>
+                </NestedCard>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button type="button" onClick={() => router.push("/storyboard/crafting")}>
+                    View story
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => router.push("/storyboard/crafting?print=1")}
+                  >
+                    Download
+                  </Button>
+                </div>
+              </CardBody>
+            </Card>
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={() => {
+                setFromCraft(null);
+                setPendingNewEntry(true);
+                setSelectedId(null);
+                setStatusLine(null);
+                setCraftUi("idle");
+              }}
+            >
+              Add another experience
+            </Button>
+          </div>
+        ) : (
+          <>
+            <AgentPrompt
+              promptKey={storyPromptKey}
+              prompt={storyPrompt}
+              ariaLabel="Storyboard prompt"
+              headingClassName="text-agent-heading text-heading-teal"
+              subtextClassName="mt-4 text-agent-question text-text-primary"
+            />
+            {storyStep === 6 && craftUi !== "ready" ? (
+              <div className="mt-8">
+                <Button
+                  className="w-full"
+                  type="button"
+                  onClick={startCrafting}
+                  disabled={craftUi === "crafting"}
+                >
+                  Craft my story
+                </Button>
+                <div className="mt-3">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => {
+                      setPendingNewEntry(true);
+                      setSelectedId(null);
+                      setStatusLine(null);
+                      setCraftUi("idle");
+                    }}
+                  >
+                    Add another experience
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+            {storyStep === 6 && craftUi === "ready" ? (
+              <div className="mt-8">
+                <Card>
+                  <CardBody>
+                    <div className="text-overline text-[var(--app-muted)]">
+                      YOUR STORYBOARD
+                    </div>
+                    <div className="mt-2 text-h6">
+                      Your storyboard for {role} is here.
+                    </div>
+                    <NestedCard className="mt-5 flex flex-wrap items-end justify-between gap-3 px-4 py-3">
+                      <div>
+                        <div className="text-caption font-semibold">Overall story score</div>
+                        <div className="text-overline text-[var(--app-muted)]">
+                          Mean of 12 competencies (0–5)
+                        </div>
+                      </div>
+                      <div
+                        className="text-h5"
+                        title="Mean strength across the 12 competency sections, or latest mock interview if draft is empty"
                       >
-                        <Card
-                          className={[
-                            "transition",
-                            isActive
-                              ? "border-primary ring-2 ring-primary/40"
-                              : "hover:border-[var(--app-hairline-strong)] hover:ring-2 hover:ring-primary/10",
-                          ].join(" ")}
-                        >
-                          <CardBody className="p-4">
-                            <div className="text-overline text-[var(--app-muted)]">
-                              EXPERIENCE {n}
-                            </div>
-                            <div className="mt-1 text-caption font-semibold">
-                              {e.title || `Experience ${n}`}
-                            </div>
-                          </CardBody>
-                        </Card>
-                      </button>
-                    );
-                  })
-                ) : (
-                  <Card>
-                    <CardBody className="p-4">
-                      <div className="text-body font-semibold">No experiences yet</div>
-                      <div className="mt-1 text-caption leading-5 text-[var(--app-muted)]">
-                        Start by sharing an experience in the chat. To add another one later, just say{" "}
-                        <span className="font-extrabold text-[var(--app-fg)]">“Add new experience”</span>.
+                        {storyScoreForCard.toFixed(1)}
+                        <span className="pl-1 text-body text-[var(--app-muted)]">
+                          / 5
+                        </span>
                       </div>
-                    </CardBody>
-                  </Card>
-                )}
+                    </NestedCard>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        onClick={() => router.push("/storyboard/crafting")}
+                      >
+                        View story
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => router.push("/storyboard/crafting?print=1")}
+                      >
+                        Download
+                      </Button>
+                    </div>
+                  </CardBody>
+                </Card>
+                <div className="mt-6 w-full">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full"
+                    onClick={() => {
+                      setPendingNewEntry(true);
+                      setSelectedId(null);
+                      setStatusLine(null);
+                      setCraftUi("idle");
+                    }}
+                  >
+                    Add another experience
+                  </Button>
+                </div>
               </div>
-
-              <div className="pt-2 text-overline text-[var(--app-muted)]">
-                YOUR STORY DRAFT
-              </div>
-              <Card>
-                <CardBody className="space-y-3 p-5">
-                  {isDraftUpdating ? (
-                    <div className="space-y-3">
-                      <div className="h-5 w-44 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
-                      <div className="space-y-2">
-                        <div className="h-4 w-full animate-pulse rounded-lg bg-[var(--app-hairline)]" />
-                        <div className="h-4 w-11/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
-                        <div className="h-4 w-9/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-body font-semibold">{storyQuick.title}</div>
-                      <div className="whitespace-pre-wrap text-caption leading-6 text-[var(--app-fg)]/80">
-                        {storyQuick.body}
-                      </div>
-                    </>
-                  )}
-                </CardBody>
-              </Card>
-
-              <div className="pt-2 text-overline text-[var(--app-muted)]">
-                SUGGESTIONS
-              </div>
-              <Card>
-                <CardBody className="space-y-3 p-5">
-                  {isDraftUpdating ? (
-                    <div className="space-y-2">
-                      <div className="h-5 w-full animate-pulse rounded-lg bg-[var(--app-hairline)]" />
-                      <div className="h-5 w-10/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
-                    </div>
-                  ) : activeSuggestion ? (
-                    <div className="text-caption leading-6 text-[var(--app-fg)]">
-                      {typeof activeSuggestion === "string"
-                        ? emphasizeSuggestionText(activeSuggestion)
-                        : activeSuggestion}
-                    </div>
-                  ) : (
-                    <div className="text-caption leading-6 text-[var(--app-muted)]">
-                      Keep going. I’ll suggest the next best detail to add.
-                    </div>
-                  )}
-                </CardBody>
-              </Card>
-        </div>
+            ) : null}
+            {statusLine ? (
+              <p className="mt-6 text-caption leading-6 text-[var(--app-fg)]/80">
+                {statusLine}
+              </p>
+            ) : null}
+          </>
+        )}
       </div>
       <CoachBottomChatBar
         placeholder={postCraftHome ? "Add another experience to start a new story…" : composerPlaceholder}
@@ -819,6 +814,7 @@ Start simple. What's something you worked on that stands out?`,
         prefill={postCraftHome ? "" : exampleReplyPrefill}
         prefillKey={postCraftHome ? "post-craft" : replyPrefillKey}
         showUploadButton={false}
+        rightPanelMaxWidth={400}
       />
     </AppShell>
   );

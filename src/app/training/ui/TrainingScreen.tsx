@@ -13,6 +13,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { TrainingChapterOneJourney } from "@/app/training/ui/TrainingChapterOneJourney";
 import {
+  PixelMedia,
+  TRAINING_CAMPAIGN,
+} from "@/app/training/ui/trainingVisuals";
+import {
   COURSE_ENTRY_HEADING,
   OPTION_COMPETENCY_PILLARS_DESC,
   OPTION_COMPETENCY_PILLARS_TITLE,
@@ -24,6 +28,8 @@ import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { buildTrainingJourneyProgress, trainingProgressKey } from "@/lib/trainingJourneyProgress";
 import type { RoleProfile, TrainingJourneyProgress, TrainingJourneyPhase } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import { cn } from "@/lib/utils";
+import { ArrowRight, GraduationCap } from "lucide-react";
 
 type TrainingCourse = {
   id: string;
@@ -41,15 +47,24 @@ type SuggestedPillar = {
   badge: string;
   duration: string;
   suggestion: string;
-  accent: { from: string; to: string };
   courseId: "competency-pillars";
+  imageUrl: string;
+  rowClass: string;
 };
 
-const PILLAR_UNSPLASH: Record<SuggestedPillar["id"], string> = {
-  thinking: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=240&h=192&q=80",
-  action: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=240&h=192&q=80",
-  people: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=240&h=192&q=80",
+const PILLAR_MEDIA: Record<SuggestedPillar["id"], string> = {
+  thinking: TRAINING_CAMPAIGN[1],
+  action: TRAINING_CAMPAIGN[4],
+  people: TRAINING_CAMPAIGN[5],
 };
+
+const CHAPTER_MEDIA = [
+  TRAINING_CAMPAIGN[1],
+  TRAINING_CAMPAIGN[2],
+  TRAINING_CAMPAIGN[3],
+  TRAINING_CAMPAIGN[4],
+  TRAINING_CAMPAIGN[5],
+] as const;
 
 export function TrainingScreen() {
   const [roleProfile] = useLocalStorageState<RoleProfile | null>(
@@ -82,36 +97,31 @@ export function TrainingScreen() {
             title: "The estimation framework",
             summary: "How to structure any estimate in minutes.",
             duration: "8 min",
-            imageUrl:
-              "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=240&h=192&q=80",
+            imageUrl: CHAPTER_MEDIA[0],
           },
           {
             title: "Assumptions that sound credible",
             summary: "Pick realistic baselines + ranges.",
             duration: "7 min",
-            imageUrl:
-              "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=240&h=192&q=80",
+            imageUrl: CHAPTER_MEDIA[1],
           },
           {
             title: "Mental math shortcuts",
             summary: "Do clean math under pressure.",
             duration: "9 min",
-            imageUrl:
-              "https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&w=240&h=192&q=80",
+            imageUrl: CHAPTER_MEDIA[2],
           },
           {
             title: "Communicating your reasoning",
             summary: "Make it easy for an interviewer to follow.",
             duration: "10 min",
-            imageUrl:
-              "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=240&h=192&q=80",
+            imageUrl: CHAPTER_MEDIA[3],
           },
           {
             title: "Practice set",
             summary: "5 example prompts with checkpoints.",
             duration: "11 min",
-            imageUrl:
-              "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=240&h=192&q=80",
+            imageUrl: CHAPTER_MEDIA[4],
           },
         ],
       },
@@ -126,29 +136,25 @@ export function TrainingScreen() {
             title: "Thinking",
             summary: "Clarity, structure, tradeoffs, and judgment.",
             duration: "28 min",
-            imageUrl:
-              "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=240&h=192&q=80",
+            imageUrl: CHAPTER_MEDIA[0],
           },
           {
             title: "Action",
             summary: "Execution, prioritization, and results.",
             duration: "30 min",
-            imageUrl:
-              "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=240&h=192&q=80",
+            imageUrl: CHAPTER_MEDIA[3],
           },
           {
             title: "People",
             summary: "Stakeholders, influence, and collaboration.",
             duration: "27 min",
-            imageUrl:
-              "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=240&h=192&q=80",
+            imageUrl: CHAPTER_MEDIA[4],
           },
           {
             title: "Mastery",
             summary: "Craft, depth, and continuous improvement.",
             duration: "35 min",
-            imageUrl:
-              "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=240&h=192&q=80",
+            imageUrl: CHAPTER_MEDIA[2],
           },
         ],
       },
@@ -165,8 +171,10 @@ export function TrainingScreen() {
         badge: "Thinking",
         duration: "35 min",
         suggestion: "Interview question: Walk me through how you’d break down an ambiguous problem from scratch.",
-        accent: { from: "#7C3AED", to: "#60A5FA" },
         courseId: "competency-pillars",
+        imageUrl: PILLAR_MEDIA.thinking,
+        rowClass:
+          "border-[color-mix(in_srgb,var(--driver-thinking-accent)_28%,transparent)] bg-[linear-gradient(90deg,var(--driver-thinking-bg),#fff_42%)]",
       },
       {
         id: "action",
@@ -175,8 +183,10 @@ export function TrainingScreen() {
         badge: "Action",
         duration: "50 min",
         suggestion: "Interview question: Tell me about a time you delivered results under tight constraints.",
-        accent: { from: "#F97316", to: "#FDE047" },
         courseId: "competency-pillars",
+        imageUrl: PILLAR_MEDIA.action,
+        rowClass:
+          "border-[color-mix(in_srgb,var(--driver-action-accent)_28%,transparent)] bg-[linear-gradient(90deg,var(--driver-action-bg),#fff_42%)]",
       },
       {
         id: "people",
@@ -185,8 +195,10 @@ export function TrainingScreen() {
         badge: "People",
         duration: "40 min",
         suggestion: "Interview question: Describe a time you aligned stakeholders who disagreed. What did you do first?",
-        accent: { from: "#10B981", to: "#22D3EE" },
         courseId: "competency-pillars",
+        imageUrl: PILLAR_MEDIA.people,
+        rowClass:
+          "border-[color-mix(in_srgb,var(--driver-people-accent)_28%,transparent)] bg-[linear-gradient(90deg,var(--driver-people-bg),#fff_42%)]",
       },
     ],
     [],
@@ -276,31 +288,99 @@ export function TrainingScreen() {
                   mode="word"
                 />
                 <div className="mx-auto mt-6 w-[800px] max-w-full space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    {courses.map((course) => {
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {courses.map((course, courseIdx) => {
                       const progress = progressForCourse(course.id);
                       const pct = progress?.percentComplete ?? 0;
+                      const isPrimary = courseIdx === 0;
+                      const status =
+                        pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started";
                       return (
                         <button
                           key={course.id}
                           type="button"
                           onClick={() => setSelectedCourseId(course.id)}
-                          className="rounded-xl border border-border bg-card px-5 py-5 text-left transition hover:bg-muted"
+                          className={cn(
+                            "group relative flex min-h-[220px] flex-col overflow-hidden rounded-[22px] border p-5 text-left transition",
+                            "duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.985]",
+                            "motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100",
+                            "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                            isPrimary
+                              ? "border-brand-300 bg-[linear-gradient(160deg,var(--brand-100)_0%,var(--brand-300)_100%)] shadow-[0_12px_28px_rgba(14,154,181,0.22)] hover:shadow-[0_16px_32px_rgba(14,154,181,0.28)]"
+                              : "border-border/80 bg-brand-1000/70 shadow-[0_10px_24px_rgba(14,154,181,0.08)] hover:bg-brand-1000 hover:shadow-[0_14px_28px_rgba(14,154,181,0.14)]",
+                          )}
                         >
-                          <div className="text-h6">{course.title}</div>
-                          <div className="mt-2 text-caption leading-6 text-text-secondary">
-                            {course.subtitle}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div
+                                className={cn(
+                                  "inline-flex items-center gap-1.5 text-overline font-medium",
+                                  isPrimary ? "text-brand-900" : "text-text-secondary",
+                                )}
+                              >
+                                <GraduationCap className="size-3.5" aria-hidden />
+                                {status}
+                              </div>
+                              <div
+                                className={cn(
+                                  "mt-2 text-[20px] leading-tight font-semibold tracking-tight",
+                                  isPrimary ? "text-primary-foreground" : "text-heading-teal",
+                                )}
+                              >
+                                {course.title}
+                              </div>
+                              <p
+                                className={cn(
+                                  "mt-2 max-w-[28ch] text-[13px] leading-snug",
+                                  isPrimary ? "text-brand-900" : "text-text-secondary",
+                                )}
+                              >
+                                {course.subtitle}
+                              </p>
+                            </div>
+                            <span
+                              className={cn(
+                                "grid size-9 shrink-0 place-items-center rounded-full",
+                                isPrimary
+                                  ? "bg-white/15 text-primary-foreground"
+                                  : "bg-white text-primary",
+                              )}
+                              aria-hidden
+                            >
+                              <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                            </span>
                           </div>
-                          <div className="mt-4">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-overline text-text-secondary">
-                                {pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started"}
-                              </span>
-                              <span className="text-overline text-text-secondary">{pct}%</span>
+
+                          <div className="mt-auto pt-8">
+                            <div className="flex items-end justify-between gap-3">
+                              <div
+                                className={cn(
+                                  "text-[34px] leading-none font-semibold tracking-tight",
+                                  isPrimary ? "text-primary-foreground" : "text-heading-teal",
+                                )}
+                              >
+                                {pct}%
+                              </div>
+                              <div
+                                className={cn(
+                                  "text-overline",
+                                  isPrimary ? "text-brand-900" : "text-text-secondary",
+                                )}
+                              >
+                                completed
+                              </div>
                             </div>
                             <ProgressBar
                               value={pct}
-                              className="mt-1.5"
+                              className={cn(
+                                "mt-3",
+                                isPrimary && "bg-white/25",
+                              )}
+                              indicatorClassName={
+                                isPrimary
+                                  ? "border-white/40 bg-primary-foreground"
+                                  : undefined
+                              }
                               aria-label={`${course.title} progress`}
                             />
                           </div>
@@ -309,55 +389,55 @@ export function TrainingScreen() {
                     })}
                   </div>
 
-                  {true ? (
-                        <section aria-label="Suggested for you" className="px-1">
-                          <div className="text-caption font-semibold text-text-primary">
-                            Suggested for you
-                          </div>
-                          <div className="mt-1 text-caption leading-5 text-text-secondary">
-                            Based on your recent session, these will help you improve where it matters most.
-                          </div>
-                          <div className="mt-3 flex flex-col gap-3">
-                            {suggestedForYou.map((pill) => (
-                              <button
-                                key={pill.id}
-                                type="button"
-                                onClick={() => setSelectedCourseId(pill.courseId)}
-                                className="group w-full rounded-xl border border-border bg-card px-4 py-4 text-left transition hover:bg-muted"
-                              >
-                                <div className="flex items-start gap-4">
-                                  <div
-                                    className="relative h-16 w-20 shrink-0 overflow-hidden rounded-xl"
-                                    style={{
-                                      backgroundImage: `url("${PILLAR_UNSPLASH[pill.id]}")`,
-                                      backgroundSize: "cover",
-                                      backgroundPosition: "center",
-                                    }}
-                                    aria-hidden
-                                  >
-                                    <div className="absolute inset-0 bg-black/10" />
-                                    <div className="absolute bottom-2 left-2 inline-flex items-center rounded-lg bg-white/80 px-2 py-1 text-overline text-text-primary">
-                                      {pill.duration}
-                                    </div>
-                                  </div>
-
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex flex-wrap items-center justify-between gap-2">
-                                      <div className="text-caption font-semibold">{pill.title}</div>
-                                      <Badge variant="outline" className="border-border">
-                                        {pill.badge}
-                                      </Badge>
-                                    </div>
-                                    <div className="mt-1 text-caption leading-5 text-text-secondary">
-                                      {pill.summary}
-                                    </div>
-                                  </div>
+                  <section aria-label="Suggested for you" className="px-1">
+                    <div className="text-caption font-semibold text-text-primary">
+                      Suggested for you
+                    </div>
+                    <div className="mt-1 text-caption leading-5 text-text-secondary">
+                      Based on your recent session, these will help you improve where it matters most.
+                    </div>
+                    <div className="mt-3 flex flex-col gap-3">
+                      {suggestedForYou.map((pill) => (
+                        <button
+                          key={pill.id}
+                          type="button"
+                          onClick={() => setSelectedCourseId(pill.courseId)}
+                          className={cn(
+                            "group w-full overflow-hidden rounded-[20px] border px-4 py-4 text-left transition",
+                            "hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(14,154,181,0.12)]",
+                            "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                            "motion-reduce:hover:translate-y-0",
+                            pill.rowClass,
+                          )}
+                        >
+                          <div className="flex items-start gap-4">
+                            <PixelMedia
+                              src={pill.imageUrl}
+                              duration={pill.duration}
+                              className="h-16 w-20 rounded-xl"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="text-caption font-semibold text-text-primary">
+                                  {pill.title}
                                 </div>
-                              </button>
-                            ))}
+                                <Badge variant="outline" className="border-border bg-white/70">
+                                  {pill.badge}
+                                </Badge>
+                              </div>
+                              <div className="mt-1 text-caption leading-5 text-text-secondary">
+                                {pill.summary}
+                              </div>
+                              <div className="mt-3 flex items-center gap-1.5 text-overline font-medium text-primary opacity-0 transition group-hover:opacity-100">
+                                Open path
+                                <ArrowRight className="size-3.5" aria-hidden />
+                              </div>
+                            </div>
                           </div>
-                        </section>
-                  ) : null}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
                 </div>
               </>
             ) : startedCourseId === selectedCourse.id ? (
@@ -416,14 +496,20 @@ export function TrainingScreen() {
                   {(() => {
                     const pct = journeyProgress?.percentComplete ?? 0;
                     return (
-                      <div className="mt-5 max-w-md">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-overline text-text-secondary">
+                      <div className="mt-5 max-w-md rounded-[20px] border border-brand-800 bg-brand-1000/80 p-4">
+                        <div className="flex items-end justify-between gap-3">
+                          <div className="text-overline text-text-secondary">
                             {pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started"}
-                          </span>
-                          <span className="text-overline text-text-secondary">{pct}%</span>
+                          </div>
+                          <div className="text-[32px] leading-none font-semibold text-heading-teal">
+                            {pct}%
+                          </div>
                         </div>
-                        <ProgressBar value={pct} className="mt-1.5" aria-label="Course progress" />
+                        <ProgressBar
+                          value={pct}
+                          className="mt-3"
+                          aria-label="Course progress"
+                        />
                       </div>
                     );
                   })()}
@@ -436,29 +522,26 @@ export function TrainingScreen() {
                       {selectedCourse.chapters.map((ch, idx) => (
                         <div
                           key={`${selectedCourse.id}-ch-${idx}`}
-                          className="w-full rounded-xl border border-border bg-card px-5 py-4"
+                          className={cn(
+                            "w-full overflow-hidden rounded-[20px] border px-4 py-4",
+                            idx % 2 === 0
+                              ? "border-brand-800 bg-[linear-gradient(90deg,var(--brand-1000),#fff_48%)]"
+                              : "border-border bg-white",
+                          )}
                         >
                           <div className="flex items-start gap-4">
-                            <div
-                              className="relative h-14 w-16 shrink-0 overflow-hidden rounded-xl bg-muted"
-                              style={{
-                                backgroundImage: `url("${ch.imageUrl}")`,
-                                backgroundSize: "cover",
-                                backgroundPosition: "center",
-                              }}
-                              aria-hidden
-                            >
-                              <div className="absolute inset-0 bg-black/10" />
-                              <div className="absolute bottom-1.5 left-1.5 inline-flex items-center rounded-lg bg-white/80 px-2 py-1 text-overline text-text-primary">
-                                {ch.duration}
-                              </div>
-                            </div>
-
+                            <PixelMedia
+                              src={ch.imageUrl}
+                              duration={ch.duration}
+                              className="h-14 w-16 rounded-xl"
+                            />
                             <div className="min-w-0 flex-1">
-                              <div className="text-caption font-semibold">
+                              <div className="text-caption font-semibold text-text-primary">
                                 {idx + 1}. {ch.title}
                               </div>
-                              <div className="mt-1 text-caption leading-5 text-text-secondary">{ch.summary}</div>
+                              <div className="mt-1 text-caption leading-5 text-text-secondary">
+                                {ch.summary}
+                              </div>
                             </div>
                           </div>
                         </div>

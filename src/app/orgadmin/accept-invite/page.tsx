@@ -165,7 +165,7 @@ export default function OrgAdminAcceptInvitePage() {
                   </p>
                 ) : null}
               </div>
-              <Button type="submit" className="h-14 w-full rounded-lg text-lg font-medium">
+              <Button type="submit" className="h-14 w-full rounded-md text-lg font-medium">
                 Activate Account
               </Button>
             </form>
