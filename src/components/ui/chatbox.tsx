@@ -25,7 +25,15 @@ type ChatboxProps = {
 
 /** AI reply textbox — Figma "Chatbox" (node 38:305): empty/upload/filled
  * states are driven here by `value`/`attachedFileName` rather than a static
- * variant prop, so the box reflects real input as the user types. */
+ * variant prop, so the box reflects real input as the user types.
+ *
+ * Border matches the selection chip's "linear1" stroke paint (node
+ * 152:370): a top-to-bottom gradient stopping at #F2F2F2 (0%), the
+ * extended-light-cyan token (41%), then white (100%). A plain
+ * `border-color` utility can't express a gradient, so — as with the chip
+ * — both the opaque white fill and the gradient ring are painted via the
+ * "double background" trick: one layer clipped to padding-box for the
+ * fill, one clipped to border-box for the border. */
 function Chatbox({
   className,
   value,
@@ -46,7 +54,7 @@ function Chatbox({
     <div
       data-slot="chatbox"
       className={cn(
-        "bg-(--base)/60 relative flex w-full max-w-[800px] flex-col gap-2.5 rounded-[20px] border border-border px-5 py-4 backdrop-blur-[42px]",
+        "relative flex w-full max-w-[800px] flex-col gap-2.5 rounded-[20px] border border-transparent px-5 py-4 backdrop-blur-[42px] [background:linear-gradient(#fff,#fff)_padding-box,linear-gradient(180deg,#f2f2f2,var(--extended-light-cyan)_41%,#fff)_border-box]",
         className,
       )}
     >
@@ -107,6 +115,7 @@ function Chatbox({
               onClick={onSend}
               disabled={!canSend}
               aria-label="Send reply"
+              className="disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
             >
               <ArrowUp />
             </IconButton>
