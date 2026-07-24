@@ -22,6 +22,7 @@ import {
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { IconButton } from "@/components/ui/icon-button";
 import { SelectionChip } from "@/components/ui/selection-chip";
+import { BackgroundGlow, type BackgroundGlowIntensity } from "@/components/shared/BackgroundGlow";
 
 export type ChatComposerQuickChip = { label: string; value: string; id?: string };
 
@@ -56,6 +57,8 @@ export function ChatComposer({
   thread,
   onThreadClose,
   threadHeaderTitle = "AI Coach",
+  /** Onboarding keeps the full wash; other candidate pages default to a softer glow. */
+  backgroundGlowIntensity = "soft",
 }: {
   placeholder?: string;
   onSend: (text: string) => void;
@@ -81,6 +84,7 @@ export function ChatComposer({
   /** Dismiss the in-card thread (e.g. clear messages); shows a close control when set. */
   onThreadClose?: () => void;
   threadHeaderTitle?: string;
+  backgroundGlowIntensity?: BackgroundGlowIntensity;
 }) {
   const [text, setText] = useState(prefill);
   const [quickPromptsOpen, setQuickPromptsOpen] = useState(false);
@@ -348,7 +352,15 @@ export function ChatComposer({
 
   return (
     <>
-      <div className={cn("flex items-end gap-2", !!thread && !expanded && "max-h-[600px] w-full min-h-0")}>
+      {/* Soft brand wash behind every candidate composer — sits under the
+          interactive chrome via z-index so the frosted Chatbox stays crisp. */}
+      <BackgroundGlow intensity={backgroundGlowIntensity} />
+      <div
+        className={cn(
+          "relative z-10 flex items-end gap-2",
+          !!thread && !expanded && "max-h-[600px] w-full min-h-0",
+        )}
+      >
         <div className={cn("flex min-w-0 flex-1 flex-col gap-2", !!thread && !expanded && "min-h-0 max-h-full")}>
           {chipsInDom && quickPromptChips?.length && !expanded ? (
             <div

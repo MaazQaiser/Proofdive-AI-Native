@@ -43,12 +43,14 @@
 }
 
 :root {
-  --app-bg: #f2f2f3;
+  /* Page chrome aliases (`--app-bg` / `--app-fg`) are defined with the
+     design-system foundation below so they stay locked to `--background` /
+     `--foreground`. Surfaces + hairlines remain here until those call sites
+     migrate to `--card` / `--border`. */
   --app-surface: #ffffff;
   /* Nested-card surface — one step down from --app-surface (white), used for
      a flat card-inside-card layer instead of a shadow-based elevation cue. */
   --app-surface-nested: #f5f5f4;
-  --app-fg: #000000;
   --app-muted: rgba(0, 0, 0, 0.62);
   --app-hairline: rgba(0, 0, 0, 0.12);
   --app-hairline-strong: rgba(0, 0, 0, 0.16);
@@ -123,9 +125,37 @@
   --trend-up: #166534;
   --trend-down: #991B1B;
 
-  /* Not defined in the Figma foundation — gap-fill so shadcn components have a
-     radius token. Flag with design if this should differ. */
-  --radius: 0.5rem;
+  /* Success Drivers — each pillar gets a pastel surface, mid-tone symbol,
+     high-contrast foreground, and accent for badges/dots. Keep these the
+     single source of truth for driver-colored UI. */
+  --driver-thinking-bg: #E7F5F8;
+  --driver-thinking-symbol: #6EC2D3;
+  --driver-thinking-fg: #062C35;
+  --driver-thinking-accent: #0E9AB5;
+  --driver-action-bg: #FFF1E8;
+  --driver-action-symbol: #F0A878;
+  --driver-action-fg: #3D2314;
+  --driver-action-accent: #E07A3D;
+  --driver-people-bg: #E8F5F0;
+  --driver-people-symbol: #7DB8A4;
+  --driver-people-fg: #1A3D32;
+  --driver-people-accent: #3D9B7A;
+  --driver-mastery-bg: #F0EAF8;
+  --driver-mastery-symbol: #B8A0D4;
+  --driver-mastery-fg: #2D1F3D;
+  --driver-mastery-accent: #7B5EA7;
+
+  /* Brand corner radius — cards/surfaces use 16px (`rounded-lg`+); buttons and
+     form controls use 8px (`rounded-md`). Candy controls (selection chips) stay
+     `rounded-full` outside this token. Cap xl/2xl/3xl at 16px. */
+  --radius: 1rem; /* 16px — card/surface default */
+
+  /* Legacy page tokens — aliases into the foundation so older `var(--app-bg)` /
+     `var(--app-fg)` call sites stay in lockstep with `bg-background` /
+     `text-foreground`. Body also paints from `--background`, so new pages
+     inherit the same canvas without setting a local bg. */
+  --app-bg: var(--background);
+  --app-fg: var(--foreground);
 }
 
 .dark {
@@ -180,6 +210,24 @@
   --scoring-yellow: #E9A13B;
   --scoring-green: #16A34A;
   --scoring-cyan: #22D3EE;
+  /* Success Drivers — slightly deeper pastels on dark surfaces. */
+  --driver-thinking-bg: #0A2A32;
+  --driver-thinking-symbol: #3EAEC4;
+  --driver-thinking-fg: #E7F5F8;
+  --driver-thinking-accent: #22D3EE;
+  --driver-action-bg: #2A1A12;
+  --driver-action-symbol: #E07A3D;
+  --driver-action-fg: #FFF1E8;
+  --driver-action-accent: #F0A878;
+  --driver-people-bg: #12241E;
+  --driver-people-symbol: #3D9B7A;
+  --driver-people-fg: #E8F5F0;
+  --driver-people-accent: #7DB8A4;
+  --driver-mastery-bg: #1C1528;
+  --driver-mastery-symbol: #7B5EA7;
+  --driver-mastery-fg: #F0EAF8;
+  --driver-mastery-accent: #B8A0D4;
+
   /* KPI trend text — tuned for ≥4.5:1 contrast on dark --card (#01161B). */
   --trend-up: #4ADE80;
   --trend-down: #FCA5A5;
@@ -320,11 +368,29 @@
   --color-scoring-cyan: var(--scoring-cyan);
   --color-trend-up: var(--trend-up);
   --color-trend-down: var(--trend-down);
+  --color-driver-thinking-bg: var(--driver-thinking-bg);
+  --color-driver-thinking-symbol: var(--driver-thinking-symbol);
+  --color-driver-thinking-fg: var(--driver-thinking-fg);
+  --color-driver-thinking-accent: var(--driver-thinking-accent);
+  --color-driver-action-bg: var(--driver-action-bg);
+  --color-driver-action-symbol: var(--driver-action-symbol);
+  --color-driver-action-fg: var(--driver-action-fg);
+  --color-driver-action-accent: var(--driver-action-accent);
+  --color-driver-people-bg: var(--driver-people-bg);
+  --color-driver-people-symbol: var(--driver-people-symbol);
+  --color-driver-people-fg: var(--driver-people-fg);
+  --color-driver-people-accent: var(--driver-people-accent);
+  --color-driver-mastery-bg: var(--driver-mastery-bg);
+  --color-driver-mastery-symbol: var(--driver-mastery-symbol);
+  --color-driver-mastery-fg: var(--driver-mastery-fg);
+  --color-driver-mastery-accent: var(--driver-mastery-accent);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: 0.5rem; /* 8px — tight nested controls */
+  --radius-md: 0.5rem; /* 8px — buttons, inputs, CTAs */
+  --radius-lg: 1rem; /* 16px — cards, dialogs */
+  --radius-xl: 1rem; /* 16px — brand max */
+  --radius-2xl: 1rem; /* capped to brand max */
+  --radius-3xl: 1rem; /* capped to brand max */
 
   --font-sans: var(--font-sans);
   --font-gilroy: "Gilroy", var(--font-sans), sans-serif;
@@ -332,6 +398,10 @@
   /* Skeleton-loader shimmer sweep — matches the Figma "Onboarding - Loading"
      motion spec (2s, linear, infinite). */
   --animate-shimmer-sweep: shimmer-sweep 2s linear infinite;
+  --animate-landing-rise: landing-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-landing-fade: landing-fade 1s ease-out both;
+  --animate-landing-visual: landing-visual 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+  --animate-landing-cta: landing-cta 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
 }
 
 @keyframes shimmer-sweep {
@@ -340,6 +410,66 @@
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+/* Chat composer mic — thin waveform scrolls while SpeechRecognition listens. */
+@keyframes voice-wave-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility voice-wave-scroll {
+  animation: voice-wave-scroll 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-wave-scroll {
+    animation: none;
+  }
+}
+
+/* Landing page entrance + brand-pixel presence (first viewport). */
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes landing-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.9;
+  }
+}
+@keyframes landing-visual {
+  from {
+    opacity: 0;
+    transform: translateX(24px) scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+@keyframes landing-cta {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -434,9 +564,20 @@
   height: 1.5rem;
 }
 
+/* Fine film-grain overlay for Success Driver card surfaces — sits above the
+   blurred symbol so pastel fills don't read as flat digital color. */
+@utility success-driver-noise {
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 160px 160px;
+  opacity: 0.28;
+  mix-blend-mode: overlay;
+}
+
 body {
-  background: var(--app-bg);
-  color: var(--app-fg);
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto,
     Helvetica, Arial, sans-serif;
 }

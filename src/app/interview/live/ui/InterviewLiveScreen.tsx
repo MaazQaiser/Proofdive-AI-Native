@@ -508,7 +508,7 @@ export function InterviewLiveScreen() {
   }, [isEnding, reportSteps.length, role, router, session.prefs.sessionKind, totalSeconds]);
 
   return (
-    <div className="min-h-screen w-full bg-[var(--app-bg)] text-[var(--app-fg)]">
+    <div className="min-h-screen w-full bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-6 pb-28">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
@@ -535,7 +535,7 @@ export function InterviewLiveScreen() {
 
         <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <div className="relative aspect-video w-full overflow-hidden rounded-[24px] border border-[var(--app-hairline)] bg-white">
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-[var(--app-hairline)] bg-white">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-caption font-semibold text-[var(--app-fg)]">
@@ -552,7 +552,7 @@ export function InterviewLiveScreen() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <div className="relative aspect-video w-full overflow-hidden rounded-[24px] border border-[var(--app-hairline)] bg-white">
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-[var(--app-hairline)] bg-white">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
                   <div className="text-caption font-semibold text-[var(--app-fg)]">
@@ -567,7 +567,7 @@ export function InterviewLiveScreen() {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-[var(--app-hairline)] bg-white p-4">
+            <div className="rounded-lg border border-[var(--app-hairline)] bg-white p-4">
               <div className="text-overline text-[var(--app-muted)]">
                 NOTES
               </div>
@@ -650,7 +650,7 @@ export function InterviewLiveScreen() {
                 setIsEnding(true);
               }}
               disabled={isEnding}
-              className="rounded-full bg-destructive px-6 text-white hover:bg-destructive/90 active:bg-destructive/80"
+              className="rounded-md bg-destructive px-6 text-white hover:bg-destructive/90 active:bg-destructive/80"
             >
               {isEnding ? "Ending…" : "End"}
             </Button>
@@ -659,7 +659,7 @@ export function InterviewLiveScreen() {
       </div>
 
       {isEnding ? (
-        <div className="fixed inset-0 z-[60] bg-[var(--app-bg)] text-[var(--app-fg)]">
+        <div className="fixed inset-0 z-[60] bg-background text-foreground">
           <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-6 py-10">
             <div className="flex items-center gap-2">
               <Logo size="xxs" />
@@ -678,7 +678,7 @@ export function InterviewLiveScreen() {
             </div>
 
             <div className="mt-10 grid gap-4 lg:grid-cols-2">
-              <div className="rounded-[24px] border border-[var(--app-hairline)] bg-white p-5">
+              <div className="rounded-lg border border-[var(--app-hairline)] bg-white p-5">
                 <div className="text-overline text-[var(--app-muted)]">
                   PROGRESS
                 </div>
@@ -714,7 +714,7 @@ export function InterviewLiveScreen() {
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-[var(--app-hairline)] bg-white p-5">
+              <div className="rounded-lg border border-[var(--app-hairline)] bg-white p-5">
                 <div className="text-overline text-[var(--app-muted)]">
                   COMPETENCY MAPPING
                 </div>

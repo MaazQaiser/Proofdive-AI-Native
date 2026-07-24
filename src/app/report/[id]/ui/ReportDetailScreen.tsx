@@ -9,6 +9,8 @@ import { CardBody, GlassCard, GlassCardSection } from "@/components/Card";
 import { cn } from "@/components/cn";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
+import { SuccessDriverMark } from "@/components/ui/success-driver-card";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type {
   InterviewReport,
@@ -16,6 +18,11 @@ import type {
   InterviewReportQuestion,
   ReadinessLabel,
 } from "@/lib/proofdiveTypes";
+import {
+  SUCCESS_DRIVER_COLORS,
+  SUCCESS_DRIVERS,
+  type SuccessDriverId,
+} from "@/lib/successDrivers";
 
 type Props = { reportId: string };
 
@@ -67,18 +74,8 @@ function fmtDuration(seconds: number): string {
   return `${mm}m ${ss}s`;
 }
 
-function driverAccentDot(driverId: InterviewReportDriver["id"]) {
-  if (driverId === "thinking") return "bg-teal-500";
-  if (driverId === "action") return "bg-amber-500";
-  if (driverId === "people") return "bg-emerald-500";
-  return "bg-violet-500";
-}
-
 function driverAccentSoft(driverId: InterviewReportDriver["id"]) {
-  if (driverId === "thinking") return "bg-teal-500/10 border-teal-500/15";
-  if (driverId === "action") return "bg-amber-500/10 border-amber-500/15";
-  if (driverId === "people") return "bg-emerald-500/10 border-emerald-500/15";
-  return "bg-violet-500/10 border-violet-500/15";
+  return SUCCESS_DRIVER_COLORS[driverId as SuccessDriverId].accentBg;
 }
 
 function useStickySummary(sentinelRef: React.RefObject<HTMLElement | null>) {
@@ -93,8 +90,8 @@ function useStickySummary(sentinelRef: React.RefObject<HTMLElement | null>) {
         setShow(!entry.isIntersecting);
       },
       // Only show once the content above has scrolled away.
-      // Slight negative top margin helps account for sticky headers.
-      { threshold: 0.01, rootMargin: "-72px 0px 0px 0px" },
+      // Slight negative top margin helps account for sticky headers (h-14 shell).
+      { threshold: 0.01, rootMargin: "-56px 0px 0px 0px" },
     );
 
     io.observe(sentinel);
@@ -124,81 +121,6 @@ function SectionTitle({
   );
 }
 
-function Icon({ name }: { name: InterviewReportDriver["icon"] }) {
-  const cls = "h-5 w-5";
-  if (name === "brain") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={cls}>
-        <path
-          d="M8.5 6.5a3.5 3.5 0 0 1 6.9-1A3.5 3.5 0 0 1 18 8.7a3.4 3.4 0 0 1 1 2.4 3.5 3.5 0 0 1-2 3.2 3.5 3.5 0 0 1-3 5.2H10a3.5 3.5 0 0 1-3-5.2A3.5 3.5 0 0 1 5 11.1c0-.9.34-1.7.9-2.4A3.5 3.5 0 0 1 8.5 6.5Z"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
-  if (name === "bolt") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={cls}>
-        <path
-          d="M13 2 3 14h7l-1 8 12-14h-7l-1-6Z"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-      </svg>
-    );
-  }
-  if (name === "users") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={cls}>
-        <path
-          d="M17 21v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M9.5 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M22 21v-1a4 4 0 0 0-3-3.87"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M16 3.13a4 4 0 0 1 0 7.75"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={cls}>
-      <path
-        d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 7v6l4 2"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function DriverCard({
   driver,
   expanded,
@@ -210,6 +132,8 @@ function DriverCard({
 }) {
   const score = driver.score;
   const pct = Math.max(0, Math.min(100, Math.round(driver.pct)));
+  const driverId = driver.id as SuccessDriverId;
+  const colors = SUCCESS_DRIVER_COLORS[driverId];
   return (
     <GlassCard className="overflow-hidden">
       <CardBody className="p-5">
@@ -218,11 +142,12 @@ function DriverCard({
             <div className="flex items-center gap-2">
               <span
                 className={cn(
-                  "inline-flex h-9 w-9 items-center justify-center rounded-xl border text-[var(--app-fg)]",
+                  "inline-flex h-9 w-9 items-center justify-center rounded-xl border",
                   driverAccentSoft(driver.id),
+                  colors.accent,
                 )}
               >
-                <Icon name={driver.icon} />
+                <SuccessDriverIcon driver={driverId} className="size-5" />
               </span>
               <div className="min-w-0">
                 <div className="truncate text-body-sm font-semibold text-[var(--app-fg)]">
@@ -323,14 +248,14 @@ function QuestionRow({
                   {q.facet}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-[var(--app-hairline)] bg-white/60 px-3 py-1 text-overline text-[var(--app-fg)]">
-                  <span className={cn("h-2 w-2 rounded-full", driverAccentDot(q.driver))} />
-                  {q.driver === "thinking"
-                    ? "Thinking"
-                    : q.driver === "action"
-                      ? "Action"
-                      : q.driver === "people"
-                        ? "People"
-                        : "Mastery"}
+                  <SuccessDriverIcon
+                    driver={q.driver as SuccessDriverId}
+                    className={cn(
+                      "size-3.5",
+                      SUCCESS_DRIVER_COLORS[q.driver as SuccessDriverId].accent,
+                    )}
+                  />
+                  {SUCCESS_DRIVERS[q.driver as SuccessDriverId].shortLabel}
                 </span>
                 <span className="rounded-full border border-[var(--app-hairline)] bg-white/60 px-3 py-1 text-overline text-[var(--app-fg)]">
                   {fmtDuration(q.timeSeconds)}
@@ -498,7 +423,7 @@ export function ReportDetailScreen({ reportId }: Props) {
       <CoachFloatingNav />
 
       {showSticky ? (
-        <div className="sticky top-[72px] z-10 -mx-6 border-b border-white/50 bg-[var(--app-bg)]/85 px-6 py-3 backdrop-blur">
+        <div className="sticky top-14 z-10 -mx-6 border-b border-white/50 bg-background/85 px-6 py-3 backdrop-blur">
           <div className="flex min-w-0 flex-wrap items-center gap-3">
             <div className="flex items-baseline gap-2">
               <div className={cn("text-caption font-semibold", scoreTextClasses(overall))}>
@@ -527,7 +452,7 @@ export function ReportDetailScreen({ reportId }: Props) {
           <div className="min-w-0 flex-1">
             <Link
               href={`/coach?final=1&report=${encodeURIComponent(reportId)}`}
-              className="mb-3 inline-flex items-center gap-1.5 text-caption font-semibold text-[var(--app-fg)]/65 transition hover:text-[var(--app-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--app-bg)]"
+              className="mb-3 inline-flex items-center gap-1.5 text-caption font-semibold text-[var(--app-fg)]/65 transition hover:text-[var(--app-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0" aria-hidden>
                 <path
@@ -672,7 +597,11 @@ export function ReportDetailScreen({ reportId }: Props) {
                       <CardBody className="p-5">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="text-caption font-semibold text-[var(--app-fg)]">{d.fullTitle}</div>
+                            <SuccessDriverMark
+                              driver={d.id as SuccessDriverId}
+                              className="text-caption"
+                              iconClassName="size-4"
+                            />
                             <div className="mt-1 text-overline text-[var(--app-muted)]">
                               PILLAR SCORE
                             </div>
@@ -743,11 +672,11 @@ export function ReportDetailScreen({ reportId }: Props) {
 
               <div className="mt-6 grid gap-4 lg:grid-cols-2">
                 <div className="min-w-0">
-                  <div className="relative aspect-video w-full overflow-hidden rounded-[24px] border border-white/60 bg-white/50">
+                  <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-white/60 bg-white/50">
                     <div className="absolute inset-0 flex items-center justify-center">
                       <button
                         type="button"
-                        className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-caption font-semibold text-primary-foreground hover:bg-primary/90"
+                        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-caption font-semibold text-primary-foreground hover:bg-primary/90"
                         onClick={() => window.alert("Player is a v1 stub.")}
                       >
                         <span className="h-2 w-2 rounded-full bg-scoring-green" aria-hidden="true" />
@@ -759,7 +688,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-white/60 bg-white/50 p-4">
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/60 bg-white/50 p-4">
                     <div className="flex items-center gap-2 text-overline text-[var(--app-muted)]">
                       <span className="rounded-full border border-black/10 bg-white/70 px-3 py-1">±10s</span>
                       <span className="rounded-full border border-black/10 bg-white/70 px-3 py-1">1×</span>
@@ -770,7 +699,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                 </div>
 
                 <div className="min-w-0">
-                  <div className="rounded-[24px] border border-white/60 bg-white/50 p-4">
+                  <div className="rounded-lg border border-white/60 bg-white/50 p-4">
                     <div className="text-overline text-[var(--app-muted)]">TRANSCRIPT</div>
                     <div className="mt-3 max-h-[320px] space-y-3 overflow-auto pr-1">
                       {report.transcript.map((line, idx) => (
@@ -803,7 +732,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                 subtitle="A sharper rewrite + delivery notes for your highest-priority gap."
               />
 
-              <div className="mt-6 rounded-[24px] border border-white/60 bg-white/50 p-5">
+              <div className="mt-6 rounded-lg border border-white/60 bg-white/50 p-5">
                 <h3 className="text-body-sm font-semibold text-[var(--app-fg)]">
                   The AI coach has picked the weakest question to help you improve.
                 </h3>

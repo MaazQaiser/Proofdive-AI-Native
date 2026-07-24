@@ -13,6 +13,7 @@ import {
   ArrowRight,
   BookOpen,
   CircleHelp,
+  Home,
   Pencil,
   UserCheck,
   WandSparkles,
@@ -26,9 +27,11 @@ import { CardButton } from "@/components/ui/card-button";
 import { Textarea } from "@/components/ui/textarea";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
 import { Logo } from "@/components/ui/logo";
-import { SelectionChip } from "@/components/ui/selection-chip";
+import {
+  SelectionChip,
+  selectionChipVariants,
+} from "@/components/ui/selection-chip";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
-import { BackgroundGlow } from "@/components/shared/BackgroundGlow";
 import { OnboardingProgressHeader } from "@/app/onboarding/ui/OnboardingProgressHeader";
 import { makeId } from "@/lib/id";
 import { reportCountForRole, upsertSavedRole } from "@/lib/proofdiveLogic";
@@ -696,7 +699,7 @@ function OnboardingAgentInner({
       setCoreFourError(null);
       push(
         "assistant",
-        "One last step - I've suggested a Core Four (one competency per Success Driver) based on your job description. Adjust if you'd like, then confirm.",
+        "I've suggested a Core Four based on your job description — adjust if you'd like, then confirm.",
       );
       setStep("coreFourSelection");
       return;
@@ -718,18 +721,21 @@ function OnboardingAgentInner({
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background">
-      <BackgroundGlow />
-      <header className="relative z-10 flex h-20 w-full shrink-0 items-center px-12">
-        <Link href="/">
+      <header className="relative z-10 flex h-14 w-full shrink-0 items-center border-b border-border bg-background px-6">
+        <Link
+          href="/"
+          className="flex h-full shrink-0 items-center border-r border-border pr-6"
+        >
           <Logo size="xxs" />
         </Link>
       </header>
-      <div className="relative mx-auto flex w-[800px] max-w-full flex-1 flex-col px-6 pb-32 pt-4">
-        <OnboardingProgressHeader
-          percent={STEP_PERCENT[step]}
-          onBack={canGoBack ? goBack : undefined}
-          homeHref={step === "done" ? homeHref : undefined}
-        />
+      <div className="relative z-[2] mx-auto flex w-[800px] max-w-full flex-1 flex-col px-6 pb-32 pt-4">
+        {step !== "done" ? (
+          <OnboardingProgressHeader
+            percent={STEP_PERCENT[step]}
+            onBack={canGoBack ? goBack : undefined}
+          />
+        ) : null}
 
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full">
@@ -805,7 +811,7 @@ function OnboardingAgentInner({
                       <>
                         <Button
                           onClick={confirmEditedJd}
-                          className="gap-1.5 rounded-full bg-[linear-gradient(135deg,var(--brand-100),var(--brand-500))] text-primary-foreground hover:opacity-90"
+                          className="gap-1.5 rounded-md bg-[linear-gradient(135deg,var(--brand-100),var(--brand-500))] text-primary-foreground hover:opacity-90"
                         >
                           Use this draft
                           <ArrowRight className="size-4" />
@@ -820,7 +826,7 @@ function OnboardingAgentInner({
                           onClick={() =>
                             acceptGeneratedJobDescription(generatedJdDraft)
                           }
-                          className="gap-1.5 rounded-full bg-[linear-gradient(135deg,var(--brand-100),var(--brand-500))] text-primary-foreground hover:opacity-90"
+                          className="gap-1.5 rounded-md bg-[linear-gradient(135deg,var(--brand-100),var(--brand-500))] text-primary-foreground hover:opacity-90"
                         >
                           Use this draft
                           <ArrowRight className="size-4" />
@@ -866,21 +872,23 @@ function OnboardingAgentInner({
               />
             ) : null}
             {step === "done" ? (
-              <div className="mt-8 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="mt-8 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
                 <CardButton
                   href="/storyboard"
                   variant="primary"
                   icon={<BookOpen />}
                   title="Storyboard"
                   subtitle="Build your career storyboard"
+                  illustrationSrc="/brand/illustration%201.svg"
                 />
 
                 <CardButton
                   href="/interview"
                   variant="gray"
                   icon={<UserCheck />}
-                  title="Start mock interview"
+                  title="Mock interview"
                   subtitle={`Evaluate yourself for the ${role || "selected"} role`}
+                  illustrationSrc="/brand/illustration%203.svg"
                 />
               </div>
             ) : null}
@@ -888,7 +896,20 @@ function OnboardingAgentInner({
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 z-40 w-full">
-          <div className="mx-auto w-full max-w-[800px] px-6 py-5">
+          <div className="mx-auto flex w-full max-w-[800px] flex-col gap-2 px-6 py-5">
+            {step === "done" ? (
+              <div className="flex flex-wrap gap-2 px-0.5">
+                <Link
+                  href={homeHref}
+                  className={cn(selectionChipVariants())}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <Home className="size-4" />
+                    Go to Home
+                  </span>
+                </Link>
+              </div>
+            ) : null}
             <ChatComposer
               placeholder={
                 step === "done" && faq.isFaqMode
@@ -910,6 +931,7 @@ function OnboardingAgentInner({
                   (step === "done" && faq.isFaqMode)
                 )
               }
+              backgroundGlowIntensity="full"
               modeToggle={
                 step === "done"
                   ? {
