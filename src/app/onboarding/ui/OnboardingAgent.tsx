@@ -1,23 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import {
-  type Dispatch,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { BookOpen, Home, MessageCircleQuestion, UserCheck } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { type Dispatch, type SetStateAction, useMemo, useRef, useState } from "react";
+import { BookOpen, CircleHelp, UserCheck } from "lucide-react";
 
 import type { ChatMessage } from "@/components/chat/chatTypes";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
+import { ChatComposer } from "@/components/chat/ChatComposer";
 import { CardButton } from "@/components/ui/card-button";
+import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
 import { Logo } from "@/components/ui/logo";
 import { SelectionChip } from "@/components/ui/selection-chip";
+import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
 import { OnboardingBackgroundGlow } from "@/app/onboarding/ui/OnboardingBackgroundGlow";
 import { OnboardingComposer } from "@/app/onboarding/ui/OnboardingComposer";
 import { OnboardingProgressHeader } from "@/app/onboarding/ui/OnboardingProgressHeader";
@@ -25,7 +20,6 @@ import { makeId } from "@/lib/id";
 import { reportCountForRole, upsertSavedRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type { RoleProfile } from "@/lib/proofdiveTypes";
-import { ONBOARDING_INTRO_VIDEO_SRC } from "@/lib/onboardingIntroVideo";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 
 type Step =
@@ -40,19 +34,21 @@ type Step =
   | "industryVertical"
   | "done";
 
-/** Progress-bar fill per step — Figma's steps advance in clean 10% increments
- * (confirmed 10% on name, 20% on role/chips-selection); branches that are
- * alternatives to each other (experienceLevel/education) share a tier. */
+/** Progress-bar fill per step — the very first question (name) starts the
+ * bar empty (0%) rather than pre-filled, since nothing has been answered
+ * yet; every step after that still advances in clean 10% increments.
+ * Branches that are alternatives to each other (experienceLevel/education)
+ * share a tier. */
 const STEP_PERCENT: Record<Step, number> = {
-  name: 10,
-  role: 20,
-  backgroundType: 30,
-  experienceLevel: 40,
-  education: 40,
-  lastWorkedAt: 50,
-  jobDescription: 60,
-  resume: 80,
-  industryVertical: 90,
+  name: 0,
+  role: 10,
+  backgroundType: 20,
+  experienceLevel: 30,
+  education: 30,
+  lastWorkedAt: 40,
+  jobDescription: 50,
+  resume: 70,
+  industryVertical: 80,
   done: 100,
 };
 
@@ -180,22 +176,11 @@ function OnboardingAgentInner({
   isEditMode: boolean;
   isNewRoleMode: boolean;
 }) {
-  const router = useRouter();
-  const [introModalOpen, setIntroModalOpen] = useState(false);
-  const introVideoRef = useRef<HTMLVideoElement>(null);
+  const faq = useFaqAssistant();
 
   /** The role title being edited, captured before any in-flow rename, so the
    * matching `savedRoles` entry gets replaced in place rather than duplicated. */
   const originalTitleRef = useRef(roleProfile?.targetRole ?? "");
-
-  const closeIntroModal = useCallback(() => {
-    const v = introVideoRef.current;
-    if (v) {
-      v.pause();
-      v.currentTime = 0;
-    }
-    setIntroModalOpen(false);
-  }, []);
 
   /** Returning users (already completed ≥1 mock interview for this role) skip the
    * first-time welcome intro and land directly on the module hub. */
@@ -203,30 +188,6 @@ function OnboardingAgentInner({
     const roleTitle = roleProfile?.targetRole?.trim() ?? "";
     return reportCountForRole(roleTitle) > 0 ? "/coach?journey=1" : "/coach?welcome=1";
   }, [roleProfile]);
-
-  const skipIntroAndOpenCoachWelcome = useCallback(() => {
-    closeIntroModal();
-    router.push(homeHref);
-  }, [closeIntroModal, router, homeHref]);
-
-  useEffect(() => {
-    if (!introModalOpen) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeIntroModal();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [introModalOpen, closeIntroModal]);
-
-  useEffect(() => {
-    if (!introModalOpen) return;
-    void introVideoRef.current?.play().catch(() => {});
-  }, [introModalOpen]);
 
   const suggestedRoles = useMemo(
     () => [
@@ -327,6 +288,12 @@ function OnboardingAgentInner({
               ]
             : [];
 
+  /** Steps whose only chip is "Skip" offer no real choice — "Select one"
+   * doesn't fit since there's nothing to select between; the copy should
+   * point back at the free-text answer instead. */
+  const isSkipOnlyStep = quickReplies.length === 1 && quickReplies[0].id === "skip";
+  const quickReplyHeading = isSkipOnlyStep ? "Reply or skip." : "Select one";
+
   function who() {
     return "";
   }
@@ -395,14 +362,14 @@ function OnboardingAgentInner({
       if (role && /^keep$/i.test(cleaned)) {
         push(
           "assistant",
-          `${who()}perfect, we’ll keep it.\n\nNow tell me a bit about you.\nWhat’s your background?`,
+          `${who()}Perfect, we’ll keep it.\n\nNow tell me a bit about you.\nWhat’s your background?`,
         );
         setStep("backgroundType");
         return;
       }
 
       if (cleaned.length < 2) {
-        push("assistant", `${who()}what job role are you preparing for? (e.g., Product Manager)`);
+        push("assistant", `${who()}What job role are you preparing for? (e.g., Product Manager)`);
         return;
       }
 
@@ -410,7 +377,7 @@ function OnboardingAgentInner({
       setDraft(next);
       push(
         "assistant",
-        `Perfect, ${cleaned} it is.\n\nlet’s get things around the ${cleaned} role.\nShare a bit more about your career stage`,
+        `Perfect, ${cleaned} it is.\n\nLet’s get things around the ${cleaned} role.\nShare a bit more about your career stage`,
       );
       setStep("backgroundType");
       return;
@@ -432,7 +399,7 @@ function OnboardingAgentInner({
       if (!backgroundType) {
         push(
           "assistant",
-          `${who()}pick one option below, and I’ll tailor everything around it.`,
+          `${who()}Pick one option below, and I’ll tailor everything around it.`,
         );
         return;
       }
@@ -451,7 +418,7 @@ function OnboardingAgentInner({
 
       push(
         "assistant",
-        "Moving forward, would you like to share about your education background (school/university)?",
+        "Moving forward!\n\nWould you like to share about your education background (school/university)?",
       );
       setStep("education");
       return;
@@ -469,7 +436,7 @@ function OnboardingAgentInner({
               : null;
 
       if (!experienceLevel) {
-        push("assistant", `${who()}pick one of the options below.`);
+        push("assistant", `${who()}Pick one of the options below.`);
         return;
       }
 
@@ -485,7 +452,7 @@ function OnboardingAgentInner({
       setDraft(next);
       push(
         "assistant",
-        `${who()}one more thing.\n\nDrop in the job description you're targeting: this one's required so I can tailor everything around it.`,
+        `${who()}One more thing.\n\nDrop in the job description you're targeting: this one's required so I can tailor everything around it.`,
       );
       setStep("jobDescription");
       return;
@@ -496,7 +463,7 @@ function OnboardingAgentInner({
       setDraft(next);
       push(
         "assistant",
-        `${who()}one more thing.\n\nDrop in the job description you're targeting: this one's required so I can tailor everything around it.`,
+        `${who()}One more thing.\n\nDrop in the job description you're targeting: this one's required so I can tailor everything around it.`,
       );
       setStep("jobDescription");
       return;
@@ -549,7 +516,6 @@ function OnboardingAgentInner({
   function handleUpload(files: File[]) {
     const file = files[0];
     if (!file) return;
-    if (step !== "jobDescription" && step !== "resume") return;
     handleAnswer(`📎 ${file.name}`);
   }
 
@@ -561,10 +527,11 @@ function OnboardingAgentInner({
           <Logo size="xxs" />
         </Link>
       </header>
-      <div className="relative mx-auto flex w-[800px] max-w-full flex-1 flex-col px-6 pb-32 pt-10">
+      <div className="relative mx-auto flex w-[800px] max-w-full flex-1 flex-col px-6 pb-32 pt-4">
         <OnboardingProgressHeader
           percent={STEP_PERCENT[step]}
           onBack={canGoBack ? goBack : undefined}
+          homeHref={step === "done" ? homeHref : undefined}
         />
 
         <div className="flex flex-1 items-center justify-center py-10">
@@ -595,7 +562,7 @@ function OnboardingAgentInner({
             {quickReplies.length ? (
               <div className="mt-6 flex w-full flex-col gap-2">
                 <div className="text-body-sm font-semibold text-text-secondary">
-                  Select one
+                  {quickReplyHeading}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {quickReplies.map((opt) => (
@@ -623,22 +590,6 @@ function OnboardingAgentInner({
                   title="Start mock interview"
                   subtitle={`Evaluate yourself for the ${role || "selected"} role`}
                 />
-
-                <CardButton
-                  variant="gray"
-                  icon={<MessageCircleQuestion />}
-                  title="Learn more"
-                  subtitle="Learn about proofdive"
-                  onClick={() => setIntroModalOpen(true)}
-                />
-
-                <CardButton
-                  href={homeHref}
-                  variant="gray"
-                  icon={<Home />}
-                  title="Go to Home"
-                  subtitle="Jump to your dashboard"
-                />
               </div>
             ) : null}
 
@@ -646,65 +597,46 @@ function OnboardingAgentInner({
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 z-40 w-full">
-          <div className="mx-auto w-full max-w-[840px] px-6 py-5">
-            <OnboardingComposer
-              placeholder="Reply (type here or use voice)"
-              onSend={handleAnswer}
-              showUploadButton={step === "jobDescription" || step === "resume"}
-              uploadAccept=".pdf,.doc,.docx,.txt"
-              onUpload={handleUpload}
-            />
+          <div className="mx-auto w-full max-w-[800px] px-6 py-5">
+            {step === "done" ? (
+              <ChatComposer
+                placeholder={faq.isFaqMode ? "Select a question above" : "Reply (type here or use voice)"}
+                onSend={handleAnswer}
+                disabled={faq.isFaqMode}
+                uploadAccept=".pdf,.doc,.docx,.txt"
+                onUpload={handleUpload}
+                showUploadButton={!faq.isFaqMode}
+                modeToggle={{
+                  isActive: faq.isFaqMode,
+                  icon: CircleHelp,
+                  activeLabel: "FAQ Assistant",
+                  onToggle: () => (faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode()),
+                }}
+                thread={
+                  faq.isFaqMode ? (
+                    <FaqAssistantThread
+                      screenData={faq.screenData}
+                      onSelectRootItem={faq.selectRootItem}
+                      onSelectFollowup={faq.selectFollowup}
+                      onBackToItemMenu={faq.backToItemMenu}
+                      onBackToRootMenu={faq.backToRootMenu}
+                    />
+                  ) : undefined
+                }
+                onThreadClose={faq.isFaqMode ? faq.exitFaqMode : undefined}
+                threadHeaderTitle="FAQ Assistant"
+              />
+            ) : (
+              <OnboardingComposer
+                placeholder="Reply (type here or use voice)"
+                onSend={handleAnswer}
+                uploadAccept=".pdf,.doc,.docx,.txt"
+                onUpload={handleUpload}
+              />
+            )}
           </div>
         </div>
       </div>
-
-      {introModalOpen ? (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 sm:p-8"
-          onClick={closeIntroModal}
-          role="presentation"
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="intro-video-title"
-            className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-[var(--app-hairline)] bg-[var(--app-surface)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--app-hairline)] px-4 py-3">
-              <span id="intro-video-title" className="min-w-0 flex-1 truncate text-caption text-[var(--app-fg)]">
-                Learn about Proofdive
-              </span>
-              <div className="flex shrink-0 items-center gap-2">
-                <button
-                  type="button"
-                  onClick={skipIntroAndOpenCoachWelcome}
-                  aria-label="Skip intro and open coach welcome"
-                  className="inline-flex h-9 items-center justify-center rounded-full px-3 text-caption text-[var(--app-muted)] transition hover:bg-[var(--app-hairline)] hover:text-[var(--app-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]/30 sm:px-4"
-                >
-                  Skip & Go to home
-                </button>
-                <button
-                  type="button"
-                  onClick={closeIntroModal}
-                  className="inline-flex h-9 min-w-[72px] items-center justify-center rounded-full border border-[var(--app-hairline)] bg-[var(--app-hairline)] px-3 text-caption text-[var(--app-fg)] transition hover:bg-[var(--app-hairline-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]/30"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-            <div className="bg-black p-2 sm:p-3">
-              <video
-                ref={introVideoRef}
-                className="mx-auto max-h-[min(52vh,480px)] w-full rounded-lg object-contain"
-                controls
-                playsInline
-                src={ONBOARDING_INTRO_VIDEO_SRC}
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
