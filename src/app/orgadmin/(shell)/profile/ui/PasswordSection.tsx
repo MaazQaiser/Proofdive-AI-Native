@@ -53,7 +53,7 @@ export function PasswordSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Password & Authentication</CardTitle>
+        <CardTitle>Password and Auth</CardTitle>
         <CardDescription>Update the password used to sign in to your account.</CardDescription>
       </CardHeader>
       <CardContent>

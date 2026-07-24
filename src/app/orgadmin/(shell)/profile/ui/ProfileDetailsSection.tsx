@@ -105,7 +105,7 @@ export function ProfileDetailsSection() {
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <CardTitle>View & Edit My Profile Details</CardTitle>
+            <CardTitle>Account Info</CardTitle>
             <CardDescription>Onboarding information configured by the Super Admin.</CardDescription>
           </div>
           {!isEditing ? (

@@ -8,11 +8,18 @@ import {
   type ReactNode,
   type TransitionEvent,
 } from "react";
-import { X, type LucideIcon } from "lucide-react";
+import { Maximize2, Minimize2, X, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/components/cn";
 import { useSpeechDictation } from "@/components/chat/useSpeechDictation";
 import { Chatbox } from "@/components/ui/chatbox";
+import {
+  Dialog,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { IconButton } from "@/components/ui/icon-button";
 import { SelectionChip } from "@/components/ui/selection-chip";
 
@@ -29,6 +36,9 @@ export type ChatComposerModeToggle = {
   activeLabel: string;
   onToggle: () => void;
 };
+
+const headerIconButtonClassName =
+  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary active:bg-muted";
 
 export function ChatComposer({
   placeholder = "Type a message…",
@@ -77,6 +87,7 @@ export function ChatComposer({
   const [chipsInDom, setChipsInDom] = useState(false);
   const [chipsAnimVisible, setChipsAnimVisible] = useState(false);
   const [pendingUploads, setPendingUploads] = useState<File[]>([]);
+  const [expanded, setExpanded] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const skipOpenOnNextFocusRef = useRef(false);
@@ -88,6 +99,10 @@ export function ChatComposer({
   useEffect(() => {
     if (disabled) skipOpenOnNextFocusRef.current = false;
   }, [disabled]);
+
+  useEffect(() => {
+    if (!thread) setExpanded(false);
+  }, [thread]);
 
   const appendFinalTranscript = useCallback((segment: string) => {
     setText((prev) => {
@@ -130,6 +145,11 @@ export function ChatComposer({
     setQuickPromptsOpen(false);
     stop();
     inputRef.current?.focus();
+  }
+
+  function handleThreadClose() {
+    setExpanded(false);
+    onThreadClose?.();
   }
 
   const hasQuickChips = Boolean(quickPromptChips?.length);
@@ -224,7 +244,12 @@ export function ChatComposer({
   ) : null;
 
   const threadLeading = thread ? (
-    <div className="flex w-full min-h-0 max-h-[min(380px,42dvh)] flex-1 flex-col border-b border-border">
+    <div
+      className={cn(
+        "flex w-full min-h-0 flex-1 flex-col border-b border-border",
+        expanded ? "max-h-none" : "max-h-[min(380px,42dvh)]",
+      )}
+    >
       <div
         className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-5"
         role="group"
@@ -234,16 +259,26 @@ export function ChatComposer({
           <StarInCircleIcon className="h-4 w-4 text-scoring-yellow" />
           <span className="text-caption text-text-primary">{threadHeaderTitle}</span>
         </div>
-        {onThreadClose ? (
+        <div className="flex shrink-0 items-center">
           <button
             type="button"
-            onClick={onThreadClose}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary active:bg-muted"
-            aria-label="Close"
+            onClick={() => setExpanded((prev) => !prev)}
+            className={headerIconButtonClassName}
+            aria-label={expanded ? "Exit full screen" : "Expand to full screen"}
           >
-            <X className="h-4 w-4" />
+            {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
-        ) : null}
+          {onThreadClose ? (
+            <button
+              type="button"
+              onClick={handleThreadClose}
+              className={headerIconButtonClassName}
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
       </div>
       <div
         className="w-full min-h-0 flex-1 overflow-y-auto scroll-smooth px-5 py-2"
@@ -266,94 +301,120 @@ export function ChatComposer({
     </p>
   ) : null;
 
-  return (
-    <div className={cn("flex items-end gap-2", !!thread && "max-h-[600px] w-full min-h-0")}>
-      <div className={cn("flex min-w-0 flex-1 flex-col gap-2", !!thread && "min-h-0 max-h-full")}>
-        {chipsInDom && quickPromptChips?.length ? (
-          <div
-            onTransitionEnd={handleChipsRowTransitionEnd}
-            className={cn(
-              "flex min-h-0 flex-wrap gap-2 px-0.5 will-change-transform",
-              "origin-bottom transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] [transition-property:transform,opacity]",
-              "motion-reduce:duration-0 motion-reduce:transition-none",
-              chipsAnimVisible
-                ? "translate-y-0 opacity-100"
-                : "pointer-events-none -translate-y-1.5 opacity-0",
-            )}
-            aria-hidden={!chipsAnimVisible}
-          >
-            {quickPromptChips.map((chip) => (
-              <SelectionChip
-                key={chip.label}
-                disabled={disabled}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => applyQuickChipFromChipObject(chip)}
-              >
-                {chip.label}
-              </SelectionChip>
-            ))}
-          </div>
-        ) : null}
-
-        {showUploadButton ? (
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept={uploadAccept}
-            multiple={uploadMultiple}
-            onChange={(e) => {
-              const files = Array.from(e.currentTarget.files ?? []);
-              if (files.length) {
-                setPendingUploads((prev) => (uploadMultiple ? [...prev, ...files] : files));
-                onUpload?.(files);
-              }
-              e.currentTarget.value = "";
-            }}
-          />
-        ) : null}
-
-        <Chatbox
-          className={cn(!!thread && "min-h-0 flex-1")}
-          value={displayText}
-          onValueChange={handleTextChange}
-          onSend={send}
-          placeholder={placeholder}
-          disabled={disabled}
-          showUploadAction={showUploadButton}
-          onUploadClick={() => fileInputRef.current?.click()}
-          attachedFiles={pendingUploads.map((file) => ({
-            id: `${file.name}-${file.lastModified}`,
-            name: file.name,
-          }))}
-          onRemoveAttachedFile={(id) =>
-            setPendingUploads((prev) =>
-              prev.filter((f) => `${f.name}-${f.lastModified}` !== id),
-            )
+  const chatbox = (
+    <Chatbox
+      className={cn(
+        !!thread && "min-h-0 flex-1",
+        expanded && "h-full max-h-full w-full max-w-none",
+      )}
+      value={displayText}
+      onValueChange={handleTextChange}
+      onSend={send}
+      placeholder={placeholder}
+      disabled={disabled}
+      showUploadAction={showUploadButton}
+      onUploadClick={() => fileInputRef.current?.click()}
+      attachedFiles={pendingUploads.map((file) => ({
+        id: `${file.name}-${file.lastModified}`,
+        name: file.name,
+      }))}
+      onRemoveAttachedFile={(id) =>
+        setPendingUploads((prev) =>
+          prev.filter((f) => `${f.name}-${f.lastModified}` !== id),
+        )
+      }
+      onMicClick={() => {
+        if (isListening) stop();
+        else void start();
+      }}
+      isListening={isListening}
+      leading={threadLeading}
+      footerTrailing={modeToggleControl}
+      status={voiceStatus}
+      textareaRef={inputRef}
+      textareaProps={{
+        onFocus: handleTextareaFocus,
+        onBlur: handleTextareaBlur,
+        onKeyDown: (e) => {
+          if (disabled) return;
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            send();
           }
-          onMicClick={() => {
-            if (isListening) stop();
-            else void start();
-          }}
-          isListening={isListening}
-          leading={threadLeading}
-          footerTrailing={modeToggleControl}
-          status={voiceStatus}
-          textareaRef={inputRef}
-          textareaProps={{
-            onFocus: handleTextareaFocus,
-            onBlur: handleTextareaBlur,
-            onKeyDown: (e) => {
-              if (disabled) return;
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-            },
-          }}
-        />
+        },
+      }}
+    />
+  );
+
+  return (
+    <>
+      <div className={cn("flex items-end gap-2", !!thread && !expanded && "max-h-[600px] w-full min-h-0")}>
+        <div className={cn("flex min-w-0 flex-1 flex-col gap-2", !!thread && !expanded && "min-h-0 max-h-full")}>
+          {chipsInDom && quickPromptChips?.length && !expanded ? (
+            <div
+              onTransitionEnd={handleChipsRowTransitionEnd}
+              className={cn(
+                "flex min-h-0 flex-wrap gap-2 px-0.5 will-change-transform",
+                "origin-bottom transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] [transition-property:transform,opacity]",
+                "motion-reduce:duration-0 motion-reduce:transition-none",
+                chipsAnimVisible
+                  ? "translate-y-0 opacity-100"
+                  : "pointer-events-none -translate-y-1.5 opacity-0",
+              )}
+              aria-hidden={!chipsAnimVisible}
+            >
+              {quickPromptChips.map((chip) => (
+                <SelectionChip
+                  key={chip.label}
+                  disabled={disabled}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => applyQuickChipFromChipObject(chip)}
+                >
+                  {chip.label}
+                </SelectionChip>
+              ))}
+            </div>
+          ) : null}
+
+          {showUploadButton ? (
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept={uploadAccept}
+              multiple={uploadMultiple}
+              onChange={(e) => {
+                const files = Array.from(e.currentTarget.files ?? []);
+                if (files.length) {
+                  setPendingUploads((prev) => (uploadMultiple ? [...prev, ...files] : files));
+                  onUpload?.(files);
+                }
+                e.currentTarget.value = "";
+              }}
+            />
+          ) : null}
+
+          {!expanded ? chatbox : null}
+        </div>
       </div>
-    </div>
+
+      <Dialog open={expanded} onOpenChange={setExpanded}>
+        <DialogPortal>
+          <DialogOverlay />
+          <DialogPrimitive.Content
+            aria-describedby={undefined}
+            className="fixed inset-0 z-50 flex h-dvh w-screen items-center justify-center p-4 outline-none sm:p-6"
+          >
+            <DialogTitle className="sr-only">{threadHeaderTitle}</DialogTitle>
+            {expanded ? (
+              <div className="flex h-full max-h-[min(840px,90dvh)] w-full max-w-[800px] flex-col">
+                {chatbox}
+              </div>
+            ) : null}
+          </DialogPrimitive.Content>
+        </DialogPortal>
+      </Dialog>
+    </>
   );
 }
 

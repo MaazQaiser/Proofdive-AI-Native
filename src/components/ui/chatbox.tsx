@@ -136,7 +136,7 @@ function Chatbox({
                 type="button"
                 onClick={onUploadClick}
                 disabled={disabled}
-                className="text-text-primary hover:bg-muted -ml-2 flex min-w-16 shrink-0 items-center justify-center gap-1 rounded-full px-2 py-0.5 disabled:pointer-events-none disabled:opacity-50"
+                className="text-text-primary hover:bg-muted flex min-w-16 shrink-0 items-center justify-center gap-1 rounded-full py-0.5 pr-2 pl-0 disabled:pointer-events-none disabled:opacity-50"
               >
                 <Paperclip className="size-4 shrink-0" />
                 <span className="px-1 text-overline font-medium leading-6 whitespace-nowrap">
@@ -161,7 +161,7 @@ function Chatbox({
                 onClick={onSend}
                 disabled={!canSend}
                 aria-label="Send reply"
-                className="-mr-1 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
+                className="disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
               >
                 <ArrowUp />
               </IconButton>
@@ -190,12 +190,12 @@ function Chatbox({
         )}
       >
         {hasLeading ? (
-          <div className="min-h-0 w-full shrink-0">{leading}</div>
+          <div className="flex min-h-0 w-full flex-1 flex-col">{leading}</div>
         ) : null}
 
         <div
           className={cn(
-            "flex w-full flex-col gap-2.5",
+            "flex w-full shrink-0 flex-col gap-2.5",
             hasLeading ? "px-5 pt-3 pb-4" : null,
           )}
         >

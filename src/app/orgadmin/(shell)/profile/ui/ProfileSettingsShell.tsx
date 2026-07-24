@@ -14,8 +14,8 @@ type SettingsNavItem = {
 };
 
 const SETTINGS_NAV_ITEMS: SettingsNavItem[] = [
-  { href: "/orgadmin/profile", label: "Profile Details", icon: IdCard },
-  { href: "/orgadmin/profile/password", label: "Password & Authentication", icon: KeyRound },
+  { href: "/orgadmin/profile", label: "Account Info", icon: IdCard },
+  { href: "/orgadmin/profile/password", label: "Password and Auth", icon: KeyRound },
   { href: "/orgadmin/profile/billing", label: "Billing & Subscription", icon: CreditCard },
   { href: "/orgadmin/profile/support", label: "Contact Support", icon: LifeBuoy },
   { href: "/orgadmin/profile/audit-logs", label: "Audit Logs", icon: History },
