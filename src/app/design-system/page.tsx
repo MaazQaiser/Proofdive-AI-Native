@@ -679,8 +679,10 @@ export default function DesignSystemPage() {
                 <CardHeader>
                   <CardTitle>Chatbox</CardTitle>
                   <CardDescription>
-                    Empty / filled / upload states driven by real input — type or attach a
-                    file to see it change
+                    Shared frosted-glass composer shell (gradient border, translucent
+                    fill, attachment chip above the field). Empty / filled / upload
+                    states are driven by real input — type or attach a file to see send
+                    enable
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

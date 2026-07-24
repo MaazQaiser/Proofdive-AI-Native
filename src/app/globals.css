@@ -119,6 +119,9 @@
   --scoring-yellow: #E9A13B;
   --scoring-green: #16A34A;
   --scoring-cyan: #22D3EE;
+  /* KPI trend text — tuned for ≥4.5:1 contrast on --card (#FFFFFF). */
+  --trend-up: #166534;
+  --trend-down: #991B1B;
 
   /* Not defined in the Figma foundation — gap-fill so shadcn components have a
      radius token. Flag with design if this should differ. */
@@ -177,6 +180,9 @@
   --scoring-yellow: #E9A13B;
   --scoring-green: #16A34A;
   --scoring-cyan: #22D3EE;
+  /* KPI trend text — tuned for ≥4.5:1 contrast on dark --card (#01161B). */
+  --trend-up: #4ADE80;
+  --trend-down: #FCA5A5;
 }
 
 /* Typography & logo scale (mode-independent).
@@ -312,6 +318,8 @@
   --color-scoring-yellow: var(--scoring-yellow);
   --color-scoring-green: var(--scoring-green);
   --color-scoring-cyan: var(--scoring-cyan);
+  --color-trend-up: var(--trend-up);
+  --color-trend-down: var(--trend-down);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

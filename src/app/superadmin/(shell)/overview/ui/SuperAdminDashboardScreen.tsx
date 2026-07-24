@@ -53,11 +53,6 @@ export function SuperAdminDashboardScreen() {
           label="Total Organizations"
           value={formatNumber(kpis.totalOrganizations)}
           icon={Building2}
-          breakdown={[
-            { label: "Universities", value: kpis.organizationsBreakdown.universities },
-            { label: "Training Centers", value: kpis.organizationsBreakdown.trainingCenters },
-            { label: "Employers", value: kpis.organizationsBreakdown.employers },
-          ]}
         />
         <KpiCard label="Total Active Users" value={formatNumber(kpis.totalActiveUsers)} icon={Users} />
         <KpiCard label="Mock Interviews" value={formatNumber(kpis.totalMockInterviews)} icon={Video} />

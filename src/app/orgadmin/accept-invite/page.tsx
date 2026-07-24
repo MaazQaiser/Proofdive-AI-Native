@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 import { AuthVisualPanel } from "@/components/auth/AuthVisualPanel";
-import { isPasswordStrong, PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -15,8 +14,7 @@ import { ORG_ADMIN_DEMO_ORG } from "@/lib/orgAdminDemo";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { writeJson } from "@/lib/storage";
 
-const WEAK_PASSWORD_ERROR =
-  "Password must contain at least 8 characters, including uppercase, lowercase, numbers, and special characters.";
+const EMPTY_PASSWORD_ERROR = "Please enter a password.";
 const MISMATCH_ERROR = "Password and Confirm Password do not match.";
 const CONSENT_ERROR = "Please accept Terms & Conditions and Privacy Policy.";
 
@@ -31,7 +29,7 @@ export default function OrgAdminAcceptInvitePage() {
     e.preventDefault();
 
     const nextErrors: typeof errors = {};
-    if (!isPasswordStrong(password)) nextErrors.password = WEAK_PASSWORD_ERROR;
+    if (!password) nextErrors.password = EMPTY_PASSWORD_ERROR;
     if (password !== confirmPassword) nextErrors.confirmPassword = MISMATCH_ERROR;
     if (!agreed) nextErrors.agreed = CONSENT_ERROR;
 
@@ -99,7 +97,6 @@ export default function OrgAdminAcceptInvitePage() {
                     aria-invalid={!!errors.password}
                     className="h-14 rounded-lg border-border pl-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
                   />
-                  <PasswordStrengthMeter password={password} />
                   {errors.password ? (
                     <p className="text-overline text-destructive" role="alert">
                       {errors.password}

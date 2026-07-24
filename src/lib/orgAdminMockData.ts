@@ -9,12 +9,20 @@ export type MockInterviewPerformancePoint = { label: string; interviewsConducted
 export type OrganizationReadinessPoint = { label: string; ready: number; gettingThere: number; needsWork: number };
 export type CompetencyGapItem = { key: string; label: string; score: number };
 
+export type OrgAdminKpiTrend = { value: number; label: string };
+
 export type OrgAdminKpis = {
   totalInvitedUsers: number;
   activeUsers: number;
   inactiveUsers: number;
   totalMockInterviews: number;
   avgInterviewScore: number;
+  trends: {
+    totalInvitedUsers: OrgAdminKpiTrend;
+    activeUsers: OrgAdminKpiTrend;
+    totalMockInterviews: OrgAdminKpiTrend;
+    avgInterviewScore: OrgAdminKpiTrend;
+  };
 };
 
 export type OrgAdminDashboardDataset = {
@@ -31,6 +39,30 @@ export const DATE_RANGE_OPTIONS: { value: DateRangeGranularity; label: string }[
   { value: "weekly", label: "Weekly" },
   { value: "monthly", label: "Monthly" },
 ];
+
+const KPI_TREND_LABEL: Record<DateRangeGranularity, string> = {
+  daily: "vs prior day",
+  weekly: "vs prior week",
+  monthly: "vs prior month",
+};
+
+function kpiTrends(
+  granularity: DateRangeGranularity,
+  values: {
+    totalInvitedUsers: number;
+    activeUsers: number;
+    totalMockInterviews: number;
+    avgInterviewScore: number;
+  },
+): OrgAdminKpis["trends"] {
+  const label = KPI_TREND_LABEL[granularity];
+  return {
+    totalInvitedUsers: { value: values.totalInvitedUsers, label },
+    activeUsers: { value: values.activeUsers, label },
+    totalMockInterviews: { value: values.totalMockInterviews, label },
+    avgInterviewScore: { value: values.avgInterviewScore, label },
+  };
+}
 
 /** Real-time snapshot, not filtered by date range — same across all granularities. Source of truth lives in orgAdminBillingData.ts. */
 const SUBSCRIPTION_MODULES: SubscriptionModuleUsage[] = BASE_SUBSCRIPTION_MODULES;
@@ -53,6 +85,12 @@ export const ORG_ADMIN_MOCK_DATA: Record<DateRangeGranularity, OrgAdminDashboard
       inactiveUsers: 11,
       totalMockInterviews: 96,
       avgInterviewScore: 3.4,
+      trends: kpiTrends("daily", {
+        totalInvitedUsers: 2.4,
+        activeUsers: 3.3,
+        totalMockInterviews: 12.5,
+        avgInterviewScore: -2.9,
+      }),
     },
     invitedUsersTrend: [
       { label: "Apr 01", total: 28, active: 20, inactive: 8 },
@@ -103,6 +141,12 @@ export const ORG_ADMIN_MOCK_DATA: Record<DateRangeGranularity, OrgAdminDashboard
       inactiveUsers: 11,
       totalMockInterviews: 340,
       avgInterviewScore: 3.4,
+      trends: kpiTrends("weekly", {
+        totalInvitedUsers: 5.0,
+        activeUsers: 6.9,
+        totalMockInterviews: 7.3,
+        avgInterviewScore: 0.0,
+      }),
     },
     invitedUsersTrend: [
       { label: "Wk 1", total: 20, active: 13, inactive: 7 },
@@ -144,6 +188,12 @@ export const ORG_ADMIN_MOCK_DATA: Record<DateRangeGranularity, OrgAdminDashboard
       inactiveUsers: 11,
       totalMockInterviews: 980,
       avgInterviewScore: 3.4,
+      trends: kpiTrends("monthly", {
+        totalInvitedUsers: 68.0,
+        activeUsers: 82.4,
+        totalMockInterviews: 100.0,
+        avgInterviewScore: 9.7,
+      }),
     },
     invitedUsersTrend: [
       { label: "Jan", total: 8, active: 4, inactive: 4 },

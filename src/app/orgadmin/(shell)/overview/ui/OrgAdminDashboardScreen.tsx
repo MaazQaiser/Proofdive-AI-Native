@@ -52,10 +52,30 @@ export function OrgAdminDashboardScreen() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Total Invited Users" value={formatNumber(kpis.totalInvitedUsers)} icon={UserPlus} />
-        <KpiCard label="Active Users" value={formatNumber(kpis.activeUsers)} icon={Users} />
-        <KpiCard label="Mock Interviews Conducted" value={formatNumber(kpis.totalMockInterviews)} icon={Video} />
-        <KpiCard label="Average Interview Score" value={`${kpis.avgInterviewScore.toFixed(1)} / 5`} icon={Star} />
+        <KpiCard
+          label="Total Invited Users"
+          value={formatNumber(kpis.totalInvitedUsers)}
+          icon={UserPlus}
+          trend={kpis.trends.totalInvitedUsers}
+        />
+        <KpiCard
+          label="Active Users"
+          value={formatNumber(kpis.activeUsers)}
+          icon={Users}
+          trend={kpis.trends.activeUsers}
+        />
+        <KpiCard
+          label="Mock Interviews Conducted"
+          value={formatNumber(kpis.totalMockInterviews)}
+          icon={Video}
+          trend={kpis.trends.totalMockInterviews}
+        />
+        <KpiCard
+          label="Average Interview Score"
+          value={`${kpis.avgInterviewScore.toFixed(1)} / 5`}
+          icon={Star}
+          trend={kpis.trends.avgInterviewScore}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">

@@ -25,6 +25,15 @@ export function KpiCard({
   isEmpty,
   emptyMessage = "No analytics data available.",
 }: Props) {
+  const trendDirection = !trend
+    ? null
+    : trend.value > 0
+      ? "up"
+      : trend.value < 0
+        ? "down"
+        : "flat";
+  const trendAbs = trend ? Math.abs(trend.value).toFixed(1) : null;
+
   return (
     <Card className="gap-0 py-5">
       <CardContent className="px-5">
@@ -42,20 +51,25 @@ export function KpiCard({
           <>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
               <p className="text-h4 tabular-nums text-foreground">{value}</p>
-              {trend ? (
+              {trend && trendDirection && trendAbs ? (
                 <span
                   className={cn(
                     "inline-flex items-center gap-0.5 text-overline font-medium",
-                    trend.value >= 0 ? "text-scoring-green" : "text-scoring-red",
+                    trendDirection === "up" && "text-trend-up",
+                    trendDirection === "down" && "text-trend-down",
+                    trendDirection === "flat" && "text-muted-foreground",
                   )}
+                  aria-label={`${
+                    trendDirection === "up" ? "Up" : trendDirection === "down" ? "Down" : "Unchanged"
+                  } ${trendAbs} percent${trend.label ? ` ${trend.label}` : ""}`}
                 >
-                  {trend.value >= 0 ? (
-                    <TrendingUp className="h-3 w-3" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3" />
-                  )}
-                  {trend.value >= 0 ? "+" : ""}
-                  {trend.value.toFixed(1)}%
+                  {trendDirection === "up" ? (
+                    <TrendingUp className="h-3 w-3" aria-hidden />
+                  ) : trendDirection === "down" ? (
+                    <TrendingDown className="h-3 w-3" aria-hidden />
+                  ) : null}
+                  {trendDirection === "up" ? "+" : trendDirection === "down" ? "−" : ""}
+                  {trendAbs}%
                 </span>
               ) : null}
             </div>

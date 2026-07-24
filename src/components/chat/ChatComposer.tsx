@@ -8,10 +8,18 @@ import {
   type ReactNode,
   type TransitionEvent,
 } from "react";
-import { ArrowUp, FileText, Mic, Paperclip, X, type LucideIcon } from "lucide-react";
+import { Maximize2, Minimize2, X, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/components/cn";
 import { useSpeechDictation } from "@/components/chat/useSpeechDictation";
+import { Chatbox } from "@/components/ui/chatbox";
+import {
+  Dialog,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { IconButton } from "@/components/ui/icon-button";
 import { SelectionChip } from "@/components/ui/selection-chip";
 
@@ -28,6 +36,9 @@ export type ChatComposerModeToggle = {
   activeLabel: string;
   onToggle: () => void;
 };
+
+const headerIconButtonClassName =
+  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary active:bg-muted";
 
 export function ChatComposer({
   placeholder = "Type a message…",
@@ -76,6 +87,7 @@ export function ChatComposer({
   const [chipsInDom, setChipsInDom] = useState(false);
   const [chipsAnimVisible, setChipsAnimVisible] = useState(false);
   const [pendingUploads, setPendingUploads] = useState<File[]>([]);
+  const [expanded, setExpanded] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const skipOpenOnNextFocusRef = useRef(false);
@@ -87,6 +99,10 @@ export function ChatComposer({
   useEffect(() => {
     if (disabled) skipOpenOnNextFocusRef.current = false;
   }, [disabled]);
+
+  useEffect(() => {
+    if (!thread) setExpanded(false);
+  }, [thread]);
 
   const appendFinalTranscript = useCallback((segment: string) => {
     setText((prev) => {
@@ -129,6 +145,11 @@ export function ChatComposer({
     setQuickPromptsOpen(false);
     stop();
     inputRef.current?.focus();
+  }
+
+  function handleThreadClose() {
+    setExpanded(false);
+    onThreadClose?.();
   }
 
   const hasQuickChips = Boolean(quickPromptChips?.length);
@@ -197,40 +218,164 @@ export function ChatComposer({
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 
-  return (
-    <div className={cn("flex items-end gap-2", !!thread && "max-h-[600px] w-full min-h-0")}>
-      <div className={cn("flex min-w-0 flex-1 flex-col gap-2", !!thread && "min-h-0 max-h-full")}>
-        {chipsInDom && quickPromptChips?.length ? (
-          <div
-            onTransitionEnd={handleChipsRowTransitionEnd}
-            className={cn(
-              "flex min-h-0 flex-wrap gap-2 px-0.5 will-change-transform",
-              "origin-bottom transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] [transition-property:transform,opacity]",
-              "motion-reduce:duration-0 motion-reduce:transition-none",
-              chipsAnimVisible
-                ? "translate-y-0 opacity-100"
-                : "pointer-events-none -translate-y-1.5 opacity-0",
-            )}
-            aria-hidden={!chipsAnimVisible}
+  const modeToggleControl = modeToggle ? (
+    modeToggle.isActive ? (
+      <button
+        type="button"
+        onClick={modeToggle.onToggle}
+        aria-label={`Exit ${modeToggle.activeLabel}`}
+        className="flex h-7 shrink-0 items-center gap-1 rounded-full border border-border bg-muted/70 py-1 pl-2 pr-1.5 backdrop-blur-[16px]"
+      >
+        <modeToggle.icon className="size-4 shrink-0" />
+        <span className="text-text-primary px-0.5 text-overline font-medium leading-6 whitespace-nowrap">
+          {modeToggle.activeLabel}
+        </span>
+        <X className="size-4 shrink-0" />
+      </button>
+    ) : (
+      <IconButton
+        variant="ghost"
+        onClick={modeToggle.onToggle}
+        aria-label={modeToggle.activeLabel}
+      >
+        <modeToggle.icon />
+      </IconButton>
+    )
+  ) : null;
+
+  const threadLeading = thread ? (
+    <div
+      className={cn(
+        "flex w-full min-h-0 flex-1 flex-col border-b border-border",
+        expanded ? "max-h-none" : "max-h-[min(380px,42dvh)]",
+      )}
+    >
+      <div
+        className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-5"
+        role="group"
+        aria-label="AI Coach header"
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <StarInCircleIcon className="h-4 w-4 text-scoring-yellow" />
+          <span className="text-caption text-text-primary">{threadHeaderTitle}</span>
+        </div>
+        <div className="flex shrink-0 items-center">
+          <button
+            type="button"
+            onClick={() => setExpanded((prev) => !prev)}
+            className={headerIconButtonClassName}
+            aria-label={expanded ? "Exit full screen" : "Expand to full screen"}
           >
-            {quickPromptChips.map((chip) => (
-              <SelectionChip
-                key={chip.label}
-                disabled={disabled}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => applyQuickChipFromChipObject(chip)}
-              >
-                {chip.label}
-              </SelectionChip>
-            ))}
-          </div>
-        ) : null}
-        <div
-          className={cn(
-            "min-w-0 min-h-0 flex-1 overflow-hidden rounded-[20px] border border-border bg-(--base)/60 backdrop-blur-[42px]",
-            !!thread && "flex min-h-0 flex-col",
-          )}
-        >
+            {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
+          {onThreadClose ? (
+            <button
+              type="button"
+              onClick={handleThreadClose}
+              className={headerIconButtonClassName}
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
+      </div>
+      <div
+        className="w-full min-h-0 flex-1 overflow-y-auto scroll-smooth px-5 py-2"
+        tabIndex={0}
+        role="log"
+        aria-relevant="additions"
+      >
+        {thread}
+      </div>
+    </div>
+  ) : null;
+
+  const voiceStatus = voiceError ? (
+    <p className="text-caption text-destructive" role="status">
+      {voiceError}
+    </p>
+  ) : !isSupported ? (
+    <p className="text-caption text-text-secondary">
+      Voice needs Chrome, Edge, or Safari (not Firefox).
+    </p>
+  ) : null;
+
+  const chatbox = (
+    <Chatbox
+      className={cn(
+        !!thread && "min-h-0 flex-1",
+        expanded && "h-full max-h-full w-full max-w-none",
+      )}
+      value={displayText}
+      onValueChange={handleTextChange}
+      onSend={send}
+      placeholder={placeholder}
+      disabled={disabled}
+      showUploadAction={showUploadButton}
+      onUploadClick={() => fileInputRef.current?.click()}
+      attachedFiles={pendingUploads.map((file) => ({
+        id: `${file.name}-${file.lastModified}`,
+        name: file.name,
+      }))}
+      onRemoveAttachedFile={(id) =>
+        setPendingUploads((prev) =>
+          prev.filter((f) => `${f.name}-${f.lastModified}` !== id),
+        )
+      }
+      onMicClick={() => {
+        if (isListening) stop();
+        else void start();
+      }}
+      isListening={isListening}
+      leading={threadLeading}
+      footerTrailing={modeToggleControl}
+      status={voiceStatus}
+      textareaRef={inputRef}
+      textareaProps={{
+        onFocus: handleTextareaFocus,
+        onBlur: handleTextareaBlur,
+        onKeyDown: (e) => {
+          if (disabled) return;
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            send();
+          }
+        },
+      }}
+    />
+  );
+
+  return (
+    <>
+      <div className={cn("flex items-end gap-2", !!thread && !expanded && "max-h-[600px] w-full min-h-0")}>
+        <div className={cn("flex min-w-0 flex-1 flex-col gap-2", !!thread && !expanded && "min-h-0 max-h-full")}>
+          {chipsInDom && quickPromptChips?.length && !expanded ? (
+            <div
+              onTransitionEnd={handleChipsRowTransitionEnd}
+              className={cn(
+                "flex min-h-0 flex-wrap gap-2 px-0.5 will-change-transform",
+                "origin-bottom transition duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] [transition-property:transform,opacity]",
+                "motion-reduce:duration-0 motion-reduce:transition-none",
+                chipsAnimVisible
+                  ? "translate-y-0 opacity-100"
+                  : "pointer-events-none -translate-y-1.5 opacity-0",
+              )}
+              aria-hidden={!chipsAnimVisible}
+            >
+              {quickPromptChips.map((chip) => (
+                <SelectionChip
+                  key={chip.label}
+                  disabled={disabled}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => applyQuickChipFromChipObject(chip)}
+                >
+                  {chip.label}
+                </SelectionChip>
+              ))}
+            </div>
+          ) : null}
+
           {showUploadButton ? (
             <input
               ref={fileInputRef}
@@ -248,166 +393,28 @@ export function ChatComposer({
               }}
             />
           ) : null}
-          {thread ? (
-            <div className="flex w-full min-h-0 max-h-[min(380px,42dvh)] flex-1 flex-col border-b border-border">
-              <div
-                className="flex shrink-0 items-center justify-between gap-2 border-b border-border pl-1 pr-0.5"
-                role="group"
-                aria-label="AI Coach header"
-              >
-                <div className="flex min-w-0 items-center gap-2 pl-1">
-                  <StarInCircleIcon className="h-4 w-4 text-scoring-yellow" />
-                  <span className="text-caption text-text-primary">
-                    {threadHeaderTitle}
-                  </span>
-                </div>
-                {onThreadClose ? (
-                  <button
-                    type="button"
-                    onClick={onThreadClose}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary active:bg-muted"
-                    aria-label="Close"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : null}
-              </div>
-              <div
-                className="w-full min-h-0 flex-1 overflow-y-auto scroll-smooth px-3 py-2"
-                tabIndex={0}
-                role="log"
-                aria-relevant="additions"
-              >
-                {thread}
-              </div>
-            </div>
-          ) : null}
-          <textarea
-            ref={inputRef}
-            value={displayText}
-            onChange={(e) => handleTextChange(e.target.value)}
-            placeholder={placeholder}
-            className={cn(
-              "text-text-primary placeholder:text-text-secondary min-h-12 w-full resize-none bg-transparent px-4 py-3 text-body-sm leading-[1.25] outline-none disabled:cursor-not-allowed disabled:opacity-60",
-              thread ? "shrink-0 rounded-none rounded-b-[20px] pt-3" : "rounded-[20px]",
-            )}
-            rows={1}
-            disabled={disabled}
-            onFocus={handleTextareaFocus}
-            onBlur={handleTextareaBlur}
-            onKeyDown={(e) => {
-              if (disabled) return;
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                send();
-              }
-            }}
-          />
-          {pendingUploads.length ? (
-            <div className="flex flex-col gap-2 px-4 pb-2">
-              {pendingUploads.map((file) => (
-                <div
-                  key={`${file.name}-${file.lastModified}`}
-                  className="flex w-fit min-w-16 shrink-0 items-center gap-1 rounded-lg border border-border bg-muted/70 px-1.5 py-1 backdrop-blur-[16px]"
-                >
-                  <FileText className="size-4 shrink-0" />
-                  <span className="text-text-primary px-1 text-overline font-medium leading-6 whitespace-nowrap">
-                    {file.name}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label={`Remove ${file.name}`}
-                    title="Remove"
-                    onClick={() =>
-                      setPendingUploads((prev) =>
-                        prev.filter(
-                          (f) => !(f.name === file.name && f.lastModified === file.lastModified),
-                        ),
-                      )
-                    }
-                    className="flex size-4 shrink-0 items-center justify-center"
-                  >
-                    <X className="size-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : null}
-          <div className="flex flex-col gap-1 px-4 pb-3">
-            {voiceError ? (
-              <p className="text-caption text-destructive" role="status">
-                {voiceError}
-              </p>
-            ) : !isSupported ? (
-              <p className="text-caption text-text-secondary">
-                Voice needs Chrome, Edge, or Safari (not Firefox).
-              </p>
-            ) : null}
-            <div className="flex h-7 w-full items-center">
-              {showUploadButton ? (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={disabled}
-                  className="text-text-primary hover:bg-muted flex min-w-16 shrink-0 items-center justify-center gap-1 rounded-full px-2 py-0.5 disabled:pointer-events-none disabled:opacity-50"
-                >
-                  <Paperclip className="size-4 shrink-0" />
-                  <span className="px-1 text-overline font-medium leading-6 whitespace-nowrap">
-                    Upload
-                  </span>
-                </button>
-              ) : null}
-              <div className="ml-auto flex shrink-0 items-center gap-2">
-                {modeToggle ? (
-                  modeToggle.isActive ? (
-                    <button
-                      type="button"
-                      onClick={modeToggle.onToggle}
-                      aria-label={`Exit ${modeToggle.activeLabel}`}
-                      className="flex h-7 shrink-0 items-center gap-1 rounded-full border border-border bg-muted/70 py-1 pl-2 pr-1.5 backdrop-blur-[16px]"
-                    >
-                      <modeToggle.icon className="size-4 shrink-0" />
-                      <span className="text-text-primary px-0.5 text-overline font-medium leading-6 whitespace-nowrap">
-                        {modeToggle.activeLabel}
-                      </span>
-                      <X className="size-4 shrink-0" />
-                    </button>
-                  ) : (
-                    <IconButton
-                      variant="ghost"
-                      onClick={modeToggle.onToggle}
-                      aria-label={modeToggle.activeLabel}
-                    >
-                      <modeToggle.icon />
-                    </IconButton>
-                  )
-                ) : null}
-                <IconButton
-                  variant="ghost"
-                  disabled={disabled}
-                  onClick={() => {
-                    if (isListening) stop();
-                    else void start();
-                  }}
-                  aria-label={isListening ? "Stop voice" : "Start voice"}
-                  className={isListening ? "bg-primary text-primary-foreground" : undefined}
-                >
-                  <Mic />
-                </IconButton>
-                <IconButton
-                  variant="solid"
-                  disabled={disabled}
-                  onClick={send}
-                  aria-label="Send"
-                >
-                  <ArrowUp />
-                </IconButton>
-              </div>
-            </div>
-          </div>
+
+          {!expanded ? chatbox : null}
         </div>
       </div>
-    </div>
+
+      <Dialog open={expanded} onOpenChange={setExpanded}>
+        <DialogPortal>
+          <DialogOverlay />
+          <DialogPrimitive.Content
+            aria-describedby={undefined}
+            className="fixed inset-0 z-50 flex h-dvh w-screen items-center justify-center p-4 outline-none sm:p-6"
+          >
+            <DialogTitle className="sr-only">{threadHeaderTitle}</DialogTitle>
+            {expanded ? (
+              <div className="flex h-full max-h-[min(840px,90dvh)] w-full max-w-[800px] flex-col">
+                {chatbox}
+              </div>
+            ) : null}
+          </DialogPrimitive.Content>
+        </DialogPortal>
+      </Dialog>
+    </>
   );
 }
 
