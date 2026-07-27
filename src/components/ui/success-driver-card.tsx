@@ -2,11 +2,13 @@ import type { ReactNode } from "react";
 
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import {
-  SUCCESS_DRIVER_COLORS,
   SUCCESS_DRIVERS,
   type SuccessDriverId,
 } from "@/lib/successDrivers";
 import { cn } from "@/lib/utils";
+
+/** Canonical Success Driver symbol fill — brand dark cyan, used app-wide. */
+export const SUCCESS_DRIVER_SYMBOL_CLASS = "text-extended-cyan-green";
 
 type SuccessDriverMarkProps = {
   driver: SuccessDriverId;
@@ -24,7 +26,6 @@ function SuccessDriverMark({
   iconClassName,
 }: SuccessDriverMarkProps) {
   const meta = SUCCESS_DRIVERS[driver];
-  const colors = SUCCESS_DRIVER_COLORS[driver];
   const text =
     label === "full" ? meta.label : label === "short" ? meta.shortLabel : null;
 
@@ -32,10 +33,10 @@ function SuccessDriverMark({
     <span className={cn("inline-flex items-center gap-2", className)}>
       <SuccessDriverIcon
         driver={driver}
-        className={cn("size-5", colors.accent, iconClassName)}
+        className={cn("size-5", SUCCESS_DRIVER_SYMBOL_CLASS, iconClassName)}
       />
       {text ? (
-        <span className={cn("min-w-0 truncate font-semibold", colors.fg)}>
+        <span className="min-w-0 truncate font-semibold text-extended-cyan-green">
           {text}
         </span>
       ) : null}
@@ -53,8 +54,8 @@ type SuccessDriverCardProps = {
   selected?: boolean;
 };
 
-/** Pastel Success Driver surface with an enlarged, blurred, grainy brand
- * symbol bleeding off the left edge. Content sits relatively above the art. */
+/** Glass Success Driver surface — light tint of the brand symbol color with a
+ * frosted fill, matching border, and a large noisy blur symbol on the right. */
 function SuccessDriverCard({
   driver,
   children,
@@ -62,42 +63,38 @@ function SuccessDriverCard({
   badge,
   selected = false,
 }: SuccessDriverCardProps) {
-  const colors = SUCCESS_DRIVER_COLORS[driver];
-
   return (
     <div
       data-slot="success-driver-card"
       data-driver={driver}
       className={cn(
         "relative overflow-hidden rounded-lg border transition",
-        colors.bg,
+        "bg-[color-mix(in_srgb,var(--extended-cyan-green)_9%,white)] backdrop-blur-xl",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]",
         selected
-          ? cn(
-              "border-transparent ring-2 ring-offset-2 ring-offset-background",
-              colors.ring,
-            )
-          : "border-transparent",
+          ? "border-extended-cyan-green"
+          : "border-extended-cyan-green/45",
         className,
       )}
     >
       <div
-        className="pointer-events-none absolute -left-10 top-1/2 -translate-y-1/2 select-none"
+        className="pointer-events-none absolute -right-16 top-1/2 size-[18rem] -translate-y-1/2 select-none sm:-right-20 sm:size-[22rem]"
         aria-hidden
       >
         <SuccessDriverIcon
           driver={driver}
           className={cn(
-            "size-[11.5rem] opacity-55 blur-[18px] sm:size-[13rem]",
-            colors.symbol,
+            "size-full opacity-50 blur-[26px] sm:blur-[30px]",
+            SUCCESS_DRIVER_SYMBOL_CLASS,
           )}
         />
       </div>
       <div className="success-driver-noise absolute inset-0" aria-hidden />
-      <div className="relative z-10 flex flex-col gap-3 py-5 pl-16 pr-5 sm:py-6 sm:pl-20 sm:pr-6">
+      <div className="relative z-10 flex flex-col gap-2.5 p-6 sm:p-8">
         {badge ? (
           <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/70 bg-white/90 px-2.5 py-1 text-overline font-medium text-text-primary shadow-sm backdrop-blur-sm">
             <span
-              className={cn("size-1.5 shrink-0 rounded-full", colors.accentDot)}
+              className="size-1.5 shrink-0 rounded-full bg-extended-cyan-green"
               aria-hidden
             />
             {badge}

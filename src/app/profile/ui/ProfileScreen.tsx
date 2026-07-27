@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, Fragment, useMemo, useRef, useState } from "react";
-import { ChevronRight, Pencil, Sparkles, UserRound } from "lucide-react";
+import { ChevronRight, Pencil, Sparkles, Trash2, UserRound } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
@@ -111,13 +111,11 @@ function PrefRow({
 
 function RoleRow({
   profile,
-  isActive,
-  onSetActive,
+  isSelected,
   onRemove,
 }: {
   profile: RoleProfile;
-  isActive: boolean;
-  onSetActive: () => void;
+  isSelected: boolean;
   onRemove: () => void;
 }) {
   return (
@@ -125,8 +123,8 @@ function RoleRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 text-body-sm font-medium text-foreground">
           {profile.targetRole}
-          {isActive && (
-            <Badge className="border-transparent bg-primary/10 text-primary">Active</Badge>
+          {isSelected && (
+            <Badge className="border-transparent bg-primary/10 text-primary">Selected</Badge>
           )}
         </div>
         {profile.industryVertical && (
@@ -136,20 +134,16 @@ function RoleRow({
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {!isActive && (
-          <Button size="sm" variant="outline" onClick={onSetActive}>
-            Set active
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant="destructive"
+        <IconButton
+          variant="ghost"
           onClick={onRemove}
-          disabled={isActive}
-          title={isActive ? "Switch to another role before removing this one" : undefined}
+          disabled={isSelected}
+          aria-label="Remove role"
+          title={isSelected ? "Switch to another role before removing this one" : "Remove role"}
+          className="text-destructive hover:bg-transparent hover:text-destructive/80 disabled:opacity-40"
         >
-          Remove
-        </Button>
+          <Trash2 />
+        </IconButton>
       </div>
     </div>
   );
@@ -200,14 +194,6 @@ export function ProfileScreen() {
   const [emailNotice, setEmailNotice] = useState<string | null>(null);
 
   const roles = useMemo(() => rolesWithActive(savedRoles, roleProfile), [savedRoles, roleProfile]);
-
-  function handleSetActiveRole(profile: RoleProfile) {
-    setSavedRoles((prev) =>
-      roleProfile?.targetRole?.trim() ? upsertSavedRole(prev, roleProfile) : prev,
-    );
-    setRoleProfile(profile);
-    setEmailNotice(null);
-  }
 
   function handleRemoveRole(targetRole: string) {
     setSavedRoles((prev) => removeSavedRole(prev, targetRole));
@@ -452,11 +438,10 @@ export function ProfileScreen() {
                       {i > 0 && <Separator />}
                       <RoleRow
                         profile={r}
-                        isActive={
+                        isSelected={
                           r.targetRole.trim().toLowerCase() ===
                           roleProfile!.targetRole.trim().toLowerCase()
                         }
-                        onSetActive={() => handleSetActiveRole(r)}
                         onRemove={() => handleRemoveRole(r.targetRole)}
                       />
                     </Fragment>

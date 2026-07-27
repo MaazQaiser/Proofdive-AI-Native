@@ -27,6 +27,8 @@ import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo, type LogoSize } from "@/components/ui/logo";
+import { MediaListItem } from "@/components/ui/media-list-item";
+import { PixelMedia } from "@/components/ui/pixel-media";
 import {
   Select,
   SelectContent,
@@ -408,7 +410,7 @@ export default function DesignSystemPage() {
 
           <Section
             title="Success Drivers"
-            description="Four brand pillars with dedicated color tokens and symbols. Use SuccessDriverIcon beside headings, SuccessDriverMark for labeled rows, and SuccessDriverCard for pastel surfaces with a left-side blurred symbol + grain."
+            description="Four brand pillars sharing one symbol color (#062C35). Use SuccessDriverIcon beside headings, SuccessDriverMark for labeled rows, and SuccessDriverCard for glass surfaces with a right-side blurred, noisy symbol."
           >
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {SUCCESS_DRIVER_ORDER.map((id) => {
@@ -421,10 +423,12 @@ export default function DesignSystemPage() {
                         className={cn(
                           "inline-flex size-10 items-center justify-center rounded-xl border",
                           colors.accentBg,
-                          colors.accent,
                         )}
                       >
-                        <SuccessDriverIcon driver={id} className="size-5" />
+                        <SuccessDriverIcon
+                          driver={id}
+                          className="size-5 text-extended-cyan-green"
+                        />
                       </span>
                       <div className="min-w-0">
                         <p className="text-caption font-semibold text-foreground">
@@ -776,7 +780,10 @@ export default function DesignSystemPage() {
               <Card className="lg:col-span-2">
                 <CardHeader>
                   <CardTitle>Card button</CardTitle>
-                  <CardDescription>Primary and gray variants</CardDescription>
+                  <CardDescription>
+                    Module CTAs — glass fill, diagonal arrow, blurred corner symbol.
+                    Primary (teal) and gray (frosted) variants share one component.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-4">
                   <CardButton
@@ -793,8 +800,45 @@ export default function DesignSystemPage() {
                     icon={<UserCheck />}
                     title="Mock interview"
                     subtitle="Evaluate yourself for UX role"
-                    illustrationSrc="/brand/illustration-3.svg"
+                    illustrationSrc="/brand/illustration-4.svg"
                   />
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Media list item</CardTitle>
+                  <CardDescription>
+                    Video / chapter rows — play icon on the stepped thumbnail; duration
+                    as plain text on the right (never overlaid on the thumb).
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                  <div className="rounded-[20px] border border-brand-800 bg-[linear-gradient(90deg,var(--brand-1000),#fff_48%)] px-4 py-4">
+                    <MediaListItem
+                      imageUrl="/brand/training-campaign-1.png"
+                      title="1. Thinking"
+                      summary="Clarity, structure, tradeoffs, and judgment."
+                      duration="28 min"
+                    />
+                  </div>
+                  <div className="rounded-[20px] border border-border bg-white px-4 py-4">
+                    <MediaListItem
+                      imageUrl="/brand/training-campaign-2.png"
+                      title="2. Action"
+                      summary="Prioritization, execution, and follow-through."
+                      duration="30 min"
+                    />
+                  </div>
+                  <div className="flex items-center gap-4 pt-2">
+                    <PixelMedia
+                      src="/brand/training-campaign-3.png"
+                      className="h-14 w-16 rounded-xl"
+                    />
+                    <span className="text-caption text-text-secondary">
+                      PixelMedia alone (play affordance, no duration overlay)
+                    </span>
+                  </div>
                 </CardContent>
               </Card>
             </div>

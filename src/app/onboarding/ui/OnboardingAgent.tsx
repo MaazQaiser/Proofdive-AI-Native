@@ -15,6 +15,7 @@ import {
   CircleHelp,
   Home,
   Pencil,
+  RotateCcw,
   UserCheck,
   WandSparkles,
 } from "lucide-react";
@@ -22,6 +23,7 @@ import {
 import type { ChatMessage } from "@/components/chat/chatTypes";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { ChatComposer } from "@/components/chat/ChatComposer";
+import { Card, CardContent } from "@/components/ui/card";
 import { CardButton } from "@/components/ui/card-button";
 import { Textarea } from "@/components/ui/textarea";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
@@ -38,6 +40,7 @@ import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type { RoleProfile } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 import {
+  buildCoreFourReason,
   coreFourValidationError,
   suggestCoreFour,
 } from "@/lib/coreFourSuggestion";
@@ -343,7 +346,7 @@ function OnboardingAgentInner({
   }
 
   function acceptGeneratedJobDescription(text: string) {
-    push("user", "📝 Used Proofy’s draft job description.");
+    push("user", "📝 Used generated job description.");
     const next = {
       ...draft,
       jobDescription: text,
@@ -370,7 +373,7 @@ function OnboardingAgentInner({
   function confirmEditedJd() {
     const text = editedJdText.trim();
     if (!text) return;
-    push("user", "📝 Edited Proofy’s draft before using it.");
+    push("user", "📝 Edited generated job description before using it.");
     const next = {
       ...draft,
       jobDescription: text,
@@ -661,7 +664,7 @@ function OnboardingAgentInner({
       const role = next.targetRole.trim() || "your role";
       push(
         "assistant",
-        `Proofy’s turn.\n\nPaste the job description you’re targeting — or ask Proofy, your ProofDive agent, to draft one from your ${role} profile.`,
+        `Job description next.\n\nType or upload the Job description you are targeting for your ${role} role. Or Generate a Job Description`,
       );
       setStep("jobDescription");
       return;
@@ -671,7 +674,7 @@ function OnboardingAgentInner({
       if (isSkip || !cleaned) {
         push(
           "assistant",
-          "A job description is required. Paste it in, upload the file, or ask Proofy to generate a draft.",
+          "A job description is required. Paste it in, upload the file, or generate a draft.",
         );
         return;
       }
@@ -699,9 +702,13 @@ function OnboardingAgentInner({
       const withSuggestion = { ...next, coreFourCompetencies: suggested };
       setDraft(withSuggestion);
       setCoreFourError(null);
+      const reason = buildCoreFourReason({
+        targetRole: next.targetRole,
+        selected: suggested,
+      });
       push(
         "assistant",
-        "I've suggested a Core Four based on your job description — adjust if you'd like, then confirm.",
+        `I've suggested a Core Four competencies based on your job description.\n\n${reason} Adjust if you'd like, then proceed.`,
       );
       setStep("coreFourSelection");
       return;
@@ -742,14 +749,36 @@ function OnboardingAgentInner({
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full">
             <AgentPrompt
-              key={promptKey}
-              promptKey={promptKey}
-              prompt={prompt}
+              key={
+                step === "jobDescription" ? `${promptKey}-jd` : promptKey
+              }
+              promptKey={
+                step === "jobDescription" ? `${promptKey}-jd` : promptKey
+              }
+              prompt={
+                step === "jobDescription" ? "Job description next." : prompt
+              }
               ariaLabel="Onboarding prompt"
               headingClassName="text-agent-heading text-heading-teal"
-              subtextClassName="mt-16 text-agent-question text-text-primary"
+              subtextClassName="mt-8 text-agent-question text-text-primary"
               mode="word"
             />
+            {step === "jobDescription" &&
+            !generatedJdDraft &&
+            !isGeneratingJd ? (
+              <p className="mt-8 text-agent-question text-text-primary">
+                Type or upload the Job description you are targeting for your{" "}
+                {draft.targetRole.trim() || "role"} role. Or{" "}
+                <button
+                  type="button"
+                  onClick={handleGenerateJd}
+                  className="inline-flex items-center gap-1.5 rounded-sm bg-extended-light-cyan px-1.5 py-0.5 font-medium text-[#095B73] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                >
+                  Generate a Job Description
+                  <WandSparkles className="size-[0.85em] shrink-0 text-primary" aria-hidden />
+                </button>
+              </p>
+            ) : null}
             {step === "role" ? (
               <div className="mt-6 flex w-full flex-col gap-2">
                 <div className="text-body-sm font-semibold text-text-secondary">
@@ -787,99 +816,70 @@ function OnboardingAgentInner({
                   roleTitle={draft.targetRole.trim() || undefined}
                 />
               ) : generatedJdDraft ? (
-                <div className="mt-6 flex w-full flex-col gap-4">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
+                <Card className="mt-6 gap-0 py-5">
+                  <CardContent className="flex flex-col gap-4 px-5">
+                    <div className="flex flex-col gap-1.5">
                       <h2 className="text-h4 text-heading-teal">
-                        Proofy’s draft
+                        Generated Job Description
                       </h2>
-                      <span className="rounded-md border border-border bg-card px-2 py-0.5 text-overline font-medium text-extended-cyan">
-                        ProofDive agent
-                      </span>
+                      <p className="text-body-sm text-text-secondary">
+                        {isEditingJd
+                          ? "Tweak the draft below, then confirm."
+                          : draft.targetRole.trim()
+                            ? `Drafted for ${draft.targetRole.trim()}${draft.industryVertical.trim() ? ` · ${draft.industryVertical.trim()}` : ""} — review before continuing.`
+                            : "Review before continuing."}
+                      </p>
                     </div>
-                    <p className="text-body-sm text-text-secondary">
-                      {isEditingJd
-                        ? "Tweak Proofy’s draft below, then confirm."
-                        : draft.targetRole.trim()
-                          ? `Drafted for ${draft.targetRole.trim()}${draft.industryVertical.trim() ? ` · ${draft.industryVertical.trim()}` : ""} — review before continuing.`
-                          : "Not an employer-authored JD — review before continuing."}
-                    </p>
-                  </div>
-                  {isEditingJd ? (
-                    <Textarea
-                      value={editedJdText}
-                      onChange={(e) => setEditedJdText(e.target.value)}
-                      className="min-h-64 w-full resize-y text-body-sm text-text-primary"
-                      autoFocus
-                    />
-                  ) : (
-                    <div className="whitespace-pre-wrap text-body-sm text-text-primary">
-                      {generatedJdDraft}
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-2">
                     {isEditingJd ? (
-                      <>
-                        <SelectionChip onClick={confirmEditedJd}>
-                          Use this draft
-                          <ArrowRight className="size-4" />
-                        </SelectionChip>
-                        <SelectionChip onClick={cancelEditingJd}>
-                          Cancel
-                        </SelectionChip>
-                      </>
+                      <Textarea
+                        value={editedJdText}
+                        onChange={(e) => setEditedJdText(e.target.value)}
+                        className="min-h-64 w-full resize-y text-body-sm text-text-primary"
+                        autoFocus
+                      />
                     ) : (
-                      <>
-                        <SelectionChip
-                          onClick={() =>
-                            acceptGeneratedJobDescription(generatedJdDraft)
-                          }
-                        >
-                          Use this draft
-                          <ArrowRight className="size-4" />
-                        </SelectionChip>
-                        <SelectionChip
-                          onClick={() => startEditingJd(generatedJdDraft)}
-                        >
-                          <Pencil className="size-4" />
-                          Edit before using
-                        </SelectionChip>
-                        <SelectionChip onClick={handleRegenerateJd}>
-                          <WandSparkles className="size-4" />
-                          Ask Proofy again
-                        </SelectionChip>
-                      </>
+                      <div className="whitespace-pre-wrap text-body-sm text-text-primary">
+                        {generatedJdDraft}
+                      </div>
                     )}
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-6 flex w-full flex-col gap-3">
-                  {(draft.targetRole.trim() ||
-                    draft.industryVertical.trim()) && (
                     <div className="flex flex-wrap gap-2">
-                      {draft.targetRole.trim() ? (
-                        <span className="rounded-md border border-border bg-card px-2.5 py-1 text-caption text-text-secondary">
-                          Role · {draft.targetRole.trim()}
-                        </span>
-                      ) : null}
-                      {draft.industryVertical.trim() ? (
-                        <span className="rounded-md border border-border bg-card px-2.5 py-1 text-caption text-text-secondary">
-                          Industry · {draft.industryVertical.trim()}
-                        </span>
-                      ) : null}
+                      {isEditingJd ? (
+                        <>
+                          <SelectionChip selected onClick={confirmEditedJd}>
+                            Use this draft
+                            <ArrowRight className="size-4" />
+                          </SelectionChip>
+                          <SelectionChip onClick={cancelEditingJd}>
+                            Cancel
+                          </SelectionChip>
+                        </>
+                      ) : (
+                        <>
+                          <SelectionChip
+                            selected
+                            onClick={() =>
+                              acceptGeneratedJobDescription(generatedJdDraft)
+                            }
+                          >
+                            Use this draft
+                            <ArrowRight className="size-4" />
+                          </SelectionChip>
+                          <SelectionChip
+                            onClick={() => startEditingJd(generatedJdDraft)}
+                          >
+                            <Pencil className="size-4" />
+                            Edit before using
+                          </SelectionChip>
+                          <SelectionChip onClick={handleRegenerateJd}>
+                            <RotateCcw className="size-4" />
+                            Regenerate
+                          </SelectionChip>
+                        </>
+                      )}
                     </div>
-                  )}
-                  <div className="flex flex-wrap gap-2">
-                    <SelectionChip onClick={handleGenerateJd}>
-                      <PencilSparklesIcon className="size-4" />
-                      Ask Proofy to draft a JD
-                    </SelectionChip>
-                  </div>
-                  <p className="text-caption text-text-secondary">
-                    Or paste / upload a real job description below.
-                  </p>
-                </div>
-              )
+                  </CardContent>
+                </Card>
+              ) : null
             ) : null}
             {step === "coreFourSelection" ? (
               <CoreFourSelectionPanel
@@ -907,7 +907,7 @@ function OnboardingAgentInner({
                   icon={<UserCheck />}
                   title="Mock interview"
                   subtitle={`Evaluate yourself for the ${role || "selected"} role`}
-                  illustrationSrc="/brand/illustration-3.svg"
+                  illustrationSrc="/brand/illustration-4.svg"
                 />
               </div>
             ) : null}
@@ -1016,33 +1016,5 @@ function JdGeneratingSkeleton({ roleTitle }: { roleTitle?: string }) {
         <div className={cn("h-4 w-1/2", shimmerBar)} />
       </div>
     </div>
-  );
-}
-
-/** lucide "pencil-sparkles" — not yet in the installed lucide-react version, inlined here. */
-function PencilSparklesIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      <path d="M10 3H8" />
-      <path d="m15.007 5.008 3.987 3.986" />
-      <path d="M20 15v4" />
-      <path d="M21.174 6.813a2.82 2.82 0 0 0-3.986-3.987L3.842 16.175a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-      <path d="M22 17h-4" />
-      <path d="M4 5v4" />
-      <path d="M6 7H2" />
-      <path d="M9 2v2" />
-    </svg>
   );
 }

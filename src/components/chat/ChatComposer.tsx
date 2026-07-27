@@ -9,7 +9,7 @@ import {
   type TransitionEvent,
 } from "react";
 import { createPortal } from "react-dom";
-import { Maximize2, Minimize2, X, type LucideIcon } from "lucide-react";
+import { Maximize2, MessageCircleQuestion, X, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/components/cn";
 import { useSpeechDictation } from "@/components/chat/useSpeechDictation";
@@ -260,7 +260,7 @@ export function ChatComposer({
     <div
       className={cn(
         "flex w-full min-h-0 flex-1 flex-col border-b border-border",
-        expanded ? "max-h-none" : "max-h-[min(380px,42dvh)]",
+        "max-h-[min(380px,42dvh)]",
       )}
     >
       <div
@@ -269,17 +269,17 @@ export function ChatComposer({
         aria-label="AI Coach header"
       >
         <div className="flex min-w-0 items-center gap-2">
-          <StarInCircleIcon className="h-4 w-4 text-scoring-yellow" />
+          <MessageCircleQuestion className="h-4 w-4 text-neutral-700" aria-hidden />
           <span className="text-caption text-text-primary">{threadHeaderTitle}</span>
         </div>
         <div className="flex shrink-0 items-center">
           <button
             type="button"
-            onClick={() => setExpanded((prev) => !prev)}
+            onClick={() => setExpanded(true)}
             className={headerIconButtonClassName}
-            aria-label={expanded ? "Exit full screen" : "Expand to full screen"}
+            aria-label="Expand to full screen"
           >
-            {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            <Maximize2 className="h-4 w-4" />
           </button>
           {onThreadClose ? (
             <button
@@ -314,50 +314,55 @@ export function ChatComposer({
     </p>
   ) : null;
 
-  const chatbox = (
-    <Chatbox
-      className={cn(
-        !!thread && "min-h-0 flex-1",
-        expanded && "h-full max-h-full w-full max-w-none",
-      )}
-      value={displayText}
-      onValueChange={handleTextChange}
-      onSend={send}
-      placeholder={placeholder}
-      disabled={disabled}
-      showUploadAction={showUploadButton}
-      onUploadClick={() => fileInputRef.current?.click()}
-      attachedFiles={pendingUploads.map((file) => ({
-        id: `${file.name}-${file.lastModified}`,
-        name: file.name,
-      }))}
-      onRemoveAttachedFile={(id) =>
-        setPendingUploads((prev) =>
-          prev.filter((f) => `${f.name}-${f.lastModified}` !== id),
-        )
-      }
-      onMicClick={() => {
-        if (isListening) stop();
-        else void start();
-      }}
-      isListening={isListening}
-      leading={threadLeading}
-      footerTrailing={modeToggleControl}
-      status={voiceStatus}
-      textareaRef={inputRef}
-      textareaProps={{
-        onFocus: handleTextareaFocus,
-        onBlur: handleTextareaBlur,
-        onKeyDown: (e) => {
-          if (disabled) return;
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            send();
-          }
-        },
-      }}
-    />
-  );
+  function renderChatbox(opts?: {
+    leading?: ReactNode;
+    className?: string;
+    hideFooterTrailing?: boolean;
+  }) {
+    return (
+      <Chatbox
+        className={cn(!!thread && "min-h-0 flex-1", opts?.className)}
+        value={displayText}
+        onValueChange={handleTextChange}
+        onSend={send}
+        placeholder={placeholder}
+        disabled={disabled}
+        showUploadAction={showUploadButton}
+        onUploadClick={() => fileInputRef.current?.click()}
+        attachedFiles={pendingUploads.map((file) => ({
+          id: `${file.name}-${file.lastModified}`,
+          name: file.name,
+        }))}
+        onRemoveAttachedFile={(id) =>
+          setPendingUploads((prev) =>
+            prev.filter((f) => `${f.name}-${f.lastModified}` !== id),
+          )
+        }
+        onMicClick={() => {
+          if (isListening) stop();
+          else void start();
+        }}
+        isListening={isListening}
+        leading={opts?.leading}
+        footerTrailing={opts?.hideFooterTrailing ? undefined : modeToggleControl}
+        status={voiceStatus}
+        textareaRef={inputRef}
+        textareaProps={{
+          onFocus: handleTextareaFocus,
+          onBlur: handleTextareaBlur,
+          onKeyDown: (e) => {
+            if (disabled) return;
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          },
+        }}
+      />
+    );
+  }
+
+  const chatbox = renderChatbox({ leading: threadLeading ?? undefined });
 
   return (
     <>
@@ -424,25 +429,66 @@ export function ChatComposer({
             <div
               role="dialog"
               aria-modal="true"
-              aria-label={threadHeaderTitle}
+              aria-label={threadHeaderTitle ?? "Full screen assistant"}
               className="fixed inset-0 z-50 flex h-dvh w-screen flex-col bg-background"
             >
-              <BackgroundGlow intensity={backgroundGlowIntensity} />
-              <div className="relative z-10 mx-auto flex h-full w-full max-w-[800px] flex-col px-6 py-4">
-                <div className="flex min-h-0 flex-1 flex-col">{chatbox}</div>
+              {/* Brand wash behind the bottom composer. No extra orbs — the PNG is
+                  fully opaque, so any backdrop behind it reads as a hard mid-screen seam. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/brand/onboarding-gradient.png"
+                alt=""
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-auto w-full select-none"
+              />
+
+              <button
+                type="button"
+                onClick={() => setExpanded(false)}
+                className="absolute top-4 right-4 z-20 inline-flex size-10 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Close full screen"
+              >
+                <X className="size-5" strokeWidth={2} />
+              </button>
+
+              <div className="relative z-10 mx-auto flex h-full w-full max-w-[800px] flex-col px-6 pt-14 pb-6">
+                <div className="min-h-0 flex-1 overflow-y-auto scroll-smooth">
+                  <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 py-6">
+                    {threadHeaderTitle ? (
+                      <div className="flex flex-col items-center gap-3 pt-4 text-center">
+                        <MessageCircleQuestion
+                          className="size-9 text-foreground"
+                          strokeWidth={1.6}
+                          aria-hidden
+                        />
+                        <h1 className="text-h2 font-normal tracking-tight text-foreground">
+                          {threadHeaderTitle}
+                        </h1>
+                      </div>
+                    ) : null}
+                    <div
+                      className="w-full"
+                      tabIndex={0}
+                      role="log"
+                      aria-relevant="additions"
+                      aria-label="Assistant responses"
+                    >
+                      {thread}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative z-[2] mx-auto w-full max-w-2xl shrink-0 pt-3">
+                  {renderChatbox({
+                    className: "max-w-none shadow-[0_8px_30px_rgba(0,0,0,0.06)]",
+                    hideFooterTrailing: true,
+                  })}
+                </div>
               </div>
             </div>,
             document.body,
           )
         : null}
     </>
-  );
-}
-
-function StarInCircleIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={cn("shrink-0", className)} fill="currentColor" aria-hidden>
-      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-    </svg>
   );
 }

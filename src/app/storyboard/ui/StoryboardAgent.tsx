@@ -731,7 +731,7 @@ Start simple. What's something you worked on that stands out?`,
               >
                 <SuccessDriverIcon
                   driver={id}
-                  className={cn("size-4", SUCCESS_DRIVER_COLORS[id].accent)}
+                  className="size-4 text-extended-cyan-green"
                 />
                 <span className="text-overline tabular-nums text-text-primary">
                   {score > 0 ? score.toFixed(1) : "—"}

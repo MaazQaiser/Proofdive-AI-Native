@@ -10,7 +10,7 @@ export function Button({ className, variant = "primary", ...props }: Props) {
   return (
     <button
       className={cn(
-        "inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md px-5 text-body transition has-[>svg:last-child]:pl-4 has-[>svg:last-child]:pr-3 has-[>svg:first-child]:pl-3 has-[>svg:first-child]:pr-6 [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0",
+        "inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 text-body transition has-[>svg:last-child]:pl-4 has-[>svg:last-child]:pr-2 has-[>svg:first-child]:pl-2 has-[>svg:first-child]:pr-4 [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]/40",
         "disabled:cursor-not-allowed disabled:opacity-40",
         variant === "primary" &&

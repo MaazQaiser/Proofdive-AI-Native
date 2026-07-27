@@ -28,7 +28,7 @@ export function AppShell({
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
-      <header className="sticky top-0 z-20 flex h-14 w-full shrink-0 items-center gap-6 border-b border-border bg-background px-6 print:hidden">
+      <header className="sticky top-0 z-20 flex h-14 w-full shrink-0 items-center gap-6 border-b border-border bg-background/75 px-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 print:hidden">
         <Link
           href="/"
           className="flex h-full shrink-0 items-center border-r border-border pr-6"

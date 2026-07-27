@@ -14,7 +14,7 @@ function SuccessDriverIcon({
   const shared = {
     fill: "currentColor",
     xmlns: "http://www.w3.org/2000/svg",
-    className: cn("shrink-0", className),
+    className: cn("shrink-0", className, "text-extended-cyan-green"),
     "aria-hidden": true as const,
     ...props,
   };

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, BookOpen, Info, Map, X } from "lucide-react";
+import { ArrowUpRight, BookOpen, Info, Map, Plus, X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
@@ -311,15 +311,12 @@ export function CoachHome() {
               return (
                 <div key={id} className="min-w-0">
                   <div
-                    className={cn(
-                      "mb-4 inline-flex size-11 items-center justify-center rounded-md",
-                      colors.bg,
-                    )}
+                    className="mb-4 inline-flex size-11 items-center justify-center rounded-md border border-extended-cyan-green/35 bg-[color-mix(in_srgb,var(--extended-cyan-green)_9%,white)] backdrop-blur-sm"
                     aria-hidden
                   >
                     <SuccessDriverIcon
                       driver={id}
-                      className={cn("size-6", colors.accent)}
+                      className="size-6 text-extended-cyan-green"
                     />
                   </div>
 
@@ -492,14 +489,6 @@ export function CoachHome() {
     () => experiences.filter((e) => (e.role ?? "").trim() === role.trim()),
     [experiences, role],
   );
-  const experienceBankPreviewTitles = useMemo(
-    () =>
-      roleExperiences
-        .slice(0, 2)
-        .map((e) => e.title?.trim())
-        .filter((t): t is string => Boolean(t)),
-    [roleExperiences],
-  );
 
   const trainingProgressForRole = useMemo(
     () => pickMostRecentForRole(trainingJourneyProgressMap, role),
@@ -643,28 +632,63 @@ export function CoachHome() {
                     <CardContent className="flex w-full flex-col">
                       <div className="w-full py-4 first:pt-0 last:pb-0">
                         <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0 flex-1">
-                            {(() => {
-                              const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                              const isSecondInterview = isFinalCoach && !isFirstStart;
-                              const showFirstStartProgress = Boolean(
-                                coachJourneyView === "journey" && isFirstStart && trainingContinue,
-                              );
+                          <div className="flex min-w-0 flex-1 items-start gap-4">
+                            <span
+                              aria-hidden
+                              className="flex shrink-0 self-stretch items-center text-[length:var(--text-h1-size)] font-normal leading-none tracking-[var(--text-h1-tracking)] tabular-nums text-brand-800"
+                            >
+                              1
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              {(() => {
+                                const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                const isSecondInterview = isFinalCoach && !isFirstStart;
+                                const showFirstStartProgress = Boolean(
+                                  coachJourneyView === "journey" && isFirstStart && trainingContinue,
+                                );
 
-                              const title = isSecondInterview
-                                ? "1. Strengthen how you take action"
-                                : "1. Train with essential interview guides";
+                                const title = isSecondInterview
+                                  ? "Strengthen how you take action"
+                                  : "Train with essential interview guides";
 
-                              const subtitle = isSecondInterview
-                                ? "Work on turning ideas into clear, outcome-driven execution."
-                                : "Learn the fundamentals with guided practice.";
+                                const subtitle = isSecondInterview
+                                  ? "Work on turning ideas into clear, outcome-driven execution."
+                                  : "Learn the fundamentals with guided practice.";
 
-                              const showActionBadge = isSecondInterview;
+                                const showActionBadge = isSecondInterview;
 
-                              if (trainingContinue) {
+                                if (trainingContinue) {
+                                  return (
+                                    <>
+                                      <h3 className="text-h5">
+                                        {showActionBadge ? (
+                                          <span className="inline-flex items-center gap-2">
+                                            <span>{title}</span>
+                                            <Badge variant="secondary">Action</Badge>
+                                          </span>
+                                        ) : (
+                                          title
+                                        )}
+                                      </h3>
+                                      <p className="mt-1.5 text-body-sm leading-6 text-text-secondary">{subtitle}</p>
+                                      {showFirstStartProgress ? (
+                                        <>
+                                          <ProgressBar
+                                            className="mt-4 h-2.5 max-w-md"
+                                            value={trainingPct}
+                                            aria-label="Training progress"
+                                          />
+                                          <p className="mt-2 text-overline tabular-nums text-text-secondary">
+                                            {Math.round(trainingPct)}% done
+                                          </p>
+                                        </>
+                                      ) : null}
+                                    </>
+                                  );
+                                }
                                 return (
                                   <>
-                                    <h3 className="text-h6">
+                                    <h3 className="text-h5">
                                       {showActionBadge ? (
                                         <span className="inline-flex items-center gap-2">
                                           <span>{title}</span>
@@ -674,40 +698,13 @@ export function CoachHome() {
                                         title
                                       )}
                                     </h3>
-                                    <p className="mt-2 text-body-sm leading-6 text-text-secondary">{subtitle}</p>
-                                    {showFirstStartProgress ? (
-                                      <>
-                                        <ProgressBar
-                                          className="mt-4 h-2.5 max-w-md"
-                                          value={trainingPct}
-                                          aria-label="Training progress"
-                                        />
-                                        <p className="mt-2 text-overline tabular-nums text-text-secondary">
-                                          {Math.round(trainingPct)}% done
-                                        </p>
-                                      </>
-                                    ) : null}
+                                    <p className="mt-1.5 text-body-sm leading-6 text-text-secondary">{subtitle}</p>
                                   </>
                                 );
-                              }
-                              return (
-                                <>
-                                  <h3 className="text-h6">
-                                    {showActionBadge ? (
-                                      <span className="inline-flex items-center gap-2">
-                                        <span>{title}</span>
-                                        <Badge variant="secondary">Action</Badge>
-                                      </span>
-                                    ) : (
-                                      title
-                                    )}
-                                  </h3>
-                                  <p className="mt-2 text-body-sm leading-6 text-text-secondary">{subtitle}</p>
-                                </>
-                              );
-                            })()}
+                              })()}
+                            </div>
                           </div>
-                          <Button asChild variant="outline">
+                          <Button asChild variant="link" className="h-auto shrink-0 px-0">
                             <Link href="/training">
                               {(() => {
                                 const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
@@ -728,151 +725,111 @@ export function CoachHome() {
 
                       <div className="w-full py-4">
                         <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0 flex-1">
-                            {hasCraftedStoryboard ? (
-                              <>
-                                <h3 className="text-h6">
-                                  {(() => {
-                                    const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                                    const isSecondInterview = isFinalCoach && !isFirstStart;
-                                    return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
-                                  })()}
-                                </h3>
-                                <p className="mt-2 text-body-sm leading-6 text-text-secondary">
-                                  {(() => {
-                                    const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                                    const isSecondInterview = isFinalCoach && !isFirstStart;
-                                    if (!isSecondInterview) {
-                                      return (
-                                        <>
-                                          Turn your experience into clear, structured answers.
-                                        </>
-                                      );
-                                    }
-                                    return (
-                                      <>
-                                        Add more depth around your{" "}
-                                        <span className="font-semibold text-text-primary">decisions</span>,{" "}
-                                        <span className="font-semibold text-text-primary">actions</span>, and{" "}
-                                        <span className="font-semibold text-text-primary">impact</span>.
-                                      </>
-                                    );
-                                  })()}
-                                </p>
-                                <div className="mt-3 flex flex-wrap items-baseline gap-2">
-                                  <span className="text-caption text-text-secondary">
-                                    Here is your story score
-                                  </span>
-                                  <span className="text-h5 leading-none tabular-nums text-text-primary">
-                                    {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
-                                  </span>
-                                  <span className="text-caption tabular-nums text-text-secondary">/ 5</span>
-                                </div>
-                              </>
-                            ) : hasCreatedStoryboard ? (
-                              <>
-                                <h3 className="text-h6">
-                                  {(() => {
-                                    const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                                    const isSecondInterview = isFinalCoach && !isFirstStart;
-                                    return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
-                                  })()}
-                                </h3>
-                                <p className="mt-2 text-body-sm leading-6 text-text-secondary">
-                                  Turn your experience into clear, structured answers. Add more detail to raise your story
-                                  score.
-                                </p>
-                                <div className="mt-3 flex flex-wrap items-baseline gap-2">
-                                  <span className="text-caption text-text-secondary">
-                                    Overall story score
-                                  </span>
-                                  <span className="text-h5 leading-none tabular-nums text-text-primary">
-                                    {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
-                                  </span>
-                                  <span className="text-caption tabular-nums text-text-secondary">/ 5</span>
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <h3 className="text-h6">
-                                  {(() => {
-                                    const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                                    const isSecondInterview = isFinalCoach && !isFirstStart;
-                                    return isSecondInterview ? "2. Improve your story" : "2. Craft your story";
-                                  })()}
-                                </h3>
-                                <p className="mt-2 text-body-sm leading-6 text-text-secondary">
-                                  Turn your experience into clear, structured answers.
-                                </p>
-                              </>
-                            )}
-                          </div>
-                          <div className="flex shrink-0 items-center gap-2">
-                            {hasCraftedStoryboard ? (
-                              <Button asChild variant="outline">
-                                <Link href="/storyboard?new=1">
-                                  Add another experience
-                                  <ArrowUpRight />
-                                </Link>
-                              </Button>
-                            ) : (
-                              <>
-                                <Button asChild variant="outline">
-                                  <Link href="/storyboard">
+                          <div className="flex min-w-0 flex-1 items-start gap-4">
+                            <span
+                              aria-hidden
+                              className="flex shrink-0 self-stretch items-center text-[length:var(--text-h1-size)] font-normal leading-none tracking-[var(--text-h1-tracking)] tabular-nums text-brand-800"
+                            >
+                              2
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              {hasCraftedStoryboard ? (
+                                <>
+                                  <h3 className="text-h5">
                                     {(() => {
                                       const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                                       const isSecondInterview = isFinalCoach && !isFirstStart;
-                                      return isSecondInterview ? "Add more" : "Start crafting";
+                                      return isSecondInterview ? "Improve your story" : "Craft your story";
                                     })()}
-                                    <ArrowUpRight />
-                                  </Link>
-                                </Button>
-                                {hasCreatedStoryboard ? (
-                                  <Button asChild variant="outline">
-                                    <Link href="/storyboard?new=1">
-                                      {(() => {
-                                        const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                                        const isSecondInterview = isFinalCoach && !isFirstStart;
-                                        return isSecondInterview ? "Add more" : "Add another experience";
-                                      })()}
-                                      <ArrowUpRight />
-                                    </Link>
-                                  </Button>
-                                ) : null}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div className="w-full py-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0 flex-1">
-                            <h3 className="text-h6">Experience bank</h3>
-                            <p className="mt-2 text-body-sm leading-6 text-text-secondary">
-                              {roleExperiences.length ? (
+                                  </h3>
+                                  <p className="mt-1.5 text-body-sm leading-6 text-text-secondary">
+                                    {(() => {
+                                      const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                      const isSecondInterview = isFinalCoach && !isFirstStart;
+                                      if (!isSecondInterview) {
+                                        return (
+                                          <>
+                                            Turn your experience into clear, structured answers.
+                                          </>
+                                        );
+                                      }
+                                      return (
+                                        <>
+                                          Add more depth around your{" "}
+                                          <span className="font-semibold text-text-primary">decisions</span>,{" "}
+                                          <span className="font-semibold text-text-primary">actions</span>, and{" "}
+                                          <span className="font-semibold text-text-primary">impact</span>.
+                                        </>
+                                      );
+                                    })()}
+                                  </p>
+                                  <div className="mt-3 flex flex-wrap items-baseline gap-2">
+                                    <span className="text-caption text-text-secondary">
+                                      Here is your story score
+                                    </span>
+                                    <span className="text-h5 leading-none tabular-nums text-text-primary">
+                                      {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
+                                    </span>
+                                    <span className="text-caption tabular-nums text-text-secondary">/ 5</span>
+                                  </div>
+                                </>
+                              ) : hasCreatedStoryboard ? (
                                 <>
-                                  {roleExperiences.length} experience{roleExperiences.length === 1 ? "" : "s"}{" "}
-                                  captured for {role || "this role"}
-                                  {experienceBankPreviewTitles.length ? (
-                                    <>, including “{experienceBankPreviewTitles.join("”, “")}”.</>
-                                  ) : (
-                                    "."
-                                  )}
+                                  <h3 className="text-h5">
+                                    {(() => {
+                                      const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                      const isSecondInterview = isFinalCoach && !isFirstStart;
+                                      return isSecondInterview ? "Improve your story" : "Craft your story";
+                                    })()}
+                                  </h3>
+                                  <p className="mt-1.5 text-body-sm leading-6 text-text-secondary">
+                                    Turn your experience into clear, structured answers. Add more detail to raise your story
+                                    score.
+                                  </p>
+                                  <div className="mt-3 flex flex-wrap items-baseline gap-2">
+                                    <span className="text-caption text-text-secondary">
+                                      Overall story score
+                                    </span>
+                                    <span className="text-h5 leading-none tabular-nums text-text-primary">
+                                      {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
+                                    </span>
+                                    <span className="text-caption tabular-nums text-text-secondary">/ 5</span>
+                                  </div>
                                 </>
                               ) : (
-                                "Nothing captured yet. Add your first experience to start building proof."
+                                <>
+                                  <h3 className="text-h5">
+                                    {(() => {
+                                      const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                      const isSecondInterview = isFinalCoach && !isFirstStart;
+                                      return isSecondInterview ? "Improve your story" : "Craft your story";
+                                    })()}
+                                  </h3>
+                                  <p className="mt-1.5 text-body-sm leading-6 text-text-secondary">
+                                    Turn your experience into clear, structured answers.
+                                  </p>
+                                </>
                               )}
-                            </p>
+                            </div>
                           </div>
-                          <Button asChild variant="outline">
-                            <Link href="/storyboard">
-                              {roleExperiences.length ? "Open Storyboard" : "Add an experience"}
-                              <ArrowUpRight />
-                            </Link>
-                          </Button>
+                          <div className="flex shrink-0 items-center gap-4">
+                            <Button asChild variant="link" className="h-auto px-0">
+                              <Link href="/storyboard">
+                                {(() => {
+                                  const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                  const isSecondInterview = isFinalCoach && !isFirstStart;
+                                  return isSecondInterview ? "Add more" : "Start crafting";
+                                })()}
+                                <ArrowUpRight />
+                              </Link>
+                            </Button>
+                            <Button asChild variant="link" className="h-auto px-0 text-text-secondary">
+                              <Link href="/storyboard?new=1">
+                                <Plus />
+                                Add experience
+                              </Link>
+                            </Button>
+                          </div>
                         </div>
                       </div>
 
@@ -880,32 +837,40 @@ export function CoachHome() {
 
                       <div className="w-full py-4 last:pb-0">
                         <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <h3 className="text-h6">
-                              {(() => {
-                                const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                                const isSecondInterview = isFinalCoach && !isFirstStart;
-                                return isSecondInterview ? "3. Practice with a focused mock" : "3. Take a mock interview";
-                              })()}
-                            </h3>
-                            <p className="mt-2 text-body-sm leading-6 text-text-secondary">
-                              {(() => {
-                                const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-                                const isSecondInterview = isFinalCoach && !isFirstStart;
-                                if (!isSecondInterview) {
-                                  return <>Practice with a 30-minute, real-world interview.</>;
-                                }
-                                return (
-                                  <>
-                                    Try a short interview focused on{" "}
-                                    <span className="font-semibold text-text-primary">Action</span> and{" "}
-                                    <span className="font-semibold text-text-primary">Mastery</span> pillars.
-                                  </>
-                                );
-                              })()}
-                            </p>
+                          <div className="flex min-w-0 flex-1 items-start gap-4">
+                            <span
+                              aria-hidden
+                              className="flex shrink-0 self-stretch items-center text-[length:var(--text-h1-size)] font-normal leading-none tracking-[var(--text-h1-tracking)] tabular-nums text-brand-800"
+                            >
+                              3
+                            </span>
+                            <div className="min-w-0">
+                              <h3 className="text-h5">
+                                {(() => {
+                                  const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                  const isSecondInterview = isFinalCoach && !isFirstStart;
+                                  return isSecondInterview ? "Practice with a focused mock" : "Take a mock interview";
+                                })()}
+                              </h3>
+                              <p className="mt-1.5 text-body-sm leading-6 text-text-secondary">
+                                {(() => {
+                                  const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
+                                  const isSecondInterview = isFinalCoach && !isFirstStart;
+                                  if (!isSecondInterview) {
+                                    return <>Practice with a 30-minute, real-world interview.</>;
+                                  }
+                                  return (
+                                    <>
+                                      Try a short interview focused on{" "}
+                                      <span className="font-semibold text-text-primary">Action</span> and{" "}
+                                      <span className="font-semibold text-text-primary">Mastery</span> pillars.
+                                    </>
+                                  );
+                                })()}
+                              </p>
+                            </div>
                           </div>
-                          <Button asChild>
+                          <Button asChild variant="link" className="h-auto shrink-0 px-0">
                             <Link href="/interview?welcomeBack=1">
                               Start interview
                               <ArrowUpRight />
