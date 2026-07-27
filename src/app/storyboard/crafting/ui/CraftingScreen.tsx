@@ -15,7 +15,6 @@ import {
   ArrowRight,
   Lock,
   Pencil,
-  Plus,
   Save,
   Unlock,
 } from "lucide-react";
@@ -36,6 +35,12 @@ import {
 } from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
 import { SuccessDriverMark } from "@/components/ui/success-driver-card";
+import {
+  DEMO_FOCUS_COUNT,
+  demoCompetencyQueue,
+  overallFocusCompetencyStrength,
+  pillarFocusStrength,
+} from "@/lib/demoFocusCompetencies";
 import { buildCarSnapshot } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import {
@@ -47,8 +52,6 @@ import {
   createStoryboardDraft,
   emptySection,
   normalizeStoryboardDocument,
-  overallCompetencyStrength,
-  pillarStrength,
   strengthScore,
 } from "@/lib/storyboardDraft";
 import { SUCCESS_DRIVER_ORDER } from "@/lib/successDrivers";
@@ -76,6 +79,8 @@ export function CraftingScreen() {
   });
 
   const role = roleProfile?.targetRole?.trim() ?? "";
+  const focusQueue = useMemo(() => demoCompetencyQueue(roleProfile), [roleProfile]);
+  const focusSet = useMemo(() => new Set(focusQueue), [focusQueue]);
 
   const document = useMemo<StoryboardDraftDocument>(() => {
     if (!role) return createStoryboardDraft("");
@@ -163,8 +168,11 @@ export function CraftingScreen() {
     router.push("/storyboard");
   }, [store, role, router]);
 
-  const overall = overallCompetencyStrength(document);
-  const byPillar = PILLAR_ORDER.map((p) => ({ id: p, v: pillarStrength(document, p) }));
+  const overall = overallFocusCompetencyStrength(document, focusQueue);
+  const byPillar = PILLAR_ORDER.map((p) => ({
+    id: p,
+    v: pillarFocusStrength(document, p, focusQueue),
+  }));
 
   if (!role) {
     return (
@@ -228,9 +236,9 @@ export function CraftingScreen() {
           <div>
             <h1 className="text-h4 text-text-primary">Storyboard draft</h1>
             <p className="mt-2 text-caption leading-6 text-text-secondary print:hidden">
-              One <strong>Core Introduction</strong> + twelve fixed competencies (CAR: Context,
-              Action, Result). Lock a section when it&apos;s interview-ready. Edits save in this
-              browser.
+              Demo focus: <strong>Core Introduction</strong> + {DEMO_FOCUS_COUNT} selected
+              competencies (CAR: Context, Action, Result). Other sections stay available but
+              collapsed. Lock a section when it&apos;s interview-ready.
             </p>
           </div>
 
@@ -238,17 +246,17 @@ export function CraftingScreen() {
             <CardContent className="space-y-4 p-6">
               <div className="text-overline text-text-secondary">Story strength</div>
               <p className="text-caption leading-6 text-text-secondary">
-                0–5 placeholder from CAR completeness. Overall = mean of the 12 competencies
-                (intro excluded).
+                0–5 placeholder from CAR completeness. Overall = mean of the{" "}
+                {DEMO_FOCUS_COUNT} demo competencies (intro excluded).
               </p>
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
                   <div className="text-caption font-semibold text-text-primary">
-                    Overall (12 competencies)
+                    Overall ({DEMO_FOCUS_COUNT} demo competencies)
                   </div>
                   <div className="text-overline text-text-secondary">Mean strength</div>
                 </div>
-                <div className="text-h4 text-text-primary" title="Mean of 12 section strength scores">
+                <div className="text-h4 text-text-primary" title="Mean of demo focus competency scores">
                   {overall.toFixed(1)}
                   <span className="text-body text-text-secondary"> / 5</span>
                 </div>
@@ -259,7 +267,7 @@ export function CraftingScreen() {
                   <span className="inline-flex items-center gap-2">
                     Success Drivers
                     <span className="text-overline text-text-secondary">
-                      (4 drivers · 3 sections each)
+                      (scores from demo focus set)
                     </span>
                   </span>
                 </summary>
@@ -316,9 +324,11 @@ export function CraftingScreen() {
               spec,
               globalIndex,
             })).filter((x) => x.spec.pillar === pillar);
+            const focusRows = rows.filter((x) => focusSet.has(x.spec.id));
+            const otherRows = rows.filter((x) => !focusSet.has(x.spec.id));
             return (
               <section key={pillar} className="space-y-4">
-                {rows.map(({ spec, globalIndex: index }) => {
+                {focusRows.map(({ spec, globalIndex: index }) => {
                   const s = document.competencies[index] ?? emptySection();
                   return (
                     <DraftSectionCard
@@ -352,6 +362,49 @@ export function CraftingScreen() {
                     </DraftSectionCard>
                   );
                 })}
+                {otherRows.length ? (
+                  <details className="rounded-md border border-border/60 bg-muted/30 p-3 print:hidden">
+                    <summary className="cursor-pointer text-caption font-medium text-text-secondary">
+                      Other {pillar} competencies ({otherRows.length})
+                    </summary>
+                    <div className="mt-3 space-y-4">
+                      {otherRows.map(({ spec, globalIndex: index }) => {
+                        const s = document.competencies[index] ?? emptySection();
+                        return (
+                          <DraftSectionCard
+                            key={spec.id}
+                            pillarLabel={spec.pillar}
+                            driver={spec.pillar}
+                            displayTitle={spec.title}
+                            score={strengthScore(s.car)}
+                            locked={s.locked}
+                            onToggleLock={() =>
+                              updateDocument((d) => {
+                                const comp = d.competencies.map((c, i) =>
+                                  i === index ? { ...c, locked: !c.locked } : c,
+                                );
+                                return { ...d, competencies: comp };
+                              })
+                            }
+                          >
+                            <CarTextAreas
+                              value={s.car}
+                              onChange={(car) =>
+                                updateDocument((d) => {
+                                  const comp = d.competencies.map((c, i) =>
+                                    i === index ? { ...c, car } : c,
+                                  );
+                                  return { ...d, competencies: comp };
+                                })
+                              }
+                              disabled={s.locked}
+                            />
+                          </DraftSectionCard>
+                        );
+                      })}
+                    </div>
+                  </details>
+                ) : null}
               </section>
             );
           })}
@@ -359,13 +412,13 @@ export function CraftingScreen() {
           <div className="space-y-3 border-t border-border pt-6 print:hidden">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-caption leading-6 text-text-secondary">
-                Continue building in Storyboard or save this draft to the browser.
+                Continue to your report, or save this draft to the browser.
               </p>
               <div className="flex flex-wrap gap-2 sm:shrink-0">
                 <Button asChild variant="outline">
-                  <Link href="/storyboard">
-                    <Plus />
-                    Add another experience
+                  <Link href="/interview">
+                    <ArrowRight />
+                    Continue to report path
                   </Link>
                 </Button>
                 <Button type="button" onClick={handleSaveStoryboard}>

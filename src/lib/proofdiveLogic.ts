@@ -2,6 +2,13 @@ import type { CarSnapshot, Experience, InterviewReport, RoleProfile } from "@/li
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 
 export function buildCarSnapshot(exp: Experience): CarSnapshot | null {
+  if (exp.car?.context?.trim() && exp.car.action?.trim() && exp.car.result?.trim()) {
+    return {
+      challenge: exp.car.context.trim(),
+      action: exp.car.action.trim(),
+      result: exp.car.result.trim(),
+    };
+  }
   const e = exp.enrichment;
   if (!e) return null;
   const q1 = e.goalObjective?.trim();

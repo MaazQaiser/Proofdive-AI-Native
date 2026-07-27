@@ -92,7 +92,7 @@ function CardButton({
   );
 
   const sharedClassName = cn(
-    "group relative flex min-h-[112px] w-full flex-col overflow-hidden rounded-2xl border p-4 text-left",
+    "group relative flex min-h-[112px] w-full flex-col overflow-hidden rounded-2xl p-4 text-left",
     "backdrop-blur-xl",
     "transition-[transform,box-shadow,background-color] duration-200 ease-out",
     "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",

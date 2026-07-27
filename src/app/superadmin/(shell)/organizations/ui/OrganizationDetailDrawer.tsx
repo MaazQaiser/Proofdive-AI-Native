@@ -13,15 +13,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import {
-  AVAILABLE_COURSES,
-  COUNTRY_OPTIONS,
-  INDUSTRY_OPTIONS,
-  PHONE_COUNTRY_CODES,
-  PRICING_PLANS,
-  type CompetencyFramework,
-} from "@/lib/superAdminOrganizationWizard";
+import { AVAILABLE_COURSES, COUNTRY_OPTIONS, INDUSTRY_OPTIONS, PHONE_COUNTRY_CODES, PRICING_PLANS, type CompetencyFramework } from "@/lib/superAdminOrganizationWizard";
 import { ORGANIZATION_TYPE_LABEL, type Organization } from "@/lib/superAdminOrganizations";
+import { SUCCESS_DRIVER_ORDER, SUCCESS_DRIVERS } from "@/lib/successDrivers";
 
 import { OrganizationStatusPill } from "./StatusPills";
 
@@ -95,7 +89,7 @@ function StatTile({ label, value, tone }: { label: string; value: number; tone?:
       <span
         className={cn(
           "text-h6 font-semibold",
-          tone === "green" ? "text-scoring-green" : tone === "muted" ? "text-muted-foreground" : "text-foreground",
+          tone === "green" ? "text-scoring-green-fg" : tone === "muted" ? "text-muted-foreground" : "text-foreground",
         )}
       >
         {value}
@@ -573,12 +567,12 @@ export function OrganizationDetailDrawer({
                         {assignedFramework?.name ?? "Not assigned"}
                       </span>
                       <div className="flex flex-wrap gap-2">
-                        {assignedFramework?.pillars.map((pillar) => (
+                        {SUCCESS_DRIVER_ORDER.map((driverId) => (
                           <span
-                            key={pillar}
+                            key={driverId}
                             className="text-caption rounded-full border border-border bg-muted px-3 py-1 text-muted-foreground"
                           >
-                            {pillar}
+                            {SUCCESS_DRIVERS[driverId].label}
                           </span>
                         ))}
                       </div>

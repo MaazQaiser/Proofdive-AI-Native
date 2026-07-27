@@ -177,7 +177,7 @@ export function TrainingScreen() {
         courseId: "competency-pillars",
         imageUrl: PILLAR_MEDIA.thinking,
         rowClass:
-          "border-[color-mix(in_srgb,var(--driver-thinking-accent)_28%,transparent)] bg-[linear-gradient(90deg,var(--driver-thinking-bg),#fff_42%)]",
+          "border-extended-cyan-green/30 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--extended-cyan-green)_10%,white),#fff_42%)]",
       },
       {
         id: "action",
@@ -189,7 +189,7 @@ export function TrainingScreen() {
         courseId: "competency-pillars",
         imageUrl: PILLAR_MEDIA.action,
         rowClass:
-          "border-[color-mix(in_srgb,var(--driver-action-accent)_28%,transparent)] bg-[linear-gradient(90deg,var(--driver-action-bg),#fff_42%)]",
+          "border-extended-cyan-green/30 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--extended-cyan-green)_10%,white),#fff_42%)]",
       },
       {
         id: "people",
@@ -201,7 +201,7 @@ export function TrainingScreen() {
         courseId: "competency-pillars",
         imageUrl: PILLAR_MEDIA.people,
         rowClass:
-          "border-[color-mix(in_srgb,var(--driver-people-accent)_28%,transparent)] bg-[linear-gradient(90deg,var(--driver-people-bg),#fff_42%)]",
+          "border-extended-cyan-green/30 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--extended-cyan-green)_10%,white),#fff_42%)]",
       },
     ],
     [],
@@ -269,7 +269,7 @@ export function TrainingScreen() {
             </CardContent>
           </Card>
         </div>
-        <CoachBottomChatBar />
+        <CoachBottomChatBar compactWhenIdle />
       </AppShell>
     );
   }
@@ -307,7 +307,7 @@ export function TrainingScreen() {
                           type="button"
                           onClick={() => setSelectedCourseId(course.id)}
                           className={cn(
-                            "group relative flex min-h-[168px] flex-col overflow-hidden rounded-2xl border p-4 text-left backdrop-blur-xl transition sm:p-5",
+                            "group relative flex min-h-[168px] flex-col overflow-hidden rounded-2xl p-4 text-left backdrop-blur-xl transition sm:p-5",
                             "duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.985]",
                             "motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100",
                             "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
@@ -582,7 +582,7 @@ export function TrainingScreen() {
           </div>
         </div>
       </div>
-      <CoachBottomChatBar />
+      <CoachBottomChatBar compactWhenIdle />
     </AppShell>
   );
 }

@@ -45,10 +45,10 @@ import {
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  SUCCESS_DRIVER_COLORS,
   SUCCESS_DRIVER_ORDER,
   SUCCESS_DRIVERS,
 } from "@/lib/successDrivers";
+import { SCORING_PALETTE, scoringBadgeClass, scoringTextClass } from "@/lib/scoringPalette";
 import { cn } from "@/lib/utils";
 
 const CHIP_OPTIONS = ["Product Designer", "UX Researcher", "UI Engineer"];
@@ -160,13 +160,6 @@ const BRAND_TOKENS: FlatToken[] = [
   { name: "brand-800", cssVar: "--brand-800", light: "#B7E1E9", dark: "#0A3F47" },
   { name: "brand-900", cssVar: "--brand-900", light: "#CFEBF0", dark: "#072A30" },
   { name: "brand-1000", cssVar: "--brand-1000", light: "#E7F5F8", dark: "#031518" },
-];
-
-const SCORING_TOKENS: FlatToken[] = [
-  { name: "scoring-red", cssVar: "--scoring-red", light: "#CB3A31", dark: "#CB3A31" },
-  { name: "scoring-yellow", cssVar: "--scoring-yellow", light: "#E9A13B", dark: "#E9A13B" },
-  { name: "scoring-green", cssVar: "--scoring-green", light: "#16A34A", dark: "#16A34A" },
-  { name: "scoring-cyan", cssVar: "--scoring-cyan", light: "#22D3EE", dark: "#22D3EE" },
 ];
 
 type TypeStyle = {
@@ -400,31 +393,95 @@ export default function DesignSystemPage() {
             </div>
           </Section>
 
-          <Section title="Scoring colors">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {SCORING_TOKENS.map((token) => (
-                <FlatSwatch key={token.name} token={token} dark={dark} />
+          <Section
+            title="Scoring Palette"
+            description="Brand score bands (1.0–5.0). Use bright --scoring-* for fills/bars/charts; use --scoring-*-fg (via scoringTextClass / scoringBadgeClass) for numbers and pill labels so text stays ≥4.5:1 on light surfaces."
+          >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {SCORING_PALETTE.map((entry) => (
+                <div
+                  key={entry.band}
+                  className="overflow-hidden rounded-xl border border-border bg-card"
+                >
+                  <div className="flex items-start justify-between gap-3 p-4">
+                    <div className="min-w-0">
+                      <p className={cn("text-h4 tabular-nums", scoringTextClass(entry.min))}>
+                        {entry.range}
+                      </p>
+                      <span
+                        className={cn(
+                          "mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-caption",
+                          scoringBadgeClass(entry.min),
+                        )}
+                      >
+                        {entry.label}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <div
+                        className="size-14 rounded-lg"
+                        style={{ background: `var(${entry.cssVar})` }}
+                        title={`${entry.token} fill`}
+                        aria-hidden
+                      />
+                      <div
+                        className="size-8 rounded-md border border-border"
+                        style={{ background: `var(${entry.fgCssVar})` }}
+                        title={`${entry.fgToken} text`}
+                        aria-hidden
+                      />
+                    </div>
+                  </div>
+                  <div className="border-t border-border px-4 py-3 text-caption text-muted-foreground">
+                    <div className="flex flex-col gap-1">
+                      <span>
+                        Fill <span className="font-mono text-foreground">{entry.token}</span>{" "}
+                        <span className="font-mono">{entry.hex}</span>
+                      </span>
+                      <span>
+                        Text <span className="font-mono text-foreground">{entry.fgToken}</span>{" "}
+                        <span className="font-mono">{entry.fgHex}</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
               ))}
+            </div>
+            <div className="mt-6 rounded-xl border border-border p-4">
+              <p className="text-caption text-muted-foreground">
+                Sample score numbers (readable `-fg` on card)
+              </p>
+              <div className="mt-3 flex flex-wrap items-end gap-8">
+                {[2.1, 3.0, 3.9, 4.7].map((score) => (
+                  <div key={score} className="text-center">
+                    <span
+                      className={cn(
+                        "font-gilroy text-[2.5rem] font-normal leading-none tabular-nums",
+                        scoringTextClass(score),
+                      )}
+                    >
+                      {score.toFixed(1)}
+                    </span>
+                    <p className="mt-1 text-overline text-muted-foreground">
+                      {SCORING_PALETTE.find((e) => score >= e.min && score <= e.maxInclusive)?.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           </Section>
 
           <Section
             title="Success Drivers"
-            description="Four brand pillars sharing one symbol color (#062C35). Use SuccessDriverIcon beside headings, SuccessDriverMark for labeled rows, and SuccessDriverCard for glass surfaces with a right-side blurred, noisy symbol."
+            description="Four brand pillars sharing one symbol color (#062C35). Use SuccessDriverIcon beside headings, SuccessDriverMark for labeled rows, and SuccessDriverCard for glass surfaces with a right-side blurred symbol."
           >
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {SUCCESS_DRIVER_ORDER.map((id) => {
                 const meta = SUCCESS_DRIVERS[id];
-                const colors = SUCCESS_DRIVER_COLORS[id];
                 return (
                   <div key={id} className="flex flex-col gap-3 rounded-xl border border-border p-4">
                     <div className="flex items-center gap-3">
-                      <span
-                        className={cn(
-                          "inline-flex size-10 items-center justify-center rounded-xl border",
-                          colors.accentBg,
-                        )}
-                      >
+                      <span className="inline-flex size-10 items-center justify-center rounded-xl border border-extended-cyan-green/20 bg-extended-cyan-green/10">
                         <SuccessDriverIcon
                           driver={id}
                           className="size-5 text-extended-cyan-green"
@@ -438,23 +495,6 @@ export default function DesignSystemPage() {
                           {meta.label}
                         </p>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      {(
-                        [
-                          ["bg", colors.bg],
-                          ["symbol", colors.symbol.replace("text-", "bg-")],
-                          ["fg", colors.fg.replace("text-", "bg-")],
-                          ["accent", colors.accentDot],
-                        ] as const
-                      ).map(([name, swatch]) => (
-                        <div key={name} className="flex flex-col gap-1">
-                          <div
-                            className={cn("h-8 rounded-md border border-border", swatch)}
-                          />
-                          <span className="text-overline text-muted-foreground">{name}</span>
-                        </div>
-                      ))}
                     </div>
                   </div>
                 );

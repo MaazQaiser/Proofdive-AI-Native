@@ -9,7 +9,6 @@ import { AppShell } from "@/components/AppShell";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { cn } from "@/components/cn";
 import { CoachConversationalDock } from "@/components/coach/CoachConversationalDock";
-import type { ChatComposerQuickChip } from "@/components/chat/ChatComposer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -25,7 +24,6 @@ import {
   type StoryboardDraftStore,
 } from "@/lib/storyboardDraft";
 import {
-  SUCCESS_DRIVER_COLORS,
   SUCCESS_DRIVER_ORDER,
   SUCCESS_DRIVERS,
   type SuccessDriverId,
@@ -33,6 +31,7 @@ import {
 import { getReportById, latestReportOverallForRole, useLatestInterviewReport } from "@/lib/interviewReports";
 import { reportCountForRole } from "@/lib/proofdiveLogic";
 import { deriveJourneySignals } from "@/lib/recommendedNextStep";
+import { scoringBadgeClass, scoringLabelForScore, scoringTextClass } from "@/lib/scoringPalette";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { readJson } from "@/lib/storage";
 import { pickMostRecentForRole } from "@/lib/trainingJourneyProgress";
@@ -51,15 +50,6 @@ export type CoachJourneyView = "welcome" | "roadmap" | "journey" | "final";
 /** `welcome` = 2 CTAs + empty readiness; `roadmap` = 3 step cards + same empty readiness; `journey` = 3 steps + full readiness from latest mock; `final` = same layout, readiness pinned to the report opened from `/report/[id]` → Coach. */
 /** Default when opening Coach without `?welcome=1` / `?roadmap=1` (those come only from onboarding + interview skip CTAs). */
 const DEFAULT_COACH_JOURNEY_VIEW: CoachJourneyView = "journey";
-
-const COACH_AI_QUICK_CHIPS: ChatComposerQuickChip[] = [
-  {
-    id: "plan_role",
-    label: "Plan new Role",
-    value: "Help me plan a new target role for my interview preparation.",
-  },
-  { label: "Add Another Experience", value: "I want to add another professional experience to my story." },
-];
 
 /** Session-only: this tab used `?welcome=1` (onboarding / interview skip). Used so stale localStorage `welcome` does not show on plain `/coach`. */
 const COACH_WELCOME_ENTRY_SESSION_KEY = "proofdive.session.coachWelcomeEntry.v1";
@@ -96,9 +86,7 @@ function readinessSnapshotFromReport(r: InterviewReport) {
 }
 
 function coachReadinessBadgeClasses(label: ReadinessLabel) {
-  if (label === "Ready") return "border-scoring-green/20 bg-scoring-green/15 text-scoring-green";
-  if (label === "Borderline") return "border-scoring-yellow/20 bg-scoring-yellow/15 text-scoring-yellow";
-  return "border-scoring-red/20 bg-scoring-red/15 text-scoring-red";
+  return scoringBadgeClass(label);
 }
 
 const ROLE_SUGGESTIONS = [
@@ -110,18 +98,8 @@ const ROLE_SUGGESTIONS = [
 ] as const;
 
 
-function pillarBarFill(id: SuccessDriverId): string {
-  const map: Record<SuccessDriverId, string> = {
-    thinking:
-      "bg-[linear-gradient(90deg,var(--driver-thinking-symbol),var(--driver-thinking-accent))]",
-    action:
-      "bg-[linear-gradient(90deg,var(--driver-action-symbol),var(--driver-action-accent))]",
-    people:
-      "bg-[linear-gradient(90deg,var(--driver-people-symbol),var(--driver-people-accent))]",
-    mastery:
-      "bg-[linear-gradient(90deg,var(--driver-mastery-symbol),var(--driver-mastery-accent))]",
-  };
-  return map[id];
+function pillarBarFill(): string {
+  return "bg-[linear-gradient(90deg,var(--extended-cyan),var(--extended-cyan-green))]";
 }
 
 function PillarInfoIcon({ tooltip }: { tooltip: string }) {
@@ -156,7 +134,7 @@ export function CoachHome() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [roleProfile, setRoleProfile] = useLocalStorageState<RoleProfile | null>(
+  const [roleProfile] = useLocalStorageState<RoleProfile | null>(
     StorageKeys.roleProfile,
     null,
   );
@@ -244,11 +222,16 @@ export function CoachHome() {
     const overall = interviewReadinessEmpty ? null : (journeyReadinessSnapshot?.overall ?? null);
     const overallText = overall == null ? "--" : overall.toFixed(1);
     const band = interviewReadinessEmpty ? null : (journeyReadinessSnapshot?.band ?? null);
-    const bandText = band ?? "--";
+    const bandText =
+      overall != null
+        ? scoringLabelForScore(overall)
+        : (band ?? "--");
     const bandClass =
-      band == null
-        ? "bg-muted text-muted-foreground border-transparent"
-        : coachReadinessBadgeClasses(journeyReadinessSnapshot?.band ?? "Not ready");
+      overall != null
+        ? scoringBadgeClass(overall)
+        : band == null
+          ? "bg-muted text-muted-foreground border-transparent"
+          : coachReadinessBadgeClasses(journeyReadinessSnapshot?.band ?? "Not ready");
 
     const noteText = interviewReadinessEmpty
       ? "Take your first mock interview to get your interview readiness score."
@@ -277,9 +260,7 @@ export function CoachHome() {
               <span
                 className={cn(
                   "font-gilroy text-[clamp(3.5rem,8vw,5.5rem)] font-normal leading-none tracking-[-0.06em] tabular-nums",
-                  readinessCardModel.overall == null
-                    ? "text-extended-dark-cyan/35"
-                    : "text-extended-dark-cyan",
+                  scoringTextClass(readinessCardModel.overall),
                 )}
               >
                 {readinessCardModel.overallText}
@@ -302,7 +283,6 @@ export function CoachHome() {
           <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
             {readinessCardModel.pillars.map(({ id, score }) => {
               const meta = SUCCESS_DRIVERS[id];
-              const colors = SUCCESS_DRIVER_COLORS[id];
               const pct =
                 score == null ? 0 : Math.min(100, Math.max(0, (score / READINESS_MAX) * 100));
               const display =
@@ -335,7 +315,7 @@ export function CoachHome() {
                     <div
                       className={cn(
                         "h-full rounded-full transition-[width] duration-500 ease-out",
-                        score == null ? "bg-border" : pillarBarFill(id),
+                        score == null ? "bg-border" : pillarBarFill(),
                       )}
                       style={{ width: `${pct}%` }}
                     />
@@ -345,7 +325,7 @@ export function CoachHome() {
                     <span
                       className={cn(
                         "font-gilroy text-[clamp(2.25rem,4vw,3rem)] font-normal leading-none tracking-[-0.04em] tabular-nums",
-                        score == null ? "text-extended-dark-cyan/35" : colors.fg,
+                        scoringTextClass(score),
                       )}
                     >
                       {display}
@@ -353,7 +333,7 @@ export function CoachHome() {
                   </div>
 
                   <div className="mt-3 flex min-w-0 items-center gap-1.5">
-                    <span className={cn("truncate text-body-sm font-semibold", colors.fg)}>
+                    <span className="truncate text-body-sm font-semibold text-extended-cyan-green">
                       {meta.label}
                     </span>
                     <PillarInfoIcon tooltip={pillarTooltip(id)} />
@@ -538,17 +518,6 @@ export function CoachHome() {
       }),
     [role, fromCraft, storyOverallScore, roleExperiences.length],
   );
-
-  function handleRoleChange(nextTargetRole: string) {
-    const trimmed = nextTargetRole.trim();
-    setRoleProfile((prev) => {
-      if (!trimmed && !prev) return null;
-      if (!prev) {
-        return { targetRole: trimmed, createdAt: new Date().toISOString() };
-      }
-      return { ...prev, targetRole: trimmed };
-    });
-  }
 
   return (
     <AppShell>
@@ -767,7 +736,7 @@ export function CoachHome() {
                                     <span className="text-caption text-text-secondary">
                                       Here is your story score
                                     </span>
-                                    <span className="text-h5 leading-none tabular-nums text-text-primary">
+                                    <span className={cn("text-h5 leading-none tabular-nums", scoringTextClass(storyScoreForCard > 0 ? storyScoreForCard : null))}>
                                       {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
                                     </span>
                                     <span className="text-caption tabular-nums text-text-secondary">/ 5</span>
@@ -790,7 +759,7 @@ export function CoachHome() {
                                     <span className="text-caption text-text-secondary">
                                       Overall story score
                                     </span>
-                                    <span className="text-h5 leading-none tabular-nums text-text-primary">
+                                    <span className={cn("text-h5 leading-none tabular-nums", scoringTextClass(storyScoreForCard > 0 ? storyScoreForCard : null))}>
                                       {storyScoreForCard > 0 ? storyScoreForCard.toFixed(1) : "—"}
                                     </span>
                                     <span className="text-caption tabular-nums text-text-secondary">/ 5</span>
@@ -887,10 +856,7 @@ export function CoachHome() {
         </div>
       </div>
 
-      <CoachConversationalDock
-        quickChips={COACH_AI_QUICK_CHIPS}
-        onAdoptPlannedRole={(r) => handleRoleChange(r)}
-      />
+      <CoachConversationalDock />
     </AppShell>
   );
 }

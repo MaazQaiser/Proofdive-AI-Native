@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { SUCCESS_DRIVER_ORDER, SUCCESS_DRIVERS } from "@/lib/successDrivers";
 import {
   AVAILABLE_COURSES,
   COMPETENCY_FRAMEWORKS,
@@ -143,7 +144,7 @@ type AddOrganizationDialogProps = {
   onOpenChange: (open: boolean) => void;
   existingOrganizationNames: string[];
   frameworks: CompetencyFramework[];
-  onCreateFramework: (framework: CompetencyFramework) => void;
+  onCreateFramework: (name: string) => CompetencyFramework | null;
   onCreate: (organization: Organization) => void;
 };
 
@@ -160,7 +161,6 @@ export function AddOrganizationDialog({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [isCreatingCompetency, setIsCreatingCompetency] = useState(false);
   const [newCompetencyName, setNewCompetencyName] = useState("");
-  const [newCompetencyPillars, setNewCompetencyPillars] = useState<string[]>([]);
   const [competencyNameError, setCompetencyNameError] = useState("");
   const [csvError, setCsvError] = useState("");
 
@@ -352,9 +352,7 @@ export function AddOrganizationDialog({
   }
 
   function startCreatingCompetency() {
-    const defaultFramework = frameworks.find((f) => f.isDefault) ?? frameworks[0];
     setNewCompetencyName("");
-    setNewCompetencyPillars([...(defaultFramework?.pillars ?? [])]);
     setCompetencyNameError("");
     setIsCreatingCompetency(true);
   }
@@ -369,14 +367,12 @@ export function AddOrganizationDialog({
       setCompetencyNameError("Competency version name already exists.");
       return;
     }
-    const newFramework: CompetencyFramework = {
-      id: `framework_${Date.now()}`,
-      name: trimmedName,
-      isDefault: false,
-      pillars: newCompetencyPillars.map((p) => p.trim()).filter(Boolean),
-    };
-    onCreateFramework(newFramework);
-    updateField("competencyFrameworkId", newFramework.id);
+    const created = onCreateFramework(trimmedName);
+    if (!created) {
+      setCompetencyNameError("Could not create competency framework copy.");
+      return;
+    }
+    updateField("competencyFrameworkId", created.id);
     setIsCreatingCompetency(false);
   }
 
@@ -724,18 +720,22 @@ export function AddOrganizationDialog({
                   {selectedFramework && (
                     <div className="flex flex-col gap-3 rounded-md border border-border p-4">
                       <span className="text-body-sm font-medium text-foreground">
-                        {selectedFramework.name} — Competency Pillars
+                        {selectedFramework.name} — Success Drivers
                       </span>
                       <div className="flex flex-wrap gap-2">
-                        {selectedFramework.pillars.map((pillar) => (
+                        {SUCCESS_DRIVER_ORDER.map((driverId) => (
                           <span
-                            key={pillar}
+                            key={driverId}
                             className="text-caption rounded-full border border-border bg-muted px-3 py-1 text-muted-foreground"
                           >
-                            {pillar}
+                            {SUCCESS_DRIVERS[driverId].label}
                           </span>
                         ))}
                       </div>
+                      <p className="text-caption text-muted-foreground">
+                        Each framework includes 12 competencies (3 per Success Driver). Edit
+                        descriptors in Competency Framework Management.
+                      </p>
                     </div>
                   )}
                 </>
@@ -763,44 +763,10 @@ export function AddOrganizationDialog({
                       <p className="text-caption text-destructive">{competencyNameError}</p>
                     )}
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <Label>Competency Pillars</Label>
-                    <div className="flex flex-col gap-2">
-                      {newCompetencyPillars.map((pillar, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Input
-                            value={pillar}
-                            onChange={(e) =>
-                              setNewCompetencyPillars((prev) =>
-                                prev.map((p, i) => (i === index ? e.target.value : p)),
-                              )
-                            }
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() =>
-                              setNewCompetencyPillars((prev) => prev.filter((_, i) => i !== index))
-                            }
-                            aria-label="Remove pillar"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-fit"
-                      onClick={() => setNewCompetencyPillars((prev) => [...prev, ""])}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Pillar
-                    </Button>
-                  </div>
+                  <p className="text-caption text-muted-foreground">
+                    Creates a draft copy of the default framework. Open Competency Framework
+                    Management afterward to edit definitions and level descriptors.
+                  </p>
                   <Button type="button" onClick={saveNewCompetency} className="w-fit">
                     Save Competency Version
                   </Button>

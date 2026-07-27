@@ -10,7 +10,7 @@ export type ReportDriverId = "thinking" | "action" | "people" | "mastery";
 
 export type ScoreBand = "needs_work" | "developing" | "strong";
 
-export type ReadinessLabel = "Not ready" | "Borderline" | "Ready";
+export type ReadinessLabel = "Not ready" | "Borderline" | "Ready" | "Pass" | "Star";
 
 /** Drives hero copy on /report/[id]. Omitted on older stored reports → treated as improving. */
 export type ReportHeroVariant = "first_start" | "improving";
@@ -127,19 +127,38 @@ export type RoleProfile = {
   createdAt: string;
 };
 
+export type ExperienceCar = {
+  context: string;
+  action: string;
+  result: string;
+};
+
+export type ExperienceConsultantAnswer = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
 export type Experience = {
   id: string;
   role: string;
   title: string;
   raw: string;
   createdAt: string;
+  /** Competency this experience anchors (Core Four / demo focus). */
+  competencyId?: CompetencyId;
+  /** Baseline Context / Action / Result capture. */
+  car?: ExperienceCar;
+  /** Consultant enrichment answers (demo: up to 2; model allows up to 5). */
+  consultantAnswers?: ExperienceConsultantAnswer[];
+  /** Legacy enrichment keys — kept for older localStorage rows. */
   enrichment?: {
-    goalObjective?: string; // Q1
-    breakdownTools?: string; // Q2
-    prioritization?: string; // Q3
-    execution?: string; // Q4
-    people?: string; // Q5
-    outcome?: string; // Q6
+    goalObjective?: string;
+    breakdownTools?: string;
+    prioritization?: string;
+    execution?: string;
+    people?: string;
+    outcome?: string;
     updatedAt?: string;
   };
 };

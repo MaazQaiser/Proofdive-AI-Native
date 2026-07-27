@@ -7,7 +7,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground border-border flex flex-col gap-6 rounded-md border py-6",
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-md py-6",
         className,
       )}
       {...props}
@@ -83,12 +83,12 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 
 /** Flat card-inside-card surface — for grouping content within a Card
  * without reaching for a shadow. Uses the muted `--surface` token so it
- * reads as a step down from `--card`, separated by a hairline border. */
+ * reads as a step down from `--card` on the base background. */
 function CardNested({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-nested"
-      className={cn("bg-surface rounded-md border border-border", className)}
+      className={cn("bg-surface rounded-md", className)}
       {...props}
     />
   );

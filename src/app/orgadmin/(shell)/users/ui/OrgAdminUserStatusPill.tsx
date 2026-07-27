@@ -6,9 +6,9 @@ import { ORG_ADMIN_USER_STATUS_LABEL, type OrgAdminUserStatus } from "@/lib/orgA
 export function OrgAdminUserStatusPill({ status }: { status: OrgAdminUserStatus }) {
   const tone =
     status === "active"
-      ? "border-scoring-green/20 bg-scoring-green/10 text-scoring-green"
+      ? "border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg"
       : status === "invited"
-        ? "border-scoring-yellow/20 bg-scoring-yellow/10 text-scoring-yellow"
+        ? "border-scoring-yellow/30 bg-scoring-yellow/20 text-scoring-yellow-fg"
         : "border-border bg-muted text-muted-foreground";
   const Icon = status === "active" ? CheckCircle2 : status === "invited" ? Clock : Ban;
 

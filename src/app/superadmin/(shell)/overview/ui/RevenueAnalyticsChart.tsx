@@ -22,8 +22,8 @@ export function RevenueAnalyticsChart({ data }: Props) {
               variant="outline"
               className={
                 latestGrowthPct >= 0
-                  ? "border-scoring-green/20 bg-scoring-green/10 text-scoring-green"
-                  : "border-scoring-red/20 bg-scoring-red/10 text-scoring-red"
+                  ? "border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg"
+                  : "border-scoring-red/25 bg-scoring-red/15 text-scoring-red-fg"
               }
             >
               {latestGrowthPct >= 0 ? "+" : ""}
