@@ -145,10 +145,10 @@
   --driver-mastery-fg: #2D1F3D;
   --driver-mastery-accent: #7B5EA7;
 
-  /* Brand corner radius — cards/surfaces use 16px (`rounded-lg`+); buttons and
-     form controls use 8px (`rounded-md`). Candy controls (selection chips) stay
-     `rounded-full` outside this token. Cap xl/2xl/3xl at 16px. */
-  --radius: 1rem; /* 16px — card/surface default */
+  /* Brand corner radius — one 8px default for buttons, fields, and cards so
+     auth controls (Login vs Google/LinkedIn) and surfaces share the same
+     corner. Candy controls (selection chips) stay `rounded-full`. */
+  --radius: 0.5rem; /* 8px */
 
   /* Legacy page tokens — aliases into the foundation so older `var(--app-bg)` /
      `var(--app-fg)` call sites stay in lockstep with `bg-background` /
@@ -385,12 +385,12 @@
   --color-driver-mastery-fg: var(--driver-mastery-fg);
   --color-driver-mastery-accent: var(--driver-mastery-accent);
 
-  --radius-sm: 0.5rem; /* 8px — tight nested controls */
-  --radius-md: 0.5rem; /* 8px — buttons, inputs, CTAs */
-  --radius-lg: 1rem; /* 16px — cards, dialogs */
-  --radius-xl: 1rem; /* 16px — brand max */
-  --radius-2xl: 1rem; /* capped to brand max */
-  --radius-3xl: 1rem; /* capped to brand max */
+  --radius-sm: 0.375rem; /* 6px — tight nested controls */
+  --radius-md: 0.5rem; /* 8px — buttons, inputs, cards, CTAs */
+  --radius-lg: 0.5rem; /* 8px — same brand default as md */
+  --radius-xl: 0.5rem; /* 8px — brand max */
+  --radius-2xl: 0.5rem; /* capped to brand max */
+  --radius-3xl: 0.5rem; /* capped to brand max */
 
   --font-sans: var(--font-sans);
   --font-gilroy: "Gilroy", var(--font-sans), sans-serif;

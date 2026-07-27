@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
-    <svg className={cn("h-5 w-5 shrink-0", className)} viewBox="0 0 24 24" aria-hidden>
+    <svg className={cn("h-4 w-4 shrink-0", className)} viewBox="0 0 24 24" aria-hidden>
       <path
         fill="#4285F4"
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -36,18 +36,23 @@ function GoogleIcon({ className }: { className?: string }) {
 
 function LinkedInIcon({ className }: { className?: string }) {
   return (
-    <svg className={cn("h-5 w-5 shrink-0 text-[#0A66C2]", className)} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg className={cn("h-4 w-4 shrink-0 text-[#0A66C2]", className)} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
     </svg>
   );
 }
+
+const fieldClassName =
+  "h-11 rounded-md border-border px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
+const socialClassName =
+  "flex h-11 w-full items-center justify-center gap-2.5 rounded-md border border-border bg-white px-4 text-body-sm font-medium text-foreground hover:bg-muted";
 
 export default function LoginPage() {
   const router = useRouter();
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-white">
-      <header className="relative z-10 flex h-20 shrink-0 items-center px-12">
+      <header className="relative z-10 flex h-16 shrink-0 items-center px-8 sm:px-12">
         <Link href="/">
           <Logo size="xxs" />
         </Link>
@@ -56,26 +61,22 @@ export default function LoginPage() {
       <div className="relative flex flex-1 overflow-hidden">
         <AuthVisualPanel />
 
-        <div className="flex w-full flex-1 items-center justify-center px-6 py-16 lg:min-w-[938px]">
-          <div className="flex w-full max-w-[524px] flex-col items-start gap-3">
-            <div className="flex w-full flex-col items-center">
-              <h1 className="text-subheading text-center font-medium text-extended-dark-cyan">Login</h1>
-            </div>
-            <div className="flex w-full flex-col items-center">
-              <p className="text-center text-[22px] leading-10 font-medium tracking-[-0.88px] text-muted-foreground">
-                To access your account
-              </p>
+        <div className="flex w-full flex-1 items-center justify-center px-6 py-10 lg:min-w-[938px]">
+          <div className="flex w-full max-w-[400px] flex-col items-stretch gap-5">
+            <div className="flex flex-col items-center gap-1.5 text-center">
+              <h1 className="text-h4 font-medium text-extended-dark-cyan">Login</h1>
+              <p className="text-body-sm text-muted-foreground">To access your account</p>
             </div>
 
             <form
-              className="flex w-full flex-col gap-[26px]"
+              className="flex w-full flex-col gap-4"
               onSubmit={(e) => {
                 e.preventDefault();
                 router.push("/onboarding");
               }}
             >
-              <div className="flex w-full flex-col gap-4">
-                <div className="flex w-full flex-col gap-[5px]">
+              <div className="flex w-full flex-col gap-3">
+                <div className="flex w-full flex-col gap-1.5">
                   <Label htmlFor="login-email" className="text-caption font-normal text-foreground">
                     Email
                   </Label>
@@ -85,12 +86,12 @@ export default function LoginPage() {
                     type="email"
                     autoComplete="email"
                     placeholder="Enter your email"
-                    className="h-14 rounded-lg border-border px-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
+                    className={fieldClassName}
                     required
                   />
                 </div>
-                <div className="flex w-full flex-col gap-[5px]">
-                  <div className="flex w-full items-center justify-between">
+                <div className="flex w-full flex-col gap-1.5">
+                  <div className="flex w-full items-center justify-between gap-3">
                     <Label htmlFor="login-password" className="text-caption font-normal text-foreground">
                       Password
                     </Label>
@@ -103,43 +104,43 @@ export default function LoginPage() {
                     name="password"
                     autoComplete="current-password"
                     placeholder="Password"
-                    className="h-14 rounded-lg border-border pl-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
+                    className={cn(fieldClassName, "pl-3")}
                     required
                   />
                 </div>
               </div>
-              <Button type="submit" className="h-14 w-full rounded-md text-lg font-medium">
+              <Button type="submit" className="h-11 w-full rounded-md text-body-sm font-medium">
                 Login
               </Button>
             </form>
 
-            <button
-              type="button"
-              onClick={() => router.push("/onboarding")}
-              className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-white px-5 py-4 hover:bg-muted"
-            >
-              <GoogleIcon />
-              <span className="text-lg font-medium text-foreground">Google</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push("/onboarding")}
-              className="flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-white px-5 py-4 hover:bg-muted"
-            >
-              <LinkedInIcon />
-              <span className="text-lg font-medium text-foreground">LinkedIn</span>
-            </button>
-
-            <div className="flex w-full flex-col items-center pt-1">
-              <p className="text-center text-lg">
-                <span className="text-muted-foreground">Do not have an account? </span>
-                <Link href="/signup" className="font-medium text-primary hover:underline">
-                  Sign up
-                </Link>
-              </p>
+            <div className="flex w-full flex-col gap-2.5">
+              <button
+                type="button"
+                onClick={() => router.push("/onboarding")}
+                className={socialClassName}
+              >
+                <GoogleIcon />
+                Google
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/onboarding")}
+                className={socialClassName}
+              >
+                <LinkedInIcon />
+                LinkedIn
+              </button>
             </div>
 
-            <div className="flex w-full flex-col items-center gap-2 pt-4">
+            <p className="text-center text-body-sm">
+              <span className="text-muted-foreground">Do not have an account? </span>
+              <Link href="/signup" className="font-medium text-primary hover:underline">
+                Sign up
+              </Link>
+            </p>
+
+            <div className="flex w-full flex-col items-center gap-1.5 pt-1">
               <button
                 type="button"
                 onClick={() => router.push("/superadmin/overview")}

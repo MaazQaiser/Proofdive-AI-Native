@@ -2,6 +2,13 @@
 
 import { useMemo } from "react";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type { RoleProfile } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
@@ -14,11 +21,8 @@ const ROLE_SUGGESTIONS = [
   "Project Manager",
 ] as const;
 
-const CHEVRON =
-  "data:image/svg+xml," +
-  encodeURIComponent(
-    "<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1.25 1.75L5 4.75L8.75 1.75' fill='none' stroke='black' stroke-opacity='0.4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>",
-  );
+/** Radix Select forbids empty item values; map placeholder ↔ stored empty role. */
+const PICK_ROLE_VALUE = "__pick_role__";
 
 export function AppShellHeaderRoleSelector() {
   const [roleProfile, setRoleProfile] = useLocalStorageState<RoleProfile | null>(
@@ -44,32 +48,37 @@ export function AppShellHeaderRoleSelector() {
   }
 
   return (
-    <div className="inline-flex min-w-0 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2">
-      <p className="shrink-0 text-caption text-text-secondary">Preparing for</p>
-      <label className="sr-only" htmlFor="appshell-target-role">
-        Target role
-      </label>
-      <div className="flex min-w-0 items-center overflow-visible">
-        <select
-          id="appshell-target-role"
-          value={role}
-          onChange={(e) => handleRoleChange(e.target.value)}
-          className="min-h-0 min-w-0 cursor-pointer appearance-none border-0 bg-transparent py-0.5 pl-0 pr-5 text-left text-caption font-medium leading-snug text-text-primary shadow-none outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0"
-          style={{
-            backgroundImage: `url("${CHEVRON}")`,
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "right 0 center",
-            backgroundSize: "10px 6px",
-          }}
-        >
-          <option value="">Pick a role</option>
-          {roleOptions.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
+    <Select
+      value={role || PICK_ROLE_VALUE}
+      onValueChange={(next) =>
+        handleRoleChange(next === PICK_ROLE_VALUE ? "" : next)
+      }
+    >
+      <SelectTrigger
+        id="appshell-target-role"
+        size="sm"
+        aria-label="Target role"
+        className="h-auto min-h-0 w-auto max-w-[min(100vw-2rem,20rem)] gap-1.5 rounded-full border-border bg-card px-4 py-2 text-caption font-medium text-text-primary shadow-none focus-visible:border-border focus-visible:ring-2 focus-visible:ring-ring/40 data-[size=sm]:h-auto [&_svg]:size-3 [&_svg]:opacity-40"
+      >
+        <span className="shrink-0 font-normal text-text-secondary">Preparing for</span>
+        <SelectValue placeholder="Pick a role" />
+      </SelectTrigger>
+      <SelectContent
+        align="end"
+        side="bottom"
+        sideOffset={8}
+        position="popper"
+        className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)] rounded-lg data-[side=bottom]:translate-y-0 data-[side=top]:translate-y-0"
+      >
+        <SelectItem value={PICK_ROLE_VALUE} className="text-caption text-text-secondary">
+          Pick a role
+        </SelectItem>
+        {roleOptions.map((opt) => (
+          <SelectItem key={opt} value={opt} className="text-caption">
+            {opt}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

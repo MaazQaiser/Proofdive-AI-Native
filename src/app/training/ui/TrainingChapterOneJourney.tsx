@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { Button } from "@/components/Button";
-import { Card, CardBody, NestedCard } from "@/components/Card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/components/cn";
 import {
   AFTER_CASE,
@@ -100,7 +100,7 @@ function segmentCompleteBetween(leftIdx: number, phase: TrainingJourneyPhase): b
 
 function CoachBlock({ children }: { children: ReactNode }) {
   return (
-    <div className="whitespace-pre-wrap text-body font-semibold leading-7 text-[var(--app-fg)]/90">
+    <div className="whitespace-pre-wrap text-body font-semibold leading-7 text-text-primary/90">
       {children}
     </div>
   );
@@ -192,7 +192,7 @@ export function TrainingChapterOneJourney({
             type="button"
             onClick={onBackToOverview}
             aria-label="Back to course overview"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--app-muted)] transition hover:bg-[var(--app-hairline)] hover:text-[var(--app-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]/30"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]/30"
           >
             <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden>
               <path
@@ -204,22 +204,22 @@ export function TrainingChapterOneJourney({
               />
             </svg>
           </button>
-          <p className="text-overline text-[var(--app-muted)]">
+          <p className="text-overline text-text-secondary">
             CHAPTER 1
           </p>
         </div>
         <h2 className="text-h5 mt-1">
           {chapterTitle}
         </h2>
-        <p className="mt-1 max-w-2xl text-caption leading-6 text-[var(--app-muted)]">
+        <p className="mt-1 max-w-2xl text-caption leading-6 text-text-secondary">
           {chapterSummary}
         </p>
       </div>
 
       {chapter2Placeholder ? (
-        <Card className="mt-8">
-          <CardBody className="p-6">
-            <p className="text-caption font-semibold leading-6 text-[var(--app-muted)]">
+        <Card className="gap-0 py-0 mt-8">
+          <CardContent className="p-6">
+            <p className="text-caption font-semibold leading-6 text-text-secondary">
               Chapter 2 is coming soon.
             </p>
             <div className="mt-4">
@@ -227,23 +227,23 @@ export function TrainingChapterOneJourney({
                 Back
               </Button>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <div className="mt-8 flex flex-col gap-6">
           <div className="min-w-0 w-full space-y-6">
             {showTimeline ? (
-              <Card>
-                <CardBody className="p-4">
+              <Card className="gap-0 py-0">
+                <CardContent className="p-4">
                   <div className="mb-4">
                     <div className="flex items-end justify-between gap-3">
-                      <span className="text-overline text-[var(--app-muted)]">Module progress</span>
+                      <span className="text-overline text-text-secondary">Module progress</span>
                       <div className="text-[32px] leading-none font-semibold text-heading-teal">
                         {percentForTrainingPhase(phase)}%
                       </div>
                     </div>
                     <div
-                      className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[var(--app-hairline)]"
+                      className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-border"
                       role="progressbar"
                       aria-valuenow={percentForTrainingPhase(phase)}
                       aria-valuemin={0}
@@ -269,7 +269,7 @@ export function TrainingChapterOneJourney({
                               "mx-0.5 mt-[18px] hidden h-0.5 min-w-[10px] flex-1 rounded-full sm:block",
                               segmentCompleteBetween(idx - 1, phase)
                                 ? "bg-primary"
-                                : "bg-[var(--app-hairline)]",
+                                : "bg-border",
                             )}
                           />
                         ) : null}
@@ -283,8 +283,8 @@ export function TrainingChapterOneJourney({
                               done
                                 ? "border-primary bg-primary text-primary-foreground"
                                 : active
-                                  ? "border-primary bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-[var(--app-surface)]"
-                                  : "border-[var(--app-hairline)] bg-white text-[var(--app-muted)]",
+                                  ? "border-primary bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-card"
+                                  : "border-border bg-white text-text-secondary",
                             )}
                           >
                             {idx + 1}
@@ -292,7 +292,7 @@ export function TrainingChapterOneJourney({
                           <p
                             className={cn(
                               "mt-2 w-full px-0.5 text-center text-overline leading-snug",
-                              active || done ? "text-[var(--app-fg)]" : "text-[var(--app-muted)]",
+                              active || done ? "text-text-primary" : "text-text-secondary",
                             )}
                           >
                             {label}
@@ -301,7 +301,7 @@ export function TrainingChapterOneJourney({
                       </Fragment>
                     ))}
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
             ) : null}
 
@@ -318,9 +318,9 @@ export function TrainingChapterOneJourney({
                 ) : null}
 
                 {phase === "video" ? (
-                  <Card>
-                    <CardBody className="p-5 sm:p-6">
-                      <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-[var(--app-surface-nested)]">
+                  <Card className="gap-0 py-0">
+                    <CardContent className="p-5 sm:p-6">
+                      <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-surface">
                         <div
                           className="absolute inset-0 bg-cover bg-center opacity-40"
                           style={{
@@ -344,13 +344,13 @@ export function TrainingChapterOneJourney({
                               <path d="M8 5v14l11-7z" />
                             </svg>
                           </button>
-                          <span className="text-overline uppercase text-[var(--app-muted)]">
+                          <span className="text-overline uppercase text-text-secondary">
                             Video
                           </span>
-                          <p className="text-caption font-semibold text-[var(--app-muted)]">
+                          <p className="text-caption font-semibold text-text-secondary">
                             Lesson player placeholder
                           </p>
-                          <p className="max-w-sm text-caption leading-5 text-[var(--app-muted)]">
+                          <p className="max-w-sm text-caption leading-5 text-text-secondary">
                             Replace with your hosted lesson (embed URL, Mux, or Vimeo).
                           </p>
                         </div>
@@ -367,7 +367,7 @@ export function TrainingChapterOneJourney({
                           Mark video as watched
                         </Button>
                       </div>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 ) : null}
 
@@ -387,16 +387,16 @@ export function TrainingChapterOneJourney({
                 ) : null}
 
                 {phase === "quiz" ? (
-                  <Card>
-                    <CardBody className="p-5 sm:p-6">
+                  <Card className="gap-0 py-0">
+                    <CardContent className="p-5 sm:p-6">
                     <h3 className="text-h6">Quick quiz (3 questions)</h3>
                     <div className="mt-5 space-y-6">
                       {QUIZ.map((item, qi) => (
                         <fieldset
                           key={qi}
-                          className="rounded-lg border border-[var(--app-hairline)] bg-[var(--app-surface-nested)] p-4"
+                          className="rounded-lg border border-border bg-surface p-4"
                         >
-                          <legend className="text-body-sm font-semibold text-[var(--app-fg)]">
+                          <legend className="text-body-sm font-semibold text-text-primary">
                             {qi + 1}. {item.q}
                           </legend>
                           <div className="mt-3 space-y-2">
@@ -408,7 +408,7 @@ export function TrainingChapterOneJourney({
                                   className={cn(
                                     "flex cursor-pointer items-start gap-2 rounded-2xl border px-3 py-2 text-caption transition",
                                     selected
-                                      ? "border-[var(--app-fg)] bg-white"
+                                      ? "border-foreground bg-card"
                                       : "border-transparent bg-white/60 hover:bg-white",
                                   )}
                                 >
@@ -444,12 +444,12 @@ export function TrainingChapterOneJourney({
                         Submit quiz
                       </Button>
                       {quizSubmitted && quizScore !== null ? (
-                        <span className="self-center text-caption font-semibold text-[var(--app-muted)]">
+                        <span className="self-center text-caption font-semibold text-text-secondary">
                           Score: {quizScore}/{QUIZ.length}
                         </span>
                       ) : null}
                     </div>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 ) : null}
 
@@ -458,7 +458,7 @@ export function TrainingChapterOneJourney({
                     <CoachBlock>{AFTER_QUIZ}</CoachBlock>
                     <CoachBlock>{CASE_INTRO}</CoachBlock>
                     {quizSubmitted && quizScore !== null ? (
-                      <p className="text-overline text-[var(--app-muted)]">
+                      <p className="text-overline text-text-secondary">
                         Score: {quizScore}/{QUIZ.length}
                       </p>
                     ) : null}
@@ -471,14 +471,14 @@ export function TrainingChapterOneJourney({
                 ) : null}
 
                 {phase === "case" ? (
-                  <Card>
-                    <CardBody className="p-5 sm:p-6">
+                  <Card className="gap-0 py-0">
+                    <CardContent className="p-5 sm:p-6">
                       <h3 className="text-h6">Case practice</h3>
-                      <p className="mt-2 text-caption leading-6 text-[var(--app-muted)]">
+                      <p className="mt-2 text-caption leading-6 text-text-secondary">
                         Work through a short scenario the way you would in an interview. State your
                         structure, assumptions, and recommendation.
                       </p>
-                      <div className="mt-4 rounded-2xl border border-dashed border-[var(--app-hairline-strong)] bg-[var(--app-surface-nested)] p-4 text-caption text-[var(--app-muted)]">
+                      <div className="mt-4 rounded-2xl border border-dashed border-border bg-surface p-4 text-caption text-text-secondary">
                         Scenario placeholder. Connect your case prompt or exercise here.
                       </div>
                       <div className="mt-4">
@@ -490,7 +490,7 @@ export function TrainingChapterOneJourney({
                           Mark case complete
                         </Button>
                       </div>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 ) : null}
 
@@ -507,16 +507,16 @@ export function TrainingChapterOneJourney({
                 ) : null}
 
                 {phase === "assessment" ? (
-                  <Card>
-                    <CardBody className="p-5 sm:p-6">
+                  <Card className="gap-0 py-0">
+                    <CardContent className="p-5 sm:p-6">
                       <h3 className="text-h6">Assessment (up to 600 words)</h3>
-                      <p className="mt-2 text-caption leading-6 text-[var(--app-muted)]">
+                      <p className="mt-2 text-caption leading-6 text-text-secondary">
                         Summarize how you would apply this chapter in an interview setting. Aim for
                         clarity and structure.
                       </p>
                       <label
                         htmlFor="chapter-assessment"
-                        className="mt-4 block text-overline text-[var(--app-muted)]"
+                        className="mt-4 block text-overline text-text-secondary"
                       >
                         Your response
                       </label>
@@ -526,12 +526,12 @@ export function TrainingChapterOneJourney({
                         onChange={(e) => setAssessmentText(e.target.value)}
                         rows={12}
                         className={cn(
-                          "mt-2 w-full resize-y rounded-2xl border border-[var(--app-hairline)] bg-white px-4 py-3 text-caption leading-6 outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--ring)]/40",
+                          "mt-2 w-full resize-y rounded-2xl border border-border bg-white px-4 py-3 text-caption leading-6 outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--ring)]/40",
                           overWordLimit && "border-destructive/60 focus-visible:ring-destructive/30",
                         )}
                         placeholder="Write your assessment…"
                       />
-                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-overline text-[var(--app-muted)]">
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-overline text-text-secondary">
                         <span className={cn(overWordLimit && "font-semibold text-destructive")}>
                           {wordCount} / 600 words
                         </span>
@@ -545,7 +545,7 @@ export function TrainingChapterOneJourney({
                           Complete chapter
                         </Button>
                       </div>
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 ) : null}
 

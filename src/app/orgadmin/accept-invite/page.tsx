@@ -13,10 +13,14 @@ import { Logo } from "@/components/ui/logo";
 import { ORG_ADMIN_DEMO_ORG } from "@/lib/orgAdminDemo";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { writeJson } from "@/lib/storage";
+import { cn } from "@/lib/utils";
 
 const EMPTY_PASSWORD_ERROR = "Please enter a password.";
 const MISMATCH_ERROR = "Password and Confirm Password do not match.";
 const CONSENT_ERROR = "Please accept Terms & Conditions and Privacy Policy.";
+
+const fieldClassName =
+  "h-11 rounded-md border-border px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
 
 export default function OrgAdminAcceptInvitePage() {
   const router = useRouter();
@@ -42,7 +46,7 @@ export default function OrgAdminAcceptInvitePage() {
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-white">
-      <header className="relative z-10 flex h-20 shrink-0 items-center px-12">
+      <header className="relative z-10 flex h-16 shrink-0 items-center px-8 sm:px-12">
         <Link href="/">
           <Logo size="xxs" />
         </Link>
@@ -51,22 +55,20 @@ export default function OrgAdminAcceptInvitePage() {
       <div className="relative flex flex-1 overflow-hidden">
         <AuthVisualPanel />
 
-        <div className="flex w-full items-center justify-center px-6 py-16 lg:w-[731px] lg:shrink-0 lg:px-12">
-          <div className="flex w-full max-w-[524px] flex-col items-start gap-3">
-            <div className="flex w-full flex-col items-center">
-              <h1 className="text-subheading text-center font-medium text-extended-dark-cyan">
+        <div className="flex w-full items-center justify-center px-6 py-10 lg:w-[731px] lg:shrink-0 lg:px-12">
+          <div className="flex w-full max-w-[400px] flex-col items-stretch gap-5">
+            <div className="flex flex-col items-center gap-1.5 text-center">
+              <h1 className="text-h4 font-medium text-extended-dark-cyan">
                 Activate Your Account
               </h1>
-            </div>
-            <div className="flex w-full flex-col items-center">
-              <p className="text-center text-[22px] leading-10 font-medium tracking-[-0.88px] text-muted-foreground">
+              <p className="text-body-sm text-muted-foreground">
                 Set a password for {ORG_ADMIN_DEMO_ORG.name}
               </p>
             </div>
 
-            <form className="flex w-full flex-col gap-[26px]" onSubmit={handleSubmit}>
-              <div className="flex w-full flex-col gap-4">
-                <div className="flex w-full flex-col gap-[5px]">
+            <form className="flex w-full flex-col gap-4" onSubmit={handleSubmit}>
+              <div className="flex w-full flex-col gap-3">
+                <div className="flex w-full flex-col gap-1.5">
                   <Label htmlFor="invite-email" className="text-caption font-normal text-foreground">
                     Email
                   </Label>
@@ -77,10 +79,10 @@ export default function OrgAdminAcceptInvitePage() {
                     value={ORG_ADMIN_DEMO_ORG.contactEmail}
                     disabled
                     readOnly
-                    className="h-14 rounded-lg border-border px-[13px] py-[17px] text-lg text-muted-foreground disabled:opacity-100 md:text-lg"
+                    className={cn(fieldClassName, "text-muted-foreground disabled:opacity-100")}
                   />
                 </div>
-                <div className="flex w-full flex-col gap-[5px]">
+                <div className="flex w-full flex-col gap-1.5">
                   <Label htmlFor="invite-password" className="text-caption font-normal text-foreground">
                     Password
                   </Label>
@@ -95,7 +97,7 @@ export default function OrgAdminAcceptInvitePage() {
                       setErrors((prev) => ({ ...prev, password: undefined }));
                     }}
                     aria-invalid={!!errors.password}
-                    className="h-14 rounded-lg border-border pl-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
+                    className={cn(fieldClassName, "pl-3")}
                   />
                   {errors.password ? (
                     <p className="text-overline text-destructive" role="alert">
@@ -103,7 +105,7 @@ export default function OrgAdminAcceptInvitePage() {
                     </p>
                   ) : null}
                 </div>
-                <div className="flex w-full flex-col gap-[5px]">
+                <div className="flex w-full flex-col gap-1.5">
                   <Label htmlFor="invite-confirm-password" className="text-caption font-normal text-foreground">
                     Confirm Password
                   </Label>
@@ -118,7 +120,7 @@ export default function OrgAdminAcceptInvitePage() {
                       setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
                     }}
                     aria-invalid={!!errors.confirmPassword}
-                    className="h-14 rounded-lg border-border pl-[13px] py-[17px] text-lg placeholder:text-placeholder md:text-lg"
+                    className={cn(fieldClassName, "pl-3")}
                   />
                   {errors.confirmPassword ? (
                     <p className="text-overline text-destructive" role="alert">
@@ -127,7 +129,7 @@ export default function OrgAdminAcceptInvitePage() {
                   ) : null}
                 </div>
 
-                <label className="flex w-full cursor-pointer items-start gap-2.5 text-caption text-muted-foreground">
+                <label className="flex w-full cursor-pointer items-start gap-2 text-caption text-muted-foreground">
                   <input
                     type="checkbox"
                     checked={agreed}
@@ -165,7 +167,7 @@ export default function OrgAdminAcceptInvitePage() {
                   </p>
                 ) : null}
               </div>
-              <Button type="submit" className="h-14 w-full rounded-md text-lg font-medium">
+              <Button type="submit" className="h-11 w-full rounded-md text-body-sm font-medium">
                 Activate Account
               </Button>
             </form>

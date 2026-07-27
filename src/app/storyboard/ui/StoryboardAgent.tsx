@@ -3,13 +3,27 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactElement } from "react";
+import {
+  BookOpen,
+  Download,
+  Plus,
+  Sparkles,
+  WandSparkles,
+} from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
-import { Button } from "@/components/Button";
-import { Card, CardBody, NestedCard } from "@/components/Card";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardNested,
+} from "@/components/ui/card";
+import { IconButton } from "@/components/ui/icon-button";
+import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
+import { SuccessDriverMark } from "@/components/ui/success-driver-card";
 import { makeId } from "@/lib/id";
 import { normalizeWhitespace } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -17,10 +31,17 @@ import {
   createStoryboardDraft,
   normalizeStoryboardDocument,
   overallCompetencyStrength,
+  pillarStrength,
   type StoryboardDraftDocument,
   type StoryboardDraftStore,
 } from "@/lib/storyboardDraft";
 import type { Experience, InterviewReport, RoleProfile, StoryboardFromCraft } from "@/lib/proofdiveTypes";
+import {
+  SUCCESS_DRIVER_COLORS,
+  SUCCESS_DRIVER_ORDER,
+  type SuccessDriverId,
+} from "@/lib/successDrivers";
+import { cn } from "@/lib/utils";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 
 /** Enrichment order matches conversation steps after entry (Goal → … → Outcome). */
@@ -34,6 +55,14 @@ const ENRICHMENT_KEYS = [
 ] as const;
 
 type EnrichmentKey = (typeof ENRICHMENT_KEYS)[number];
+
+/** Maps conversation enrichment steps → Success Driver for consistent iconography. */
+function enrichmentDriver(key: EnrichmentKey): SuccessDriverId {
+  if (key === "execution") return "action";
+  if (key === "people") return "people";
+  if (key === "outcome") return "mastery";
+  return "thinking";
+}
 
 /** 0 = Goal/Objective … 5 = Outcome. */
 const CONVERSATION_PROMPTS: readonly string[] = [
@@ -477,29 +506,42 @@ Start simple. What's something you worked on that stands out?`,
     return list[suggestionCursor % list.length] ?? null;
   }, [storyQuick.suggestions, suggestionCursor]);
 
+  const activeEnrichmentDriver = useMemo<SuccessDriverId | null>(() => {
+    if (storyStep < 0 || storyStep > 5) return null;
+    const key = ENRICHMENT_KEYS[storyStep];
+    return key ? enrichmentDriver(key) : null;
+  }, [storyStep]);
+
+  const pillarScores = useMemo(
+    () =>
+      SUCCESS_DRIVER_ORDER.map((id) => ({
+        id,
+        score: pillarStrength(storyDraftDocument, id),
+      })),
+    [storyDraftDocument],
+  );
+
   if (!role) {
     return (
       <AppShell>
         <CoachFloatingNav />
         <div className="pb-44">
-          <Card>
-            <CardBody>
-              <h2 className="text-h4">
-                First, set a target role.
-              </h2>
-              <p className="mt-3 text-caption leading-6 text-[var(--app-muted)]">
+          <Card className="gap-0 py-0">
+            <CardContent className="space-y-4 p-6">
+              <h2 className="text-h4 text-text-primary">First, set a target role.</h2>
+              <p className="text-caption leading-6 text-text-secondary">
                 Story banks are saved per role. Once you pick a role, we’ll build
                 at least 3 experiences and enrich them into proof.
               </p>
-              <div className="mt-6 flex gap-2">
-                <Link href="/onboarding">
-                  <Button>Go to onboarding</Button>
-                </Link>
-                <Link href="/coach?journey=1">
-                  <Button variant="secondary">Back to Coach</Button>
-                </Link>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild>
+                  <Link href="/onboarding">Go to onboarding</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/coach?journey=1">Back to Coach</Link>
+                </Button>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
         <CoachBottomChatBar showUploadButton={false} />
@@ -510,13 +552,9 @@ Start simple. What's something you worked on that stands out?`,
   const storyboardRightPanel = (
     <div className="space-y-3">
       <div className="flex items-end justify-between gap-3">
-        <div className="text-overline text-[var(--app-muted)]">
-          EXPERIENCE BANK
-        </div>
-        <button
-          type="button"
+        <div className="text-overline text-text-secondary">Experience bank</div>
+        <IconButton
           aria-label="Add experience"
-          className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/80 active:bg-primary/70"
           onClick={() => {
             setPendingNewEntry(true);
             setSelectedId(null);
@@ -524,10 +562,8 @@ Start simple. What's something you worked on that stands out?`,
             setCraftUi("idle");
           }}
         >
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-3.5 w-3.5">
-            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-        </button>
+          <Plus />
+        </IconButton>
       </div>
 
       <div className="space-y-2">
@@ -548,88 +584,179 @@ Start simple. What's something you worked on that stands out?`,
                 }}
               >
                 <Card
-                  className={[
-                    "transition",
+                  className={cn(
+                    "gap-0 py-0 transition",
                     isActive
                       ? "border-primary ring-2 ring-primary/40"
-                      : "hover:border-[var(--app-hairline-strong)] hover:ring-2 hover:ring-primary/10",
-                  ].join(" ")}
+                      : "hover:border-border hover:ring-2 hover:ring-primary/10",
+                  )}
                 >
-                  <CardBody className="p-4">
-                    <div className="text-overline text-[var(--app-muted)]">
-                      EXPERIENCE {n}
+                  <CardContent className="p-4">
+                    <div className="text-overline text-text-secondary">
+                      Experience {n}
                     </div>
-                    <div className="mt-1 text-caption font-semibold">
+                    <div className="mt-1 text-caption font-semibold text-text-primary">
                       {e.title || `Experience ${n}`}
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
               </button>
             );
           })
         ) : (
-          <Card>
-            <CardBody className="p-4">
-              <div className="text-body font-semibold">No experiences yet</div>
-              <div className="mt-1 text-caption leading-5 text-[var(--app-muted)]">
-                Start by sharing an experience in the chat. To add another one later, just say{" "}
-                <span className="font-extrabold text-[var(--app-fg)]">“Add new experience”</span>.
+          <Card className="gap-0 py-0">
+            <CardContent className="p-4">
+              <div className="text-body-sm font-semibold text-text-primary">
+                No experiences yet
               </div>
-            </CardBody>
+              <div className="mt-1 text-caption leading-5 text-text-secondary">
+                Start by sharing an experience in the chat, or use{" "}
+                <span className="font-semibold text-text-primary">+</span> to add
+                another one later.
+              </div>
+            </CardContent>
           </Card>
         )}
       </div>
 
-      <div className="pt-2 text-overline text-[var(--app-muted)]">
-        YOUR STORY DRAFT
-      </div>
-      <Card>
-        <CardBody className="space-y-3 p-5">
+      <div className="pt-2 text-overline text-text-secondary">Success Drivers</div>
+      <Card className="gap-0 py-0">
+        <CardContent className="space-y-2.5 p-4">
+          {pillarScores.map(({ id, score }) => (
+            <div key={id} className="flex items-center justify-between gap-2">
+              <SuccessDriverMark
+                driver={id}
+                label="short"
+                className="text-caption"
+                iconClassName="size-3.5"
+              />
+              <span className="shrink-0 text-caption tabular-nums text-text-secondary">
+                {score > 0 ? score.toFixed(1) : "—"}
+              </span>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="pt-2 text-overline text-text-secondary">Your story draft</div>
+      <Card className="gap-0 py-0">
+        <CardContent className="space-y-3 p-5">
           {isDraftUpdating ? (
             <div className="space-y-3">
-              <div className="h-5 w-44 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
+              <div className="h-5 w-44 animate-pulse rounded-lg bg-muted" />
               <div className="space-y-2">
-                <div className="h-4 w-full animate-pulse rounded-lg bg-[var(--app-hairline)]" />
-                <div className="h-4 w-11/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
-                <div className="h-4 w-9/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
+                <div className="h-4 w-full animate-pulse rounded-lg bg-muted" />
+                <div className="h-4 w-11/12 animate-pulse rounded-lg bg-muted" />
+                <div className="h-4 w-9/12 animate-pulse rounded-lg bg-muted" />
               </div>
             </div>
           ) : (
             <>
-              <div className="text-body font-semibold">{storyQuick.title}</div>
-              <div className="whitespace-pre-wrap text-caption leading-6 text-[var(--app-fg)]/80">
+              <div className="text-body-sm font-semibold text-text-primary">
+                {storyQuick.title}
+              </div>
+              <div className="whitespace-pre-wrap text-caption leading-6 text-text-secondary">
                 {storyQuick.body}
               </div>
             </>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
 
-      <div className="pt-2 text-overline text-[var(--app-muted)]">
-        SUGGESTIONS
-      </div>
-      <Card>
-        <CardBody className="space-y-3 p-5">
+      <div className="pt-2 text-overline text-text-secondary">Suggestions</div>
+      <Card className="gap-0 py-0">
+        <CardContent className="space-y-3 p-5">
           {isDraftUpdating ? (
             <div className="space-y-2">
-              <div className="h-5 w-full animate-pulse rounded-lg bg-[var(--app-hairline)]" />
-              <div className="h-5 w-10/12 animate-pulse rounded-lg bg-[var(--app-hairline)]" />
+              <div className="h-5 w-full animate-pulse rounded-lg bg-muted" />
+              <div className="h-5 w-10/12 animate-pulse rounded-lg bg-muted" />
             </div>
           ) : activeSuggestion ? (
-            <div className="text-caption leading-6 text-[var(--app-fg)]">
-              {typeof activeSuggestion === "string"
-                ? emphasizeSuggestionText(activeSuggestion)
-                : activeSuggestion}
+            <div className="space-y-2">
+              {activeEnrichmentDriver ? (
+                <SuccessDriverMark
+                  driver={activeEnrichmentDriver}
+                  label="short"
+                  className="text-overline"
+                  iconClassName="size-3.5"
+                />
+              ) : null}
+              <div className="text-caption leading-6 text-text-primary">
+                {typeof activeSuggestion === "string"
+                  ? emphasizeSuggestionText(activeSuggestion)
+                  : activeSuggestion}
+              </div>
             </div>
           ) : (
-            <div className="text-caption leading-6 text-[var(--app-muted)]">
+            <div className="text-caption leading-6 text-text-secondary">
               Keep going. I’ll suggest the next best detail to add.
             </div>
           )}
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );
+
+  function renderStoryReadyCard(title: string, subtitle: string) {
+    return (
+      <Card className="gap-0 py-0">
+        <CardContent className="space-y-4 p-6">
+          <div className="text-overline text-text-secondary">{title}</div>
+          <div className="text-h6 text-text-primary">{subtitle}</div>
+          <CardNested className="flex flex-wrap items-end justify-between gap-3 px-4 py-3">
+            <div>
+              <div className="text-caption font-semibold text-text-primary">
+                Overall story score
+              </div>
+              <div className="text-overline text-text-secondary">
+                Mean of 12 competencies (0–5)
+              </div>
+            </div>
+            <div
+              className="text-h5 text-text-primary"
+              title="Mean of 12 competency sections in your draft, or latest mock interview overall if the draft is still empty"
+            >
+              {storyScoreForCard.toFixed(1)}
+              <span className="pl-1 text-body text-text-secondary">/ 5</span>
+            </div>
+          </CardNested>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {pillarScores.map(({ id, score }) => (
+              <div
+                key={id}
+                className={cn(
+                  "flex flex-col items-start gap-1 rounded-lg border px-2.5 py-2",
+                  SUCCESS_DRIVER_COLORS[id].accentBg,
+                )}
+              >
+                <SuccessDriverIcon
+                  driver={id}
+                  className={cn("size-4", SUCCESS_DRIVER_COLORS[id].accent)}
+                />
+                <span className="text-overline tabular-nums text-text-primary">
+                  {score > 0 ? score.toFixed(1) : "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={() => router.push("/storyboard/crafting")}>
+              <BookOpen />
+              View story
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/storyboard/crafting?print=1")}
+            >
+              <Download />
+              Download
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <AppShell rightPanel={storyboardRightPanel} rightPanelMaxWidth={400}>
@@ -638,58 +765,23 @@ Start simple. What's something you worked on that stands out?`,
         {postCraftHome ? (
           <div className="space-y-6">
             <div className="space-y-3">
-              <h2 className="text-h4 text-left">
+              <h2 className="text-h4 text-left text-text-primary">
                 Hey {firstName}, we’ve crafted a story.
               </h2>
-              <p className="text-body-lg font-semibold text-left text-[var(--app-fg)]/80">
-                For the role of <span className="text-[var(--app-fg)]">{role}</span>
+              <p className="text-left text-body-lg font-semibold text-text-secondary">
+                For the role of <span className="text-text-primary">{role}</span>
               </p>
-              <p className="text-caption text-left leading-6 text-[var(--app-muted)]">
+              <p className="text-left text-caption leading-6 text-text-secondary">
                 You can still add more to your story to get better results.
               </p>
             </div>
-            <Card>
-              <CardBody>
-                <div className="text-overline text-[var(--app-muted)]">
-                  YOUR STORYBOARD
-                </div>
-                <div className="mt-2 text-h6">
-                  Your storyboard for {role} is ready to review.
-                </div>
-                <NestedCard className="mt-5 flex flex-wrap items-end justify-between gap-3 px-4 py-3">
-                  <div>
-                    <div className="text-caption font-semibold">Overall story score</div>
-                    <div className="text-overline text-[var(--app-muted)]">
-                      Mean of 12 competencies (0–5)
-                    </div>
-                  </div>
-                  <div
-                    className="text-h5"
-                    title="Mean of 12 competency sections in your draft, or latest mock interview overall if the draft is still empty"
-                  >
-                    {storyScoreForCard.toFixed(1)}
-                    <span className="pl-1 text-body text-[var(--app-muted)]">
-                      / 5
-                    </span>
-                  </div>
-                </NestedCard>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button type="button" onClick={() => router.push("/storyboard/crafting")}>
-                    View story
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => router.push("/storyboard/crafting?print=1")}
-                  >
-                    Download
-                  </Button>
-                </div>
-              </CardBody>
-            </Card>
+            {renderStoryReadyCard(
+              "Your storyboard",
+              `Your storyboard for ${role} is ready to review.`,
+            )}
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
               className="w-full"
               onClick={() => {
                 setFromCraft(null);
@@ -699,6 +791,7 @@ Start simple. What's something you worked on that stands out?`,
                 setCraftUi("idle");
               }}
             >
+              <Plus />
               Add another experience
             </Button>
           </div>
@@ -712,95 +805,60 @@ Start simple. What's something you worked on that stands out?`,
               subtextClassName="mt-4 text-agent-question text-text-primary"
             />
             {storyStep === 6 && craftUi !== "ready" ? (
-              <div className="mt-8">
+              <div className="mt-8 space-y-3">
                 <Button
                   className="w-full"
                   type="button"
                   onClick={startCrafting}
                   disabled={craftUi === "crafting"}
                 >
+                  {craftUi === "crafting" ? (
+                    <Sparkles />
+                  ) : (
+                    <WandSparkles />
+                  )}
                   Craft my story
                 </Button>
-                <div className="mt-3">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="w-full"
-                    onClick={() => {
-                      setPendingNewEntry(true);
-                      setSelectedId(null);
-                      setStatusLine(null);
-                      setCraftUi("idle");
-                    }}
-                  >
-                    Add another experience
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setPendingNewEntry(true);
+                    setSelectedId(null);
+                    setStatusLine(null);
+                    setCraftUi("idle");
+                  }}
+                >
+                  <Plus />
+                  Add another experience
+                </Button>
               </div>
             ) : null}
             {storyStep === 6 && craftUi === "ready" ? (
-              <div className="mt-8">
-                <Card>
-                  <CardBody>
-                    <div className="text-overline text-[var(--app-muted)]">
-                      YOUR STORYBOARD
-                    </div>
-                    <div className="mt-2 text-h6">
-                      Your storyboard for {role} is here.
-                    </div>
-                    <NestedCard className="mt-5 flex flex-wrap items-end justify-between gap-3 px-4 py-3">
-                      <div>
-                        <div className="text-caption font-semibold">Overall story score</div>
-                        <div className="text-overline text-[var(--app-muted)]">
-                          Mean of 12 competencies (0–5)
-                        </div>
-                      </div>
-                      <div
-                        className="text-h5"
-                        title="Mean strength across the 12 competency sections, or latest mock interview if draft is empty"
-                      >
-                        {storyScoreForCard.toFixed(1)}
-                        <span className="pl-1 text-body text-[var(--app-muted)]">
-                          / 5
-                        </span>
-                      </div>
-                    </NestedCard>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        onClick={() => router.push("/storyboard/crafting")}
-                      >
-                        View story
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => router.push("/storyboard/crafting?print=1")}
-                      >
-                        Download
-                      </Button>
-                    </div>
-                  </CardBody>
-                </Card>
-                <div className="mt-6 w-full">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="w-full"
-                    onClick={() => {
-                      setPendingNewEntry(true);
-                      setSelectedId(null);
-                      setStatusLine(null);
-                      setCraftUi("idle");
-                    }}
-                  >
-                    Add another experience
-                  </Button>
-                </div>
+              <div className="mt-8 space-y-6">
+                {renderStoryReadyCard(
+                  "Your storyboard",
+                  `Your storyboard for ${role} is here.`,
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setPendingNewEntry(true);
+                    setSelectedId(null);
+                    setStatusLine(null);
+                    setCraftUi("idle");
+                  }}
+                >
+                  <Plus />
+                  Add another experience
+                </Button>
               </div>
             ) : null}
             {statusLine ? (
-              <p className="mt-6 text-caption leading-6 text-[var(--app-fg)]/80">
+              <p className="mt-6 text-caption leading-6 text-text-secondary">
                 {statusLine}
               </p>
             ) : null}

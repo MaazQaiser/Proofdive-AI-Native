@@ -18,8 +18,8 @@ export function ChatThread({ messages }: { messages: ChatMessage[] }) {
             className={cn(
               "max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-3 text-body-sm leading-6",
               m.role === "user"
-                ? "bg-[var(--app-fg)] text-white"
-                : "border border-[var(--app-hairline)] bg-white text-[var(--app-fg)]",
+                ? "bg-foreground text-background"
+                : "border border-border bg-card text-text-primary",
             )}
           >
             {m.content}

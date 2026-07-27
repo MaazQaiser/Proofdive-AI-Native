@@ -21,7 +21,7 @@ function AgentPromptInner({
   prompt,
   ariaLabel = "Agent prompt",
   headingClassName = "text-h3 leading-[1.05]",
-  subtextClassName = "mt-4 text-h4 leading-[48px] text-[var(--app-fg)]/80",
+  subtextClassName = "mt-4 text-h4 leading-[48px] text-text-primary/80",
   mode = "char",
 }: AgentPromptProps) {
   const { heading: promptHeading, subtext: promptSubtext } = splitPrompt(prompt);
@@ -29,8 +29,10 @@ function AgentPromptInner({
   const [headingDone, setHeadingDone] = useState(false);
 
   const headingText = promptHeading || prompt;
-  const charDelay = mode === "word" ? undefined : 22;
-  const wordDelay = mode === "word" ? 55 : undefined;
+  // Paced for a thoughtful agent voice — fast enough to stay engaging,
+  // slow enough to feel like the coach is thinking before asking.
+  const charDelay = mode === "word" ? undefined : 40;
+  const wordDelay = mode === "word" ? 145 : undefined;
 
   return (
     <div className="relative w-full">
@@ -66,6 +68,7 @@ function AgentPromptInner({
             mode={mode}
             baseCharDelayMs={charDelay}
             baseWordDelayMs={wordDelay}
+            startDelayMs={420}
             onDone={() => setHeadingDone(true)}
           />
         </div>
@@ -79,7 +82,7 @@ function AgentPromptInner({
               mode={mode}
               baseCharDelayMs={charDelay}
               baseWordDelayMs={wordDelay}
-              startDelayMs={260}
+              startDelayMs={520}
             />
           </div>
         ) : null}

@@ -32,10 +32,10 @@ export type TypingTextProps = {
 export function TypingText({
   text,
   startDelayMs = 0,
-  baseCharDelayMs = 28,
-  baseWordDelayMs = 90,
+  baseCharDelayMs = 36,
+  baseWordDelayMs = 120,
   mode = "char",
-  jitter = 0.2,
+  jitter = 0.22,
   cursor = true,
   reveal = false,
   onDone,
@@ -87,15 +87,18 @@ export function TypingText({
       setShown((prev) => prev + nextUnit);
 
       const lastChar = nextUnit.trimEnd().slice(-1);
+      // Breath at clause/sentence boundaries so the agent feels human, not robotic.
       const punctPause =
         lastChar === "." || lastChar === "!" || lastChar === "?"
-          ? 130
+          ? 320
           : lastChar === "," || lastChar === ";" || lastChar === ":"
-            ? 70
-            : 0;
+            ? 160
+            : lastChar === "…" || lastChar === "—"
+              ? 220
+              : 0;
 
       const rand = 1 + (Math.random() * 2 - 1) * jitter;
-      const delay = Math.max(10, Math.round(baseDelay * rand + punctPause));
+      const delay = Math.max(16, Math.round(baseDelay * rand + punctPause));
       timeoutRef.current = window.setTimeout(tick, delay);
     };
 
