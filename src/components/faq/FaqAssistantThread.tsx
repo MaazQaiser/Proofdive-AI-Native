@@ -18,10 +18,10 @@ type Props = {
 };
 
 const MENU_PILL_CLASSES =
-  "w-full rounded-2xl border border-black/10 bg-white/60 px-4 py-3 text-left text-body-sm font-medium text-gray-900 transition hover:border-black/20 hover:bg-white/90";
+  "w-full rounded-2xl border border-neutral-200 bg-neutral-100/90 px-4 py-3 text-left text-body-sm font-medium text-neutral-900 transition hover:border-neutral-300 hover:bg-neutral-100";
 
 const BACK_BUTTON_CLASSES =
-  "flex w-full items-center gap-1.5 rounded-2xl px-4 py-2.5 text-left text-body-sm font-medium text-gray-600 transition hover:bg-black/5";
+  "flex w-full items-center gap-1.5 rounded-2xl px-4 py-2.5 text-left text-body-sm font-medium text-neutral-600 transition hover:bg-neutral-100";
 
 /** Deliberately the app's real `Button` (design-system) component, not a pill — a FAQ
  * navigation CTA should read as an action, visually distinct from the question pills.
@@ -52,7 +52,7 @@ function CtaButton({ cta }: { cta: FaqCtaAction }) {
 function UserBubble({ children }: { children: ReactNode }) {
   return (
     <div className="flex w-full justify-end">
-      <div className="max-w-[min(100%,32rem)] rounded-2xl rounded-br-md bg-black px-3.5 py-2.5 text-body-sm leading-6 text-white [word-break:break-word]">
+      <div className="max-w-[min(100%,32rem)] rounded-3xl bg-neutral-800 px-4 py-2.5 text-body-sm leading-6 text-white [word-break:break-word]">
         {children}
       </div>
     </div>
@@ -61,7 +61,7 @@ function UserBubble({ children }: { children: ReactNode }) {
 
 function AssistantText({ children }: { children: ReactNode }) {
   return (
-    <p className="whitespace-pre-wrap text-left text-body-sm leading-6 text-gray-800 [word-break:break-word]">
+    <p className="whitespace-pre-wrap text-left text-body leading-7 text-neutral-800 [word-break:break-word]">
       {children}
     </p>
   );
@@ -132,20 +132,20 @@ export function FaqAssistantThread({
               ))}
             </div>
           ) : null}
-          <BackButton label="Back to Menu" onClick={onBackToRootMenu} />
+          <BackButton label="Back" onClick={onBackToRootMenu} />
         </div>
       </div>
     );
   }
 
-  const { item, answer, followup } = screenData;
+  const { answer, followup } = screenData;
   return (
     <div className="flex w-full flex-col gap-3 py-0.5 pr-0.5" aria-label="FAQ Assistant follow-up answer">
       <UserBubble>{followup.question}</UserBubble>
       <AssistantText>{followup.answer}</AssistantText>
       <div className="flex flex-col gap-2">
         {answer.cta ? <CtaButton cta={answer.cta} /> : null}
-        <BackButton label={item.backMenuLabel ?? "Back to Menu"} onClick={onBackToItemMenu} />
+        <BackButton label="Back" onClick={onBackToItemMenu} />
       </div>
     </div>
   );

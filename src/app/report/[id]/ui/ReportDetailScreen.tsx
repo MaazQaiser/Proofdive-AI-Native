@@ -145,10 +145,12 @@ function DriverCard({
                 className={cn(
                   "inline-flex h-9 w-9 items-center justify-center rounded-xl border",
                   driverAccentSoft(driver.id),
-                  colors.accent,
                 )}
               >
-                <SuccessDriverIcon driver={driverId} className="size-5" />
+                <SuccessDriverIcon
+                  driver={driverId}
+                  className="size-5 text-extended-cyan-green"
+                />
               </span>
               <div className="min-w-0">
                 <div className="truncate text-body-sm font-semibold text-text-primary">
@@ -251,10 +253,7 @@ function QuestionRow({
                 <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-overline text-text-primary">
                   <SuccessDriverIcon
                     driver={q.driver as SuccessDriverId}
-                    className={cn(
-                      "size-3.5",
-                      SUCCESS_DRIVER_COLORS[q.driver as SuccessDriverId].accent,
-                    )}
+                    className="size-3.5 text-extended-cyan-green"
                   />
                   {SUCCESS_DRIVERS[q.driver as SuccessDriverId].shortLabel}
                 </span>

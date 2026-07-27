@@ -1,7 +1,11 @@
 import * as React from "react";
 import Link, { type LinkProps } from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
+import {
+  GlassBlurSymbol,
+  glassCardSurfaceClasses,
+} from "@/components/ui/glass-blur-symbol";
 import { cn } from "@/lib/utils";
 
 type CardButtonProps = React.ComponentProps<"button"> & {
@@ -9,15 +13,15 @@ type CardButtonProps = React.ComponentProps<"button"> & {
   icon: React.ReactNode;
   title: React.ReactNode;
   subtitle: React.ReactNode;
-  /** Abstract brand mark in the right column (e.g. `/brand/illustration-1.svg`). */
+  /** Brand mark rendered as a large blurred glass symbol (e.g. `/brand/illustration-1.svg`). */
   illustrationSrc?: string;
   /** Renders as a `next/link` instead of a `<button>` when set. */
   href?: LinkProps["href"];
 };
 
-/** Module CTA — content stack on the left, brand illustration as a right column.
- * Whole card is the hit target; a text “Continue →” cue replaces a floating arrow chip.
- * `primary` is the filled teal tile; `gray` is white with accent chrome. */
+/** Module CTA — compact left content, diagonal arrow top-right, and a large
+ * blurred illustration as a glass symbol (same treatment as SuccessDriverCard).
+ * `primary` is the filled teal tile; `gray` is frosted white with accent chrome. */
 function CardButton({
   className,
   variant = "primary",
@@ -31,90 +35,70 @@ function CardButton({
   const isPrimary = variant === "primary";
 
   const content = (
-    <div className="relative z-10 flex min-h-0 flex-1 items-stretch gap-3">
-      <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 py-0.5">
-        <div className="flex flex-col gap-2.5">
-          <div
-            className={cn(
-              "grid size-9 shrink-0 place-items-center rounded-full [&_svg]:size-[18px]",
-              isPrimary
-                ? "bg-white/15 text-primary-foreground"
-                : "bg-brand-1000 text-primary",
-            )}
-            aria-hidden
-          >
-            {icon}
-          </div>
-          <div className="flex min-w-0 flex-col gap-1">
-            <p
-              className={cn(
-                "text-[20px] leading-[1.25] font-semibold tracking-tight",
-                isPrimary ? "text-primary-foreground" : "text-text-primary",
-              )}
-            >
-              {title}
-            </p>
-            <p
-              className={cn(
-                "text-[13px] leading-snug",
-                isPrimary ? "text-brand-900" : "text-text-secondary",
-              )}
-            >
-              {subtitle}
-            </p>
-          </div>
-        </div>
+    <>
+      {illustrationSrc ? (
+        <GlassBlurSymbol src={illustrationSrc} variant={variant} />
+      ) : null}
 
-        <span
+      <span
+        className={cn(
+          "absolute top-3 right-3 z-10 grid size-8 place-items-center rounded-full transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0",
+          isPrimary
+            ? "bg-white/20 text-primary-foreground backdrop-blur-sm"
+            : "bg-white/70 text-primary shadow-sm backdrop-blur-sm",
+        )}
+        aria-hidden
+      >
+        <ArrowUpRight className="size-4" strokeWidth={2.25} />
+      </span>
+
+      <div className="relative z-10 flex min-w-0 flex-col gap-2.5 pr-10">
+        <div
           className={cn(
-            "inline-flex items-center gap-1.5 text-[13px] font-medium transition-transform duration-200 ease-out group-hover:translate-x-0.5",
-            isPrimary ? "text-primary-foreground" : "text-primary",
+            "grid size-8 shrink-0 place-items-center rounded-full backdrop-blur-sm [&_svg]:size-4",
+            isPrimary
+              ? "bg-white/20 text-primary-foreground"
+              : "bg-brand-1000/80 text-primary",
+          )}
+          aria-hidden
+        >
+          {icon}
+        </div>
+        <div
+          className={cn(
+            "flex min-w-0 flex-col gap-0.5",
+            isPrimary && "[text-shadow:0_1px_2px_rgba(7,62,76,0.28)]",
           )}
         >
-          Continue
-          <ArrowRight className="size-4" aria-hidden />
-        </span>
-      </div>
-
-      {illustrationSrc ? (
-        <div
-          aria-hidden
-          className="relative flex w-[42%] shrink-0 items-center justify-center"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={illustrationSrc}
-            alt=""
+          <p
             className={cn(
-              "h-[120px] w-auto max-w-[88%] select-none object-contain",
-              isPrimary
-                ? "opacity-95 [filter:brightness(0)_invert(1)]"
-                : "opacity-90",
+              "text-[18px] leading-snug font-semibold tracking-tight",
+              isPrimary ? "text-primary-foreground" : "text-text-primary",
             )}
-          />
+          >
+            {title}
+          </p>
+          <p
+            className={cn(
+              "max-w-[14rem] text-[13px] leading-snug",
+              isPrimary ? "text-primary-foreground/90" : "text-text-secondary",
+            )}
+          >
+            {subtitle}
+          </p>
         </div>
-      ) : null}
-    </div>
+      </div>
+    </>
   );
 
   const sharedClassName = cn(
-    "group relative flex min-h-[168px] w-full flex-col overflow-hidden rounded-2xl border p-4 text-left sm:p-5",
+    "group relative flex min-h-[112px] w-full flex-col overflow-hidden rounded-2xl border p-4 text-left",
+    "backdrop-blur-xl",
     "transition-[transform,box-shadow,background-color] duration-200 ease-out",
     "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
     "active:scale-[0.985] motion-reduce:transition-none motion-reduce:active:scale-100",
-    isPrimary
-      ? [
-          "border-brand-300 bg-[linear-gradient(160deg,var(--brand-100)_0%,var(--brand-300)_100%)]",
-          "shadow-[0_12px_28px_rgba(14,154,181,0.22)]",
-          "hover:-translate-y-0.5 hover:shadow-[0_16px_32px_rgba(14,154,181,0.28)]",
-          "motion-reduce:hover:translate-y-0",
-        ]
-      : [
-          "border-border/80 bg-white",
-          "shadow-[0_10px_24px_rgba(14,154,181,0.08)]",
-          "hover:-translate-y-0.5 hover:bg-brand-1000/40 hover:shadow-[0_14px_28px_rgba(14,154,181,0.14)]",
-          "motion-reduce:hover:translate-y-0",
-        ],
+    "hover:-translate-y-0.5 motion-reduce:hover:translate-y-0",
+    glassCardSurfaceClasses(variant),
     className,
   );
 

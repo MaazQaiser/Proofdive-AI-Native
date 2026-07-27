@@ -11,11 +11,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { TrainingChapterOneJourney } from "@/app/training/ui/TrainingChapterOneJourney";
 import {
-  PixelMedia,
-  TRAINING_CAMPAIGN,
-} from "@/app/training/ui/trainingVisuals";
+  GlassBlurSymbol,
+  glassCardSurfaceClasses,
+} from "@/components/ui/glass-blur-symbol";
+import { MediaListItem } from "@/components/ui/media-list-item";
+import { PixelMedia } from "@/components/ui/pixel-media";
+import { TrainingChapterOneJourney } from "@/app/training/ui/TrainingChapterOneJourney";
+import { TRAINING_CAMPAIGN } from "@/app/training/ui/trainingVisuals";
 import {
   COURSE_ENTRY_HEADING,
   OPTION_COMPETENCY_PILLARS_DESC,
@@ -29,7 +32,7 @@ import { buildTrainingJourneyProgress, trainingProgressKey } from "@/lib/trainin
 import type { RoleProfile, TrainingJourneyProgress, TrainingJourneyPhase } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 import { cn } from "@/lib/utils";
-import { ArrowRight, GraduationCap } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 
 type TrainingCourse = {
   id: string;
@@ -293,46 +296,49 @@ export function TrainingScreen() {
                       const progress = progressForCourse(course.id);
                       const pct = progress?.percentComplete ?? 0;
                       const isPrimary = courseIdx === 0;
-                      const status =
-                        pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started";
+                      const variant = isPrimary ? "primary" : "gray";
+                      const illustrationSrc = isPrimary
+                        ? "/brand/illustration-1.svg"
+                        : "/brand/illustration-4.svg";
+                      const progressLabel = pct >= 1 ? "completed" : "Not started";
                       return (
                         <button
                           key={course.id}
                           type="button"
                           onClick={() => setSelectedCourseId(course.id)}
                           className={cn(
-                            "group relative flex min-h-[220px] flex-col overflow-hidden rounded-[22px] border p-5 text-left transition",
+                            "group relative flex min-h-[168px] flex-col overflow-hidden rounded-2xl border p-4 text-left backdrop-blur-xl transition sm:p-5",
                             "duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.985]",
                             "motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100",
                             "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                            isPrimary
-                              ? "border-brand-300 bg-[linear-gradient(160deg,var(--brand-100)_0%,var(--brand-300)_100%)] shadow-[0_12px_28px_rgba(14,154,181,0.22)] hover:shadow-[0_16px_32px_rgba(14,154,181,0.28)]"
-                              : "border-border/80 bg-brand-1000/70 shadow-[0_10px_24px_rgba(14,154,181,0.08)] hover:bg-brand-1000 hover:shadow-[0_14px_28px_rgba(14,154,181,0.14)]",
+                            glassCardSurfaceClasses(variant),
                           )}
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
+                          <GlassBlurSymbol src={illustrationSrc} variant={variant} />
+
+                          <div className="relative z-10 flex items-start justify-between gap-3">
+                            <div
+                              className={cn(
+                                "min-w-0 pr-2",
+                                isPrimary && "[text-shadow:0_1px_2px_rgba(7,62,76,0.28)]",
+                              )}
+                            >
                               <div
                                 className={cn(
-                                  "inline-flex items-center gap-1.5 text-overline font-medium",
-                                  isPrimary ? "text-brand-900" : "text-text-secondary",
-                                )}
-                              >
-                                <GraduationCap className="size-3.5" aria-hidden />
-                                {status}
-                              </div>
-                              <div
-                                className={cn(
-                                  "mt-2 text-[20px] leading-tight font-semibold tracking-tight",
-                                  isPrimary ? "text-primary-foreground" : "text-heading-teal",
+                                  "text-[20px] leading-tight font-semibold tracking-tight",
+                                  isPrimary
+                                    ? "text-primary-foreground"
+                                    : "text-text-primary",
                                 )}
                               >
                                 {course.title}
                               </div>
                               <p
                                 className={cn(
-                                  "mt-2 max-w-[28ch] text-[13px] leading-snug",
-                                  isPrimary ? "text-brand-900" : "text-text-secondary",
+                                  "mt-1.5 max-w-[28ch] text-[13px] leading-snug",
+                                  isPrimary
+                                    ? "text-primary-foreground/90"
+                                    : "text-text-secondary",
                                 )}
                               >
                                 {course.subtitle}
@@ -340,23 +346,28 @@ export function TrainingScreen() {
                             </div>
                             <span
                               className={cn(
-                                "grid size-9 shrink-0 place-items-center rounded-full",
+                                "grid size-8 shrink-0 place-items-center rounded-full backdrop-blur-sm",
                                 isPrimary
-                                  ? "bg-white/15 text-primary-foreground"
-                                  : "bg-white text-primary",
+                                  ? "bg-white/20 text-primary-foreground"
+                                  : "bg-white/70 text-primary shadow-sm",
                               )}
                               aria-hidden
                             >
-                              <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                              <ArrowUpRight
+                                className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                                strokeWidth={2.25}
+                              />
                             </span>
                           </div>
 
-                          <div className="mt-auto pt-8">
+                          <div className="relative z-10 mt-auto pt-5">
                             <div className="flex items-end justify-between gap-3">
                               <div
                                 className={cn(
-                                  "text-[34px] leading-none font-semibold tracking-tight",
-                                  isPrimary ? "text-primary-foreground" : "text-heading-teal",
+                                  "text-[28px] leading-none font-semibold tracking-tight",
+                                  isPrimary
+                                    ? "text-primary-foreground [text-shadow:0_1px_2px_rgba(7,62,76,0.28)]"
+                                    : "text-heading-teal",
                                 )}
                               >
                                 {pct}%
@@ -364,16 +375,18 @@ export function TrainingScreen() {
                               <div
                                 className={cn(
                                   "text-overline",
-                                  isPrimary ? "text-brand-900" : "text-text-secondary",
+                                  isPrimary
+                                    ? "text-primary-foreground/90"
+                                    : "text-text-secondary",
                                 )}
                               >
-                                completed
+                                {progressLabel}
                               </div>
                             </div>
                             <ProgressBar
                               value={pct}
                               className={cn(
-                                "mt-3",
+                                "mt-2.5",
                                 isPrimary && "bg-white/25",
                               )}
                               indicatorClassName={
@@ -413,7 +426,6 @@ export function TrainingScreen() {
                           <div className="flex items-start gap-4">
                             <PixelMedia
                               src={pill.imageUrl}
-                              duration={pill.duration}
                               className="h-16 w-20 rounded-xl"
                             />
                             <div className="min-w-0 flex-1">
@@ -432,6 +444,9 @@ export function TrainingScreen() {
                                 Open path
                                 <ArrowRight className="size-3.5" aria-hidden />
                               </div>
+                            </div>
+                            <div className="shrink-0 pt-0.5 text-caption text-text-secondary tabular-nums">
+                              {pill.duration}
                             </div>
                           </div>
                         </button>
@@ -529,21 +544,12 @@ export function TrainingScreen() {
                               : "border-border bg-white",
                           )}
                         >
-                          <div className="flex items-start gap-4">
-                            <PixelMedia
-                              src={ch.imageUrl}
-                              duration={ch.duration}
-                              className="h-14 w-16 rounded-xl"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="text-caption font-semibold text-text-primary">
-                                {idx + 1}. {ch.title}
-                              </div>
-                              <div className="mt-1 text-caption leading-5 text-text-secondary">
-                                {ch.summary}
-                              </div>
-                            </div>
-                          </div>
+                          <MediaListItem
+                            imageUrl={ch.imageUrl}
+                            title={`${idx + 1}. ${ch.title}`}
+                            summary={ch.summary}
+                            duration={ch.duration}
+                          />
                         </div>
                       ))}
                     </div>

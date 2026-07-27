@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight, CheckCircle2, ClipboardCheck, MicOff, Video, VideoOff } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, Clock3, ListChecks, MicOff, Video, VideoOff } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { cn } from "@/components/cn";
@@ -14,6 +14,7 @@ import { TypingText } from "@/components/TypingText";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CardButton } from "@/components/ui/card-button";
 import {
   Dialog,
   DialogContent,
@@ -87,59 +88,6 @@ const CONSENT_TIPS: ReactNode[] = [
   <>Position yourself properly if your camera is on. Sit centered, well-lit, and not too far.</>,
   <>Ensure a clean, plain background with minimal distractions.</>,
 ];
-
-/** Horizontal session CTA — title | description | circular arrow.
- * Primary filled vs secondary muted (inverted arrow), for clear CTA hierarchy. */
-function InterviewSessionAction({
-  title,
-  description,
-  variant,
-  onClick,
-}: {
-  title: string;
-  description: string;
-  variant: "primary" | "secondary";
-  onClick: () => void;
-}) {
-  const isPrimary = variant === "primary";
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "group flex w-full cursor-pointer items-center gap-3 rounded-full py-2.5 pl-3 pr-2.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 sm:gap-4",
-        isPrimary
-          ? "bg-primary text-primary-foreground hover:bg-primary/90"
-          : "border border-border bg-card text-text-primary hover:bg-muted/60",
-      )}
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-3 pl-3 sm:gap-4 sm:pl-4">
-        <span className="w-[7.5rem] shrink-0 text-caption font-semibold leading-snug sm:w-[9.5rem]">
-          {title}
-        </span>
-        <p
-          className={cn(
-            "min-w-0 flex-1 text-[13px] leading-snug sm:text-caption",
-            isPrimary ? "text-primary-foreground/85" : "text-text-secondary",
-          )}
-        >
-          {description}
-        </p>
-      </div>
-      <span
-        className={cn(
-          "grid size-9 shrink-0 place-items-center rounded-full transition-transform duration-200 group-hover:translate-x-0.5",
-          isPrimary
-            ? "bg-white text-primary shadow-sm"
-            : "bg-primary text-primary-foreground",
-        )}
-        aria-hidden
-      >
-        <ArrowRight className="size-3.5" strokeWidth={2.25} />
-      </span>
-    </button>
-  );
-}
 
 export function InterviewScreen() {
   const router = useRouter();
@@ -339,17 +287,21 @@ export function InterviewScreen() {
                 session focused on selected competencies.
               </p>
 
-              <div className="mt-4 flex w-full flex-col gap-2">
-                <InterviewSessionAction
+              <div className="mt-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+                <CardButton
                   variant="primary"
+                  icon={<Clock3 />}
                   title="30-minute full mock"
-                  description="All competency pillars, aligned with your storyboard."
+                  subtitle="All competency pillars, aligned with your storyboard."
+                  illustrationSrc="/brand/illustration-1.svg"
                   onClick={() => openConsent("full_competency")}
                 />
-                <InterviewSessionAction
-                  variant="secondary"
+                <CardButton
+                  variant="gray"
+                  icon={<ListChecks />}
                   title="Short interview"
-                  description="Focus on selected competency pillars when time is tight."
+                  subtitle="Focus on selected competency pillars when time is tight."
+                  illustrationSrc="/brand/illustration-4.svg"
                   onClick={openSelectivePillarPicker}
                 />
               </div>
@@ -608,7 +560,7 @@ export function InterviewScreen() {
                     <span className="mt-2 flex items-center gap-2">
                       <SuccessDriverIcon
                         driver={id}
-                        className={cn("size-5", on ? colors.accent : "text-text-secondary")}
+                        className="size-5 text-extended-cyan-green"
                       />
                       <span>{PILLAR_LABEL[id]}</span>
                     </span>

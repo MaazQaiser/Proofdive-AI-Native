@@ -38,8 +38,6 @@ export type FaqResolverContext = {
 export type FaqRootItem = {
   id: FaqRootItemId;
   menuLabel: string;
-  /** Shown on "Back to <X> Menu" after a follow-up answer; omitted when the item has no follow-ups. */
-  backMenuLabel?: string;
   getAnswer: (ctx: FaqResolverContext) => FaqAnswer;
 };
 
@@ -95,7 +93,6 @@ export const FAQ_ROOT_ITEMS: FaqRootItem[] = [
   {
     id: "storyboard",
     menuLabel: "Storyboard Info",
-    backMenuLabel: "Back to Storyboard Menu",
     getAnswer: () => ({
       text: "The Storyboard Module helps you turn your real experiences into structured, interview-ready stories for your target role. Add your experiences, and get a competency-scored story built using the CAR (Cause, Action, Result) framework.",
       cta: STORYBOARD_CTA,
@@ -133,7 +130,6 @@ export const FAQ_ROOT_ITEMS: FaqRootItem[] = [
   {
     id: "mockInterview",
     menuLabel: "Mock Interview Info",
-    backMenuLabel: "Back to Mock Interview Menu",
     getAnswer: () => ({
       text: "Mock Interview puts you through a realistic, timed interview with an AI interviewer that asks adaptive follow-up questions. You'll get a full transcript, a score across key competencies, and personalized feedback on what worked and what to improve.",
       cta: MOCK_INTERVIEW_CTA,
@@ -165,7 +161,6 @@ export const FAQ_ROOT_ITEMS: FaqRootItem[] = [
   {
     id: "latestReport",
     menuLabel: "View Latest Report",
-    backMenuLabel: "Back to Report Menu",
     getAnswer: (ctx) => {
       if (!ctx.latestReport) {
         return {
@@ -207,7 +202,6 @@ export const FAQ_ROOT_ITEMS: FaqRootItem[] = [
   {
     id: "prepareAnotherRole",
     menuLabel: "Prepare for Another Role",
-    backMenuLabel: "Back to Prepare for Another Role Menu",
     getAnswer: () => ({
       text: "Preparing for another role starts a fresh onboarding journey for that new target role. Your existing roles, storyboards, and progress stay untouched, and you can switch between roles anytime.",
       cta: ADD_ANOTHER_ROLE_CTA,

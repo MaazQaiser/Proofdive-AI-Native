@@ -33,54 +33,46 @@ export function CoachFloatingNav() {
   ] as const;
 
   return (
-    <nav aria-label="Coach shortcuts" className="fixed left-3 top-1/2 z-50 -translate-y-1/2 print:hidden">
-      {/* Glass shell — same frosted fill + cyan gradient ring as SelectionChip
-       * (double-background border trick so the ring can be a gradient). */}
-      <div
-        className={cn(
-          "flex flex-col gap-1 rounded-full border border-transparent p-1 backdrop-blur-[9px]",
-          "[background:linear-gradient(rgba(255,255,255,0.72),rgba(255,255,255,0.72))_padding-box,linear-gradient(180deg,#f2f2f2,var(--extended-light-cyan)_41%,#fff)_border-box]",
-        )}
-      >
-        {items.map((it) => {
-          const Icon = it.icon;
-          const isActive = pathname === it.base || Boolean(pathname?.startsWith(`${it.base}/`));
-          return (
-            <Link
-              key={it.href}
-              href={it.href}
-              aria-label={it.label}
+    <nav
+      aria-label="Coach shortcuts"
+      className="fixed left-3 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-2 print:hidden"
+    >
+      {items.map((it) => {
+        const Icon = it.icon;
+        const isActive = pathname === it.base || Boolean(pathname?.startsWith(`${it.base}/`));
+        return (
+          <Link
+            key={it.href}
+            href={it.href}
+            aria-label={it.label}
+            className={cn(
+              "group relative grid size-11 place-items-center rounded-full p-1 transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+              isActive
+                ? "bg-primary text-primary-foreground"
+                : cn(
+                    "border border-transparent text-primary backdrop-blur-[9px]",
+                    /* Same frosted fill + cyan gradient ring as SelectionChip */
+                    "[background:linear-gradient(rgba(255,255,255,0.72),rgba(255,255,255,0.72))_padding-box,linear-gradient(180deg,#f2f2f2,var(--extended-light-cyan)_41%,#fff)_border-box]",
+                    "hover:[background:linear-gradient(var(--extended-light-cyan),var(--extended-light-cyan))_padding-box,linear-gradient(180deg,#f2f2f2,var(--extended-light-cyan)_41%,#fff)_border-box]",
+                  ),
+            )}
+          >
+            <Icon className="h-5 w-5" aria-hidden />
+            <span
               className={cn(
-                "group relative flex w-[60px] items-center justify-center rounded-2xl p-2",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                "pointer-events-none absolute left-full top-1/2 z-10 ml-2 -translate-y-1/2",
+                "whitespace-nowrap rounded-full bg-foreground px-2.5 py-1 text-overline text-background",
+                "opacity-0 translate-x-1 transition",
+                "group-hover:opacity-100 group-hover:translate-x-0",
               )}
+              role="tooltip"
             >
-              <span
-                className={cn(
-                  "grid h-11 w-11 place-items-center rounded-full p-1 transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-primary hover:bg-[var(--extended-light-cyan)]",
-                )}
-                aria-hidden
-              >
-                <Icon className="h-5 w-5" />
-              </span>
-              <span
-                className={cn(
-                  "pointer-events-none absolute left-full top-1/2 z-10 ml-2 -translate-y-1/2",
-                  "whitespace-nowrap rounded-full bg-foreground px-2.5 py-1 text-overline text-background",
-                  "opacity-0 translate-x-1 transition",
-                  "group-hover:opacity-100 group-hover:translate-x-0",
-                )}
-                role="tooltip"
-              >
-                {it.label}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
+              {it.label}
+            </span>
+          </Link>
+        );
+      })}
     </nav>
   );
 }
