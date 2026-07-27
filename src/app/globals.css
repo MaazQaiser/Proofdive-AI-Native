@@ -121,29 +121,15 @@
   --scoring-yellow: #E9A13B;
   --scoring-green: #16A34A;
   --scoring-cyan: #22D3EE;
+  /* Readable text/pill labels on light surfaces (≥4.5:1 on --card / --background).
+     Bright --scoring-* stay for fills, bars, and chart series. */
+  --scoring-red-fg: #CB3A31;
+  --scoring-yellow-fg: #A16207;
+  --scoring-green-fg: #15803D;
+  --scoring-cyan-fg: #0E7490;
   /* KPI trend text — tuned for ≥4.5:1 contrast on --card (#FFFFFF). */
   --trend-up: #166534;
   --trend-down: #991B1B;
-
-  /* Success Drivers — each pillar gets a pastel surface, mid-tone symbol,
-     high-contrast foreground, and accent for badges/dots. Keep these the
-     single source of truth for driver-colored UI. */
-  --driver-thinking-bg: #E7F5F8;
-  --driver-thinking-symbol: #6EC2D3;
-  --driver-thinking-fg: #062C35;
-  --driver-thinking-accent: #0E9AB5;
-  --driver-action-bg: #FFF1E8;
-  --driver-action-symbol: #F0A878;
-  --driver-action-fg: #3D2314;
-  --driver-action-accent: #E07A3D;
-  --driver-people-bg: #E8F5F0;
-  --driver-people-symbol: #7DB8A4;
-  --driver-people-fg: #1A3D32;
-  --driver-people-accent: #3D9B7A;
-  --driver-mastery-bg: #F0EAF8;
-  --driver-mastery-symbol: #B8A0D4;
-  --driver-mastery-fg: #2D1F3D;
-  --driver-mastery-accent: #7B5EA7;
 
   /* Brand corner radius — one 8px default for buttons, fields, and cards so
      auth controls (Login vs Google/LinkedIn) and surfaces share the same
@@ -210,24 +196,11 @@
   --scoring-yellow: #E9A13B;
   --scoring-green: #16A34A;
   --scoring-cyan: #22D3EE;
-  /* Success Drivers — slightly deeper pastels on dark surfaces. */
-  --driver-thinking-bg: #0A2A32;
-  --driver-thinking-symbol: #3EAEC4;
-  --driver-thinking-fg: #E7F5F8;
-  --driver-thinking-accent: #22D3EE;
-  --driver-action-bg: #2A1A12;
-  --driver-action-symbol: #E07A3D;
-  --driver-action-fg: #FFF1E8;
-  --driver-action-accent: #F0A878;
-  --driver-people-bg: #12241E;
-  --driver-people-symbol: #3D9B7A;
-  --driver-people-fg: #E8F5F0;
-  --driver-people-accent: #7DB8A4;
-  --driver-mastery-bg: #1C1528;
-  --driver-mastery-symbol: #7B5EA7;
-  --driver-mastery-fg: #F0EAF8;
-  --driver-mastery-accent: #B8A0D4;
-
+  /* On dark surfaces the brand fills already clear AA, so fg aliases them. */
+  --scoring-red-fg: #F87171;
+  --scoring-yellow-fg: #FBBF24;
+  --scoring-green-fg: #4ADE80;
+  --scoring-cyan-fg: #22D3EE;
   /* KPI trend text — tuned for ≥4.5:1 contrast on dark --card (#01161B). */
   --trend-up: #4ADE80;
   --trend-down: #FCA5A5;
@@ -366,24 +339,12 @@
   --color-scoring-yellow: var(--scoring-yellow);
   --color-scoring-green: var(--scoring-green);
   --color-scoring-cyan: var(--scoring-cyan);
+  --color-scoring-red-fg: var(--scoring-red-fg);
+  --color-scoring-yellow-fg: var(--scoring-yellow-fg);
+  --color-scoring-green-fg: var(--scoring-green-fg);
+  --color-scoring-cyan-fg: var(--scoring-cyan-fg);
   --color-trend-up: var(--trend-up);
   --color-trend-down: var(--trend-down);
-  --color-driver-thinking-bg: var(--driver-thinking-bg);
-  --color-driver-thinking-symbol: var(--driver-thinking-symbol);
-  --color-driver-thinking-fg: var(--driver-thinking-fg);
-  --color-driver-thinking-accent: var(--driver-thinking-accent);
-  --color-driver-action-bg: var(--driver-action-bg);
-  --color-driver-action-symbol: var(--driver-action-symbol);
-  --color-driver-action-fg: var(--driver-action-fg);
-  --color-driver-action-accent: var(--driver-action-accent);
-  --color-driver-people-bg: var(--driver-people-bg);
-  --color-driver-people-symbol: var(--driver-people-symbol);
-  --color-driver-people-fg: var(--driver-people-fg);
-  --color-driver-people-accent: var(--driver-people-accent);
-  --color-driver-mastery-bg: var(--driver-mastery-bg);
-  --color-driver-mastery-symbol: var(--driver-mastery-symbol);
-  --color-driver-mastery-fg: var(--driver-mastery-fg);
-  --color-driver-mastery-accent: var(--driver-mastery-accent);
 
   --radius-sm: 0.375rem; /* 6px — tight nested controls */
   --radius-md: 0.5rem; /* 8px — buttons, inputs, cards, CTAs */

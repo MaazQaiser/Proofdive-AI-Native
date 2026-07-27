@@ -2,24 +2,14 @@ export type CompetencyFramework = {
   id: string;
   name: string;
   isDefault: boolean;
-  pillars: string[];
 };
 
-const DEFAULT_COMPETENCY_PILLARS = [
-  "Technical Proficiency",
-  "Communication",
-  "Problem Solving",
-  "Leadership",
-  "Adaptability",
-];
-
-/** Mutated in-memory when a Super Admin saves a new custom competency version — reusable across organizations for the session. */
+/** @deprecated Prefer useCompetencyFrameworks().summaries — kept for static defaults. */
 export const COMPETENCY_FRAMEWORKS: CompetencyFramework[] = [
   {
     id: "framework_default",
     name: "ProofDive Default Competency Framework",
     isDefault: true,
-    pillars: DEFAULT_COMPETENCY_PILLARS,
   },
 ];
 

@@ -44,5 +44,7 @@ export const StorageKeys = {
   orgAdminBillingOverrides: "proofdive.orgAdmin.billingOverrides.v1",
   /** Whether the candidate has ever seen the FAQ Assistant's first-open greeting — shown once, ever. */
   faqAssistantGreetingSeen: "proofdive.faqAssistantGreetingSeen.v1",
+  /** Super Admin competency framework versions (default + custom copies). */
+  superAdminCompetencyFrameworks: "proofdive.superAdmin.competencyFrameworks.v1",
 } as const;
 

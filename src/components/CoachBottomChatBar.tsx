@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleHelp } from "lucide-react";
+import { MessageCircleQuestion } from "lucide-react";
 
 import { ChatComposer } from "@/components/chat/ChatComposer";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
@@ -20,6 +20,11 @@ type Props = {
    * xl+ from the viewport edge so the composer centers in the main Q&A column.
    */
   rightPanelMaxWidth?: number;
+  /**
+   * Rest as a compact pill; tap opens AI Assistant. Used on Coach / Interview /
+   * Training. Storyboard keeps the full resting composer.
+   */
+  compactWhenIdle?: boolean;
 };
 
 export function CoachBottomChatBar({
@@ -30,6 +35,7 @@ export function CoachBottomChatBar({
   prefillKey,
   showUploadButton,
   rightPanelMaxWidth,
+  compactWhenIdle = false,
 }: Props = {}) {
   const faq = useFaqAssistant();
 
@@ -41,10 +47,11 @@ export function CoachBottomChatBar({
       disabled={disabled || faq.isFaqMode}
       prefill={prefill}
       showUploadButton={faq.isFaqMode ? false : showUploadButton}
+      compactWhenIdle={compactWhenIdle}
       modeToggle={{
         isActive: faq.isFaqMode,
-        icon: CircleHelp,
-        activeLabel: "FAQ Assistant",
+        icon: MessageCircleQuestion,
+        activeLabel: "AI Assistant",
         onToggle: () => (faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode()),
       }}
       thread={
@@ -59,7 +66,7 @@ export function CoachBottomChatBar({
         ) : undefined
       }
       onThreadClose={faq.isFaqMode ? faq.exitFaqMode : undefined}
-      threadHeaderTitle="FAQ Assistant"
+      threadHeaderTitle="AI Assistant"
     />
   );
 

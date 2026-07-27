@@ -2,19 +2,19 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "@/components/cn";
 
-/** Report/section cards — solid surface + hairline border for readable contrast
- * on `--background` (#F5F5F3). Frosted white glass washed out against that tone. */
+/** Report/section cards — solid white surface on `--background` (#F5F5F3).
+ * Borderless to keep the canvas clutter-free. */
 const glassCardClassName =
-  "relative overflow-hidden rounded-md border border-border bg-card text-card-foreground";
+  "relative overflow-hidden rounded-md bg-card text-card-foreground";
 
 const glassCardSectionClassName =
-  "relative overflow-x-clip overflow-y-visible rounded-md border border-border bg-card text-card-foreground";
+  "relative overflow-x-clip overflow-y-visible rounded-md bg-card text-card-foreground";
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "rounded-md border border-[var(--app-hairline)] bg-[var(--app-surface)]",
+        "rounded-md bg-[var(--app-surface)]",
         className,
       )}
       {...props}
@@ -51,9 +51,8 @@ export function CardBody({
 }
 
 /** Flat card-inside-card surface for the custom app Card system — a step
- * down from `--app-surface` (white), separated by a hairline border instead
- * of a shadow. Use to group content inside a `Card` (e.g. a sub-section,
- * a quoted block, a nested list item). */
+ * down from `--app-surface` (white) on the base background. Use to group
+ * content inside a `Card` (e.g. a sub-section, a quoted block, a nested list). */
 export function NestedCard({
   className,
   ...props
@@ -61,7 +60,7 @@ export function NestedCard({
   return (
     <div
       className={cn(
-        "rounded-md border border-[var(--app-hairline)] bg-[var(--app-surface-nested)]",
+        "rounded-md bg-[var(--app-surface-nested)]",
         className,
       )}
       {...props}

@@ -55,7 +55,7 @@ export function PasswordStrengthMeter({ password }: Props) {
             key={rule.key}
             className={cn(
               "flex items-center gap-1.5 text-overline",
-              rule.passed ? "text-scoring-green" : "text-muted-foreground",
+              rule.passed ? "text-scoring-green-fg" : "text-muted-foreground",
             )}
           >
             {rule.passed ? <Check className="h-3 w-3 shrink-0" /> : <X className="h-3 w-3 shrink-0" />}

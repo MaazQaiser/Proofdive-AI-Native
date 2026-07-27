@@ -26,6 +26,7 @@ import {
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { Switch } from "@/components/ui/switch";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
+import { scoringBadgeClass, scoringTextClass } from "@/lib/scoringPalette";
 import type {
   InterviewReport,
   InterviewSessionKind,
@@ -42,7 +43,6 @@ import {
   type StoryboardDraftDocument,
   type StoryboardDraftStore,
 } from "@/lib/storyboardDraft";
-import { SUCCESS_DRIVER_COLORS } from "@/lib/successDrivers";
 import { ONBOARDING_INTRO_VIDEO_SRC } from "@/lib/onboardingIntroVideo";
 import { hasCompletedAnyTrainingForRole } from "@/lib/trainingJourneyProgress";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
@@ -211,7 +211,7 @@ export function InterviewScreen() {
     };
     const mk = (i: number) => {
       const score = 1.6 + rng(i) * 2.6;
-      const status = score >= 3.5 ? "Ready" : score >= 2.5 ? "Borderline" : "Not ready";
+      const status = score >= 4.5 ? "Star" : score >= 3.5 ? "Pass" : score >= 2.5 ? "Borderline" : "Not ready";
       const mins = score >= 3.2 ? 30 : 10;
       return {
         key: `demo-${i}`,
@@ -265,7 +265,7 @@ export function InterviewScreen() {
                 <span className="text-caption text-text-secondary">Mock interview</span>
                 <Badge
                   variant="outline"
-                  className="rounded-full border-scoring-green/20 bg-scoring-green/15 text-caption text-scoring-green"
+                  className="rounded-full border-scoring-green/25 bg-scoring-green/15 text-caption text-scoring-green-fg"
                 >
                   <CheckCircle2 className="size-3" aria-hidden />
                   Ready for you
@@ -348,12 +348,24 @@ export function InterviewScreen() {
                           <div className="mt-3 text-overline text-text-secondary">
                             SESSION SCORE
                           </div>
-                          <div className="mt-0.5 text-h5 leading-none tabular-nums text-text-primary">
+                          <div
+                            className={cn(
+                              "mt-0.5 text-h5 leading-none tabular-nums",
+                              scoringTextClass(Number.parseFloat(c.scoreText)),
+                            )}
+                          >
                             {c.scoreText}
                             <span className="text-body-sm text-text-secondary"> / 5</span>
                           </div>
-                          <div className="mt-0.5 text-overline text-text-secondary">
-                            {c.status}
+                          <div className="mt-1.5">
+                            <span
+                              className={cn(
+                                "inline-flex rounded-full border px-2 py-0.5 text-overline",
+                                scoringBadgeClass(c.status),
+                              )}
+                            >
+                              {c.status}
+                            </span>
                           </div>
                           <div className="mt-3 text-overline text-text-secondary">
                             SESSION TYPE
@@ -541,7 +553,6 @@ export function InterviewScreen() {
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {SELECTIVE_PILLAR_IDS.map((id) => {
                 const on = selectivePillarIds.includes(id);
-                const colors = SUCCESS_DRIVER_COLORS[id];
                 return (
                   <button
                     key={id}
@@ -550,7 +561,7 @@ export function InterviewScreen() {
                     className={cn(
                       "rounded-2xl border px-4 py-3 text-left text-caption font-semibold transition",
                       on
-                        ? cn("border-transparent ring-2 ring-offset-2 ring-offset-background", colors.bg, colors.ring, colors.fg)
+                        ? "border-extended-cyan-green bg-[color-mix(in_srgb,var(--extended-cyan-green)_9%,white)] text-extended-cyan-green"
                         : "border-border bg-card text-text-primary hover:bg-muted",
                     )}
                   >
@@ -803,7 +814,7 @@ export function InterviewScreen() {
           )
         : null}
 
-      <CoachBottomChatBar />
+      <CoachBottomChatBar compactWhenIdle />
     </AppShell>
   );
 }

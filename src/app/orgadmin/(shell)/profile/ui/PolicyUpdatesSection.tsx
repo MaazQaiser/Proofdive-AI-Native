@@ -66,7 +66,7 @@ export function PolicyUpdatesSection() {
                   </Link>
                 </Button>
                 {isAcknowledged ? (
-                  <span className="flex items-center gap-1 text-caption font-medium text-scoring-green">
+                  <span className="flex items-center gap-1 text-caption font-medium text-scoring-green-fg">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Acknowledged
                   </span>

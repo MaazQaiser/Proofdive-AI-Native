@@ -45,7 +45,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { COMPETENCY_FRAMEWORKS, type CompetencyFramework } from "@/lib/superAdminOrganizationWizard";
+import { COMPETENCY_FRAMEWORKS } from "@/lib/superAdminOrganizationWizard";
 import {
   ORGANIZATION_STATUS_LABEL,
   ORGANIZATION_TYPE_LABEL,
@@ -56,6 +56,8 @@ import {
   type OrganizationType,
   type SubscriptionStatus,
 } from "@/lib/superAdminOrganizations";
+import { DEFAULT_FRAMEWORK_ID } from "@/lib/superAdminCompetencyFrameworks";
+import { useCompetencyFrameworks } from "@/lib/useCompetencyFrameworks";
 
 import { AddOrganizationDialog } from "./AddOrganizationDialog";
 import { OrganizationDetailDrawer } from "./OrganizationDetailDrawer";
@@ -75,7 +77,7 @@ export function OrganizationsListScreen() {
   const [confirmTarget, setConfirmTarget] = useState<{ org: Organization; nextStatus: OrganizationStatus } | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const [frameworks, setFrameworks] = useState<CompetencyFramework[]>(COMPETENCY_FRAMEWORKS);
+  const { summaries: frameworks, createCopy } = useCompetencyFrameworks();
 
   const selectedOrganization = organizations.find((o) => o.id === selectedOrgId) ?? null;
 
@@ -139,7 +141,7 @@ export function OrganizationsListScreen() {
 
   return (
     <div className="-m-6 flex h-full flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-12 py-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
         <h1 className="text-h6 text-foreground">Organizations</h1>
         <Button onClick={handleAddOrganization}>
           <Plus className="h-4 w-4" />
@@ -147,7 +149,7 @@ export function OrganizationsListScreen() {
         </Button>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-12 py-3">
+      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-6 py-3">
         <div className="relative w-full max-w-sm">
           <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -251,23 +253,23 @@ export function OrganizationsListScreen() {
           <table className="w-full caption-bottom text-sm">
             <TableHeader className="sticky top-0 z-10 border-b border-border bg-background">
               <TableRow>
-                <TableHead className="text-overline pl-12 text-muted-foreground">Organization</TableHead>
+                <TableHead className="text-overline pl-6 text-muted-foreground">Organization</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Type</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Country</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Subscription Plan</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Subscription Status</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Status</TableHead>
-                <TableHead className="text-overline pr-12 text-right text-muted-foreground">Actions</TableHead>
+                <TableHead className="text-overline pr-6 text-right text-muted-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pageRows.map((org) => (
                 <TableRow key={org.id}>
-                  <TableCell className="pl-12">
+                  <TableCell className="pl-6">
                     <button
                       type="button"
                       onClick={() => handleViewDetails(org)}
-                      className="text-caption text-left font-semibold text-primary hover:underline"
+                      className="text-left font-semibold text-primary hover:underline"
                     >
                       {org.name}
                     </button>
@@ -283,7 +285,7 @@ export function OrganizationsListScreen() {
                   <TableCell>
                     <OrganizationStatusPill status={org.status} />
                   </TableCell>
-                  <TableCell className="pr-12 text-right">
+                  <TableCell className="pr-6 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" aria-label={`Actions for ${org.name}`}>
@@ -310,7 +312,7 @@ export function OrganizationsListScreen() {
         )}
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border bg-background px-12 py-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border bg-background px-6 py-4">
         <div className="text-caption flex items-center gap-2 text-muted-foreground">
           <span>Rows per page</span>
           <Select
@@ -414,8 +416,20 @@ export function OrganizationsListScreen() {
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         existingOrganizationNames={organizations.map((o) => o.name)}
-        frameworks={frameworks}
-        onCreateFramework={(framework) => setFrameworks((prev) => [...prev, framework])}
+        frameworks={frameworks.length > 0 ? frameworks : COMPETENCY_FRAMEWORKS}
+        onCreateFramework={(name) => {
+          const created = createCopy(DEFAULT_FRAMEWORK_ID, name);
+          if (!created) {
+            toast.error("Could not create competency framework copy.");
+            return null;
+          }
+          toast.success(`Draft framework "${created.name}" created.`);
+          return {
+            id: created.id,
+            name: created.name,
+            isDefault: created.isDefault,
+          };
+        }}
         onCreate={handleCreateOrganization}
       />
 
@@ -425,7 +439,7 @@ export function OrganizationsListScreen() {
           if (!open) setSelectedOrgId(null);
         }}
         existingOrganizationNames={organizations.map((o) => o.name)}
-        frameworks={frameworks}
+        frameworks={frameworks.length > 0 ? frameworks : COMPETENCY_FRAMEWORKS}
         onUpdate={handleUpdateOrganization}
         onRequestStatusChange={handleRequestStatusChange}
       />

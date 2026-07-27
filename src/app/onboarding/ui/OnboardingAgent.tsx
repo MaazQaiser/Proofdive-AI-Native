@@ -12,8 +12,8 @@ import {
 import {
   ArrowRight,
   BookOpen,
-  CircleHelp,
   Home,
+  MessageCircleQuestion,
   Pencil,
   RotateCcw,
   UserCheck,
@@ -432,12 +432,12 @@ function OnboardingAgentInner({
   const quickReplies: Array<{ id: string; label: string; value: string }> =
     step === "backgroundType"
       ? [
-          { id: "fresh", label: "Fresh grad", value: "fresh_grad" },
-          { id: "undergrad", label: "Under grad", value: "under_grad" },
-          { id: "diploma", label: "Diploma holder", value: "diploma_holder" },
+          { id: "fresh", label: "Freshie", value: "fresh_grad" },
+          { id: "undergrad", label: "Undergraduate", value: "under_grad" },
+          { id: "diploma", label: "Diploma Holder", value: "diploma_holder" },
           {
             id: "exp",
-            label: "Experienced professional",
+            label: "Experienced Professional",
             value: "experienced",
           },
         ]
@@ -571,7 +571,7 @@ function OnboardingAgentInner({
     if (step === "backgroundType") {
       const v = cleaned.toLowerCase();
       const backgroundType: NonNullable<RoleProfile["backgroundType"]> | null =
-        v === "fresh_grad" || v === "fresh grad"
+        v === "fresh_grad" || v === "fresh grad" || v === "freshie"
           ? "fresh_grad"
           : v === "under_grad" || v === "under grad" || v === "undergraduate"
             ? "under_grad"
@@ -931,7 +931,7 @@ function OnboardingAgentInner({
             ) : null}
             <ChatComposer
               placeholder={
-                step === "done" && faq.isFaqMode
+                faq.isFaqMode
                   ? "Select a question above"
                   : "Reply (type here or use voice)"
               }
@@ -939,7 +939,7 @@ function OnboardingAgentInner({
               disabled={
                 step === "coreFourSelection" ||
                 isEditingJd ||
-                (step === "done" && faq.isFaqMode)
+                faq.isFaqMode
               }
               uploadAccept=".pdf,.doc,.docx,.txt"
               onUpload={handleUpload}
@@ -947,23 +947,25 @@ function OnboardingAgentInner({
                 !(
                   step === "coreFourSelection" ||
                   isEditingJd ||
-                  (step === "done" && faq.isFaqMode)
+                  faq.isFaqMode
                 )
               }
               backgroundGlowIntensity="full"
+              compactWhenIdle={step === "coreFourSelection"}
               modeToggle={
-                step === "done"
+                step === "done" || step === "coreFourSelection"
                   ? {
                       isActive: faq.isFaqMode,
-                      icon: CircleHelp,
-                      activeLabel: "FAQ Assistant",
+                      icon: MessageCircleQuestion,
+                      activeLabel: "AI Assistant",
                       onToggle: () =>
                         faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode(),
                     }
                   : undefined
               }
               thread={
-                step === "done" && faq.isFaqMode ? (
+                faq.isFaqMode &&
+                (step === "done" || step === "coreFourSelection") ? (
                   <FaqAssistantThread
                     screenData={faq.screenData}
                     onSelectRootItem={faq.selectRootItem}
@@ -974,9 +976,12 @@ function OnboardingAgentInner({
                 ) : undefined
               }
               onThreadClose={
-                step === "done" && faq.isFaqMode ? faq.exitFaqMode : undefined
+                faq.isFaqMode &&
+                (step === "done" || step === "coreFourSelection")
+                  ? faq.exitFaqMode
+                  : undefined
               }
-              threadHeaderTitle="FAQ Assistant"
+              threadHeaderTitle="AI Assistant"
             />
           </div>
         </div>

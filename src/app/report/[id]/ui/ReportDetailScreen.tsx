@@ -20,10 +20,15 @@ import type {
   ReadinessLabel,
 } from "@/lib/proofdiveTypes";
 import {
-  SUCCESS_DRIVER_COLORS,
   SUCCESS_DRIVERS,
   type SuccessDriverId,
 } from "@/lib/successDrivers";
+import {
+  scoringBadgeClass,
+  scoringFillClass,
+  scoringLabelForScore,
+  scoringTextClass,
+} from "@/lib/scoringPalette";
 
 type Props = { reportId: string };
 
@@ -36,30 +41,16 @@ function safeParseJson<T>(raw: string | null): T | null {
   }
 }
 
-function scoreBand(score: number): "red" | "amber" | "green" {
-  if (score >= 3.5) return "green";
-  if (score >= 2.5) return "amber";
-  return "red";
-}
-
 function badgeClasses(label: ReadinessLabel) {
-  if (label === "Ready") return "border-scoring-green/20 bg-scoring-green/15 text-scoring-green";
-  if (label === "Borderline") return "border-scoring-yellow/20 bg-scoring-yellow/15 text-scoring-yellow";
-  return "border-scoring-red/20 bg-scoring-red/15 text-scoring-red";
+  return scoringBadgeClass(label);
 }
 
 function scoreTextClasses(score: number) {
-  const b = scoreBand(score);
-  if (b === "green") return "text-scoring-green";
-  if (b === "amber") return "text-scoring-yellow";
-  return "text-scoring-red";
+  return scoringTextClass(score);
 }
 
 function scoreBarClasses(score: number) {
-  const b = scoreBand(score);
-  if (b === "green") return "bg-scoring-green";
-  if (b === "amber") return "bg-scoring-yellow";
-  return "bg-scoring-red";
+  return scoringFillClass(score);
 }
 
 function fmtDate(iso: string): string {
@@ -75,8 +66,8 @@ function fmtDuration(seconds: number): string {
   return `${mm}m ${ss}s`;
 }
 
-function driverAccentSoft(driverId: InterviewReportDriver["id"]) {
-  return SUCCESS_DRIVER_COLORS[driverId as SuccessDriverId].accentBg;
+function driverAccentSoft() {
+  return "border-extended-cyan-green/20 bg-extended-cyan-green/10";
 }
 
 function useStickySummary(sentinelRef: React.RefObject<HTMLElement | null>) {
@@ -134,7 +125,6 @@ function DriverCard({
   const score = driver.score;
   const pct = Math.max(0, Math.min(100, Math.round(driver.pct)));
   const driverId = driver.id as SuccessDriverId;
-  const colors = SUCCESS_DRIVER_COLORS[driverId];
   return (
     <Card className="gap-0 py-0 overflow-hidden">
       <CardContent className="p-5">
@@ -144,7 +134,7 @@ function DriverCard({
               <span
                 className={cn(
                   "inline-flex h-9 w-9 items-center justify-center rounded-xl border",
-                  driverAccentSoft(driver.id),
+                  driverAccentSoft(),
                 )}
               >
                 <SuccessDriverIcon
@@ -367,7 +357,6 @@ export function ReportDetailScreen({ reportId }: Props) {
   const [openQuestions, setOpenQuestions] = useState<Record<string, boolean>>({});
 
   const overall = report?.overallScore ?? 0;
-  const overallLabel = report?.overallStatus ?? "Borderline";
 
   const spotlightQuestion = useMemo(() => {
     if (!report) return null;
@@ -432,10 +421,10 @@ export function ReportDetailScreen({ reportId }: Props) {
               <div
                 className={cn(
                   "inline-flex items-center rounded-full border px-2.5 py-1 text-overline",
-                  badgeClasses(overallLabel),
+                  scoringBadgeClass(overall),
                 )}
               >
-                {overallLabel}
+                {scoringLabelForScore(overall)}
               </div>
             </div>
             <div className="text-overline text-text-secondary">
@@ -531,10 +520,10 @@ export function ReportDetailScreen({ reportId }: Props) {
                       <div
                         className={cn(
                           "inline-flex items-center rounded-full border px-3 py-1 text-overline",
-                          badgeClasses(report.overallStatus),
+                          scoringBadgeClass(overall),
                         )}
                       >
-                        {report.overallStatus}
+                        {scoringLabelForScore(overall)}
                       </div>
                     </div>
                     <div className="mt-4 text-body-sm font-semibold text-text-primary">
@@ -715,7 +704,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                           </div>
                           <div className="mt-2 text-caption leading-6 text-text-primary">{line.text}</div>
                           {line.flag ? (
-                            <div className="mt-2 inline-flex items-center rounded-full border border-scoring-red/20 bg-scoring-red/10 px-2.5 py-1 text-overline text-scoring-red">
+                            <div className="mt-2 inline-flex items-center rounded-full border border-scoring-red/25 bg-scoring-red/15 px-2.5 py-1 text-overline text-scoring-red-fg">
                               {line.flag}
                             </div>
                           ) : null}

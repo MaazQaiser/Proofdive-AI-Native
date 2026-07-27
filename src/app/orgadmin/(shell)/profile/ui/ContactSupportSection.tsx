@@ -65,7 +65,7 @@ export function ContactSupportSection() {
         />
         {error ? <p className="text-caption text-destructive">{error}</p> : null}
         {submitted ? (
-          <div className="flex items-center gap-2 text-caption text-scoring-green">
+          <div className="flex items-center gap-2 text-caption text-scoring-green-fg">
             <CheckCircle2 className="h-4 w-4" />
             Your support request has been submitted successfully.
           </div>

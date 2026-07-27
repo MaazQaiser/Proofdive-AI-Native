@@ -58,12 +58,12 @@ function GlassBlurSymbol({
 function glassCardSurfaceClasses(variant: "primary" | "gray" = "primary") {
   return variant === "primary"
     ? [
-        "border-brand-300/80 bg-[linear-gradient(160deg,color-mix(in_srgb,var(--brand-100)_88%,white)_0%,color-mix(in_srgb,var(--brand-300)_92%,white)_100%)]",
+        "border-transparent bg-[linear-gradient(160deg,color-mix(in_srgb,var(--brand-100)_88%,white)_0%,color-mix(in_srgb,var(--brand-300)_92%,white)_100%)]",
         "shadow-[0_10px_24px_rgba(14,154,181,0.2),inset_0_1px_0_rgba(255,255,255,0.45)]",
         "hover:shadow-[0_14px_28px_rgba(14,154,181,0.26),inset_0_1px_0_rgba(255,255,255,0.5)]",
       ]
     : [
-        "border-extended-cyan-green/35 bg-[color-mix(in_srgb,var(--extended-cyan-green)_8%,white)]",
+        "border-transparent bg-[color-mix(in_srgb,var(--extended-cyan-green)_8%,white)]",
         "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
         "hover:bg-[color-mix(in_srgb,var(--extended-cyan-green)_12%,white)] hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
       ];

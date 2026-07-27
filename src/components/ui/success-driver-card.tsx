@@ -55,7 +55,7 @@ type SuccessDriverCardProps = {
 };
 
 /** Glass Success Driver surface — light tint of the brand symbol color with a
- * frosted fill, matching border, and a large noisy blur symbol on the right. */
+ * frosted fill and a large noisy blur symbol on the right. */
 function SuccessDriverCard({
   driver,
   children,
@@ -68,12 +68,10 @@ function SuccessDriverCard({
       data-slot="success-driver-card"
       data-driver={driver}
       className={cn(
-        "relative overflow-hidden rounded-lg border transition",
+        "relative overflow-hidden rounded-lg transition",
         "bg-[color-mix(in_srgb,var(--extended-cyan-green)_9%,white)] backdrop-blur-xl",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]",
-        selected
-          ? "border-extended-cyan-green"
-          : "border-extended-cyan-green/45",
+        selected ? "ring-2 ring-extended-cyan-green/70" : null,
         className,
       )}
     >

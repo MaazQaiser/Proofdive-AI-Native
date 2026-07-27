@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, ChevronLeft } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { FaqScreenData } from "@/components/faq/useFaqAssistant";
 import type { FaqCtaAction, FaqRootItemId } from "@/lib/faqAssistantContent";
 
@@ -17,16 +18,29 @@ type Props = {
   onBackToRootMenu: () => void;
 };
 
-const MENU_PILL_CLASSES =
-  "w-full rounded-2xl border border-neutral-200 bg-neutral-100/90 px-4 py-3 text-left text-body-sm font-medium text-neutral-900 transition hover:border-neutral-300 hover:bg-neutral-100";
+/**
+ * Soft brand suggestion chip — Soft UI Evolution + ProofDive teal wash.
+ * No hard gray box borders; glass tint from brand-1000 with cyan text.
+ */
+const SUGGESTION_CHIP_CLASSES = cn(
+  "w-full cursor-pointer rounded-2xl px-4 py-3.5 text-left text-body-sm font-medium",
+  "bg-brand-1000 text-extended-cyan-green",
+  "shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]",
+  "transition duration-200 ease-out",
+  "hover:bg-brand-900 hover:text-extended-cyan-green",
+  "active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+);
 
-const BACK_BUTTON_CLASSES =
-  "flex w-full items-center gap-1.5 rounded-2xl px-4 py-2.5 text-left text-body-sm font-medium text-neutral-600 transition hover:bg-neutral-100";
+const BACK_BUTTON_CLASSES = cn(
+  "inline-flex w-fit cursor-pointer items-center gap-1 rounded-full px-2 py-2",
+  "text-left text-body-sm font-medium text-primary",
+  "transition duration-200 hover:bg-brand-1000 hover:text-brand-100",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+);
 
-/** Deliberately the app's real `Button` (design-system) component, not a pill — a FAQ
- * navigation CTA should read as an action, visually distinct from the question pills.
- * Sized to its own content (not full-width) like a normal button, with a leading icon
- * for the destination and a trailing arrow for the "go to" affordance. */
+/** Deliberately the app's real `Button` (design-system) component, not a pill — a
+ * navigation CTA should read as an action, visually distinct from suggestion chips. */
 function CtaButton({ cta }: { cta: FaqCtaAction }) {
   const Icon = cta.icon;
   if (cta.kind === "stub") {
@@ -52,7 +66,14 @@ function CtaButton({ cta }: { cta: FaqCtaAction }) {
 function UserBubble({ children }: { children: ReactNode }) {
   return (
     <div className="flex w-full justify-end">
-      <div className="max-w-[min(100%,32rem)] rounded-3xl bg-neutral-800 px-4 py-2.5 text-body-sm leading-6 text-white [word-break:break-word]">
+      <div
+        className={cn(
+          "max-w-[min(100%,32rem)] rounded-[1.25rem] rounded-br-md px-4 py-2.5",
+          "bg-primary text-body-sm leading-6 text-primary-foreground",
+          "shadow-[0_6px_18px_rgba(14,154,181,0.22)]",
+          "[word-break:break-word]",
+        )}
+      >
         {children}
       </div>
     </div>
@@ -61,25 +82,47 @@ function UserBubble({ children }: { children: ReactNode }) {
 
 function AssistantText({ children }: { children: ReactNode }) {
   return (
-    <p className="whitespace-pre-wrap text-left text-body leading-7 text-neutral-800 [word-break:break-word]">
-      {children}
-    </p>
+    <div className="flex w-full items-start gap-3">
+      <span
+        className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-brand-1000 text-primary"
+        aria-hidden
+      >
+        <Sparkles className="size-3.5" strokeWidth={2} />
+      </span>
+      <p className="min-w-0 flex-1 whitespace-pre-wrap pt-1 text-left text-body leading-7 text-text-primary [word-break:break-word]">
+        {children}
+      </p>
+    </div>
   );
 }
 
 function BackButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button type="button" className={BACK_BUTTON_CLASSES} onClick={onClick}>
-      <ChevronLeft className="h-4 w-4 shrink-0" />
+      <ChevronLeft className="size-4 shrink-0" />
       {label}
     </button>
   );
 }
 
+function SuggestionList({
+  children,
+  label,
+}: {
+  children: ReactNode;
+  label?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2" role="group" aria-label={label}>
+      {children}
+    </div>
+  );
+}
+
 /**
- * Renders exactly one FAQ screen at a time (Root Menu, an item's Answer View, or a
- * follow-up's Answer View) — every button/pill is stacked vertically below the answer
- * text per the PRD's button-placement rule, never beside it.
+ * Renders exactly one AI Assistant screen at a time (Root Menu, an item's Answer
+ * View, or a follow-up's Answer View) — suggestions stack below the answer text
+ * per the PRD's button-placement rule, never beside it.
  */
 export function FaqAssistantThread({
   screenData,
@@ -90,22 +133,22 @@ export function FaqAssistantThread({
 }: Props) {
   if (screenData.kind === "root") {
     return (
-      <div className="flex w-full flex-col gap-3 py-0.5 pr-0.5" aria-label="FAQ Assistant menu">
+      <div className="flex w-full flex-col gap-4 py-1" aria-label="AI Assistant menu">
         {screenData.showGreeting ? (
           <AssistantText>{`Hey ${screenData.candidateName}, what can I help you with today?`}</AssistantText>
         ) : null}
-        <div className="flex flex-col gap-2">
+        <SuggestionList label="Suggested questions">
           {screenData.items.map((item) => (
             <button
               key={item.id}
               type="button"
-              className={MENU_PILL_CLASSES}
+              className={SUGGESTION_CHIP_CLASSES}
               onClick={() => onSelectRootItem(item.id)}
             >
               {item.label}
             </button>
           ))}
-        </div>
+        </SuggestionList>
       </div>
     );
   }
@@ -113,24 +156,24 @@ export function FaqAssistantThread({
   if (screenData.kind === "item") {
     const { item, answer } = screenData;
     return (
-      <div className="flex w-full flex-col gap-3 py-0.5 pr-0.5" aria-label="FAQ Assistant answer">
+      <div className="flex w-full flex-col gap-4 py-1" aria-label="AI Assistant answer">
         <UserBubble>{item.menuLabel}</UserBubble>
         <AssistantText>{answer.text}</AssistantText>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           {answer.cta ? <CtaButton cta={answer.cta} /> : null}
           {answer.followups?.length ? (
-            <div className="flex flex-col gap-2">
+            <SuggestionList label="Follow-up questions">
               {answer.followups.map((f) => (
                 <button
                   key={f.id}
                   type="button"
-                  className={MENU_PILL_CLASSES}
+                  className={SUGGESTION_CHIP_CLASSES}
                   onClick={() => onSelectFollowup(f.id)}
                 >
                   {f.question}
                 </button>
               ))}
-            </div>
+            </SuggestionList>
           ) : null}
           <BackButton label="Back" onClick={onBackToRootMenu} />
         </div>
@@ -140,10 +183,10 @@ export function FaqAssistantThread({
 
   const { answer, followup } = screenData;
   return (
-    <div className="flex w-full flex-col gap-3 py-0.5 pr-0.5" aria-label="FAQ Assistant follow-up answer">
+    <div className="flex w-full flex-col gap-4 py-1" aria-label="AI Assistant follow-up answer">
       <UserBubble>{followup.question}</UserBubble>
       <AssistantText>{followup.answer}</AssistantText>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         {answer.cta ? <CtaButton cta={answer.cta} /> : null}
         <BackButton label="Back" onClick={onBackToItemMenu} />
       </div>

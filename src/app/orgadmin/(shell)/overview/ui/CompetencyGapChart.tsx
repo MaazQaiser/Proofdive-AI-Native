@@ -5,8 +5,9 @@ import type { CompetencyGapItem } from "@/lib/orgAdminMockData";
 type Props = { data: CompetencyGapItem[] };
 
 function colorForScore(score: number): string {
-  if (score >= 4.5) return "var(--scoring-green)";
-  if (score >= 3.0) return "var(--scoring-yellow)";
+  if (score >= 4.5) return "var(--scoring-cyan)";
+  if (score >= 3.5) return "var(--scoring-green)";
+  if (score >= 2.5) return "var(--scoring-yellow)";
   return "var(--scoring-red)";
 }
 

@@ -21,19 +21,19 @@ import { BackgroundGlow, type BackgroundGlowIntensity } from "@/components/share
 export type ChatComposerQuickChip = { label: string; value: string; id?: string };
 
 /** A persistent, always-visible footer icon that toggles into a labeled pill once active —
- * e.g. the FAQ Assistant entry point. Unlike `quickPromptChips`, this is never gated by
+ * e.g. the AI Assistant entry point. Unlike `quickPromptChips`, this is never gated by
  * focus, and (see render below) is deliberately never disabled by the composer's own
  * `disabled` prop, since toggling it off is exactly how a caller un-disables the composer. */
 export type ChatComposerModeToggle = {
   isActive: boolean;
   icon: LucideIcon;
-  /** Shown next to the icon only while `isActive` is true. */
+  /** Shown next to the icon while active, and on the compact-idle open control. */
   activeLabel: string;
   onToggle: () => void;
 };
 
 const headerIconButtonClassName =
-  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary active:bg-muted";
+  "inline-flex size-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary active:bg-muted";
 
 export function ChatComposer({
   placeholder = "Type a message…",
@@ -53,6 +53,11 @@ export function ChatComposer({
   threadHeaderTitle = "AI Coach",
   /** Onboarding keeps the full wash; other candidate pages default to a softer glow. */
   backgroundGlowIntensity = "soft",
+  /**
+   * When true and the assistant mode toggle is inactive, render a compact pill instead of
+   * the full chatbox. Tapping the pill opens the assistant via `modeToggle.onToggle`.
+   */
+  compactWhenIdle = false,
 }: {
   placeholder?: string;
   onSend: (text: string) => void;
@@ -72,13 +77,14 @@ export function ChatComposer({
   quickPromptChips?: ChatComposerQuickChip[];
   /** If provided and returns `true`, the chip’s value is not prefilled (parent handles the action). */
   onQuickPromptChipSelect?: (chip: ChatComposerQuickChip) => boolean;
-  /** Persistent footer icon/pill toggle (e.g. FAQ Assistant) — see `ChatComposerModeToggle`. */
+  /** Persistent footer icon/pill toggle (e.g. AI Assistant) — see `ChatComposerModeToggle`. */
   modeToggle?: ChatComposerModeToggle;
   thread?: ReactNode;
   /** Dismiss the in-card thread (e.g. clear messages); shows a close control when set. */
   onThreadClose?: () => void;
   threadHeaderTitle?: string;
   backgroundGlowIntensity?: BackgroundGlowIntensity;
+  compactWhenIdle?: boolean;
 }) {
   const [text, setText] = useState(prefill);
   const [quickPromptsOpen, setQuickPromptsOpen] = useState(false);
@@ -231,21 +237,11 @@ export function ChatComposer({
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 
-  const modeToggleControl = modeToggle ? (
-    modeToggle.isActive ? (
-      <button
-        type="button"
-        onClick={modeToggle.onToggle}
-        aria-label={`Exit ${modeToggle.activeLabel}`}
-        className="flex h-7 shrink-0 items-center gap-1 rounded-full border border-border bg-muted/70 py-1 pl-2 pr-1.5 backdrop-blur-[16px]"
-      >
-        <modeToggle.icon className="size-4 shrink-0" />
-        <span className="text-text-primary px-0.5 text-overline font-medium leading-6 whitespace-nowrap">
-          {modeToggle.activeLabel}
-        </span>
-        <X className="size-4 shrink-0" />
-      </button>
-    ) : (
+  // While the assistant is open, exit via the thread header close — do not show an
+  // "AI Assistant" footer pill with an X. When idle (non-compact hosts), keep the
+  // ghost icon so users can still open the assistant from the full chatbox.
+  const modeToggleControl =
+    modeToggle && !modeToggle.isActive ? (
       <IconButton
         variant="ghost"
         onClick={modeToggle.onToggle}
@@ -253,8 +249,7 @@ export function ChatComposer({
       >
         <modeToggle.icon />
       </IconButton>
-    )
-  ) : null;
+    ) : null;
 
   const threadLeading = thread ? (
     <div
@@ -264,22 +259,26 @@ export function ChatComposer({
       )}
     >
       <div
-        className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-5"
+        className="flex min-h-12 shrink-0 items-center justify-between gap-3 border-b border-brand-900/80 bg-brand-1000/50 px-5 py-3"
         role="group"
-        aria-label="AI Coach header"
+        aria-label={`${threadHeaderTitle} header`}
       >
-        <div className="flex min-w-0 items-center gap-2">
-          <MessageCircleQuestion className="h-4 w-4 text-neutral-700" aria-hidden />
-          <span className="text-caption text-text-primary">{threadHeaderTitle}</span>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+            <MessageCircleQuestion className="size-4" aria-hidden />
+          </span>
+          <span className="truncate text-body-sm font-medium text-extended-cyan-green">
+            {threadHeaderTitle}
+          </span>
         </div>
-        <div className="flex shrink-0 items-center">
+        <div className="flex shrink-0 items-center gap-0.5">
           <button
             type="button"
             onClick={() => setExpanded(true)}
             className={headerIconButtonClassName}
             aria-label="Expand to full screen"
           >
-            <Maximize2 className="h-4 w-4" />
+            <Maximize2 className="size-4" />
           </button>
           {onThreadClose ? (
             <button
@@ -288,13 +287,13 @@ export function ChatComposer({
               className={headerIconButtonClassName}
               aria-label="Close"
             >
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </button>
           ) : null}
         </div>
       </div>
       <div
-        className="w-full min-h-0 flex-1 overflow-y-auto scroll-smooth px-5 py-2"
+        className="w-full min-h-0 flex-1 overflow-y-auto scroll-smooth px-5 py-3"
         tabIndex={0}
         role="log"
         aria-relevant="additions"
@@ -364,11 +363,37 @@ export function ChatComposer({
 
   const chatbox = renderChatbox({ leading: threadLeading ?? undefined });
 
+  const isCompactIdle = Boolean(compactWhenIdle && modeToggle && !modeToggle.isActive);
+
   return (
     <>
       {/* Soft brand wash behind every candidate composer — sits under the
           interactive chrome via z-index so the frosted Chatbox stays crisp. */}
       <BackgroundGlow intensity={backgroundGlowIntensity} />
+      {isCompactIdle && modeToggle ? (
+        <div className="relative z-10 w-full">
+          <button
+            type="button"
+            onClick={modeToggle.onToggle}
+            aria-label={`Open ${modeToggle.activeLabel}`}
+            className={cn(
+              "flex h-14 w-full max-w-[800px] items-center gap-3 rounded-full p-1.5 pr-4 text-left",
+              "border border-transparent shadow-[0_8px_30px_rgba(0,0,0,0.06)] backdrop-blur-[42px]",
+              "[background:linear-gradient(rgba(255,255,255,0.72),rgba(255,255,255,0.72))_padding-box,linear-gradient(180deg,#f2f2f2,var(--extended-light-cyan)_41%,#fff)_border-box]",
+              "transition hover:shadow-[0_10px_32px_rgba(0,0,0,0.08)]",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+            )}
+          >
+            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+              <modeToggle.icon className="size-5" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1 truncate text-[16px] font-medium leading-[1.3] text-text-secondary">
+              {modeToggle.activeLabel}
+            </span>
+            <Maximize2 className="size-4 shrink-0 text-text-secondary" aria-hidden />
+          </button>
+        </div>
+      ) : (
       <div
         className={cn(
           "relative z-10 flex items-end gap-2",
@@ -423,6 +448,7 @@ export function ChatComposer({
           {!expanded ? chatbox : null}
         </div>
       </div>
+      )}
 
       {expanded && typeof document !== "undefined"
         ? createPortal(

@@ -50,12 +50,7 @@ export function CoachFloatingNav() {
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
               isActive
                 ? "bg-primary text-primary-foreground"
-                : cn(
-                    "border border-transparent text-primary backdrop-blur-[9px]",
-                    /* Same frosted fill + cyan gradient ring as SelectionChip */
-                    "[background:linear-gradient(rgba(255,255,255,0.72),rgba(255,255,255,0.72))_padding-box,linear-gradient(180deg,#f2f2f2,var(--extended-light-cyan)_41%,#fff)_border-box]",
-                    "hover:[background:linear-gradient(var(--extended-light-cyan),var(--extended-light-cyan))_padding-box,linear-gradient(180deg,#f2f2f2,var(--extended-light-cyan)_41%,#fff)_border-box]",
-                  ),
+                : "bg-white text-primary hover:bg-white",
             )}
           >
             <Icon className="h-5 w-5" aria-hidden />

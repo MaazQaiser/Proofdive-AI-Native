@@ -15,7 +15,7 @@ export function OrganizationStatusPill({ status }: { status: OrganizationStatus 
       className={cn(
         "text-overline inline-flex h-6 w-fit items-center gap-1 rounded-full border px-2 whitespace-nowrap",
         active
-          ? "border-scoring-green/20 bg-scoring-green/10 text-scoring-green"
+          ? "border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg"
           : "border-border bg-muted text-muted-foreground",
       )}
     >
@@ -28,10 +28,10 @@ export function OrganizationStatusPill({ status }: { status: OrganizationStatus 
 export function SubscriptionStatusPill({ status }: { status: SubscriptionStatus }) {
   const tone =
     status === "active"
-      ? "border-scoring-green/20 bg-scoring-green/10 text-scoring-green"
+      ? "border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg"
       : status === "expiring_soon"
-        ? "border-scoring-yellow/20 bg-scoring-yellow/10 text-scoring-yellow"
-        : "border-scoring-red/20 bg-scoring-red/10 text-scoring-red";
+        ? "border-scoring-yellow/30 bg-scoring-yellow/20 text-scoring-yellow-fg"
+        : "border-scoring-red/25 bg-scoring-red/15 text-scoring-red-fg";
   return (
     <span className={cn("text-overline inline-flex h-6 w-fit items-center rounded-full border px-2 whitespace-nowrap", tone)}>
       {SUBSCRIPTION_STATUS_LABEL[status]}

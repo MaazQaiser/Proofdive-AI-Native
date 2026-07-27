@@ -18,16 +18,16 @@ export function OrganizationReadinessChart({ data }: Props) {
           <StackedBarChartPrimitive
             labels={data.map((d) => d.label)}
             series={[
-              { key: "ready", label: "Ready (4.5–5.0)", color: "var(--scoring-green)", values: data.map((d) => d.ready) },
+              { key: "ready", label: "Star (4.5–5.0)", color: "var(--scoring-cyan)", values: data.map((d) => d.ready) },
               {
                 key: "gettingThere",
-                label: "Getting There (3.0–4.4)",
-                color: "var(--scoring-yellow)",
+                label: "Pass (3.5–4.4)",
+                color: "var(--scoring-green)",
                 values: data.map((d) => d.gettingThere),
               },
               {
                 key: "needsWork",
-                label: "Needs Work (1.0–2.9)",
+                label: "Not ready / Borderline (1.0–3.4)",
                 color: "var(--scoring-red)",
                 values: data.map((d) => d.needsWork),
               },
