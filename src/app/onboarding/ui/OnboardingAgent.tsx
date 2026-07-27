@@ -22,7 +22,6 @@ import {
 import type { ChatMessage } from "@/components/chat/chatTypes";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { ChatComposer } from "@/components/chat/ChatComposer";
-import { Button } from "@/components/ui/button";
 import { CardButton } from "@/components/ui/card-button";
 import { Textarea } from "@/components/ui/textarea";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
@@ -344,7 +343,7 @@ function OnboardingAgentInner({
   }
 
   function acceptGeneratedJobDescription(text: string) {
-    push("user", "📝 Used the system-generated draft job description.");
+    push("user", "📝 Used Proofy’s draft job description.");
     const next = {
       ...draft,
       jobDescription: text,
@@ -371,7 +370,7 @@ function OnboardingAgentInner({
   function confirmEditedJd() {
     const text = editedJdText.trim();
     if (!text) return;
-    push("user", "📝 Edited the system-generated draft before using it.");
+    push("user", "📝 Edited Proofy’s draft before using it.");
     const next = {
       ...draft,
       jobDescription: text,
@@ -635,9 +634,10 @@ function OnboardingAgentInner({
     if (step === "lastWorkedAt") {
       const next = { ...draft, lastWorkedAt: isSkip ? "" : cleaned };
       setDraft(next);
+      const role = next.targetRole.trim() || "this role";
       push(
         "assistant",
-        "Good progress! Which industry vertical are you targeting? Pick one below or type your own.",
+        `Looking solid for ${role}.\n\nWhich industry vertical should we target? Pick one below or type your own.`,
       );
       setStep("industryVertical");
       return;
@@ -646,9 +646,10 @@ function OnboardingAgentInner({
     if (step === "education") {
       const next = { ...draft, education: isSkip ? "" : cleaned };
       setDraft(next);
+      const role = next.targetRole.trim() || "this role";
       push(
         "assistant",
-        "Good progress! Which industry vertical are you targeting? Pick one below or type your own.",
+        `Looking solid for ${role}.\n\nWhich industry vertical should we target? Pick one below or type your own.`,
       );
       setStep("industryVertical");
       return;
@@ -657,9 +658,10 @@ function OnboardingAgentInner({
     if (step === "industryVertical") {
       const next = { ...draft, industryVertical: isSkip ? "" : cleaned };
       setDraft(next);
+      const role = next.targetRole.trim() || "your role";
       push(
         "assistant",
-        `${who()}One more thing.\n\nDrop in the job description you're targeting: this one's required so I can tailor everything around it. Or ask me to generate a draft for you.`,
+        `Proofy’s turn.\n\nPaste the job description you’re targeting — or ask Proofy, your ProofDive agent, to draft one from your ${role} profile.`,
       );
       setStep("jobDescription");
       return;
@@ -669,7 +671,7 @@ function OnboardingAgentInner({
       if (isSkip || !cleaned) {
         push(
           "assistant",
-          "The job description is required. Paste it in, upload the file, or ask me to generate a draft.",
+          "A job description is required. Paste it in, upload the file, or ask Proofy to generate a draft.",
         );
         return;
       }
@@ -781,17 +783,26 @@ function OnboardingAgentInner({
             ) : null}
             {step === "jobDescription" ? (
               isGeneratingJd ? (
-                <JdGeneratingSkeleton />
+                <JdGeneratingSkeleton
+                  roleTitle={draft.targetRole.trim() || undefined}
+                />
               ) : generatedJdDraft ? (
                 <div className="mt-6 flex w-full flex-col gap-4">
-                  <div className="flex flex-col gap-1">
-                    <h2 className="text-h2 text-heading-teal">
-                      AI-generated draft
-                    </h2>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-h4 text-heading-teal">
+                        Proofy’s draft
+                      </h2>
+                      <span className="rounded-md border border-border bg-card px-2 py-0.5 text-overline font-medium text-extended-cyan">
+                        ProofDive agent
+                      </span>
+                    </div>
                     <p className="text-body-sm text-text-secondary">
                       {isEditingJd
-                        ? "Edit the text below, then confirm."
-                        : "Not an employer-authored JD — review before continuing."}
+                        ? "Tweak Proofy’s draft below, then confirm."
+                        : draft.targetRole.trim()
+                          ? `Drafted for ${draft.targetRole.trim()}${draft.industryVertical.trim() ? ` · ${draft.industryVertical.trim()}` : ""} — review before continuing.`
+                          : "Not an employer-authored JD — review before continuing."}
                     </p>
                   </div>
                   {isEditingJd ? (
@@ -809,56 +820,64 @@ function OnboardingAgentInner({
                   <div className="flex flex-wrap gap-2">
                     {isEditingJd ? (
                       <>
-                        <Button
-                          onClick={confirmEditedJd}
-                          className="gap-1.5 rounded-md bg-[linear-gradient(135deg,var(--brand-100),var(--brand-500))] text-primary-foreground hover:opacity-90"
-                        >
+                        <SelectionChip onClick={confirmEditedJd}>
                           Use this draft
                           <ArrowRight className="size-4" />
-                        </Button>
+                        </SelectionChip>
                         <SelectionChip onClick={cancelEditingJd}>
                           Cancel
                         </SelectionChip>
                       </>
                     ) : (
                       <>
-                        <Button
+                        <SelectionChip
                           onClick={() =>
                             acceptGeneratedJobDescription(generatedJdDraft)
                           }
-                          className="gap-1.5 rounded-md bg-[linear-gradient(135deg,var(--brand-100),var(--brand-500))] text-primary-foreground hover:opacity-90"
                         >
                           Use this draft
                           <ArrowRight className="size-4" />
-                        </Button>
+                        </SelectionChip>
                         <SelectionChip
                           onClick={() => startEditingJd(generatedJdDraft)}
                         >
-                          <span className="flex items-center gap-1.5">
-                            <Pencil className="size-4" />
-                            Edit before using
-                          </span>
+                          <Pencil className="size-4" />
+                          Edit before using
                         </SelectionChip>
                         <SelectionChip onClick={handleRegenerateJd}>
-                          <span className="flex items-center gap-1.5">
-                            <WandSparkles className="size-4" />
-                            Regenerate
-                          </span>
+                          <WandSparkles className="size-4" />
+                          Ask Proofy again
                         </SelectionChip>
                       </>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="mt-6 flex w-full flex-col gap-2">
+                <div className="mt-6 flex w-full flex-col gap-3">
+                  {(draft.targetRole.trim() ||
+                    draft.industryVertical.trim()) && (
+                    <div className="flex flex-wrap gap-2">
+                      {draft.targetRole.trim() ? (
+                        <span className="rounded-md border border-border bg-card px-2.5 py-1 text-caption text-text-secondary">
+                          Role · {draft.targetRole.trim()}
+                        </span>
+                      ) : null}
+                      {draft.industryVertical.trim() ? (
+                        <span className="rounded-md border border-border bg-card px-2.5 py-1 text-caption text-text-secondary">
+                          Industry · {draft.industryVertical.trim()}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-2">
                     <SelectionChip onClick={handleGenerateJd}>
-                      <span className="flex items-center gap-1.5">
-                        <PencilSparklesIcon className="size-4" />
-                        Generate a draft JD for me
-                      </span>
+                      <PencilSparklesIcon className="size-4" />
+                      Ask Proofy to draft a JD
                     </SelectionChip>
                   </div>
+                  <p className="text-caption text-text-secondary">
+                    Or paste / upload a real job description below.
+                  </p>
                 </div>
               )
             ) : null}
@@ -879,7 +898,7 @@ function OnboardingAgentInner({
                   icon={<BookOpen />}
                   title="Storyboard"
                   subtitle="Build your career storyboard"
-                  illustrationSrc="/brand/illustration%201.svg"
+                  illustrationSrc="/brand/illustration-1.svg"
                 />
 
                 <CardButton
@@ -888,7 +907,7 @@ function OnboardingAgentInner({
                   icon={<UserCheck />}
                   title="Mock interview"
                   subtitle={`Evaluate yourself for the ${role || "selected"} role`}
-                  illustrationSrc="/brand/illustration%203.svg"
+                  illustrationSrc="/brand/illustration-3.svg"
                 />
               </div>
             ) : null}
@@ -966,18 +985,28 @@ function OnboardingAgentInner({
   );
 }
 
-/** Skeleton loader shown while the mock JD generator "thinks" — Figma "Onboarding - Loading"
+/** Skeleton loader shown while Proofy "thinks" — Figma "Onboarding - Loading"
  * (node 43:87). Bar widths/heights mirror the design's two line-pairs; the shimmer sweep
  * reuses the design's motion timing (2s, linear, infinite) via `animate-shimmer-sweep`. */
-function JdGeneratingSkeleton() {
+function JdGeneratingSkeleton({ roleTitle }: { roleTitle?: string }) {
   const shimmerBar =
     "rounded-full bg-[linear-gradient(90deg,var(--brand-100),var(--brand-400),var(--brand-700),var(--brand-1000),var(--brand-700),var(--brand-400),var(--brand-100))] bg-[length:200%_100%] animate-shimmer-sweep";
   return (
     <div
       className="mt-6 flex w-full flex-col gap-6"
       role="status"
-      aria-label="Generating a draft job description"
+      aria-label="Proofy is drafting a job description"
     >
+      <div className="flex flex-col gap-1">
+        <p className="text-body-sm font-medium text-heading-teal">
+          Proofy is drafting…
+        </p>
+        <p className="text-caption text-text-secondary">
+          {roleTitle
+            ? `Writing a ${roleTitle} job description from your answers.`
+            : "Writing a job description from your answers."}
+        </p>
+      </div>
       <div className="flex flex-col gap-3">
         <div className={cn("h-6 w-full", shimmerBar)} />
         <div className={cn("h-6 w-1/2", shimmerBar)} />

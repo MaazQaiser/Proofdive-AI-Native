@@ -2,17 +2,19 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "@/components/cn";
 
+/** Report/section cards — solid surface + hairline border for readable contrast
+ * on `--background` (#F5F5F3). Frosted white glass washed out against that tone. */
 const glassCardClassName =
-  "relative overflow-hidden rounded-lg border border-white bg-[linear-gradient(90deg,rgba(255,255,255,0.24)_0%,rgba(255,255,255,0.6)_99.92%)] backdrop-blur-[21px]";
+  "relative overflow-hidden rounded-md border border-border bg-card text-card-foreground";
 
 const glassCardSectionClassName =
-  "relative overflow-x-clip overflow-y-visible rounded-lg border border-white bg-[linear-gradient(90deg,rgba(255,255,255,0.24)_0%,rgba(255,255,255,0.6)_99.92%)] backdrop-blur-[21px]";
+  "relative overflow-x-clip overflow-y-visible rounded-md border border-border bg-card text-card-foreground";
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "rounded-lg border border-[var(--app-hairline)] bg-[var(--app-surface)]",
+        "rounded-md border border-[var(--app-hairline)] bg-[var(--app-surface)]",
         className,
       )}
       {...props}
