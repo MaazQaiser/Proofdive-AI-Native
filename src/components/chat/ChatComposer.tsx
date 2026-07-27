@@ -8,18 +8,12 @@ import {
   type ReactNode,
   type TransitionEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { Maximize2, Minimize2, X, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/components/cn";
 import { useSpeechDictation } from "@/components/chat/useSpeechDictation";
 import { Chatbox } from "@/components/ui/chatbox";
-import {
-  Dialog,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { IconButton } from "@/components/ui/icon-button";
 import { SelectionChip } from "@/components/ui/selection-chip";
 import { BackgroundGlow, type BackgroundGlowIntensity } from "@/components/shared/BackgroundGlow";
@@ -107,6 +101,21 @@ export function ChatComposer({
   useEffect(() => {
     if (!thread) setExpanded(false);
   }, [thread]);
+
+  // Full-screen FAQ agent — lock page scroll and allow Escape to exit.
+  useEffect(() => {
+    if (!expanded) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setExpanded(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [expanded]);
 
   const appendFinalTranscript = useCallback((segment: string) => {
     setText((prev) => {
@@ -410,22 +419,22 @@ export function ChatComposer({
         </div>
       </div>
 
-      <Dialog open={expanded} onOpenChange={setExpanded}>
-        <DialogPortal>
-          <DialogOverlay />
-          <DialogPrimitive.Content
-            aria-describedby={undefined}
-            className="fixed inset-0 z-50 flex h-dvh w-screen items-center justify-center p-4 outline-none sm:p-6"
-          >
-            <DialogTitle className="sr-only">{threadHeaderTitle}</DialogTitle>
-            {expanded ? (
-              <div className="flex h-full max-h-[min(840px,90dvh)] w-full max-w-[800px] flex-col">
-                {chatbox}
+      {expanded && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={threadHeaderTitle}
+              className="fixed inset-0 z-50 flex h-dvh w-screen flex-col bg-background"
+            >
+              <BackgroundGlow intensity={backgroundGlowIntensity} />
+              <div className="relative z-10 mx-auto flex h-full w-full max-w-[800px] flex-col px-6 py-4">
+                <div className="flex min-h-0 flex-1 flex-col">{chatbox}</div>
               </div>
-            ) : null}
-          </DialogPrimitive.Content>
-        </DialogPortal>
-      </Dialog>
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }

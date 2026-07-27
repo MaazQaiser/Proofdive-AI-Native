@@ -2,15 +2,26 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { ArrowRight, CheckCircle2, ClipboardCheck, MicOff, Video, VideoOff } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { cn } from "@/components/cn";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { TypingText } from "@/components/TypingText";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { Switch } from "@/components/ui/switch";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -66,12 +77,67 @@ function sessionTypeLabel(report: InterviewReport): string {
 
 const SELECTIVE_PILLAR_IDS: PillarId[] = ["thinking", "action", "people", "mastery"];
 
-function ShortInterviewClockIcon({ className }: { className?: string }) {
+const CONSENT_TIPS: ReactNode[] = [
+  <>
+    Structure your answers using the <span className="font-semibold text-text-primary">CAR</span>{" "}
+    method (Context, Action, Result).
+  </>,
+  <>Keep responses clear and concise (1–2 minutes max).</>,
+  <>Focus on your individual contribution, not just the team.</>,
+  <>Position yourself properly if your camera is on. Sit centered, well-lit, and not too far.</>,
+  <>Ensure a clean, plain background with minimal distractions.</>,
+];
+
+/** Horizontal session CTA — title | description | circular arrow.
+ * Primary filled vs secondary muted (inverted arrow), for clear CTA hierarchy. */
+function InterviewSessionAction({
+  title,
+  description,
+  variant,
+  onClick,
+}: {
+  title: string;
+  description: string;
+  variant: "primary" | "secondary";
+  onClick: () => void;
+}) {
+  const isPrimary = variant === "primary";
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "group flex w-full cursor-pointer items-center gap-3 rounded-full py-2.5 pl-3 pr-2.5 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 sm:gap-4",
+        isPrimary
+          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+          : "border border-border bg-card text-text-primary hover:bg-muted/60",
+      )}
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-3 pl-3 sm:gap-4 sm:pl-4">
+        <span className="w-[7.5rem] shrink-0 text-caption font-semibold leading-snug sm:w-[9.5rem]">
+          {title}
+        </span>
+        <p
+          className={cn(
+            "min-w-0 flex-1 text-[13px] leading-snug sm:text-caption",
+            isPrimary ? "text-primary-foreground/85" : "text-text-secondary",
+          )}
+        >
+          {description}
+        </p>
+      </div>
+      <span
+        className={cn(
+          "grid size-9 shrink-0 place-items-center rounded-full transition-transform duration-200 group-hover:translate-x-0.5",
+          isPrimary
+            ? "bg-white text-primary shadow-sm"
+            : "bg-primary text-primary-foreground",
+        )}
+        aria-hidden
+      >
+        <ArrowRight className="size-3.5" strokeWidth={2.25} />
+      </span>
+    </button>
   );
 }
 
@@ -242,84 +308,67 @@ export function InterviewScreen() {
   return (
     <AppShell>
       <CoachFloatingNav />
-      <div className="flex min-h-[70vh] w-full flex-col items-stretch justify-start pb-44">
+      <div className="flex min-h-[70vh] w-full flex-col items-stretch justify-center pb-44">
         <div className="flex w-full flex-1 items-center justify-center">
           <div className="mx-auto w-[800px] max-w-full text-left">
           {showPostJourneyMockLanding ? (
             <>
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-overline text-text-secondary">
-                <span>Mock interview</span>
-                <span className="h-3 w-px bg-border" />
-                <span>Ready for you</span>
-              </div>
-
-              <h2 className="mt-6 text-agent-heading text-heading-teal">
-                Hey {name}, glad to see you back
-              </h2>
-              <h4 className="mt-1 mb-[14px] max-w-2xl text-agent-question text-text-primary">
-                You’ve completed training and crafted your story. It’s time to take a full mock
-                interview. Pick how you want to practice below.
-              </h4>
-
-              <div className="mt-8 flex w-full flex-col gap-4">
-                <button
-                  type="button"
-                  onClick={() => openConsent("full_competency")}
-                  className="group w-full cursor-pointer rounded-xl border border-border bg-card p-5 text-left transition hover:bg-muted"
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-caption text-text-secondary">Mock interview</span>
+                <Badge
+                  variant="outline"
+                  className="rounded-full border-scoring-green/20 bg-scoring-green/15 text-caption text-scoring-green"
                 >
-                  <div className="flex w-full flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-body-sm font-semibold text-text-primary">
-                        Take a 30-minute mock interview
-                      </div>
-                      <div className="mt-1 text-caption leading-6 text-text-secondary">
-                        Full session covering all competency pillars, aligned with your storyboard.
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="border-border shrink-0">
-                      30 min
-                    </Badge>
-                  </div>
-                </button>
-
-                <div className="relative w-full">
-                  <button
-                    type="button"
-                    onClick={openSelectivePillarPicker}
-                    className="group w-full cursor-pointer rounded-xl border border-border bg-card p-5 pr-16 text-left transition hover:bg-muted"
-                  >
-                    <div className="flex w-full flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-body-sm font-semibold text-text-primary">
-                          Take a short interview
-                        </div>
-                        <div className="mt-1 text-caption leading-6 text-text-secondary">
-                          Focus on selected competency pillars when you have limited time.
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="border-border shrink-0">
-                        Short
-                      </Badge>
-                    </div>
-                  </button>
-                </div>
+                  <CheckCircle2 className="size-3" aria-hidden />
+                  Ready for you
+                </Badge>
               </div>
 
-              <div className="mt-8 border-t border-border pt-6">
+              <h1 className="mt-3 text-h3 text-heading-teal">
+                <TypingText
+                  key={`interview-welcome-${name}`}
+                  text={`Hey ${name}, glad to see you back`}
+                  mode="word"
+                  cursor={false}
+                  baseWordDelayMs={120}
+                  startDelayMs={220}
+                />
+              </h1>
+              <p className="mt-1 max-w-lg text-caption leading-relaxed text-text-secondary">
+                Training and storyboard are done. Choose a full mock or a shorter
+                session focused on selected competencies.
+              </p>
+
+              <div className="mt-4 flex w-full flex-col gap-2">
+                <InterviewSessionAction
+                  variant="primary"
+                  title="30-minute full mock"
+                  description="All competency pillars, aligned with your storyboard."
+                  onClick={() => openConsent("full_competency")}
+                />
+                <InterviewSessionAction
+                  variant="secondary"
+                  title="Short interview"
+                  description="Focus on selected competency pillars when time is tight."
+                  onClick={openSelectivePillarPicker}
+                />
+              </div>
+
+              <div className="mt-5 border-t border-border pt-3">
                 <button
                   type="button"
                   onClick={() => setRecentStatsOpen((o) => !o)}
                   aria-expanded={recentStatsOpen}
-                  className="flex w-full items-center justify-between gap-3 text-left text-body-sm font-semibold text-text-primary transition hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2"
+                  className="flex w-full cursor-pointer items-center justify-between gap-3 text-left text-caption font-medium text-text-secondary transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2"
                 >
-                  <span className="underline decoration-border underline-offset-[6px]">
+                  <span className="underline decoration-border underline-offset-[5px]">
                     View my recent interview stats
                   </span>
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"
                     className={cn(
-                      "h-5 w-5 shrink-0 text-text-secondary transition-transform duration-200",
+                      "h-4 w-4 shrink-0 text-text-secondary transition-transform duration-200",
                       recentStatsOpen && "rotate-180",
                     )}
                     aria-hidden
@@ -334,35 +383,38 @@ export function InterviewScreen() {
                   </svg>
                 </button>
                 {recentStatsOpen ? (
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     {recentStatsCards.map((c) => (
-                      <Card key={c.key} className="flex flex-col">
-                        <CardContent className="flex flex-1 flex-col">
+                      <Card key={c.key} className="flex flex-col py-4">
+                        <CardContent className="flex flex-1 flex-col gap-0 px-4">
                           <div className="text-overline text-text-secondary">
                             ROLE
                           </div>
-                          <div className="text-body font-semibold mt-1 text-text-primary">
+                          <div className="mt-0.5 text-body-sm font-semibold text-text-primary">
                             {c.roleTitle}
                           </div>
-                          <div className="mt-4 text-overline text-text-secondary">
+                          <div className="mt-3 text-overline text-text-secondary">
                             SESSION SCORE
                           </div>
-                          <div className="text-h5 mt-1 leading-none tabular-nums text-text-primary">
+                          <div className="mt-0.5 text-h5 leading-none tabular-nums text-text-primary">
                             {c.scoreText}
                             <span className="text-body-sm text-text-secondary"> / 5</span>
                           </div>
-                          <div className="mt-1 text-overline text-text-secondary">
+                          <div className="mt-0.5 text-overline text-text-secondary">
                             {c.status}
                           </div>
-                          <div className="mt-4 text-overline text-text-secondary">
+                          <div className="mt-3 text-overline text-text-secondary">
                             SESSION TYPE
                           </div>
-                          <div className="mt-1 text-caption font-semibold text-text-primary">{c.sessionType}</div>
-                          <div className="mt-4 flex-1" />
+                          <div className="mt-0.5 text-caption font-semibold text-text-primary">
+                            {c.sessionType}
+                          </div>
+                          <div className="mt-3 flex-1" />
                           <Button
                             type="button"
                             variant="outline"
-                            className="mt-2 w-full sm:w-auto"
+                            size="sm"
+                            className="mt-1 w-full sm:w-auto"
                             onClick={c.onView}
                           >
                             View report
@@ -376,144 +428,143 @@ export function InterviewScreen() {
             </>
           ) : (
             <>
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-overline text-text-secondary">
-            <span>Duration</span>
-            <span className="h-3 w-px bg-border" />
-            <span>10 min</span>
-          </div>
-
-          <h2 className="mt-6 text-agent-heading text-heading-teal">
-            Hey {name}, welcome to your first Mock Interview
-          </h2>
-
-          <h4 className="mt-1 mb-[14px] max-w-xl text-agent-question text-text-primary">
-            This is a first mock interview. You’ll be judged based on the Proofdive Competency
-            Engine.{" "}
-            <button
-              type="button"
-              className="font-bold text-text-primary underline underline-offset-4"
-              onClick={() => setIntroLearnModalOpen(true)}
-            >
-              Learn more
-            </button>
-            .
-          </h4>
-
-          <div className="mt-6 w-full max-w-none">
-            <Card>
-              <CardContent>
-              <input
-                ref={jobDescriptionInputRef}
-                type="file"
-                className="hidden"
-                accept=".pdf,.doc,.docx,.txt"
-                onChange={(e) => {
-                  const file = e.currentTarget.files?.[0];
-                  setJobDescriptionName(file?.name ?? "");
-                }}
-              />
-
-              {roleProfile?.jobDescription ? (
-                <div className="flex items-start gap-3">
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-text-secondary">
-                    <path
-                      d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <div className="min-w-0 text-caption leading-6 text-text-secondary">
-                    Using the job description from your profile to tailor this interview.
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="text-body-sm font-semibold text-text-primary">
-                        Would you like to add a job description for this interview?
-                      </div>
-                      <div className="mt-1 text-caption leading-6 text-text-secondary">
-                        Uploading it helps tailor the interview.
-                      </div>
-                    </div>
-
-                    <Button variant="outline" onClick={() => jobDescriptionInputRef.current?.click()}>
-                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
-                        <path
-                          d="M12 15V3m0 0 4 4m-4-4-4 4"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      Upload job description
-                    </Button>
-                  </div>
-
-                  {jobDescriptionName ? (
-                    <div className="mt-3 text-caption text-text-secondary">{jobDescriptionName}</div>
-                  ) : null}
-                </>
-              )}
-
-              <div className="mt-5 border-t border-border pt-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="text-caption font-semibold text-text-primary">
-                      Enable camera
-                    </div>
-                    <div className="mt-1 text-caption leading-6 text-text-secondary">
-                      Optional: it captures video for gesture and presence for detailed analytics.
-                    </div>
-                  </div>
-
-                  <Switch
-                    checked={cameraEnabled}
-                    onCheckedChange={setCameraEnabled}
-                    className="mt-1"
-                    aria-label="Enable camera"
-                  />
-                </div>
-              </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="mt-10">
-            <div className="flex flex-wrap gap-3">
-              <Button
-                onClick={() => {
-                  setSessionKind("first_time");
-                  setConsentOpen(true);
-                }}
+              <Badge
+                variant="outline"
+                className="rounded-full border-border bg-card text-caption text-text-secondary"
               >
-                Start mock interview
-              </Button>
-              <Link href="/coach?welcome=1">
-                <Button variant="outline">Skip interview</Button>
-              </Link>
-            </div>
-          </div>
+                Duration · 10 min
+              </Badge>
+
+              <h1 className="mt-3 text-h3 text-heading-teal">
+                <TypingText
+                  key={`interview-first-${name}`}
+                  text={`Hey ${name}, welcome to your first Mock Interview`}
+                  mode="word"
+                  cursor={false}
+                  baseWordDelayMs={120}
+                  startDelayMs={220}
+                />
+              </h1>
+
+              <p className="mt-1 max-w-lg text-caption leading-relaxed text-text-secondary">
+                This is a first mock interview. You’ll be judged based on the Proofdive Competency
+                Engine.{" "}
+                <button
+                  type="button"
+                  className="font-semibold text-text-primary underline underline-offset-2"
+                  onClick={() => setIntroLearnModalOpen(true)}
+                >
+                  Learn more
+                </button>
+                .
+              </p>
+
+              <Card className="mt-4 gap-0 py-4">
+                <CardContent className="space-y-3 px-4">
+                  <input
+                    ref={jobDescriptionInputRef}
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.txt"
+                    onChange={(e) => {
+                      const file = e.currentTarget.files?.[0];
+                      setJobDescriptionName(file?.name ?? "");
+                    }}
+                  />
+
+                  {roleProfile?.jobDescription ? (
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle2
+                        className="mt-0.5 size-4 shrink-0 text-scoring-green"
+                        aria-hidden
+                      />
+                      <p className="min-w-0 text-caption leading-snug text-text-secondary">
+                        Using the job description from your profile to tailor this interview.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="text-caption font-semibold text-text-primary">
+                          Add a job description?
+                        </div>
+                        <div className="mt-0.5 text-caption leading-snug text-text-secondary">
+                          Optional — helps tailor the interview.
+                        </div>
+                        {jobDescriptionName ? (
+                          <div className="mt-1.5 text-overline text-text-secondary">
+                            {jobDescriptionName}
+                          </div>
+                        ) : null}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0"
+                        onClick={() => jobDescriptionInputRef.current?.click()}
+                      >
+                        Upload JD
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="border-t border-border pt-3">
+                    <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-muted/40 p-3 transition-colors hover:bg-muted/70 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40">
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-primary">
+                            <Video className="size-3.5 text-text-secondary" aria-hidden />
+                            Enable camera
+                          </span>
+                          <Badge
+                            variant="secondary"
+                            className="rounded-full px-2 py-0 text-[10px] font-semibold uppercase tracking-wide"
+                          >
+                            Optional
+                          </Badge>
+                        </span>
+                        <span className="mt-1 block text-caption leading-snug text-text-secondary">
+                          Captures video for gesture and presence analytics.
+                        </span>
+                      </span>
+                      <Switch
+                        checked={cameraEnabled}
+                        onCheckedChange={setCameraEnabled}
+                        className="mt-0.5"
+                        aria-label="Enable camera"
+                      />
+                    </label>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="mt-5 flex flex-wrap gap-2.5">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setSessionKind("first_time");
+                    setConsentOpen(true);
+                  }}
+                >
+                  Start mock interview
+                </Button>
+                <Link href="/coach?welcome=1">
+                  <Button variant="outline" size="sm">
+                    Skip interview
+                  </Button>
+                </Link>
+              </div>
             </>
           )}
         </div>
       </div>
       </div>
 
-      {pillarPickOpen ? (
+      {pillarPickOpen
+        ? createPortal(
         <div
-          className="fixed inset-0 z-[105] flex items-center justify-center bg-black/40 p-4 sm:p-6"
+          className="fixed inset-0 z-[105] overflow-y-auto bg-black/40"
           role="dialog"
           aria-modal="true"
           aria-labelledby="pillar-pick-title"
@@ -523,8 +574,9 @@ export function InterviewScreen() {
             setPillarPickError(null);
           }}
         >
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
           <div
-            className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 sm:p-8"
+            className="w-full max-w-lg rounded-lg border border-border bg-card p-6 sm:p-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-overline text-text-secondary">SHORT SESSION</div>
@@ -587,178 +639,185 @@ export function InterviewScreen() {
               </Button>
             </div>
           </div>
-        </div>
-      ) : null}
+          </div>
+        </div>,
+            document.body,
+          )
+        : null}
 
-      {consentOpen ? (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-6"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Interview Consent & Instructions"
+      <Dialog
+        open={consentOpen}
+        onOpenChange={(open) => {
+          if (open) return;
+          setConsentOpen(false);
+          setSessionKind(null);
+          setPendingSelectivePillars(null);
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          className="flex max-h-[min(92dvh,40rem)] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-md border-border p-0 sm:max-w-md"
         >
-          <div className="w-full max-w-2xl rounded-3xl border border-border bg-card">
-            <div className="p-6 sm:p-8">
-              <div className="text-overline text-text-secondary">
-                BEFORE WE BEGIN
-              </div>
-              <div className="text-h5 mt-3 text-text-primary">
-                Interview Consent & Instructions
-              </div>
+          <DialogHeader className="gap-2 bg-gradient-to-br from-primary to-extended-dark-cyan-green px-5 py-4 text-left">
+            <div
+              className="flex size-8 items-center justify-center rounded-md bg-white/15 text-primary-foreground ring-1 ring-white/25"
+              aria-hidden
+            >
+              <ClipboardCheck className="size-4" strokeWidth={1.75} />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-body-sm font-semibold text-primary-foreground">
+                Interview consent & instructions
+              </DialogTitle>
+              <DialogDescription className="text-caption leading-snug text-primary-foreground/85">
+                Quick prep, then choose how this session captures audio and video.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
 
-              <div className="mt-6 space-y-1.5 text-caption leading-6 text-text-secondary">
-                {sessionKind === "selective_pillar" && pendingSelectivePillars && pendingSelectivePillars.length > 0 ? (
-                  <div className="rounded-2xl border border-border bg-muted p-4 text-caption font-semibold text-text-primary">
-                    Selected focus:{" "}
-                    {pendingSelectivePillars.map((id) => PILLAR_LABEL[id]).join(" · ")}
-                  </div>
-                ) : null}
-                <div className="mb-0 rounded-2xl border border-border bg-muted p-4">
-                  Structure your answers using the <span className="font-bold text-text-primary">CAR</span>{" "}
-                  method (Context, Action, Result).
-                </div>
-                <div className="rounded-2xl border border-border bg-muted p-4">
-                  Keep responses clear and concise (1–2 minutes max).
-                </div>
-                <div className="rounded-2xl border border-border bg-muted p-4">
-                  Focus on your individual contribution, not just the team.
-                </div>
-                <div className="rounded-2xl border border-border bg-muted p-4">
-                  Position yourself properly if your camera is on. Sit centered, well-lit, and not too far.
-                </div>
-                <div className="rounded-2xl border border-border bg-muted px-4 py-1">
-                  Ensure a clean, plain background with minimal distractions.
-                </div>
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+            {sessionKind === "selective_pillar" &&
+            pendingSelectivePillars &&
+            pendingSelectivePillars.length > 0 ? (
+              <div className="rounded-md border border-border bg-muted/70 px-3 py-2 text-caption font-semibold text-text-primary">
+                Selected focus:{" "}
+                {pendingSelectivePillars.map((id) => PILLAR_LABEL[id]).join(" · ")}
               </div>
+            ) : null}
 
-              <div className="mt-7">
-                <div className="text-overline text-text-secondary">
-                  SESSION OPTIONS
-                </div>
+            <ul className="list-disc space-y-1.5 pl-4 text-caption leading-snug text-text-secondary marker:text-text-secondary">
+              {CONSENT_TIPS.map((tip, index) => (
+                <li key={index} className="pl-0.5">
+                  {tip}
+                </li>
+              ))}
+            </ul>
 
-                <div className="mt-4 space-y-3">
-                  <button
-                    type="button"
-                    onClick={() => setCancelRecording((v) => !v)}
-                    className="flex w-full items-start justify-between gap-4 rounded-xl border border-border bg-card px-4 py-4 text-left hover:bg-muted"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-caption font-semibold text-text-primary">
+            <div>
+              <p className="text-overline text-text-secondary">Session options</p>
+              <div className="mt-2 space-y-2">
+                <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-card p-3 transition-colors hover:bg-muted/50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40">
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-primary">
+                        <MicOff className="size-3.5 text-text-secondary" aria-hidden />
                         Cancel recording
-                      </div>
-                      <div className="mt-1 text-caption leading-6 text-text-secondary">
-                        Session runs without audio / video capture
-                      </div>
-                    </div>
-                    <div
-                      className={[
-                        "mt-1 inline-flex h-6 w-11 items-center rounded-full border transition",
-                        cancelRecording ? "border-primary bg-primary" : "border-border bg-muted",
-                      ].join(" ")}
-                      aria-hidden="true"
-                    >
-                      <div
-                        className={[
-                          "h-5 w-5 rounded-full bg-white transition",
-                          cancelRecording ? "translate-x-5" : "translate-x-0.5",
-                        ].join(" ")}
-                      />
-                    </div>
-                  </button>
+                      </span>
+                      <Badge
+                        variant="secondary"
+                        className="rounded-full px-2 py-0 text-[10px] font-semibold uppercase tracking-wide"
+                      >
+                        Optional
+                      </Badge>
+                    </span>
+                    <span className="mt-1 block text-caption leading-snug text-text-secondary">
+                      Session runs without audio / video capture
+                    </span>
+                  </span>
+                  <Switch
+                    checked={cancelRecording}
+                    onCheckedChange={setCancelRecording}
+                    className="mt-0.5"
+                    aria-label="Cancel recording"
+                  />
+                </label>
 
-                  <button
-                    type="button"
-                    onClick={() => setTurnOffCamera((v) => !v)}
-                    className="flex w-full items-start justify-between gap-4 rounded-xl border border-border bg-card px-4 py-4 text-left hover:bg-muted"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-caption font-semibold text-text-primary">
+                <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-card p-3 transition-colors hover:bg-muted/50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40">
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-primary">
+                        <VideoOff className="size-3.5 text-text-secondary" aria-hidden />
                         Turn off camera
-                      </div>
-                      <div className="mt-1 text-caption leading-6 text-text-secondary">
-                        Disables gesture and body movement analysis
-                      </div>
-                    </div>
-                    <div
-                      className={[
-                        "mt-1 inline-flex h-6 w-11 items-center rounded-full border transition",
-                        turnOffCamera ? "border-primary bg-primary" : "border-border bg-muted",
-                      ].join(" ")}
-                      aria-hidden="true"
-                    >
-                      <div
-                        className={[
-                          "h-5 w-5 rounded-full bg-white transition",
-                          turnOffCamera ? "translate-x-5" : "translate-x-0.5",
-                        ].join(" ")}
-                      />
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setConsentOpen(false);
-                    setSessionKind(null);
-                    setPendingSelectivePillars(null);
-                  }}
-                  className="sm:w-auto"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                    try {
-                      const kind: InterviewSessionKind = sessionKind ?? "first_time";
-                      const payload: Record<string, unknown> = {
-                        cancelRecording,
-                        turnOffCamera,
-                        cameraEnabled,
-                        sessionKind: kind,
-                      };
-                      if (
-                        kind === "selective_pillar" &&
-                        pendingSelectivePillars &&
-                        pendingSelectivePillars.length > 0
-                      ) {
-                        payload.selectivePillars = pendingSelectivePillars;
-                      }
-                      window.localStorage.setItem(
-                        StorageKeys.interviewSessionPrefs,
-                        JSON.stringify(payload),
-                      );
-                    } catch {
-                      // ignore
-                    }
-                    setConsentOpen(false);
-                    setSessionKind(null);
-                    setPendingSelectivePillars(null);
-                    router.push("/interview/live");
-                  }}
-                  className="sm:w-auto"
-                >
-                  I understand
-                </Button>
+                      </span>
+                      <Badge
+                        variant="secondary"
+                        className="rounded-full px-2 py-0 text-[10px] font-semibold uppercase tracking-wide"
+                      >
+                        Optional
+                      </Badge>
+                    </span>
+                    <span className="mt-1 block text-caption leading-snug text-text-secondary">
+                      Disables gesture and body movement analysis
+                    </span>
+                  </span>
+                  <Switch
+                    checked={turnOffCamera}
+                    onCheckedChange={setTurnOffCamera}
+                    className="mt-0.5"
+                    aria-label="Turn off camera"
+                  />
+                </label>
               </div>
             </div>
           </div>
-        </div>
-      ) : null}
 
-      {introLearnModalOpen ? (
+          <DialogFooter className="gap-2 border-t border-border bg-muted/30 px-5 py-3 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setConsentOpen(false);
+                setSessionKind(null);
+                setPendingSelectivePillars(null);
+              }}
+              className="sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                try {
+                  const kind: InterviewSessionKind = sessionKind ?? "first_time";
+                  const payload: Record<string, unknown> = {
+                    cancelRecording,
+                    turnOffCamera,
+                    cameraEnabled,
+                    sessionKind: kind,
+                  };
+                  if (
+                    kind === "selective_pillar" &&
+                    pendingSelectivePillars &&
+                    pendingSelectivePillars.length > 0
+                  ) {
+                    payload.selectivePillars = pendingSelectivePillars;
+                  }
+                  window.localStorage.setItem(
+                    StorageKeys.interviewSessionPrefs,
+                    JSON.stringify(payload),
+                  );
+                } catch {
+                  // ignore
+                }
+                setConsentOpen(false);
+                setSessionKind(null);
+                setPendingSelectivePillars(null);
+                router.push("/interview/live");
+              }}
+              className="sm:w-auto"
+            >
+              I understand
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {introLearnModalOpen
+        ? createPortal(
         <div
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 p-4 sm:p-8"
+          className="fixed inset-0 z-[110] overflow-y-auto bg-black/40"
           onClick={closeIntroLearnModal}
           role="presentation"
         >
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-8">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="interview-intro-video-title"
-            className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-border bg-card"
+            className="relative w-full max-w-2xl overflow-hidden rounded-lg border border-border bg-card"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
@@ -786,8 +845,11 @@ export function InterviewScreen() {
               />
             </div>
           </div>
-        </div>
-      ) : null}
+          </div>
+        </div>,
+            document.body,
+          )
+        : null}
 
       <CoachBottomChatBar />
     </AppShell>

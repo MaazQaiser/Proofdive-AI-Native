@@ -19,7 +19,9 @@ import { cn } from "@/lib/utils";
  * replaces the default state's `background` shorthand instead of layering
  * a plain `bg-*`/`border-*` utility underneath it. */
 const selectionChipVariants = cva(
-  "inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-4 text-[16px] font-medium leading-[1.3] backdrop-blur-[9px] transition-colors outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50",
+  // Icon-side 8px / text-side 16px when a leading or trailing SVG is present
+  // (Figma action-chip padding). Text-only chips keep symmetric px-4.
+  "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-[16px] font-medium leading-[1.3] backdrop-blur-[9px] transition-colors outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 has-[>svg:first-child]:pl-2 has-[>svg:first-child]:pr-4 has-[>svg:last-child]:pl-4 has-[>svg:last-child]:pr-2",
   {
     variants: {
       selected: {

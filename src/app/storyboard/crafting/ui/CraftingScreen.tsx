@@ -2,7 +2,23 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Lock,
+  Pencil,
+  Plus,
+  Save,
+  Unlock,
+} from "lucide-react";
 
 import {
   buildMockCraftingDraft,
@@ -10,10 +26,14 @@ import {
 } from "@/app/storyboard/crafting/mockCraftingDraft";
 
 import { AppShell } from "@/components/AppShell";
-import { Button } from "@/components/Button";
-import { Card, CardBody, NestedCard } from "@/components/Card";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardNested,
+} from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
 import { SuccessDriverMark } from "@/components/ui/success-driver-card";
 import { buildCarSnapshot } from "@/lib/proofdiveLogic";
@@ -22,7 +42,6 @@ import {
   COMPETENCY_SPECS,
   type CarBlock,
   type PillarId,
-  PILLAR_LABEL,
   type StoryboardDraftDocument,
   type StoryboardDraftStore,
   createStoryboardDraft,
@@ -40,7 +59,7 @@ import { useLocalStorageState } from "@/lib/useLocalStorageState";
 const PILLAR_ORDER = SUCCESS_DRIVER_ORDER;
 
 const TA =
-  "min-h-24 w-full rounded-2xl border border-[var(--app-hairline)] bg-white px-4 py-3 text-caption leading-6 text-[var(--app-fg)] outline-none ring-0 placeholder:text-[var(--app-muted)] disabled:cursor-not-allowed disabled:opacity-60 focus:border-[var(--app-hairline-strong)]";
+  "min-h-24 w-full rounded-md border border-border bg-card px-4 py-3 text-caption leading-6 text-text-primary outline-none ring-0 placeholder:text-placeholder disabled:cursor-not-allowed disabled:opacity-60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
 
 export function CraftingScreen() {
   const router = useRouter();
@@ -153,35 +172,33 @@ export function CraftingScreen() {
         <CoachFloatingNav />
         <div className="pb-44">
           <div className="mx-auto w-full max-w-3xl space-y-6">
-            <Card>
-              <CardBody>
-                <div className="text-overline text-[var(--app-muted)]">STATUS</div>
-                <div className="mt-3 text-body-sm font-semibold">No role set</div>
-                <p className="mt-2 text-caption leading-6 text-[var(--app-muted)]">
+            <Card className="gap-0 py-0">
+              <CardContent className="space-y-3 p-6">
+                <div className="text-overline text-text-secondary">Status</div>
+                <div className="text-body-sm font-semibold text-text-primary">No role set</div>
+                <p className="text-caption leading-6 text-text-secondary">
                   Go to onboarding to set your target role.
                 </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Link href="/storyboard">
-                    <Button variant="secondary">Back to Storyboard</Button>
-                  </Link>
-                  <Link href="/coach?journey=1">
-                    <Button variant="secondary">Coach</Button>
-                  </Link>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild variant="outline">
+                    <Link href="/storyboard">Back to Storyboard</Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link href="/coach?journey=1">Coach</Link>
+                  </Button>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
-            <Card>
-              <CardBody>
-                <h1 className="text-h4">Storyboard draft</h1>
-                <p className="mt-3 text-caption leading-6 text-[var(--app-muted)]">
+            <Card className="gap-0 py-0">
+              <CardContent className="space-y-4 p-6">
+                <h1 className="text-h4 text-text-primary">Storyboard draft</h1>
+                <p className="text-caption leading-6 text-text-secondary">
                   Set a target role in onboarding to edit your 13 sections here.
                 </p>
-                <div className="mt-6">
-                  <Link href="/onboarding">
-                    <Button>Go to onboarding</Button>
-                  </Link>
-                </div>
-              </CardBody>
+                <Button asChild>
+                  <Link href="/onboarding">Go to onboarding</Link>
+                </Button>
+              </CardContent>
             </Card>
           </div>
         </div>
@@ -197,68 +214,58 @@ export function CraftingScreen() {
         <div className="mx-auto w-full max-w-3xl space-y-6">
           <Link
             href="/coach?journey=1"
-            className="inline-flex items-center gap-1.5 text-caption font-semibold text-[var(--app-fg)]/65 transition hover:text-[var(--app-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-fg)]/15 focus-visible:ring-offset-2 focus-visible:ring-offset-background print:hidden"
+            className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-secondary transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background print:hidden"
           >
-            <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0" aria-hidden>
-              <path
-                d="M15 18l-6-6 6-6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ArrowLeft className="size-4 shrink-0" />
             Back to home
           </Link>
           <div className="hidden print:block">
             <Logo size="xxs" />
-            <p className="mt-1 text-caption text-[var(--app-muted)]">
+            <p className="mt-1 text-caption text-text-secondary">
               Storyboard for {role}, generated {new Date().toLocaleDateString()}
             </p>
           </div>
           <div>
-            <h1 className="text-h4">Storyboard draft</h1>
-            <p className="mt-2 text-caption leading-6 text-[var(--app-muted)] print:hidden">
-              One <strong>Core Introduction</strong> + twelve fixed competencies (CAR: Context, Action,
-              Result). Lock a section when it&apos;s interview-ready. Edits save in this browser.
+            <h1 className="text-h4 text-text-primary">Storyboard draft</h1>
+            <p className="mt-2 text-caption leading-6 text-text-secondary print:hidden">
+              One <strong>Core Introduction</strong> + twelve fixed competencies (CAR: Context,
+              Action, Result). Lock a section when it&apos;s interview-ready. Edits save in this
+              browser.
             </p>
           </div>
 
-          <Card>
-            <CardBody>
-              <div className="text-overline text-[var(--app-muted)]">
-                STORY STRENGTH
-              </div>
-              <p className="mt-1 text-caption leading-6 text-[var(--app-muted)]">
-                0–5 placeholder from CAR completeness. Overall = mean of the 12 competencies (intro
-                excluded).
+          <Card className="gap-0 py-0">
+            <CardContent className="space-y-4 p-6">
+              <div className="text-overline text-text-secondary">Story strength</div>
+              <p className="text-caption leading-6 text-text-secondary">
+                0–5 placeholder from CAR completeness. Overall = mean of the 12 competencies
+                (intro excluded).
               </p>
-              <div className="mt-4 flex flex-wrap items-baseline justify-between gap-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
-                  <div className="text-caption font-semibold">Overall (12 competencies)</div>
-                  <div className="text-overline text-[var(--app-muted)]">Mean strength</div>
+                  <div className="text-caption font-semibold text-text-primary">
+                    Overall (12 competencies)
+                  </div>
+                  <div className="text-overline text-text-secondary">Mean strength</div>
                 </div>
-                <div
-                  className="text-h4"
-                  title="Mean of 12 section strength scores"
-                >
+                <div className="text-h4 text-text-primary" title="Mean of 12 section strength scores">
                   {overall.toFixed(1)}
-                  <span className="text-body text-[var(--app-muted)]"> / 5</span>
+                  <span className="text-body text-text-secondary"> / 5</span>
                 </div>
               </div>
 
-              <details className="mt-6 border-t border-[var(--app-hairline)] pt-4" open>
-                <summary className="cursor-pointer list-none text-caption font-semibold text-[var(--app-fg)] [&::-webkit-details-marker]:hidden">
+              <details className="border-t border-border pt-4" open>
+                <summary className="cursor-pointer list-none text-caption font-semibold text-text-primary [&::-webkit-details-marker]:hidden">
                   <span className="inline-flex items-center gap-2">
-                    Pillar scores
-                    <span className="text-overline text-[var(--app-muted)]">
-                      (4 pillars · 3 sections each)
+                    Success Drivers
+                    <span className="text-overline text-text-secondary">
+                      (4 drivers · 3 sections each)
                     </span>
                   </span>
                 </summary>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   {byPillar.map(({ id, v }) => (
-                    <NestedCard
+                    <CardNested
                       key={id}
                       className="flex items-center justify-between gap-2 px-3 py-2.5"
                     >
@@ -268,19 +275,17 @@ export function CraftingScreen() {
                           className="text-caption"
                           iconClassName="size-4"
                         />
-                        <div className="mt-0.5 text-overline text-[var(--app-muted)]">
-                          Mean / 5
-                        </div>
+                        <div className="mt-0.5 text-overline text-text-secondary">Mean / 5</div>
                       </div>
-                      <div className="shrink-0 text-body font-semibold">
+                      <div className="shrink-0 text-body font-semibold text-text-primary">
                         {v.toFixed(1)}
-                        <span className="text-caption text-[var(--app-muted)]"> / 5</span>
+                        <span className="text-caption text-text-secondary"> / 5</span>
                       </div>
-                    </NestedCard>
+                    </CardNested>
                   ))}
                 </div>
               </details>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <section>
@@ -288,7 +293,6 @@ export function CraftingScreen() {
               key="intro"
               pillarLabel="Introduction"
               displayTitle="Core Introduction"
-              idLabel="intro"
               score={strengthScore(document.intro.car)}
               locked={document.intro.locked}
               onToggleLock={() =>
@@ -308,64 +312,64 @@ export function CraftingScreen() {
           </section>
 
           {PILLAR_ORDER.map((pillar) => {
-            const rows = COMPETENCY_SPECS.map((spec, globalIndex) => ({ spec, globalIndex })).filter(
-              (x) => x.spec.pillar === pillar,
-            );
+            const rows = COMPETENCY_SPECS.map((spec, globalIndex) => ({
+              spec,
+              globalIndex,
+            })).filter((x) => x.spec.pillar === pillar);
             return (
-              <section key={pillar}>
-                <div className="space-y-4">
-                  {rows.map(({ spec, globalIndex: index }) => {
-                    const s = document.competencies[index] ?? emptySection();
-                    return (
-                      <DraftSectionCard
-                        key={spec.id}
-                        pillarLabel={PILLAR_LABEL[spec.pillar]}
-                        driver={spec.pillar}
-                        displayTitle={spec.title}
-                        idLabel={spec.id}
-                        score={strengthScore(s.car)}
-                        locked={s.locked}
-                        onToggleLock={() =>
+              <section key={pillar} className="space-y-4">
+                {rows.map(({ spec, globalIndex: index }) => {
+                  const s = document.competencies[index] ?? emptySection();
+                  return (
+                    <DraftSectionCard
+                      key={spec.id}
+                      pillarLabel={spec.pillar}
+                      driver={spec.pillar}
+                      displayTitle={spec.title}
+                      score={strengthScore(s.car)}
+                      locked={s.locked}
+                      onToggleLock={() =>
+                        updateDocument((d) => {
+                          const comp = d.competencies.map((c, i) =>
+                            i === index ? { ...c, locked: !c.locked } : c,
+                          );
+                          return { ...d, competencies: comp };
+                        })
+                      }
+                    >
+                      <CarTextAreas
+                        value={s.car}
+                        onChange={(car) =>
                           updateDocument((d) => {
                             const comp = d.competencies.map((c, i) =>
-                              i === index ? { ...c, locked: !c.locked } : c,
+                              i === index ? { ...c, car } : c,
                             );
                             return { ...d, competencies: comp };
                           })
                         }
-                      >
-                        <CarTextAreas
-                          value={s.car}
-                          onChange={(car) =>
-                            updateDocument((d) => {
-                              const comp = d.competencies.map((c, i) =>
-                                i === index ? { ...c, car } : c,
-                              );
-                              return { ...d, competencies: comp };
-                            })
-                          }
-                          disabled={s.locked}
-                        />
-                      </DraftSectionCard>
-                    );
-                  })}
-                </div>
+                        disabled={s.locked}
+                      />
+                    </DraftSectionCard>
+                  );
+                })}
               </section>
             );
           })}
 
-          <div className="space-y-3 border-t border-[var(--app-hairline)] pt-6 print:hidden">
+          <div className="space-y-3 border-t border-border pt-6 print:hidden">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-caption leading-6 text-[var(--app-muted)]">
+              <p className="text-caption leading-6 text-text-secondary">
                 Continue building in Storyboard or save this draft to the browser.
               </p>
               <div className="flex flex-wrap gap-2 sm:shrink-0">
-                <Link href="/storyboard">
-                  <Button variant="secondary" type="button">
+                <Button asChild variant="outline">
+                  <Link href="/storyboard">
+                    <Plus />
                     Add another experience
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
                 <Button type="button" onClick={handleSaveStoryboard}>
+                  <Save />
                   Save storyboard
                 </Button>
               </div>
@@ -382,7 +386,6 @@ function DraftSectionCard({
   pillarLabel,
   driver,
   displayTitle,
-  idLabel,
   score,
   locked,
   onToggleLock,
@@ -391,7 +394,6 @@ function DraftSectionCard({
   pillarLabel: string;
   driver?: PillarId;
   displayTitle: string;
-  idLabel: string;
   score: number;
   locked: boolean;
   onToggleLock: () => void;
@@ -401,46 +403,47 @@ function DraftSectionCard({
   const [draftInput, setDraftInput] = useState("");
 
   return (
-    <Card className="overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--app-hairline)] bg-[var(--app-surface-nested)] px-4 py-3">
-        <div>
+    <Card className="gap-0 overflow-hidden py-0">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface px-4 py-3">
+        <div className="min-w-0">
           {driver ? (
             <SuccessDriverMark
               driver={driver}
-              className="text-overline uppercase"
+              className="text-overline"
               iconClassName="size-3.5"
             />
           ) : (
-            <div className="text-overline uppercase text-[var(--app-muted)]">
-              {pillarLabel}
-            </div>
+            <div className="text-overline text-text-secondary">{pillarLabel}</div>
           )}
-          <h3 className="text-h6">{displayTitle}</h3>
-          <div className="mt-0.5 text-overline text-[var(--app-muted)]">id: {idLabel}</div>
+          <h3 className="text-h6 text-text-primary">{displayTitle}</h3>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span
-            className="inline-flex items-center rounded-full bg-[var(--app-fg)] px-2.5 py-0.5 text-overline text-white"
+            className="inline-flex items-center rounded-full bg-foreground px-2.5 py-0.5 text-overline text-background"
             title="Strength score (0–5), based on how complete the CAR is (placeholder)."
           >
             Strength {score} / 5
           </span>
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
+            size="sm"
             onClick={() => setIsEditing((v) => !v)}
-            className="text-overline print:hidden"
+            className="print:hidden"
             title="Show an inline edit field"
           >
-            {isEditing ? "Close edit" : "Edit"}
+            <Pencil />
+            {isEditing ? "Close" : "Edit"}
           </Button>
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
+            size="sm"
             onClick={onToggleLock}
-            className="text-overline print:hidden"
+            className="print:hidden"
             title={locked ? "Unlock to edit" : "Lock to prevent edits"}
           >
+            {locked ? <Unlock /> : <Lock />}
             {locked ? "Unlock" : "Lock"}
           </Button>
         </div>
@@ -450,32 +453,24 @@ function DraftSectionCard({
         {isEditing ? (
           <div className="mt-4">
             <label className="block">
-              <span className="text-overline">
+              <span className="text-overline text-text-secondary">
                 Share the quick change you want updated in this area of the story
               </span>
-              <div className="relative mt-1.5 overflow-hidden rounded-xl">
+              <div className="relative mt-1.5 overflow-hidden rounded-md">
                 <input
                   type="text"
                   value={draftInput}
                   onChange={(e) => setDraftInput(e.target.value)}
                   placeholder="Type here..."
-                  className="w-full rounded-xl border-2 border-[var(--app-hairline-strong)] bg-white px-3 py-2 pr-12 text-caption text-[var(--app-fg)] outline-none placeholder:text-[var(--app-muted)] focus:border-[var(--app-fg)]/40"
+                  className="w-full rounded-md border border-border bg-card px-3 py-2 pr-12 text-caption text-text-primary outline-none placeholder:text-placeholder focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 />
                 <button
                   type="button"
                   aria-label="Send quick change"
                   title="Send quick change"
-                  className="absolute right-1.5 top-1/2 z-10 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl bg-primary text-primary-foreground transition hover:bg-primary/90"
+                  className="absolute right-1.5 top-1/2 z-10 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md bg-primary text-primary-foreground transition hover:bg-primary/90"
                 >
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
-                    <path
-                      d="M5 12h12M11 6l6 6-6 6"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <ArrowRight className="size-4" />
                 </button>
               </div>
             </label>
@@ -501,8 +496,8 @@ function CarTextAreas({
   return (
     <div className="space-y-4">
       <label className="block">
-        <span className="text-overline">Context</span>
-        <p className="mb-1 text-caption text-[var(--app-muted)]">
+        <span className="text-overline text-text-secondary">Context</span>
+        <p className="mb-1 text-caption text-text-secondary">
           {introVariant
             ? "Primary interview opener: role, scope, and how the stories connect (2–3 sentences; may carry most of the intro)."
             : "Situation, constraints, stakes (2–3 sentences)."}
@@ -516,8 +511,8 @@ function CarTextAreas({
         />
       </label>
       <label className="block">
-        <span className="text-overline">Action</span>
-        <p className="mb-1 text-caption text-[var(--app-muted)]">
+        <span className="text-overline text-text-secondary">Action</span>
+        <p className="mb-1 text-caption text-text-secondary">
           {introVariant
             ? "Optional for intro. Add if you want a distinct “how you operate” line."
             : "What you did, decisions, and how you moved the work forward."}
@@ -531,8 +526,8 @@ function CarTextAreas({
         />
       </label>
       <label className="block">
-        <span className="text-overline">Result</span>
-        <p className="mb-1 text-caption text-[var(--app-muted)]">
+        <span className="text-overline text-text-secondary">Result</span>
+        <p className="mb-1 text-caption text-text-secondary">
           {introVariant
             ? "Optional. Outcomes, themes, or what the listener should take away."
             : "Outcomes, learning, business impact (measurable or qualitative)."}

@@ -9,15 +9,15 @@ type CardButtonProps = React.ComponentProps<"button"> & {
   icon: React.ReactNode;
   title: React.ReactNode;
   subtitle: React.ReactNode;
-  /** Abstract brand mark anchored bottom-right (e.g. `/brand/illustration%201.svg`). */
+  /** Abstract brand mark in the right column (e.g. `/brand/illustration-1.svg`). */
   illustrationSrc?: string;
   /** Renders as a `next/link` instead of a `<button>` when set. */
   href?: LinkProps["href"];
 };
 
-/** Module CTA card — layout inspired by dashboard action tiles: title + body
- * top-left, icon top-right, arrow bottom-left, brand illustration bottom-right.
- * `primary` is the filled teal featured tile; `gray` is white with accent chrome. */
+/** Module CTA — content stack on the left, brand illustration as a right column.
+ * Whole card is the hit target; a text “Continue →” cue replaces a floating arrow chip.
+ * `primary` is the filled teal tile; `gray` is white with accent chrome. */
 function CardButton({
   className,
   variant = "primary",
@@ -31,72 +31,74 @@ function CardButton({
   const isPrimary = variant === "primary";
 
   const content = (
-    <>
-      <div className="relative z-10 flex items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-1.5 pr-2">
-          <p
+    <div className="relative z-10 flex min-h-0 flex-1 items-stretch gap-3">
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-4 py-0.5">
+        <div className="flex flex-col gap-2.5">
+          <div
             className={cn(
-              "text-[20px] leading-[1.25] font-semibold tracking-tight",
-              isPrimary ? "text-primary-foreground" : "text-text-primary",
+              "grid size-9 shrink-0 place-items-center rounded-full [&_svg]:size-[18px]",
+              isPrimary
+                ? "bg-white/15 text-primary-foreground"
+                : "bg-brand-1000 text-primary",
             )}
+            aria-hidden
           >
-            {title}
-          </p>
-          <p
-            className={cn(
-              "max-w-[16ch] text-[13px] leading-snug",
-              isPrimary ? "text-brand-900" : "text-text-secondary",
-            )}
-          >
-            {subtitle}
-          </p>
+            {icon}
+          </div>
+          <div className="flex min-w-0 flex-col gap-1">
+            <p
+              className={cn(
+                "text-[20px] leading-[1.25] font-semibold tracking-tight",
+                isPrimary ? "text-primary-foreground" : "text-text-primary",
+              )}
+            >
+              {title}
+            </p>
+            <p
+              className={cn(
+                "text-[13px] leading-snug",
+                isPrimary ? "text-brand-900" : "text-text-secondary",
+              )}
+            >
+              {subtitle}
+            </p>
+          </div>
         </div>
-        <div
-          className={cn(
-            "grid size-9 shrink-0 place-items-center rounded-full [&_svg]:size-[18px]",
-            isPrimary
-              ? "bg-white/15 text-primary-foreground"
-              : "bg-brand-1000 text-primary",
-          )}
-          aria-hidden
-        >
-          {icon}
-        </div>
-      </div>
 
-      <div className="relative z-10 mt-auto flex items-end justify-between gap-3 pt-8">
         <span
           className={cn(
-            "grid size-9 place-items-center rounded-full transition-transform duration-200 ease-out group-hover:translate-x-0.5",
-            isPrimary
-              ? "bg-white/15 text-primary-foreground"
-              : "bg-brand-1000 text-primary",
+            "inline-flex items-center gap-1.5 text-[13px] font-medium transition-transform duration-200 ease-out group-hover:translate-x-0.5",
+            isPrimary ? "text-primary-foreground" : "text-primary",
           )}
-          aria-hidden
         >
-          <ArrowRight className="size-4" />
+          Continue
+          <ArrowRight className="size-4" aria-hidden />
         </span>
-        {illustrationSrc ? (
-          // Decorative — title already names the destination.
-          // eslint-disable-next-line @next/next/no-img-element
+      </div>
+
+      {illustrationSrc ? (
+        <div
+          aria-hidden
+          className="relative flex w-[42%] shrink-0 items-center justify-center"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={illustrationSrc}
             alt=""
-            aria-hidden
             className={cn(
-              "pointer-events-none h-[72px] w-auto max-w-[42%] select-none object-contain object-right-bottom",
-              !isPrimary && "opacity-90",
+              "h-[120px] w-auto max-w-[88%] select-none object-contain",
+              isPrimary
+                ? "opacity-95 [filter:brightness(0)_invert(1)]"
+                : "opacity-90",
             )}
           />
-        ) : (
-          <span className="h-[72px] w-16 shrink-0" aria-hidden />
-        )}
-      </div>
-    </>
+        </div>
+      ) : null}
+    </div>
   );
 
   const sharedClassName = cn(
-    "group relative flex min-h-[200px] w-full flex-col overflow-hidden rounded-lg border p-5 text-left",
+    "group relative flex min-h-[168px] w-full flex-col overflow-hidden rounded-2xl border p-4 text-left sm:p-5",
     "transition-[transform,box-shadow,background-color] duration-200 ease-out",
     "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
     "active:scale-[0.985] motion-reduce:transition-none motion-reduce:active:scale-100",

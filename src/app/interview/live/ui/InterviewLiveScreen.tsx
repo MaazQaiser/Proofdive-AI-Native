@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/Button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/components/cn";
 import { Logo } from "@/components/ui/logo";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -515,7 +515,7 @@ export function InterviewLiveScreen() {
             <div className="truncate text-h5">
               {role} • Live interview
             </div>
-            <div className="mt-1 text-body-sm text-[var(--app-muted)]">Proofdive interview room</div>
+            <div className="mt-1 text-body-sm text-text-secondary">Proofdive interview room</div>
             {session.prefs.sessionKind === "selective_pillar" &&
             session.prefs.selectivePillars &&
             session.prefs.selectivePillars.length > 0 ? (
@@ -527,7 +527,7 @@ export function InterviewLiveScreen() {
               </div>
             ) : null}
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 text-overline text-[var(--app-muted)]">
+          <div className="inline-flex items-center gap-2 rounded-full bg-card/60 px-4 py-2 text-overline text-text-secondary">
             <span className="h-2 w-2 rounded-full bg-scoring-green" />
             <span>{formatTimer(secondsLeft)}</span>
           </div>
@@ -535,13 +535,13 @@ export function InterviewLiveScreen() {
 
         <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-[var(--app-hairline)] bg-white">
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-card">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-caption font-semibold text-[var(--app-fg)]">
+                  <div className="text-caption font-semibold text-text-primary">
                     AI Interviewer
                   </div>
-                  <div className="mt-2 text-overline text-[var(--app-muted)]">Video feed placeholder</div>
+                  <div className="mt-2 text-overline text-text-secondary">Video feed placeholder</div>
                 </div>
               </div>
               <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-overline text-white">
@@ -552,13 +552,13 @@ export function InterviewLiveScreen() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-[var(--app-hairline)] bg-white">
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-card">
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-caption font-semibold text-[var(--app-fg)]">
+                  <div className="text-caption font-semibold text-text-primary">
                     {name}
                   </div>
-                  <div className="mt-2 text-overline text-[var(--app-muted)]">Camera preview placeholder</div>
+                  <div className="mt-2 text-overline text-text-secondary">Camera preview placeholder</div>
                 </div>
               </div>
               <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-overline text-white">
@@ -567,11 +567,11 @@ export function InterviewLiveScreen() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-[var(--app-hairline)] bg-white p-4">
-              <div className="text-overline text-[var(--app-muted)]">
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="text-overline text-text-secondary">
                 NOTES
               </div>
-              <div className="mt-2 text-caption text-[var(--app-muted)]">
+              <div className="mt-2 text-caption text-text-secondary">
                 Answer naturally. Use STAR/CARE structure where possible. Stay concise.
               </div>
             </div>
@@ -579,14 +579,14 @@ export function InterviewLiveScreen() {
         </div>
 
         <div className="fixed bottom-4 left-0 right-0 z-50 px-6">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-full border border-[var(--app-hairline-strong)] bg-white/80 px-3 py-3 backdrop-blur">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-full border border-border bg-card/80 px-3 py-3 backdrop-blur">
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setMicOn((v) => !v)}
                 className={cn(
                   "inline-flex h-11 w-11 items-center justify-center rounded-full transition",
-                  micOn ? "bg-white/60 hover:bg-white/80" : "bg-destructive/90 hover:bg-destructive",
+                  micOn ? "bg-card/60 hover:bg-card/80" : "bg-destructive/90 hover:bg-destructive",
                 )}
                 disabled={isEnding}
                 aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
@@ -615,7 +615,7 @@ export function InterviewLiveScreen() {
                 onClick={() => setCamOn((v) => !v)}
                 className={cn(
                   "inline-flex h-11 w-11 items-center justify-center rounded-full transition",
-                  camOn ? "bg-white/60 hover:bg-white/80" : "bg-destructive/90 hover:bg-destructive",
+                  camOn ? "bg-card/60 hover:bg-card/80" : "bg-destructive/90 hover:bg-destructive",
                 )}
                 disabled={isEnding}
                 aria-label={camOn ? "Turn camera off" : "Turn camera on"}
@@ -640,17 +640,18 @@ export function InterviewLiveScreen() {
               </button>
             </div>
 
-            <div className="hidden text-overline text-[var(--app-muted)] sm:block">
+            <div className="hidden text-overline text-text-secondary sm:block">
               {formatTimer(secondsLeft)} remaining
             </div>
 
             <Button
+              variant="destructive"
               onClick={() => {
                 setReportStepIdx(0);
                 setIsEnding(true);
               }}
               disabled={isEnding}
-              className="rounded-md bg-destructive px-6 text-white hover:bg-destructive/90 active:bg-destructive/80"
+              className="rounded-md px-6"
             >
               {isEnding ? "Ending…" : "End"}
             </Button>
@@ -663,7 +664,7 @@ export function InterviewLiveScreen() {
           <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-6 py-10">
             <div className="flex items-center gap-2">
               <Logo size="xxs" />
-              <span className="text-overline text-[var(--app-muted)]">
+              <span className="text-overline text-text-secondary">
                 REPORT
               </span>
             </div>
@@ -672,14 +673,14 @@ export function InterviewLiveScreen() {
               <div className="text-h4">
                 Generating your report…
               </div>
-              <div className="mt-3 max-w-2xl text-caption leading-6 text-[var(--app-muted)]">
+              <div className="mt-3 max-w-2xl text-caption leading-6 text-text-secondary">
                 Mapping each answer to competencies and extracting the strongest proof points.
               </div>
             </div>
 
             <div className="mt-10 grid gap-4 lg:grid-cols-2">
-              <div className="rounded-lg border border-[var(--app-hairline)] bg-white p-5">
-                <div className="text-overline text-[var(--app-muted)]">
+              <div className="rounded-lg border border-border bg-card p-5">
+                <div className="text-overline text-text-secondary">
                   PROGRESS
                 </div>
                 <div className="mt-4 space-y-3">
@@ -692,7 +693,7 @@ export function InterviewLiveScreen() {
                           <div
                             className={cn(
                               "truncate text-caption font-semibold",
-                              done || active ? "text-[var(--app-fg)]" : "text-[var(--app-muted)]",
+                              done || active ? "text-text-primary" : "text-text-secondary",
                             )}
                           >
                             {label}
@@ -705,7 +706,7 @@ export function InterviewLiveScreen() {
                               ? "bg-scoring-green"
                               : active
                                 ? "bg-primary animate-pulse"
-                                : "bg-[var(--app-hairline-strong)]",
+                                : "bg-border",
                           )}
                         />
                       </div>
@@ -714,8 +715,8 @@ export function InterviewLiveScreen() {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-[var(--app-hairline)] bg-white p-5">
-                <div className="text-overline text-[var(--app-muted)]">
+              <div className="rounded-lg border border-border bg-card p-5">
+                <div className="text-overline text-text-secondary">
                   COMPETENCY MAPPING
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -727,8 +728,8 @@ export function InterviewLiveScreen() {
                         className={cn(
                           "rounded-2xl border px-3 py-3 text-overline transition",
                           filled
-                            ? "border-scoring-green/30 bg-scoring-green/10 text-[var(--app-fg)]"
-                            : "border-[var(--app-hairline)] bg-[var(--app-surface-nested)] text-[var(--app-muted)]",
+                            ? "border-scoring-green/30 bg-scoring-green/10 text-text-primary"
+                            : "border-border bg-surface text-text-secondary",
                         )}
                       >
                         {c}
@@ -739,7 +740,7 @@ export function InterviewLiveScreen() {
               </div>
             </div>
 
-            <div className="mt-auto pt-10 text-overline text-[var(--app-muted)]">
+            <div className="mt-auto pt-10 text-overline text-text-secondary">
               You’ll be redirected to home automatically.
             </div>
           </div>

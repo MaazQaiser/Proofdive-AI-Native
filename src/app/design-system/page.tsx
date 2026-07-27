@@ -785,7 +785,7 @@ export default function DesignSystemPage() {
                     icon={<BookOpen />}
                     title="Storyboard"
                     subtitle="Build your career storyboard"
-                    illustrationSrc="/brand/illustration%201.svg"
+                    illustrationSrc="/brand/illustration-1.svg"
                   />
                   <CardButton
                     className="max-w-[280px]"
@@ -793,7 +793,7 @@ export default function DesignSystemPage() {
                     icon={<UserCheck />}
                     title="Mock interview"
                     subtitle="Evaluate yourself for UX role"
-                    illustrationSrc="/brand/illustration%203.svg"
+                    illustrationSrc="/brand/illustration-3.svg"
                   />
                 </CardContent>
               </Card>

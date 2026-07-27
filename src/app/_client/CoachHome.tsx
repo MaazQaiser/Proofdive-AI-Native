@@ -588,7 +588,7 @@ export function CoachHome() {
                     icon={<BookOpen />}
                     title="Storyboard"
                     subtitle="Turn your experience into proof"
-                    illustrationSrc="/brand/illustration%201.svg"
+                    illustrationSrc="/brand/illustration-1.svg"
                   />
                   <CardButton
                     href="/coach?roadmap=1"
@@ -596,7 +596,7 @@ export function CoachHome() {
                     icon={<Map />}
                     title="Roadmap"
                     subtitle="Get a personalized prep plan"
-                    illustrationSrc="/brand/illustration%202.svg"
+                    illustrationSrc="/brand/illustration-2.svg"
                   />
                 </div>
                 {readinessNoteBanner}
