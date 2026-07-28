@@ -814,7 +814,7 @@ export function InterviewScreen() {
           )
         : null}
 
-      <CoachBottomChatBar compactWhenIdle />
+      <CoachBottomChatBar />
     </AppShell>
   );
 }

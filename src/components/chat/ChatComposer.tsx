@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
@@ -13,27 +14,23 @@ import { Maximize2, MessageCircleQuestion, X, type LucideIcon } from "lucide-rea
 
 import { cn } from "@/components/cn";
 import { useSpeechDictation } from "@/components/chat/useSpeechDictation";
-import { Chatbox } from "@/components/ui/chatbox";
+import { Chatbox, type ChatboxVariant } from "@/components/ui/chatbox";
 import { IconButton } from "@/components/ui/icon-button";
 import { SelectionChip } from "@/components/ui/selection-chip";
 import { BackgroundGlow, type BackgroundGlowIntensity } from "@/components/shared/BackgroundGlow";
 
 export type ChatComposerQuickChip = { label: string; value: string; id?: string };
 
-/** A persistent, always-visible footer icon that toggles into a labeled pill once active —
- * e.g. the AI Assistant entry point. Unlike `quickPromptChips`, this is never gated by
- * focus, and (see render below) is deliberately never disabled by the composer's own
- * `disabled` prop, since toggling it off is exactly how a caller un-disables the composer. */
+/** Ask / FAQ entry — rendered inside Chatbox per Figma Compact (icon) / Expanded (label). */
 export type ChatComposerModeToggle = {
   isActive: boolean;
   icon: LucideIcon;
-  /** Shown next to the icon while active, and on the compact-idle open control. */
   activeLabel: string;
   onToggle: () => void;
 };
 
 export function ChatComposer({
-  placeholder = "Type a message…",
+  placeholder = "Reply (paste here or upload)",
   onSend,
   onUpload,
   uploadAccept,
@@ -50,11 +47,6 @@ export function ChatComposer({
   threadHeaderTitle = "AI Coach",
   /** Onboarding keeps the full wash; other candidate pages default to a softer glow. */
   backgroundGlowIntensity = "soft",
-  /**
-   * When true and the assistant mode toggle is inactive, render a compact pill instead of
-   * the full chatbox. Tapping the pill opens the assistant via `modeToggle.onToggle`.
-   */
-  compactWhenIdle = false,
 }: {
   placeholder?: string;
   onSend: (text: string) => void;
@@ -74,51 +66,49 @@ export function ChatComposer({
   quickPromptChips?: ChatComposerQuickChip[];
   /** If provided and returns `true`, the chip’s value is not prefilled (parent handles the action). */
   onQuickPromptChipSelect?: (chip: ChatComposerQuickChip) => boolean;
-  /** Persistent footer icon/pill toggle (e.g. AI Assistant) — see `ChatComposerModeToggle`. */
+  /** Ask / FAQ toggle — see `ChatComposerModeToggle`. */
   modeToggle?: ChatComposerModeToggle;
   thread?: ReactNode;
   /** Dismiss the in-card thread (e.g. clear messages); shows a close control when set. */
   onThreadClose?: () => void;
   threadHeaderTitle?: string;
   backgroundGlowIntensity?: BackgroundGlowIntensity;
-  compactWhenIdle?: boolean;
 }) {
   const [text, setText] = useState(prefill);
   const [quickPromptsOpen, setQuickPromptsOpen] = useState(false);
   const [chipsInDom, setChipsInDom] = useState(false);
   const [chipsAnimVisible, setChipsAnimVisible] = useState(false);
   const [pendingUploads, setPendingUploads] = useState<File[]>([]);
-  const [expanded, setExpanded] = useState(false);
+  /** Full-screen FAQ portal (Maximize), not the compact/expanded Chatbox variant. */
+  const [fullscreen, setFullscreen] = useState(false);
+  const [textOverflows, setTextOverflows] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const skipOpenOnNextFocusRef = useRef(false);
+  const measureRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // A chip selection that hands off to a mode where `disabled` becomes true (e.g. FAQ
-  // Assistant) never gets to consume this flag via its own scheduled refocus (you can't
-  // focus a disabled textarea) — left stuck `true`, it would otherwise swallow the very
-  // next real focus once the composer re-enables. Clear it as soon as we go disabled.
   useEffect(() => {
     if (disabled) skipOpenOnNextFocusRef.current = false;
   }, [disabled]);
 
   useEffect(() => {
-    if (!thread) setExpanded(false);
+    if (!thread) setFullscreen(false);
   }, [thread]);
 
   // Full-screen FAQ agent — lock page scroll and allow Escape to exit.
   useEffect(() => {
-    if (!expanded) return;
+    if (!fullscreen) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setExpanded(false);
+      if (e.key === "Escape") setFullscreen(false);
     }
     window.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [expanded]);
+  }, [fullscreen]);
 
   const appendFinalTranscript = useCallback((segment: string) => {
     setText((prev) => {
@@ -137,6 +127,31 @@ export function ChatComposer({
     interim && text && !text.endsWith(" ") && !interim.startsWith(" ") ? " " : "";
   const displayText = `${text}${interim ? `${interimSpacer}${interim}` : ""}`;
 
+  const forceExpanded =
+    pendingUploads.length > 0 || Boolean(modeToggle?.isActive) || Boolean(thread);
+  const variant: ChatboxVariant =
+    forceExpanded || textOverflows ? "expanded" : "compact";
+
+  // Measure against a compact single-line mirror so we can collapse again when text fits.
+  useLayoutEffect(() => {
+    if (forceExpanded) {
+      setTextOverflows(false);
+      return;
+    }
+    const el = measureRef.current;
+    if (!el) return;
+    setTextOverflows(el.scrollWidth > el.clientWidth + 1);
+  }, [displayText, forceExpanded]);
+
+  // Keep the measure mirror as wide as the live compact input when available.
+  useLayoutEffect(() => {
+    const live = inputRef.current;
+    const mirror = measureRef.current;
+    if (!live || !mirror || variant !== "compact") return;
+    mirror.style.width = `${live.clientWidth}px`;
+    setTextOverflows(mirror.scrollWidth > mirror.clientWidth + 1);
+  }, [displayText, variant, forceExpanded]);
+
   function handleTextChange(next: string) {
     if (!interim) {
       setText(next);
@@ -152,19 +167,24 @@ export function ChatComposer({
   }
 
   function send() {
-    if (disabled) return;
+    if (disabled || modeToggle?.isActive) return;
     const payload = displayText.trim();
-    if (!payload) return;
-    onSend(payload);
+    if (!payload && pendingUploads.length === 0) return;
+    if (payload) {
+      onSend(payload);
+    } else {
+      onSend(`📎 ${pendingUploads.map((f) => f.name).join(", ")}`);
+    }
     setText("");
     setPendingUploads([]);
     setQuickPromptsOpen(false);
+    setTextOverflows(false);
     stop();
     inputRef.current?.focus();
   }
 
   function handleThreadClose() {
-    setExpanded(false);
+    setFullscreen(false);
     onThreadClose?.();
   }
 
@@ -234,20 +254,6 @@ export function ChatComposer({
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 
-  // While the assistant is open, exit via the thread header close — do not show an
-  // "AI Assistant" footer pill with an X. When idle (non-compact hosts), keep the
-  // ghost icon so users can still open the assistant from the full chatbox.
-  const modeToggleControl =
-    modeToggle && !modeToggle.isActive ? (
-      <IconButton
-        variant="ghost"
-        onClick={modeToggle.onToggle}
-        aria-label={modeToggle.activeLabel}
-      >
-        <modeToggle.icon />
-      </IconButton>
-    ) : null;
-
   const threadLeading = thread ? (
     <div
       className={cn(
@@ -272,7 +278,7 @@ export function ChatComposer({
           <IconButton
             variant="ghost"
             size="md"
-            onClick={() => setExpanded(true)}
+            onClick={() => setFullscreen(true)}
             className="text-text-secondary hover:text-text-primary active:bg-muted"
             aria-label="Expand to full screen"
           >
@@ -315,11 +321,12 @@ export function ChatComposer({
   function renderChatbox(opts?: {
     leading?: ReactNode;
     className?: string;
-    hideFooterTrailing?: boolean;
+    forceVariant?: ChatboxVariant;
   }) {
     return (
       <Chatbox
         className={cn(!!thread && "min-h-0 flex-1", opts?.className)}
+        variant={opts?.forceVariant ?? variant}
         value={displayText}
         onValueChange={handleTextChange}
         onSend={send}
@@ -341,15 +348,23 @@ export function ChatComposer({
           else void start();
         }}
         isListening={isListening}
+        askAction={
+          modeToggle
+            ? {
+                isActive: modeToggle.isActive,
+                label: modeToggle.activeLabel === "AI Assistant" ? "Ask" : modeToggle.activeLabel,
+                onToggle: modeToggle.onToggle,
+              }
+            : undefined
+        }
         leading={opts?.leading}
-        footerTrailing={opts?.hideFooterTrailing ? undefined : modeToggleControl}
         status={voiceStatus}
         textareaRef={inputRef}
         textareaProps={{
           onFocus: handleTextareaFocus,
           onBlur: handleTextareaBlur,
           onKeyDown: (e) => {
-            if (disabled) return;
+            if (disabled || modeToggle?.isActive) return;
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               send();
@@ -362,45 +377,33 @@ export function ChatComposer({
 
   const chatbox = renderChatbox({ leading: threadLeading ?? undefined });
 
-  const isCompactIdle = Boolean(compactWhenIdle && modeToggle && !modeToggle.isActive);
-
   return (
     <>
-      {/* Soft brand wash behind every candidate composer — sits under the
-          interactive chrome via z-index so the frosted Chatbox stays crisp. */}
+      {/* Hidden measure mirror for compact single-line overflow detection. */}
+      <textarea
+        ref={measureRef}
+        aria-hidden
+        tabIndex={-1}
+        readOnly
+        value={displayText || " "}
+        rows={1}
+        className="pointer-events-none invisible absolute top-0 left-0 h-7 w-[min(100%,520px)] resize-none overflow-hidden whitespace-nowrap text-body-sm leading-[1.25]"
+      />
+
       <BackgroundGlow intensity={backgroundGlowIntensity} />
-      {isCompactIdle && modeToggle ? (
-        <div className="relative z-10 w-full">
-          <button
-            type="button"
-            onClick={modeToggle.onToggle}
-            aria-label={`Open ${modeToggle.activeLabel}`}
-            className={cn(
-              "flex h-14 w-full max-w-[800px] items-center gap-3 rounded-full p-1.5 pr-4 text-left",
-              "border border-transparent shadow-[0_8px_30px_rgba(0,0,0,0.06)] backdrop-blur-[42px]",
-              "[background:linear-gradient(rgba(255,255,255,0.72),rgba(255,255,255,0.72))_padding-box,linear-gradient(180deg,#f2f2f2,var(--extended-light-cyan)_41%,#fff)_border-box]",
-              "transition hover:shadow-[0_10px_32px_rgba(0,0,0,0.08)]",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
-            )}
-          >
-            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-              <modeToggle.icon className="size-5" aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1 truncate text-[16px] font-medium leading-[1.3] text-text-secondary">
-              {modeToggle.activeLabel}
-            </span>
-            <Maximize2 className="size-4 shrink-0 text-text-secondary" aria-hidden />
-          </button>
-        </div>
-      ) : (
       <div
         className={cn(
           "relative z-10 flex items-end gap-2",
-          !!thread && !expanded && "max-h-[600px] w-full min-h-0",
+          !!thread && !fullscreen && "max-h-[600px] w-full min-h-0",
         )}
       >
-        <div className={cn("flex min-w-0 flex-1 flex-col gap-2", !!thread && !expanded && "min-h-0 max-h-full")}>
-          {chipsInDom && quickPromptChips?.length && !expanded ? (
+        <div
+          className={cn(
+            "flex min-w-0 flex-1 flex-col gap-2",
+            !!thread && !fullscreen && "min-h-0 max-h-full",
+          )}
+        >
+          {chipsInDom && quickPromptChips?.length && !fullscreen ? (
             <div
               onTransitionEnd={handleChipsRowTransitionEnd}
               className={cn(
@@ -436,7 +439,9 @@ export function ChatComposer({
               onChange={(e) => {
                 const files = Array.from(e.currentTarget.files ?? []);
                 if (files.length) {
-                  setPendingUploads((prev) => (uploadMultiple ? [...prev, ...files] : files));
+                  setPendingUploads((prev) =>
+                    uploadMultiple ? [...prev, ...files] : files,
+                  );
                   onUpload?.(files);
                 }
                 e.currentTarget.value = "";
@@ -444,12 +449,11 @@ export function ChatComposer({
             />
           ) : null}
 
-          {!expanded ? chatbox : null}
+          {!fullscreen ? chatbox : null}
         </div>
       </div>
-      )}
 
-      {expanded && typeof document !== "undefined"
+      {fullscreen && typeof document !== "undefined"
         ? createPortal(
             <div
               role="dialog"
@@ -457,8 +461,6 @@ export function ChatComposer({
               aria-label={threadHeaderTitle ?? "Full screen assistant"}
               className="fixed inset-0 z-50 flex h-dvh w-screen flex-col bg-background"
             >
-              {/* Brand wash behind the bottom composer. No extra orbs — the PNG is
-                  fully opaque, so any backdrop behind it reads as a hard mid-screen seam. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/brand/onboarding-gradient.png"
@@ -470,7 +472,7 @@ export function ChatComposer({
               <IconButton
                 variant="ghost"
                 size="lg"
-                onClick={() => setExpanded(false)}
+                onClick={() => setFullscreen(false)}
                 className="absolute top-4 right-4 z-20 text-text-secondary hover:text-text-primary"
                 aria-label="Close full screen"
               >
@@ -507,7 +509,7 @@ export function ChatComposer({
                 <div className="relative z-[2] mx-auto w-full max-w-2xl shrink-0 pt-3">
                   {renderChatbox({
                     className: "max-w-none shadow-[0_8px_30px_rgba(0,0,0,0.06)]",
-                    hideFooterTrailing: true,
+                    forceVariant: "expanded",
                   })}
                 </div>
               </div>

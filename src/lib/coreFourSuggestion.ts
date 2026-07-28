@@ -49,25 +49,6 @@ export function suggestCoreFour(input: { targetRole: string; jobDescription: str
   return PILLAR_ORDER.map((pillar) => bestForPillar(pillar, haystack));
 }
 
-/** Short rationale shown under the Core Four heading (deterministic, no LLM). */
-export function buildCoreFourReason(input: {
-  targetRole: string;
-  selected: CompetencyId[];
-}): string {
-  const titles = input.selected
-    .map((id) => COMPETENCY_SPECS.find((spec) => spec.id === id)?.title)
-    .filter((title): title is string => Boolean(title));
-  const role = input.targetRole.trim() || "This role";
-  if (titles.length === 0) {
-    return `${role} needs a balanced Core Four across Thinking, Action, People, and Mastery.`;
-  }
-  const focus =
-    titles.length === 1
-      ? titles[0]
-      : `${titles.slice(0, -1).join(", ")}, and ${titles[titles.length - 1]}`;
-  return `This role needs someone who can demonstrate ${focus} in day-to-day work.`;
-}
-
 /** Returns a user-facing error string if the selection is invalid, otherwise null.
  * Rule: at least 4 total selected, and every pillar must have at least one selection
  * (extra picks beyond 4, or more than one per pillar, are fine). */
