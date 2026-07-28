@@ -40,7 +40,6 @@ import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type { RoleProfile } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 import {
-  buildCoreFourReason,
   coreFourValidationError,
   suggestCoreFour,
 } from "@/lib/coreFourSuggestion";
@@ -702,13 +701,9 @@ function OnboardingAgentInner({
       const withSuggestion = { ...next, coreFourCompetencies: suggested };
       setDraft(withSuggestion);
       setCoreFourError(null);
-      const reason = buildCoreFourReason({
-        targetRole: next.targetRole,
-        selected: suggested,
-      });
       push(
         "assistant",
-        `I've suggested a Core Four competencies based on your job description.\n\n${reason} Adjust if you'd like, then proceed.`,
+        "I've suggested a Core Four competencies based on your job description.\n\nAdjust if you'd like, then proceed.",
       );
       setStep("coreFourSelection");
       return;
@@ -932,8 +927,8 @@ function OnboardingAgentInner({
             <ChatComposer
               placeholder={
                 faq.isFaqMode
-                  ? "Select a question above"
-                  : "Reply (type here or use voice)"
+                  ? "I am here to help you!"
+                  : "Reply (paste here or upload)"
               }
               onSend={handleAnswer}
               disabled={
@@ -951,23 +946,15 @@ function OnboardingAgentInner({
                 )
               }
               backgroundGlowIntensity="full"
-              compactWhenIdle={
-                step === "coreFourSelection" || step === "done"
-              }
-              modeToggle={
-                step === "done" || step === "coreFourSelection"
-                  ? {
-                      isActive: faq.isFaqMode,
-                      icon: MessageCircleQuestion,
-                      activeLabel: "AI Assistant",
-                      onToggle: () =>
-                        faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode(),
-                    }
-                  : undefined
-              }
+              modeToggle={{
+                isActive: faq.isFaqMode,
+                icon: MessageCircleQuestion,
+                activeLabel: "AI Assistant",
+                onToggle: () =>
+                  faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode(),
+              }}
               thread={
-                faq.isFaqMode &&
-                (step === "done" || step === "coreFourSelection") ? (
+                faq.isFaqMode ? (
                   <FaqAssistantThread
                     screenData={faq.screenData}
                     onSelectRootItem={faq.selectRootItem}
@@ -977,12 +964,7 @@ function OnboardingAgentInner({
                   />
                 ) : undefined
               }
-              onThreadClose={
-                faq.isFaqMode &&
-                (step === "done" || step === "coreFourSelection")
-                  ? faq.exitFaqMode
-                  : undefined
-              }
+              onThreadClose={faq.isFaqMode ? faq.exitFaqMode : undefined}
               threadHeaderTitle="AI Assistant"
             />
           </div>

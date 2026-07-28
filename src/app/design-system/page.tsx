@@ -441,7 +441,9 @@ export default function DesignSystemPage() {
   const [dark, setDark] = useState(false);
   const [selectedChip, setSelectedChip] = useState(CHIP_OPTIONS[0]);
   const [chatValue, setChatValue] = useState("");
+  const [chatCompactValue, setChatCompactValue] = useState("");
   const [attachedFileName, setAttachedFileName] = useState<string | null>(null);
+  const [askActive, setAskActive] = useState(false);
   const [dateRange, setDateRange] = useState<"7d" | "30d" | "90d">("30d");
   const [passwordVisible, setPasswordVisible] = useState(false);
 
@@ -1026,21 +1028,44 @@ export default function DesignSystemPage() {
                 <CardHeader>
                   <CardTitle>Chatbox</CardTitle>
                   <CardDescription>
-                    Shared frosted-glass composer shell (gradient border, translucent
-                    fill, attachment chip above the field). Empty / filled / upload
-                    states are driven by real input — type or attach a file to see send
-                    enable
+                    Figma Chatbox (38:305) — Compact pill (60px) and Expanded
+                    rounded-20 shell. Upload · Ask · Mic · Send. Attachments and
+                    Ask force Expanded.
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Chatbox
-                    value={chatValue}
-                    onValueChange={setChatValue}
-                    onSend={() => setChatValue("")}
-                    attachedFileName={attachedFileName}
-                    onUploadClick={() => setAttachedFileName("Job Description.pdf")}
-                    onRemoveFile={() => setAttachedFileName(null)}
-                  />
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <div className="text-overline text-text-secondary">Compact</div>
+                    <Chatbox
+                      variant="compact"
+                      value={chatCompactValue}
+                      onValueChange={setChatCompactValue}
+                      onSend={() => setChatCompactValue("")}
+                      onUploadClick={() => undefined}
+                      askAction={{
+                        isActive: false,
+                        label: "Ask",
+                        onToggle: () => undefined,
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-overline text-text-secondary">Expanded</div>
+                    <Chatbox
+                      variant="expanded"
+                      value={chatValue}
+                      onValueChange={setChatValue}
+                      onSend={() => setChatValue("")}
+                      attachedFileName={attachedFileName}
+                      onUploadClick={() => setAttachedFileName("Job Description.pdf")}
+                      onRemoveFile={() => setAttachedFileName(null)}
+                      askAction={{
+                        isActive: askActive,
+                        label: "Ask",
+                        onToggle: () => setAskActive((v) => !v),
+                      }}
+                    />
+                  </div>
                 </CardContent>
               </Card>
 

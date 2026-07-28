@@ -269,7 +269,7 @@ export function TrainingScreen() {
             </CardContent>
           </Card>
         </div>
-        <CoachBottomChatBar compactWhenIdle />
+        <CoachBottomChatBar />
       </AppShell>
     );
   }
@@ -582,7 +582,7 @@ export function TrainingScreen() {
           </div>
         </div>
       </div>
-      <CoachBottomChatBar compactWhenIdle />
+      <CoachBottomChatBar />
     </AppShell>
   );
 }

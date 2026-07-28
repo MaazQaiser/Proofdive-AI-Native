@@ -20,11 +20,6 @@ type Props = {
    * xl+ from the viewport edge so the composer centers in the main Q&A column.
    */
   rightPanelMaxWidth?: number;
-  /**
-   * Rest as a compact pill; tap opens AI Assistant. Used on Coach / Interview /
-   * Training. Storyboard keeps the full resting composer.
-   */
-  compactWhenIdle?: boolean;
 };
 
 export function CoachBottomChatBar({
@@ -35,19 +30,17 @@ export function CoachBottomChatBar({
   prefillKey,
   showUploadButton,
   rightPanelMaxWidth,
-  compactWhenIdle = false,
 }: Props = {}) {
   const faq = useFaqAssistant();
 
   const composer = (
     <ChatComposer
       key={prefillKey ?? "coach-bottom-chat-composer"}
-      placeholder={faq.isFaqMode ? "Select a question above" : (placeholder ?? "Ask AI Coach")}
+      placeholder={faq.isFaqMode ? "I am here to help you!" : (placeholder ?? "Ask AI Coach")}
       onSend={onSend ?? (() => {})}
       disabled={disabled || faq.isFaqMode}
       prefill={prefill}
       showUploadButton={faq.isFaqMode ? false : showUploadButton}
-      compactWhenIdle={compactWhenIdle}
       modeToggle={{
         isActive: faq.isFaqMode,
         icon: MessageCircleQuestion,

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { SuccessDriverMark } from "@/components/ui/success-driver-card";
+import { buildMockCraftingDraft } from "@/app/storyboard/crafting/mockCraftingDraft";
 import {
   DEMO_CONSULTANT_QUESTION_COUNT,
   DEMO_FOCUS_COUNT,
@@ -32,8 +33,6 @@ import {
   experienceForCompetency,
   isDemoExperienceComplete,
   nextOpenDemoCompetency,
-  overallFocusCompetencyStrength,
-  pillarFocusStrength,
   pillarForCompetency,
   seedDraftFromDemoExperiences,
 } from "@/lib/demoFocusCompetencies";
@@ -49,6 +48,8 @@ import { scoringTextClass } from "@/lib/scoringPalette";
 import {
   createStoryboardDraft,
   normalizeStoryboardDocument,
+  overallCompetencyStrength,
+  pillarStrength,
   type CompetencyId,
   type StoryboardDraftDocument,
   type StoryboardDraftStore,
@@ -243,8 +244,8 @@ export function StoryboardAgent() {
   }, [draftStore, role]);
 
   const storyOverallScore = useMemo(
-    () => overallFocusCompetencyStrength(storyDraftDocument, focusQueue),
-    [storyDraftDocument, focusQueue],
+    () => overallCompetencyStrength(storyDraftDocument),
+    [storyDraftDocument],
   );
 
   const storyScoreForCard = useMemo(() => {
@@ -374,10 +375,10 @@ What would you like to do next?`;
     setStatusLine("It will take a moment. I'm crafting your story…");
     setCraftUi("crafting");
 
-    const base = normalizeStoryboardDocument(
-      draftStore.byRole[role] ?? createStoryboardDraft(role),
-    );
-    const seeded = seedDraftFromDemoExperiences(base, roleExperiences, focusQueue);
+    // Generate a full 12-competency storyboard, then overlay the real CAR
+    // evidence captured for the focus competencies during intake.
+    const fullDraft = buildMockCraftingDraft(role);
+    const seeded = seedDraftFromDemoExperiences(fullDraft, roleExperiences, focusQueue);
     setDraftStore((prev) => ({
       ...prev,
       byRole: { ...prev.byRole, [role]: seeded },
@@ -534,9 +535,9 @@ What would you like to do next?`;
     () =>
       SUCCESS_DRIVER_ORDER.map((id) => ({
         id,
-        score: pillarFocusStrength(storyDraftDocument, id, focusQueue),
+        score: pillarStrength(storyDraftDocument, id),
       })),
-    [storyDraftDocument, focusQueue],
+    [storyDraftDocument],
   );
 
   const reportHref = useMemo(() => {
@@ -699,7 +700,7 @@ What would you like to do next?`;
             <div>
               <div className="text-caption font-semibold text-text-primary">Overall story score</div>
               <div className="text-overline text-text-secondary">
-                Mean of {DEMO_FOCUS_COUNT} competencies (0–5)
+                Mean of 12 competencies (0–5)
               </div>
             </div>
             <div
