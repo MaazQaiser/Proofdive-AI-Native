@@ -205,10 +205,6 @@ export function StoryboardAgent() {
   );
 
   const focusQueue = useMemo(() => demoCompetencyQueue(roleProfile), [roleProfile]);
-  const focusSpecs = useMemo(
-    () => focusQueue.map((id) => competencySpec(id)),
-    [focusQueue],
-  );
 
   const roleExperiences = useMemo(
     () =>
@@ -302,10 +298,7 @@ export function StoryboardAgent() {
 
   const storyPrompt = useMemo(() => {
     if (phase.kind === "greet") {
-      const labels = focusSpecs.map((s) => s.title).join(" and ");
       return `Hey ${firstName}, let's build interview-ready proof from real experience.
-
-In this demo we'll capture one experience for each of ${DEMO_FOCUS_COUNT} competencies — ${labels} — then craft your storyboard and jump to your report.
 
 Reply to start with the first competency.`;
     }
@@ -325,10 +318,8 @@ What should this experience be called? (short title, up to ~15 words)`;
     }
     return `This is coming together really well.
 
-You've anchored experiences for both demo competencies with clear Context, Action, and Result — exactly what interviewers look for.
-
 What would you like to do next?`;
-  }, [phase, firstName, focusSpecs]);
+  }, [phase, firstName]);
 
   const storyPromptKey = `${phase.kind}-${activeCompetencyId ?? "none"}-${
     phase.kind === "car"
@@ -708,7 +699,7 @@ What would you like to do next?`;
             <div>
               <div className="text-caption font-semibold text-text-primary">Overall story score</div>
               <div className="text-overline text-text-secondary">
-                Mean of {DEMO_FOCUS_COUNT} demo competencies (0–5)
+                Mean of {DEMO_FOCUS_COUNT} competencies (0–5)
               </div>
             </div>
             <div
@@ -779,7 +770,7 @@ What would you like to do next?`;
                 For the role of <span className="text-text-primary">{role}</span>
               </p>
               <p className="text-left text-caption leading-6 text-text-secondary">
-                Demo complete — review your storyboard or jump to your report.
+                Review your storyboard or jump to your report.
               </p>
             </div>
             {renderStoryReadyCard(

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/components/cn";
 import { Logo } from "@/components/ui/logo";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -581,18 +582,20 @@ export function InterviewLiveScreen() {
         <div className="fixed bottom-4 left-0 right-0 z-50 px-6">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-full border border-border bg-card/80 px-3 py-3 backdrop-blur">
             <div className="flex items-center gap-2">
-              <button
-                type="button"
+              <IconButton
+                variant="ghost"
+                size="xl"
                 onClick={() => setMicOn((v) => !v)}
                 className={cn(
-                  "inline-flex h-11 w-11 items-center justify-center rounded-full transition",
-                  micOn ? "bg-card/60 hover:bg-card/80" : "bg-destructive/90 hover:bg-destructive",
+                  micOn
+                    ? "bg-card/60 text-foreground hover:bg-card/80"
+                    : "bg-destructive/90 text-destructive-foreground hover:bg-destructive",
                 )}
                 disabled={isEnding}
                 aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
                 title={micOn ? "Mute" : "Unmute"}
               >
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path
                     d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Z"
                     stroke="currentColor"
@@ -608,20 +611,22 @@ export function InterviewLiveScreen() {
                     strokeLinejoin="round"
                   />
                 </svg>
-              </button>
+              </IconButton>
 
-              <button
-                type="button"
+              <IconButton
+                variant="ghost"
+                size="xl"
                 onClick={() => setCamOn((v) => !v)}
                 className={cn(
-                  "inline-flex h-11 w-11 items-center justify-center rounded-full transition",
-                  camOn ? "bg-card/60 hover:bg-card/80" : "bg-destructive/90 hover:bg-destructive",
+                  camOn
+                    ? "bg-card/60 text-foreground hover:bg-card/80"
+                    : "bg-destructive/90 text-destructive-foreground hover:bg-destructive",
                 )}
                 disabled={isEnding}
                 aria-label={camOn ? "Turn camera off" : "Turn camera on"}
                 title={camOn ? "Camera off" : "Camera on"}
               >
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path
                     d="M23 7 16 12l7 5V7Z"
                     stroke="currentColor"
@@ -637,7 +642,7 @@ export function InterviewLiveScreen() {
                     strokeLinejoin="round"
                   />
                 </svg>
-              </button>
+              </IconButton>
             </div>
 
             <div className="hidden text-overline text-text-secondary sm:block">

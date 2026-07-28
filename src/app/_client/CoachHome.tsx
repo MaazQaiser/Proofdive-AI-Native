@@ -358,14 +358,15 @@ export function CoachHome() {
         <p className="min-w-0 flex-1 text-body-sm leading-6 text-extended-green-blue">
           {readinessCardModel.noteText}
         </p>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={dismissReadinessBanner}
-          className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-extended-green-blue transition hover:bg-extended-light-cyan hover:text-extended-dark-cyan focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          className="size-8 shrink-0 text-extended-green-blue hover:bg-extended-light-cyan hover:text-extended-dark-cyan"
           aria-label="Dismiss readiness tip"
         >
-          <X className="size-4" />
-        </button>
+          <X />
+        </Button>
       </div>
     ) : null;
   useEffect(() => {

@@ -951,7 +951,9 @@ function OnboardingAgentInner({
                 )
               }
               backgroundGlowIntensity="full"
-              compactWhenIdle={step === "coreFourSelection"}
+              compactWhenIdle={
+                step === "coreFourSelection" || step === "done"
+              }
               modeToggle={
                 step === "done" || step === "coreFourSelection"
                   ? {

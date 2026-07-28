@@ -1,6 +1,27 @@
 "use client";
 
-import { ArrowUp, BookOpen, Download, UserCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  ArrowUpRight,
+  BookOpen,
+  ChevronRight,
+  Download,
+  Eye,
+  EyeOff,
+  Info,
+  Mic,
+  MicOff,
+  Pencil,
+  Play,
+  Plus,
+  UserCheck,
+  Video,
+  VideoOff,
+  X,
+} from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,13 +36,15 @@ import {
   CardNested,
 } from "@/components/ui/card";
 import { CardButton } from "@/components/ui/card-button";
+import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
+import { Disclosure } from "@/app/superadmin/(shell)/competency-engine/ui/Disclosure";
+import { GoogleIcon, LinkedInIcon } from "@/components/icons/SocialIcons";
 import {
   Card as AppCard,
   CardBody as AppCardBody,
   GlassCard,
   NestedCard,
 } from "@/components/Card";
-import { Button as AppButton } from "@/components/Button";
 import { Chatbox } from "@/components/ui/chatbox";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
@@ -333,11 +356,94 @@ function Section({
   );
 }
 
+/** Pillar picker toggle card — recreated from InterviewScreen.tsx's competency-area
+ * picker (border + tinted bg swap on selection, no separate shadcn component backs it). */
+function PillarToggleDemo() {
+  const [on, setOn] = useState(true);
+  return (
+    <button
+      type="button"
+      onClick={() => setOn((v) => !v)}
+      className={cn(
+        "rounded-2xl border px-4 py-3 text-left text-caption font-semibold transition",
+        on
+          ? "border-extended-cyan-green bg-[color-mix(in_srgb,var(--extended-cyan-green)_9%,white)] text-extended-cyan-green"
+          : "border-border bg-card text-text-primary hover:bg-muted",
+      )}
+    >
+      <span className="block text-overline uppercase text-current opacity-70">
+        {on ? "Selected" : "Tap to add"}
+      </span>
+      <span className="mt-2 block text-body-sm">Product Thinking</span>
+    </button>
+  );
+}
+
+/** Mic/cam toggle — recreated from InterviewLiveScreen.tsx. State is communicated by a
+ * background-color swap (not just an icon swap): off = destructive fill. */
+function MicCamToggleDemo() {
+  const [micOn, setMicOn] = useState(true);
+  const [camOn, setCamOn] = useState(false);
+  return (
+    <div className="flex items-center gap-3 rounded-full border border-border bg-card/80 px-3 py-3">
+      <IconButton
+        variant="ghost"
+        size="xl"
+        onClick={() => setMicOn((v) => !v)}
+        aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
+        className={cn(
+          micOn
+            ? "bg-card/60 text-foreground hover:bg-card/80"
+            : "bg-destructive/90 text-destructive-foreground hover:bg-destructive",
+        )}
+      >
+        {micOn ? <Mic /> : <MicOff />}
+      </IconButton>
+      <IconButton
+        variant="ghost"
+        size="xl"
+        onClick={() => setCamOn((v) => !v)}
+        aria-label={camOn ? "Turn camera off" : "Turn camera on"}
+        className={cn(
+          camOn
+            ? "bg-card/60 text-foreground hover:bg-card/80"
+            : "bg-destructive/90 text-destructive-foreground hover:bg-destructive",
+        )}
+      >
+        {camOn ? <Video /> : <VideoOff />}
+      </IconButton>
+    </div>
+  );
+}
+
+/** Bare icon button + CSS-only hover tooltip — recreated from CoachHome.tsx's
+ * PillarInfoIcon and CoachFloatingNav.tsx's nav rail. Two independent, near-identical
+ * hand-rolled implementations of this idiom exist today; no shared Tooltip primitive. */
+function InfoTooltipIconDemo() {
+  return (
+    <button
+      type="button"
+      className="group relative inline-flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+      aria-label="What is this score?"
+    >
+      <Info className="h-4 w-4 shrink-0" />
+      <span
+        className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-max max-w-[240px] -translate-x-1/2 whitespace-normal rounded-xl bg-foreground px-3 py-2 text-caption leading-4 text-background opacity-0 transition group-hover:opacity-100"
+        role="tooltip"
+      >
+        Blended from your last 3 interview attempts.
+      </span>
+    </button>
+  );
+}
+
 export default function DesignSystemPage() {
   const [dark, setDark] = useState(false);
   const [selectedChip, setSelectedChip] = useState(CHIP_OPTIONS[0]);
   const [chatValue, setChatValue] = useState("");
   const [attachedFileName, setAttachedFileName] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState<"7d" | "30d" | "90d">("30d");
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   return (
     <div className={cn(dark && "dark")}>
@@ -599,20 +705,137 @@ export default function DesignSystemPage() {
             description="A first pass of shadcn/ui components, sanity-checked against the new tokens."
           >
             <div className="grid gap-6 lg:grid-cols-2">
-              <Card>
+              <Card className="lg:col-span-2">
                 <CardHeader>
                   <CardTitle>Buttons</CardTitle>
-                  <CardDescription>All variants and sizes</CardDescription>
+                  <CardDescription>
+                    src/components/ui/button.tsx — every variant, size, state, and icon
+                    placement actually used across the app. This is now the app&apos;s
+                    only button component: the separate pill-shaped Button
+                    (src/components/Button.tsx, previously shown below as &quot;App
+                    buttons&quot;) had zero real call sites and has been removed.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-wrap items-center gap-3">
-                  <Button>Default</Button>
-                  <Button variant="secondary">Secondary</Button>
-                  <Button variant="outline">Outline</Button>
-                  <Button variant="ghost">Ghost</Button>
-                  <Button variant="destructive">Destructive</Button>
-                  <Button variant="link">Link</Button>
-                  <Button size="sm">Small</Button>
-                  <Button size="lg">Large</Button>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <p className="text-caption font-medium text-muted-foreground">
+                      Variants (default state)
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button>Default</Button>
+                      <Button variant="secondary">Secondary</Button>
+                      <Button variant="outline">Outline</Button>
+                      <Button variant="ghost">Ghost</Button>
+                      <Button variant="destructive">Destructive</Button>
+                      <Button variant="link">Link</Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-caption font-medium text-muted-foreground">
+                      Disabled state — every variant
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button disabled>Default</Button>
+                      <Button variant="secondary" disabled>
+                        Secondary
+                      </Button>
+                      <Button variant="outline" disabled>
+                        Outline
+                      </Button>
+                      <Button variant="ghost" disabled>
+                        Ghost
+                      </Button>
+                      <Button variant="destructive" disabled>
+                        Destructive
+                      </Button>
+                      <Button variant="link" disabled>
+                        Link
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-caption font-medium text-muted-foreground">
+                      Sizes — sm / default / lg / icon
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button size="sm">Small</Button>
+                      <Button size="default">Default</Button>
+                      <Button size="lg">Large</Button>
+                      <Button size="icon" variant="outline" aria-label="Edit">
+                        <Pencil />
+                      </Button>
+                      <Button size="icon" variant="ghost" aria-label="More actions">
+                        <ChevronRight />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-caption font-medium text-muted-foreground">
+                      Icon placement — leading, trailing, icon-only
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button>
+                        <Plus />
+                        Add another email
+                      </Button>
+                      <Button variant="outline">
+                        <Pencil />
+                        Edit
+                      </Button>
+                      <Button variant="destructive">
+                        <X />
+                        Remove
+                      </Button>
+                      <Button variant="link">
+                        See all
+                        <ArrowUpRight />
+                      </Button>
+                      <Button size="icon" aria-label="Add">
+                        <Plus />
+                      </Button>
+                      <Button onClick={() => {}} className="pl-4! pr-2!">
+                        Confirm selection
+                        <ArrowRight />
+                      </Button>
+                    </div>
+                    <p className="text-caption text-muted-foreground">
+                      Icon always leads the label — the one real trailing-icon exception is
+                      CoreFourSelectionPanel.tsx&apos;s &quot;Confirm selection{" "}
+                      <ArrowRight className="inline size-3.5" />
+                      &quot; (last button above). Leading icons get 8px/16px padding
+                      automatically via <code>has-[&gt;svg:first-child]</code>, but CSS can&apos;t
+                      also auto-detect a trailing icon: when the icon is the button&apos;s
+                      only element child, it matches <em>both</em>{" "}
+                      <code>:first-child</code> and <code>:last-child</code> at once (a plain
+                      text label doesn&apos;t count as a sibling element), so position alone
+                      can&apos;t tell leading from trailing. Trailing-icon buttons need an
+                      explicit <code>pl-4! pr-2!</code> override (Tailwind&apos;s important
+                      modifier — a plain override loses to the <code>:has()</code>{" "}
+                      selector&apos;s higher specificity).
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-caption font-medium text-muted-foreground">
+                      asChild — button styling on a real link (the sanctioned way to make a
+                      link look like a button; never wrap a real <code>Button</code> in a
+                      <code>Link</code>)
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button asChild>
+                        <Link href="/design-system">Go to dashboard</Link>
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/design-system">
+                          <Download />
+                          Export
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -742,19 +965,6 @@ export default function DesignSystemPage() {
           <Separator />
 
           <Section
-            title="App buttons"
-            description="Custom pill buttons used across onboarding, storyboard, interview and training — src/components/Button.tsx. Distinct from the shadcn Button above; not yet unified."
-          >
-            <div className="flex flex-wrap items-center gap-3">
-              <AppButton variant="primary">Primary</AppButton>
-              <AppButton variant="secondary">Secondary</AppButton>
-              <AppButton variant="ghost">Ghost</AppButton>
-            </div>
-          </Section>
-
-          <Separator />
-
-          <Section
             title="Onboarding components"
             description="Pixel-exact ports of the Figma 'Components' section (node 38:55), for the onboarding flow redesign."
           >
@@ -762,7 +972,9 @@ export default function DesignSystemPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Icon button</CardTitle>
-                  <CardDescription>Solid and ghost, default and disabled</CardDescription>
+                  <CardDescription>
+                    Solid and ghost, default / disabled / pressed — src/components/ui/icon-button.tsx
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap items-center gap-3">
                   <IconButton aria-label="Send">
@@ -774,6 +986,21 @@ export default function DesignSystemPage() {
                   <IconButton variant="ghost" aria-label="Record">
                     <ArrowUp />
                   </IconButton>
+                  <IconButton variant="ghost" aria-label="Record" disabled>
+                    <ArrowUp />
+                  </IconButton>
+                  <IconButton
+                    variant="ghost"
+                    aria-label="Mute microphone (pressed/on)"
+                    aria-pressed
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    <Mic />
+                  </IconButton>
+                  <p className="basis-full text-caption text-muted-foreground">
+                    Pressed state (last icon) is a manual className override in
+                    chatbox.tsx/ChatComposer.tsx today, not a variant on IconButton itself.
+                  </p>
                 </CardContent>
               </Card>
 
@@ -879,6 +1106,268 @@ export default function DesignSystemPage() {
                       PixelMedia alone (play affordance, no duration overlay)
                     </span>
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          </Section>
+
+          <Separator />
+
+          <Section
+            title="Buttons — other patterns in use"
+            description="Every remaining button shape found across the app that isn't a plain shadcn Button/IconButton/CardButton call — mostly one-off <button> elements. Shown here as reference so real usages can be checked and repadded against a single source, not refactored into new components yet."
+          >
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Toggle / segmented control</CardTitle>
+                  <CardDescription>
+                    DateRangeFilter (real component) — src/components/dashboard/DateRangeFilter.tsx
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DateRangeFilter
+                    value={dateRange}
+                    onChange={setDateRange}
+                    options={[
+                      { value: "7d", label: "7 days" },
+                      { value: "30d", label: "30 days" },
+                      { value: "90d", label: "90 days" },
+                    ]}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Selection / pillar toggle card</CardTitle>
+                  <CardDescription>
+                    Recreated from InterviewScreen.tsx — border + tinted-bg swap, click to
+                    toggle
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center gap-3">
+                  <PillarToggleDemo />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Mic / camera toggle</CardTitle>
+                  <CardDescription>
+                    Recreated from InterviewLiveScreen.tsx — off-state is a color fill, not
+                    just an icon swap. Click to toggle.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MicCamToggleDemo />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Circular play button</CardTitle>
+                  <CardDescription>
+                    TrainingChapterOneJourney.tsx — now <code>IconButton</code> variant
+                    =&quot;solid&quot; size=&quot;2xl&quot; (64px), over a video thumbnail
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center gap-3">
+                  <IconButton variant="solid" size="2xl" aria-label="Play video">
+                    <Play className="ml-1" fill="currentColor" />
+                  </IconButton>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Circular dismiss / close buttons</CardTitle>
+                  <CardDescription>
+                    Now all <code>IconButton</code> at the new md/lg sizes — CoachHome.tsx&apos;s
+                    dismiss (square, so it&apos;s shadcn <code>Button size=&quot;icon&quot;</code>{" "}
+                    instead) and ChatComposer.tsx&apos;s two circular close controls
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Dismiss (CoachHome.tsx)"
+                    className="size-8 shrink-0 text-extended-green-blue hover:bg-extended-light-cyan hover:text-extended-dark-cyan"
+                  >
+                    <X />
+                  </Button>
+                  <IconButton
+                    variant="ghost"
+                    size="md"
+                    aria-label="Close (ChatComposer.tsx thread header)"
+                    className="text-text-secondary hover:text-text-primary active:bg-muted"
+                  >
+                    <X />
+                  </IconButton>
+                  <IconButton
+                    variant="ghost"
+                    size="lg"
+                    aria-label="Close full screen (ChatComposer.tsx)"
+                    className="text-text-secondary hover:text-text-primary"
+                  >
+                    <X strokeWidth={2} />
+                  </IconButton>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Bare info tooltip icon</CardTitle>
+                  <CardDescription>
+                    CoachHome.tsx PillarInfoIcon — no chrome, CSS-only tooltip on
+                    hover/focus. Hover to see it.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center gap-3 pb-10">
+                  <InfoTooltipIconDemo />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Password visibility toggle</CardTitle>
+                  <CardDescription>
+                    src/components/ui/password-input.tsx — absolutely positioned inside
+                    the field, no bg/border
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative w-full max-w-xs">
+                    <Input
+                      type={passwordVisible ? "text" : "password"}
+                      defaultValue="hunter2"
+                      className="pr-11"
+                      readOnly
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPasswordVisible((v) => !v)}
+                      aria-label={passwordVisible ? "Hide password" : "Show password"}
+                      className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+                    >
+                      {passwordVisible ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Back button</CardTitle>
+                  <CardDescription>
+                    OnboardingProgressHeader.tsx — now shadcn <code>Button</code> variant
+                    =&quot;ghost&quot; size=&quot;sm&quot;, with an explicit{" "}
+                    <code>pl-0! pr-2!</code> override for its flush-left layout. Disabled
+                    now inherits Button&apos;s standard opacity-50 instead of a one-off
+                    opacity-30.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto shrink-0 gap-2.5 pl-0! pr-2! text-caption font-medium text-text-secondary hover:bg-transparent hover:text-foreground"
+                  >
+                    <ArrowLeft className="size-5" />
+                    Back
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled
+                    className="h-auto shrink-0 gap-2.5 pl-0! pr-2! text-caption font-medium text-text-secondary hover:bg-transparent hover:text-foreground"
+                  >
+                    <ArrowLeft className="size-5" />
+                    Back (disabled)
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Text / link-style buttons</CardTitle>
+                  <CardDescription>
+                    No chrome — color and underline carry the affordance. The table-row
+                    pattern repeats verbatim across 4 admin list screens.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center gap-6">
+                  <button
+                    type="button"
+                    className="text-caption text-left font-semibold text-primary hover:underline"
+                  >
+                    Jordan Lee (table row → drawer)
+                  </button>
+                  <Button variant="link" className="p-0">
+                    See all
+                    <ArrowUpRight />
+                  </Button>
+                  <button type="button" className="text-body-sm text-muted-foreground hover:text-foreground">
+                    Super Admin login →
+                  </button>
+                  <p className="basis-full text-caption text-muted-foreground">
+                    The plain &quot;→&quot; character on login/page.tsx&apos;s admin links
+                    is the one inconsistency — every other trailing-icon button uses an
+                    actual <code>ArrowUpRight</code> SVG.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Disclosure / expand-collapse button</CardTitle>
+                  <CardDescription>
+                    Real component — src/app/superadmin/(shell)/competency-engine/ui/Disclosure.tsx.
+                    Three tones, all sharing the same chevron-rotate affordance. Two other
+                    ad hoc chevron-toggle implementations exist elsewhere (InterviewScreen.tsx,
+                    ReportDetailScreen.tsx) plus a native &lt;details&gt;/&lt;summary&gt;
+                    variant in CraftingScreen.tsx — worth converging on this one.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Disclosure title="Product Thinking" subtitle="Success driver" tone="driver">
+                    <p className="text-body-sm text-muted-foreground">Driver-tone content.</p>
+                  </Disclosure>
+                  <Disclosure title="Prioritization" tone="competency" defaultOpen>
+                    <p className="text-body-sm text-muted-foreground">
+                      Competency-tone content, open by default.
+                    </p>
+                  </Disclosure>
+                  <Disclosure title="Level 3 — Practicing" tone="level">
+                    <p className="text-body-sm text-muted-foreground">Level-tone content.</p>
+                  </Disclosure>
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Social auth buttons</CardTitle>
+                  <CardDescription>
+                    login/page.tsx and signup/page.tsx — now share one icon source
+                    (src/components/icons/SocialIcons.tsx) instead of two duplicated copies
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    className="flex h-11 items-center justify-center gap-2.5 rounded-md border border-border bg-white px-4 text-body-sm font-medium text-foreground hover:bg-muted"
+                  >
+                    <GoogleIcon />
+                    Continue with Google
+                  </button>
+                  <button
+                    type="button"
+                    className="flex h-11 items-center justify-center gap-2.5 rounded-md border border-border bg-white px-4 text-body-sm font-medium text-foreground hover:bg-muted"
+                  >
+                    <LinkedInIcon />
+                    Continue with LinkedIn
+                  </button>
                 </CardContent>
               </Card>
             </div>
