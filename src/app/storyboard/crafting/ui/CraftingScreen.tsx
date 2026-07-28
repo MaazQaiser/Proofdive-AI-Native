@@ -236,7 +236,7 @@ export function CraftingScreen() {
           <div>
             <h1 className="text-h4 text-text-primary">Storyboard draft</h1>
             <p className="mt-2 text-caption leading-6 text-text-secondary print:hidden">
-              Demo focus: <strong>Core Introduction</strong> + {DEMO_FOCUS_COUNT} selected
+              One <strong>Core Introduction</strong> + {DEMO_FOCUS_COUNT} selected
               competencies (CAR: Context, Action, Result). Other sections stay available but
               collapsed. Lock a section when it&apos;s interview-ready.
             </p>
@@ -247,16 +247,16 @@ export function CraftingScreen() {
               <div className="text-overline text-text-secondary">Story strength</div>
               <p className="text-caption leading-6 text-text-secondary">
                 0–5 placeholder from CAR completeness. Overall = mean of the{" "}
-                {DEMO_FOCUS_COUNT} demo competencies (intro excluded).
+                {DEMO_FOCUS_COUNT} selected competencies (intro excluded).
               </p>
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
                   <div className="text-caption font-semibold text-text-primary">
-                    Overall ({DEMO_FOCUS_COUNT} demo competencies)
+                    Overall ({DEMO_FOCUS_COUNT} competencies)
                   </div>
                   <div className="text-overline text-text-secondary">Mean strength</div>
                 </div>
-                <div className="text-h4 text-text-primary" title="Mean of demo focus competency scores">
+                <div className="text-h4 text-text-primary" title="Mean of selected competency scores">
                   {overall.toFixed(1)}
                   <span className="text-body text-text-secondary"> / 5</span>
                 </div>
@@ -267,7 +267,7 @@ export function CraftingScreen() {
                   <span className="inline-flex items-center gap-2">
                     Success Drivers
                     <span className="text-overline text-text-secondary">
-                      (scores from demo focus set)
+                      (scores from selected competencies)
                     </span>
                   </span>
                 </summary>

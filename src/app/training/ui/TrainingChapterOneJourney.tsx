@@ -5,6 +5,7 @@ import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { IconButton } from "@/components/ui/icon-button";
 import { cn } from "@/components/cn";
 import {
   AFTER_CASE,
@@ -329,21 +330,21 @@ export function TrainingChapterOneJourney({
                           aria-hidden
                         />
                         <div className="relative flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
-                          <button
-                            type="button"
+                          <IconButton
+                            variant="solid"
+                            size="2xl"
                             onClick={() => setVideoStarted(true)}
-                            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]/40"
                             aria-label="Play video"
                           >
                             <svg
-                              className="ml-1 h-7 w-7"
+                              className="ml-1"
                               viewBox="0 0 24 24"
                               fill="currentColor"
                               aria-hidden
                             >
                               <path d="M8 5v14l11-7z" />
                             </svg>
-                          </button>
+                          </IconButton>
                           <span className="text-overline uppercase text-text-secondary">
                             Video
                           </span>

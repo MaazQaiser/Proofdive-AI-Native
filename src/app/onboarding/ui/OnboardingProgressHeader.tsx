@@ -1,5 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/ui/progress-bar";
 
 type OnboardingProgressHeaderProps = {
@@ -25,16 +26,18 @@ export function OnboardingProgressHeader({
   return (
     <div className="sticky top-0 z-20 flex w-full flex-col gap-3 bg-background/90 py-2 backdrop-blur-sm">
       <div className="flex w-full items-start justify-between">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={onBack}
           disabled={!onBack}
-          className="flex shrink-0 items-center gap-2.5 pr-2 text-caption font-medium text-text-secondary transition hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+          className="h-auto shrink-0 gap-2.5 pl-0! pr-2! text-caption font-medium text-text-secondary hover:bg-transparent hover:text-foreground"
           aria-label="Go back to previous step"
         >
           <ArrowLeft className="size-5" />
           Back
-        </button>
+        </Button>
         <span className="shrink-0 text-caption font-medium text-text-secondary">
           {Math.round(Math.min(100, Math.max(0, percent)))}%
         </span>

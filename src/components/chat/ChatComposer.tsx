@@ -32,9 +32,6 @@ export type ChatComposerModeToggle = {
   onToggle: () => void;
 };
 
-const headerIconButtonClassName =
-  "inline-flex size-9 shrink-0 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary active:bg-muted";
-
 export function ChatComposer({
   placeholder = "Type a message…",
   onSend,
@@ -272,23 +269,25 @@ export function ChatComposer({
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
-          <button
-            type="button"
+          <IconButton
+            variant="ghost"
+            size="md"
             onClick={() => setExpanded(true)}
-            className={headerIconButtonClassName}
+            className="text-text-secondary hover:text-text-primary active:bg-muted"
             aria-label="Expand to full screen"
           >
-            <Maximize2 className="size-4" />
-          </button>
+            <Maximize2 />
+          </IconButton>
           {onThreadClose ? (
-            <button
-              type="button"
+            <IconButton
+              variant="ghost"
+              size="md"
               onClick={handleThreadClose}
-              className={headerIconButtonClassName}
+              className="text-text-secondary hover:text-text-primary active:bg-muted"
               aria-label="Close"
             >
-              <X className="size-4" />
-            </button>
+              <X />
+            </IconButton>
           ) : null}
         </div>
       </div>
@@ -468,14 +467,15 @@ export function ChatComposer({
                 className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-auto w-full select-none"
               />
 
-              <button
-                type="button"
+              <IconButton
+                variant="ghost"
+                size="lg"
                 onClick={() => setExpanded(false)}
-                className="absolute top-4 right-4 z-20 inline-flex size-10 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="absolute top-4 right-4 z-20 text-text-secondary hover:text-text-primary"
                 aria-label="Close full screen"
               >
-                <X className="size-5" strokeWidth={2} />
-              </button>
+                <X strokeWidth={2} />
+              </IconButton>
 
               <div className="relative z-10 mx-auto flex h-full w-full max-w-[800px] flex-col px-6 pt-14 pb-6">
                 <div className="min-h-0 flex-1 overflow-y-auto scroll-smooth">

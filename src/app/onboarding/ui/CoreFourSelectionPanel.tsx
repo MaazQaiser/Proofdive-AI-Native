@@ -110,7 +110,7 @@ export function CoreFourSelectionPanel({
       {error ? <div className="text-body-sm text-destructive">{error}</div> : null}
 
       <div className="flex flex-wrap gap-3">
-        <Button onClick={onConfirm}>
+        <Button onClick={onConfirm} className="pl-4! pr-2!">
           Confirm selection
           <ArrowRight />
         </Button>
