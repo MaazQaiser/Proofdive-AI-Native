@@ -921,89 +921,92 @@ What would you like to do next?`;
     const canAdd = divesLeft > 0 && (isCurrent || dive.diveNumber === 1);
 
     return (
-      <Card
-        key={dive.id}
-        className="gap-0 py-0"
-      >
-        <CardContent className="space-y-5 p-6">
-          <div className="flex items-center justify-between gap-3">
+      <Card key={dive.id} className="gap-0 py-0">
+        <CardContent className="space-y-4 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h3 className="text-h3 text-primary">Dive {dive.diveNumber}</h3>
+              <h3 className="text-[24px] font-semibold leading-tight text-text-primary">
+                Dive {dive.diveNumber}
+              </h3>
               {isCurrent ? <Badge variant="secondary">Current</Badge> : null}
             </div>
-            <Button
-              type="button"
-              size="icon"
-              variant="outline"
-              className="shrink-0 border-0 bg-card text-extended-cyan-green hover:bg-card hover:text-extended-cyan-green"
-              aria-label={`Download Dive ${dive.diveNumber}`}
-              title="Download"
-              onClick={() =>
-                router.push(`/storyboard/crafting?dive=${encodeURIComponent(dive.id)}&print=1`)
-              }
-            >
-              <Download />
-            </Button>
-          </div>
-
-          <CardNested className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <div className="text-caption font-semibold text-text-primary">Overall story score</div>
-            <div
-              className={cn(
-                "text-h5 tabular-nums",
-                scoringTextClass(dive.overallScore > 0 ? dive.overallScore : null),
-              )}
-            >
-              {dive.overallScore.toFixed(1)}
-              <span className="pl-1 text-body text-text-secondary">/ 5</span>
-            </div>
-          </CardNested>
-
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {divePillars.map(({ id, score }) => (
-              <div
-                key={id}
-                className="flex flex-col gap-1.5 rounded-lg border border-border bg-surface px-3 py-2.5"
-              >
-                <SuccessDriverMark
-                  driver={id}
-                  label="short"
-                  className="text-overline text-text-primary"
-                  iconClassName="size-3.5"
-                />
-                <span
-                  className={cn(
-                    "text-body-sm font-medium tabular-nums",
-                    scoringTextClass(score > 0 ? score : null),
-                  )}
-                >
-                  {score > 0 ? score.toFixed(1) : "—"}
-                  <span className="text-caption font-normal text-text-secondary"> / 5</span>
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              onClick={() =>
-                router.push(`/storyboard/crafting?dive=${encodeURIComponent(dive.id)}`)
-              }
-            >
-              <BookOpen />
-              View story
-            </Button>
-            {canAdd ? (
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
               <Button
                 type="button"
-                className="border-0 bg-extended-light-cyan text-text-primary hover:bg-extended-light-cyan/80 hover:text-text-primary"
-                onClick={startAddCompetency}
+                size="icon"
+                variant="outline"
+                className="shrink-0 border-0 bg-card text-extended-cyan-green hover:bg-card hover:text-extended-cyan-green"
+                aria-label={`Download Dive ${dive.diveNumber}`}
+                title="Download"
+                onClick={() =>
+                  router.push(`/storyboard/crafting?dive=${encodeURIComponent(dive.id)}&print=1`)
+                }
               >
-                <Plus />
-                Add Competency
+                <Download />
               </Button>
-            ) : null}
+              {canAdd ? (
+                <Button
+                  type="button"
+                  className="border-0 bg-extended-light-cyan text-text-primary hover:bg-extended-light-cyan/80 hover:text-text-primary"
+                  onClick={startAddCompetency}
+                >
+                  <Plus />
+                  Add Competency
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                onClick={() =>
+                  router.push(`/storyboard/crafting?dive=${encodeURIComponent(dive.id)}`)
+                }
+              >
+                <BookOpen />
+                View story
+              </Button>
+            </div>
+          </div>
+
+          {/* Flat nested surfaces only — no mixed strokes/radii (matches crafting Story strength). */}
+          <div className="space-y-3">
+            <CardNested className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+              <div>
+                <div className="text-caption font-semibold text-text-primary">
+                  Overall story score
+                </div>
+                <div className="text-overline text-text-secondary">Mean across competencies</div>
+              </div>
+              <div
+                className={cn(
+                  "text-h5 tabular-nums",
+                  scoringTextClass(dive.overallScore > 0 ? dive.overallScore : null),
+                )}
+              >
+                {dive.overallScore.toFixed(1)}
+                <span className="pl-1 text-body text-text-secondary">/ 5</span>
+              </div>
+            </CardNested>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {divePillars.map(({ id, score }) => (
+                <CardNested key={id} className="flex flex-col gap-1.5 px-3 py-2.5">
+                  <SuccessDriverMark
+                    driver={id}
+                    label="short"
+                    className="min-w-0 text-overline"
+                    iconClassName="size-3.5"
+                  />
+                  <div
+                    className={cn(
+                      "text-caption font-semibold tabular-nums",
+                      scoringTextClass(score > 0 ? score : null),
+                    )}
+                  >
+                    {score > 0 ? score.toFixed(1) : "—"}
+                    <span className="font-normal text-text-secondary"> / 5</span>
+                  </div>
+                </CardNested>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>

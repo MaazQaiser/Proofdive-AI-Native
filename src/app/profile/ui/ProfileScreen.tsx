@@ -522,9 +522,12 @@ export function ProfileScreen() {
                   </div>
 
                   <p className="text-caption leading-5 text-muted-foreground">
-                    We count generated feedback reports toward this limit. Upgrade limits will be
-                    wired once billing lands.
+                    We count generated feedback reports toward this limit. Manage your plan and
+                    purchase add-ons from Payments & Subscription.
                   </p>
+                  <Button asChild size="sm" variant="outline" className="w-full">
+                    <Link href="/profile/billing">Payments & Subscription</Link>
+                  </Button>
                 </CardContent>
               </Card>
 

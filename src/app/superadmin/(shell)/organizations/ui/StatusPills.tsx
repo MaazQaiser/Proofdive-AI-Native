@@ -13,7 +13,7 @@ export function OrganizationStatusPill({ status }: { status: OrganizationStatus 
   return (
     <span
       className={cn(
-        "text-overline inline-flex h-6 w-fit items-center gap-1 rounded-full border px-2 whitespace-nowrap",
+        "text-overline inline-flex h-6 w-fit items-center gap-1 rounded-full border pl-1 pr-2 whitespace-nowrap",
         active
           ? "border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg"
           : "border-border bg-muted text-muted-foreground",

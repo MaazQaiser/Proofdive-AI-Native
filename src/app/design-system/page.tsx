@@ -209,7 +209,7 @@ const TYPE_STYLES: TypeStyle[] = [
   },
   { key: "h2", className: "text-h2", label: "H2", size: "42px", weight: "500", tracking: "-2.6px" },
   { key: "h3", className: "text-h3", label: "H3", size: "32px", weight: "500", tracking: "-2.6px" },
-  { key: "h4", className: "text-h4", label: "H4", size: "24px", weight: "500", tracking: "-2px", note: "Page titles in admin shells (e.g. Organizations, Competency Frameworks)." },
+  { key: "h4", className: "text-h4", label: "H4", size: "24px", weight: "500", tracking: "-2px", note: "Super Admin tab page titles (Overview, Organizations, Competency Frameworks, etc.)." },
   { key: "h5", className: "text-h5", label: "H5", size: "18px", weight: "500", tracking: "-1.3px" },
   { key: "h6", className: "text-h6", label: "H6", size: "14px", weight: "500", tracking: "-0.65px" },
   {

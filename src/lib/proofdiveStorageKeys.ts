@@ -57,5 +57,19 @@ export const StorageKeys = {
   superAdminCompetencyFrameworks: "proofdive.superAdmin.competencyFrameworks.v1",
   /** Super Admin organization directory (seeded list + created orgs). */
   superAdminOrganizations: "proofdive.superAdmin.organizations.v1",
+  /** Super Admin global (bundle-inclusion) rates keyed by item × client type. */
+  superAdminGlobalRates: "proofdive.superAdmin.globalRates.v1",
+  /** Super Admin add-on (top-up) rates keyed by item × client type. */
+  superAdminAddOnRates: "proofdive.superAdmin.addOnRates.v1",
+  /** Super Admin payment bundles catalog. */
+  superAdminPaymentBundles: "proofdive.superAdmin.paymentBundles.v1",
+  /** Super Admin discount codes. */
+  superAdminDiscountCodes: "proofdive.superAdmin.discountCodes.v1",
+  /** Org Admin active subscription snapshot (bundle assignment + cycle). */
+  orgAdminSubscription: "proofdive.orgAdmin.subscription.v1",
+  /** Candidate subscription state (free / paid / pending cancel). */
+  candidateSubscription: "proofdive.candidate.subscription.v1",
+  /** Candidate one-time free baseline remaining + purchased add-on deltas. */
+  candidateEntitlements: "proofdive.candidate.entitlements.v1",
 } as const;
 

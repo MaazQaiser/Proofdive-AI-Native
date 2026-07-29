@@ -5,6 +5,7 @@ import {
   Briefcase,
   Building2,
   BookOpen,
+  CreditCard,
   Handshake,
   LayoutDashboard,
   LifeBuoy,
@@ -25,6 +26,7 @@ type NavItem = {
 export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/superadmin/overview", label: "Overview", icon: LayoutDashboard },
   { href: "/superadmin/organizations", label: "Organizations", icon: Building2 },
+  { href: "/superadmin/payments", label: "Payments", icon: CreditCard },
   { href: "/superadmin/content", label: "Content", icon: BookOpen },
   { href: "/superadmin/partners", label: "Partners", icon: Handshake },
   { href: "/superadmin/employers", label: "Employers", icon: Briefcase },
@@ -39,7 +41,7 @@ export function SuperAdminSidebarNav() {
   return (
     <nav className="flex flex-row gap-1 overflow-x-auto lg:flex-1 lg:flex-col lg:overflow-visible">
       {SUPER_ADMIN_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href;
+        const active = pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
         return (
           <Link
             key={href}

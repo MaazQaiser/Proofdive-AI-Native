@@ -153,7 +153,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
     <div className="-m-6 flex h-full flex-col overflow-hidden">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-12 py-4">
         <div className="min-w-0 space-y-0.5">
-          <h1 className="text-h1 font-bold text-foreground">Edit copy</h1>
+          <h1 className="text-h4 text-foreground">Edit copy</h1>
           <p className="text-caption text-muted-foreground">
             Update definitions, core questions, and level descriptors.
           </p>
@@ -177,14 +177,9 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
       <div className="min-h-0 flex-1 overflow-y-auto px-12 py-6">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
           <section className="space-y-3 rounded-xl border border-border bg-card p-5">
-            <div>
-              <h2 className="text-body font-semibold text-foreground">Framework identity</h2>
-              <p className="mt-0.5 text-caption text-muted-foreground">
-                Display name shown in the frameworks list and organization assignment.
-              </p>
-            </div>
+            <h2 className="text-body font-semibold text-foreground">Competency framework</h2>
             <div className="flex max-w-xl flex-col gap-1.5">
-              <IconLabel htmlFor="framework-name">Framework name</IconLabel>
+              <IconLabel htmlFor="framework-name">Version Name</IconLabel>
               <Input
                 id="framework-name"
                 value={name}

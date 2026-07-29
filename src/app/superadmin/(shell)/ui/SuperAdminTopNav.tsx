@@ -9,6 +9,7 @@ type NavItem = { href: string; label: string };
 export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/superadmin/overview", label: "Overview" },
   { href: "/superadmin/organizations", label: "Organizations" },
+  { href: "/superadmin/payments", label: "Payments" },
   { href: "/superadmin/content", label: "Content" },
   { href: "/superadmin/partners", label: "Partners" },
   { href: "/superadmin/employers", label: "Employers" },
