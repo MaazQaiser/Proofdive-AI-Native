@@ -2,8 +2,12 @@
 
 import {
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Copy,
+  CreditCard,
   MoreHorizontal,
   Plus,
   Search,
@@ -13,9 +17,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import {
   TableBody,
   TableCell,
@@ -60,7 +63,9 @@ import { usePaymentBundles } from "@/lib/usePaymentBundles";
 import { useGlobalRates } from "@/lib/usePaymentRates";
 import { cn } from "@/lib/utils";
 
-import { PaymentsShell } from "./PaymentsShell";
+import { PaymentsSubNav } from "./PaymentsSubNav";
+
+const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
 
 function BundleStatusPill({ status }: { status: BundleStatus }) {
   const tone =
@@ -93,7 +98,17 @@ function formatUpdated(iso: string): string {
   }
 }
 
-function SummaryCard({
+function formatCyclesInline(bundle: PaymentBundle): string {
+  if (bundle.cycles.length === 0) return "—";
+  return bundle.cycles.map((c) => BILLING_CYCLE_LABEL[c.cycle]).join(", ");
+}
+
+function formatPricesInline(bundle: PaymentBundle): string {
+  if (bundle.cycles.length === 0) return "—";
+  return bundle.cycles.map((c) => formatUsd(c.price)).join(", ");
+}
+
+function SummaryChip({
   title,
   value,
   expandable,
@@ -106,27 +121,31 @@ function SummaryCard({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <Card
-      className={cn(expandable && "cursor-pointer transition hover:bg-muted/30")}
+    <button
+      type="button"
+      disabled={!expandable}
       onClick={expandable ? () => setOpen((v) => !v) : undefined}
+      className={cn(
+        "rounded-xl border border-border bg-background px-4 py-3 text-left",
+        expandable && "transition hover:bg-muted/30",
+        !expandable && "cursor-default",
+      )}
     >
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <CardDescription>{title}</CardDescription>
-          {expandable ? (
-            open ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            )
-          ) : null}
-        </div>
-        <CardTitle className="text-h4">{value}</CardTitle>
-      </CardHeader>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-overline text-muted-foreground">{title}</span>
+        {expandable ? (
+          open ? (
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          )
+        ) : null}
+      </div>
+      <div className="mt-1 text-h5 text-foreground">{value}</div>
       {expandable && open && children ? (
-        <CardContent className="pt-0 text-caption text-muted-foreground">{children}</CardContent>
+        <div className="mt-2 text-overline text-muted-foreground">{children}</div>
       ) : null}
-    </Card>
+    </button>
   );
 }
 
@@ -139,6 +158,8 @@ export function BundleListingScreen() {
   const [typeFilter, setTypeFilter] = useState<ClientType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<BundleStatus | "all">("all");
   const [cycleFilter, setCycleFilter] = useState<BillingCycle | "all">("all");
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(ROWS_PER_PAGE_OPTIONS[0]);
   const [confirmDeactivate, setConfirmDeactivate] = useState<PaymentBundle | null>(null);
   const [reactivateErrors, setReactivateErrors] = useState<string[] | null>(null);
 
@@ -162,6 +183,16 @@ export function BundleListingScreen() {
       return hay.includes(q);
     });
   }, [bundles, search, typeFilter, statusFilter, cycleFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * rowsPerPage;
+  const pageEnd = Math.min(pageStart + rowsPerPage, filtered.length);
+  const pageRows = filtered.slice(pageStart, pageEnd);
+
+  function resetToFirstPage() {
+    setPage(1);
+  }
 
   function handleDuplicate(bundle: PaymentBundle) {
     const copy = duplicate(bundle.id);
@@ -191,65 +222,76 @@ export function BundleListingScreen() {
 
   const emptyMessage =
     bundles.length === 0
-      ? "No bundles yet. Create your first payment bundle."
-      : search.trim()
+      ? "No bundles found."
+      : search.trim() || typeFilter !== "all" || statusFilter !== "all" || cycleFilter !== "all"
         ? "No matching bundles found."
-        : typeFilter !== "all" || statusFilter !== "all" || cycleFilter !== "all"
-          ? "No bundles found for the selected filters."
-          : "No bundles found.";
+        : "No bundles found.";
 
   return (
-    <PaymentsShell
-      title="Payments"
-      description="Monitor bundle performance and manage payment offerings across B2C and B2B."
-      actions={
+    <div className="-m-6 flex h-full flex-col overflow-hidden">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
+        <h1 className="text-h4 text-foreground">Payments</h1>
         <Button asChild>
           <Link href="/superadmin/payments/bundles/new">
             <Plus className="h-4 w-4" />
             Create New Bundle
           </Link>
         </Button>
-      }
-    >
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard title="Total Active Bundles" value={String(stats.totalActiveBundles)} />
-        <SummaryCard title="Earnings" value={formatUsd(stats.earnings)} expandable>
-          <ul className="space-y-1">
+      </div>
+
+      <div className="shrink-0 border-b border-border px-6">
+        <PaymentsSubNav />
+      </div>
+
+      <div className="grid shrink-0 gap-3 border-b border-border px-6 py-4 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryChip title="Total Active Bundles" value={String(stats.totalActiveBundles)} />
+        <SummaryChip title="Earnings" value={formatUsd(stats.earnings)} expandable>
+          <ul className="space-y-0.5">
             <li>B2C: {formatUsd(stats.earningsByClientType.B2C)}</li>
             <li>B2B: {formatUsd(stats.earningsByClientType.B2B)}</li>
             <li>Add-ons: {formatUsd(stats.earningsAddOns)}</li>
           </ul>
-        </SummaryCard>
-        <SummaryCard title="Total Subscribers" value={String(stats.totalSubscribers)} expandable>
-          <ul className="space-y-1">
+        </SummaryChip>
+        <SummaryChip title="Total Subscribers" value={String(stats.totalSubscribers)} expandable>
+          <ul className="space-y-0.5">
             <li>B2C: {stats.subscribersByClientType.B2C}</li>
             <li>B2B: {stats.subscribersByClientType.B2B}</li>
           </ul>
-        </SummaryCard>
-        <SummaryCard
+        </SummaryChip>
+        <SummaryChip
           title="New Subscribers This Month"
           value={String(stats.newSubscribersThisMonth)}
           expandable
         >
-          <ul className="space-y-1">
+          <ul className="space-y-0.5">
             <li>B2C: {stats.newSubscribersByClientType.B2C}</li>
             <li>B2B: {stats.newSubscribersByClientType.B2B}</li>
           </ul>
-        </SummaryCard>
+        </SummaryChip>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative min-w-0 flex-1">
+      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-6 py-3">
+        <div className="relative w-full max-w-sm">
           <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="pl-9"
-            placeholder="Search bundles…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              resetToFirstPage();
+            }}
+            placeholder="Search by Bundle Name"
+            className="pl-9"
           />
         </div>
-        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as ClientType | "all")}>
-          <SelectTrigger className="w-full sm:w-36">
+        <Separator orientation="vertical" className="h-6" />
+        <Select
+          value={typeFilter}
+          onValueChange={(v) => {
+            setTypeFilter(v as ClientType | "all");
+            resetToFirstPage();
+          }}
+        >
+          <SelectTrigger size="sm" className="w-[140px]">
             <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
@@ -260,9 +302,12 @@ export function BundleListingScreen() {
         </Select>
         <Select
           value={statusFilter}
-          onValueChange={(v) => setStatusFilter(v as BundleStatus | "all")}
+          onValueChange={(v) => {
+            setStatusFilter(v as BundleStatus | "all");
+            resetToFirstPage();
+          }}
         >
-          <SelectTrigger className="w-full sm:w-40">
+          <SelectTrigger size="sm" className="w-[150px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -274,9 +319,12 @@ export function BundleListingScreen() {
         </Select>
         <Select
           value={cycleFilter}
-          onValueChange={(v) => setCycleFilter(v as BillingCycle | "all")}
+          onValueChange={(v) => {
+            setCycleFilter(v as BillingCycle | "all");
+            resetToFirstPage();
+          }}
         >
-          <SelectTrigger className="w-full sm:w-40">
+          <SelectTrigger size="sm" className="w-[160px]">
             <SelectValue placeholder="Billing Cycle" />
           </SelectTrigger>
           <SelectContent>
@@ -288,102 +336,172 @@ export function BundleListingScreen() {
         </Select>
       </div>
 
-      {!hydrated ? (
-        <p className="text-caption text-muted-foreground">Loading bundles…</p>
-      ) : filtered.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-caption text-muted-foreground">
-            {emptyMessage}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-[720px] text-left">
-            <TableHeader>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {!hydrated ? (
+          <p className="px-6 py-10 text-caption text-muted-foreground">Loading bundles…</p>
+        ) : pageRows.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 px-6 py-20 text-center">
+            <CreditCard className="h-8 w-8 text-muted-foreground" />
+            <p className="text-body-sm font-medium text-foreground">{emptyMessage}</p>
+          </div>
+        ) : (
+          <table className="w-full caption-bottom text-sm">
+            <TableHeader className="sticky top-0 z-10 border-b border-border bg-background">
               <TableRow>
-                <TableHead>Bundle Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Billing Cycle</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Last Updated</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-12" />
+                <TableHead className="text-overline pl-6 text-muted-foreground">Bundle Name</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Type</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Billing Cycle</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Price</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Last Updated</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Status</TableHead>
+                <TableHead className="text-overline pr-6 text-right text-muted-foreground">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((bundle) =>
-                bundle.cycles.length === 0 ? (
-                  <TableRow key={bundle.id}>
-                    <TableCell>
-                      <Link
-                        href={`/superadmin/payments/bundles/${bundle.id}`}
-                        className="font-medium text-primary hover:underline"
-                      >
-                        {bundle.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{bundle.type}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">—</TableCell>
-                    <TableCell className="text-muted-foreground">—</TableCell>
-                    <TableCell>{formatUpdated(bundle.updatedAt)}</TableCell>
-                    <TableCell>
-                      <BundleStatusPill status={bundle.status} />
-                    </TableCell>
-                    <TableCell>
-                      <BundleRowActions
-                        bundle={bundle}
-                        onDeactivate={() => setConfirmDeactivate(bundle)}
-                        onReactivate={() => handleReactivate(bundle)}
-                        onDuplicate={() => handleDuplicate(bundle)}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  bundle.cycles.map((cycle, idx) => (
-                    <TableRow key={`${bundle.id}-${cycle.cycle}`}>
-                      <TableCell>
-                        {idx === 0 ? (
-                          <Link
-                            href={`/superadmin/payments/bundles/${bundle.id}`}
-                            className="font-medium text-primary hover:underline"
-                          >
-                            {bundle.name}
+              {pageRows.map((bundle) => (
+                <TableRow key={bundle.id}>
+                  <TableCell className="pl-6">
+                    <Link
+                      href={`/superadmin/payments/bundles/${bundle.id}`}
+                      className="text-left font-semibold text-text-primary hover:underline"
+                    >
+                      {bundle.name}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-caption text-muted-foreground">{bundle.type}</TableCell>
+                  <TableCell className="text-caption text-muted-foreground">
+                    {formatCyclesInline(bundle)}
+                  </TableCell>
+                  <TableCell className="text-caption text-muted-foreground">
+                    {formatPricesInline(bundle)}
+                  </TableCell>
+                  <TableCell className="text-caption text-muted-foreground">
+                    {formatUpdated(bundle.updatedAt)}
+                  </TableCell>
+                  <TableCell>
+                    <BundleStatusPill status={bundle.status} />
+                  </TableCell>
+                  <TableCell className="pr-6 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Actions for ${bundle.name}`}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/superadmin/payments/bundles/${bundle.id}`}>
+                            Edit Bundle
                           </Link>
-                        ) : (
-                          <span className="pl-4 text-muted-foreground">↳</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {idx === 0 ? <Badge variant="secondary">{bundle.type}</Badge> : null}
-                      </TableCell>
-                      <TableCell>{BILLING_CYCLE_LABEL[cycle.cycle]}</TableCell>
-                      <TableCell>{formatUsd(cycle.price)}</TableCell>
-                      <TableCell>{idx === 0 ? formatUpdated(bundle.updatedAt) : null}</TableCell>
-                      <TableCell>
-                        {idx === 0 ? <BundleStatusPill status={bundle.status} /> : null}
-                      </TableCell>
-                      <TableCell>
-                        {idx === 0 ? (
-                          <BundleRowActions
-                            bundle={bundle}
-                            onDeactivate={() => setConfirmDeactivate(bundle)}
-                            onReactivate={() => handleReactivate(bundle)}
-                            onDuplicate={() => handleDuplicate(bundle)}
-                          />
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDuplicate(bundle)}>
+                          <Copy className="h-4 w-4" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        {bundle.status === "active" || bundle.status === "inactive" ? (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              variant={bundle.status === "active" ? "destructive" : "default"}
+                              onClick={() =>
+                                bundle.status === "active"
+                                  ? setConfirmDeactivate(bundle)
+                                  : handleReactivate(bundle)
+                              }
+                            >
+                              {bundle.status === "active" ? "Deactivate Bundle" : "Reactivate Bundle"}
+                            </DropdownMenuItem>
+                          </>
                         ) : null}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ),
-              )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </table>
-        </div>
-      )}
+        )}
+      </div>
 
-      <Dialog open={Boolean(confirmDeactivate)} onOpenChange={(o) => !o && setConfirmDeactivate(null)}>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border bg-background px-6 py-4">
+        <div className="text-caption flex items-center gap-2 text-muted-foreground">
+          <span>Rows per page</span>
+          <Select
+            value={String(rowsPerPage)}
+            onValueChange={(v) => {
+              setRowsPerPage(Number(v));
+              resetToFirstPage();
+            }}
+          >
+            <SelectTrigger size="sm" className="w-[72px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROWS_PER_PAGE_OPTIONS.map((n) => (
+                <SelectItem key={n} value={String(n)}>
+                  {n}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="text-caption flex items-center gap-4 text-muted-foreground">
+          <span>
+            {filtered.length === 0
+              ? "0 items found"
+              : `${filtered.length} item${filtered.length === 1 ? "" : "s"} found, displaying ${pageStart + 1} to ${pageEnd}`}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={currentPage === 1}
+              onClick={() => setPage(1)}
+              aria-label="First page"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={currentPage === 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={currentPage === totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              aria-label="Next page"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={currentPage === totalPages}
+              onClick={() => setPage(totalPages)}
+              aria-label="Last page"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <Dialog
+        open={Boolean(confirmDeactivate)}
+        onOpenChange={(o) => !o && setConfirmDeactivate(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Deactivate bundle?</DialogTitle>
@@ -393,7 +511,7 @@ export function BundleListingScreen() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setConfirmDeactivate(null)}>
+            <Button type="button" variant="secondary" onClick={() => setConfirmDeactivate(null)}>
               Cancel
             </Button>
             <Button type="button" variant="destructive" onClick={confirmDeactivateAction}>
@@ -423,43 +541,6 @@ export function BundleListingScreen() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </PaymentsShell>
-  );
-}
-
-function BundleRowActions({
-  bundle,
-  onDeactivate,
-  onReactivate,
-  onDuplicate,
-}: {
-  bundle: PaymentBundle;
-  onDeactivate: () => void;
-  onReactivate: () => void;
-  onDuplicate: () => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button type="button" size="icon" variant="ghost" aria-label="Bundle actions">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/superadmin/payments/bundles/${bundle.id}`}>Edit Bundle</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onDuplicate}>
-          <Copy className="h-4 w-4" />
-          Duplicate
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {bundle.status === "inactive" ? (
-          <DropdownMenuItem onClick={onReactivate}>Reactivate</DropdownMenuItem>
-        ) : bundle.status === "active" ? (
-          <DropdownMenuItem onClick={onDeactivate}>Deactivate</DropdownMenuItem>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    </div>
   );
 }
