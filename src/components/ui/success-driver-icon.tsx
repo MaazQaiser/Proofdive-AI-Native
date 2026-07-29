@@ -37,7 +37,7 @@ function SuccessDriverIcon({
     fill: "currentColor",
     xmlns: "http://www.w3.org/2000/svg",
     preserveAspectRatio: "xMidYMid meet",
-    className: cn("shrink-0", className, "text-extended-cyan-green"),
+    className: cn("shrink-0 text-extended-cyan-green", className),
     "aria-hidden": true as const,
     ...props,
   };
