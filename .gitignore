@@ -45,3 +45,6 @@ next-env.d.ts
 
 # design review docs dropped in repo root
 ProofDive Design Discrepancies.pdf
+
+# payment user stories (local reference only)
+public/brand/Payment_UserStories*.pdf

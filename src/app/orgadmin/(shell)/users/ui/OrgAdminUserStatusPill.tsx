@@ -13,7 +13,7 @@ export function OrgAdminUserStatusPill({ status }: { status: OrgAdminUserStatus 
   const Icon = status === "active" ? CheckCircle2 : status === "invited" ? Clock : Ban;
 
   return (
-    <span className={cn("text-overline inline-flex h-6 w-fit items-center gap-1 rounded-full border px-2 whitespace-nowrap", tone)}>
+    <span className={cn("text-overline inline-flex h-6 w-fit items-center gap-1 rounded-full border pl-1 pr-2 whitespace-nowrap", tone)}>
       <Icon className="h-3.5 w-3.5" />
       {ORG_ADMIN_USER_STATUS_LABEL[status]}
     </span>

@@ -10,7 +10,6 @@ import {
   Plus,
   Search,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -56,17 +55,19 @@ import {
   type OrganizationType,
   type SubscriptionStatus,
 } from "@/lib/superAdminOrganizations";
+import { DEFAULT_FRAMEWORK_ID } from "@/lib/superAdminCompetencyFrameworks";
 import { useCompetencyFrameworks } from "@/lib/useCompetencyFrameworks";
 import { useOrganizations } from "@/lib/useOrganizations";
 
+import { AddOrganizationDialog } from "./AddOrganizationDialog";
 import { OrganizationDetailDrawer } from "./OrganizationDetailDrawer";
 import { OrganizationStatusPill, SubscriptionStatusPill } from "./StatusPills";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
 
 export function OrganizationsListScreen() {
-  const router = useRouter();
-  const { organizations, updateOrganization } = useOrganizations();
+  const { organizations, addOrganization, updateOrganization, existingNames } =
+    useOrganizations();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<OrganizationType | "all">("all");
   const [countryFilter, setCountryFilter] = useState<string>("all");
@@ -75,8 +76,9 @@ export function OrganizationsListScreen() {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(ROWS_PER_PAGE_OPTIONS[0]);
   const [confirmTarget, setConfirmTarget] = useState<{ org: Organization; nextStatus: OrganizationStatus } | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const { summaries: frameworks } = useCompetencyFrameworks();
+  const { summaries: frameworks, createCopy } = useCompetencyFrameworks();
 
   const selectedOrganization = organizations.find((o) => o.id === selectedOrgId) ?? null;
 
@@ -108,7 +110,16 @@ export function OrganizationsListScreen() {
   }
 
   function handleAddOrganization() {
-    router.push("/superadmin/organizations/new");
+    setIsAddDialogOpen(true);
+  }
+
+  function handleCreateOrganization(org: Organization) {
+    addOrganization(org);
+    setIsAddDialogOpen(false);
+    resetToFirstPage();
+    toast.success(
+      `"${org.name}" was created and an invitation was sent to the Organization Admin.`,
+    );
   }
 
   function handleViewDetails(org: Organization) {
@@ -403,6 +414,27 @@ export function OrganizationsListScreen() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AddOrganizationDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        existingOrganizationNames={existingNames}
+        frameworks={frameworks.length > 0 ? frameworks : COMPETENCY_FRAMEWORKS}
+        onCreateFramework={(name) => {
+          const created = createCopy(DEFAULT_FRAMEWORK_ID, name);
+          if (!created) {
+            toast.error("Could not create competency framework copy.");
+            return null;
+          }
+          toast.success(`Draft framework "${created.name}" created.`);
+          return {
+            id: created.id,
+            name: created.name,
+            isDefault: created.isDefault,
+          };
+        }}
+        onCreate={handleCreateOrganization}
+      />
 
       <OrganizationDetailDrawer
         organization={selectedOrganization}

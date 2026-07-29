@@ -39,12 +39,7 @@ export function SuperAdminDashboardScreen() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-h5 text-foreground">Overview</h1>
-          <p className="mt-0.5 text-caption text-muted-foreground">
-            Read-only platform KPIs and usage trends.
-          </p>
-        </div>
+        <h1 className="text-h4 text-foreground">Overview</h1>
         <DateRangeFilter value={granularity} onChange={setGranularity} options={DATE_RANGE_OPTIONS} />
       </div>
 

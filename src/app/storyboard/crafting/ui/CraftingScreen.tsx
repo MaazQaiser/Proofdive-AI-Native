@@ -22,6 +22,7 @@ import {
   Save,
   Sparkles,
   Unlock,
+  X,
 } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -747,19 +748,13 @@ function DraftSectionCard({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [draftInput, setDraftInput] = useState("");
-  const [tooltipOpen, setTooltipOpen] = useState(false);
   const regenBlocked = Boolean(onRegenerate && regenCount >= regenLimit);
-  const progress = onRegenerate ? Math.min(1, regenCount / regenLimit) : 0;
-  const circumference = 2 * Math.PI * 8;
-  const dashOffset = circumference * (1 - progress);
+  const regenRemaining = Math.max(0, regenLimit - regenCount);
 
   function handleSendQuickChange() {
     if (!onRegenerate) return;
+    if (regenBlocked) return;
     const result = onRegenerate(draftInput);
-    if (!result.ok && result.reason === "limit") {
-      setTooltipOpen(true);
-      return;
-    }
     if (!result.ok) return;
     setDraftInput("");
     setIsEditing(false);
@@ -810,82 +805,17 @@ function DraftSectionCard({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsEditing((v) => !v)}
+                onClick={() => {
+                  setIsEditing((v) => !v);
+                  setDraftInput("");
+                }}
                 className="print:hidden"
-                title="Show an inline edit field"
+                title={isEditing ? "Cancel edit" : "Show an inline edit field"}
               >
-                <Pencil />
-                {isEditing ? "Close" : "Edit"}
+                {isEditing ? <X /> : <Pencil />}
+                {isEditing ? "Cancel" : "Edit"}
               </Button>
-              {onRegenerate ? (
-                <>
-                  {showLockToggle ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={onToggleLock}
-                      className="print:hidden"
-                      title={locked ? "Unlock to edit" : "Lock to prevent edits"}
-                    >
-                      {locked ? <Unlock /> : <Lock />}
-                      {locked ? "Unlock" : "Lock"}
-                    </Button>
-                  ) : null}
-                  {isEditing ? (
-                    <div className="relative print:hidden">
-                      <button
-                        type="button"
-                        className="inline-flex size-8 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                        aria-label={
-                          regenBlocked
-                            ? "Regenerate limit reached"
-                            : `${regenLimit - regenCount} regenerations remaining`
-                        }
-                        onMouseEnter={() => setTooltipOpen(true)}
-                        onMouseLeave={() => setTooltipOpen(false)}
-                        onFocus={() => setTooltipOpen(true)}
-                        onBlur={() => setTooltipOpen(false)}
-                      >
-                        <svg
-                          aria-hidden
-                          viewBox="0 0 20 20"
-                          className="size-4 -rotate-90"
-                        >
-                          <circle
-                            cx="10"
-                            cy="10"
-                            r="8"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="opacity-20"
-                          />
-                          <circle
-                            cx="10"
-                            cy="10"
-                            r="8"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeDasharray={circumference}
-                            strokeDashoffset={dashOffset}
-                            className={regenBlocked ? "text-destructive" : "text-primary"}
-                          />
-                        </svg>
-                      </button>
-                      {tooltipOpen ? (
-                        <div className="absolute right-0 top-[calc(100%+8px)] z-20 w-56 rounded-lg border border-border bg-white p-3 text-caption leading-snug text-text-primary shadow-[0_8px_20px_rgba(14,154,181,0.12)]">
-                          {regenBlocked
-                            ? `The ${regenLimit} regeneration limit for this competency has been exceeded.`
-                            : `${regenLimit - regenCount} of ${regenLimit} regenerations remaining for this competency.`}
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </>
-              ) : showLockToggle ? (
+              {showLockToggle ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -923,20 +853,45 @@ function DraftSectionCard({
                       handleSendQuickChange();
                     }
                   }}
+                  disabled={regenBlocked}
                   placeholder={onRegenerate ? "Type the change you want..." : "Type here..."}
-                  className="w-full rounded-md border border-border bg-card px-3 py-2 pr-12 text-caption text-text-primary outline-none placeholder:text-placeholder focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                  className="w-full rounded-md border border-border bg-card px-3 py-2 pr-12 text-caption text-text-primary outline-none placeholder:text-placeholder focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <button
                   type="button"
                   aria-label="Send quick change"
                   title="Send quick change"
-                  className="absolute right-1.5 top-1/2 z-10 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md bg-primary text-primary-foreground transition hover:bg-primary/90"
+                  disabled={regenBlocked}
+                  className="absolute right-1.5 top-1/2 z-10 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md bg-primary text-primary-foreground transition hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
                   onClick={handleSendQuickChange}
                 >
                   <ArrowRight className="size-4" />
                 </button>
               </div>
             </label>
+            {onRegenerate ? (
+              <p
+                className={cn(
+                  "mt-1.5 text-caption leading-5",
+                  regenBlocked ? "text-destructive" : "text-text-secondary",
+                )}
+              >
+                {regenBlocked
+                  ? `Regeneration limit reached (${regenLimit} of ${regenLimit} used).`
+                  : `${regenRemaining} of ${regenLimit} regenerations remaining.`}
+                {regenBlocked ? (
+                  <>
+                    {" "}
+                    <a
+                      href="/profile/billing?addon=storyboard"
+                      className="font-medium text-primary underline-offset-2 hover:underline"
+                    >
+                      Purchase Storyboard add-on
+                    </a>
+                  </>
+                ) : null}
+              </p>
+            ) : null}
           </div>
         ) : null}
       </div>
