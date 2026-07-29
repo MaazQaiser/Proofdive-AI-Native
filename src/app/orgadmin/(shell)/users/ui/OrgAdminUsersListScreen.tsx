@@ -227,7 +227,7 @@ export function OrgAdminUsersListScreen() {
                     <button
                       type="button"
                       onClick={() => handleViewDetails(user)}
-                      className="text-caption text-left font-semibold text-primary hover:underline"
+                      className="text-left font-semibold text-text-primary hover:underline"
                     >
                       {user.name}
                     </button>

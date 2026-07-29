@@ -1,7 +1,7 @@
 import { BookOpen, GraduationCap, UserCheck, type LucideIcon } from "lucide-react";
 
 import { hasCompletedAnyTrainingForRole } from "@/lib/trainingJourneyProgress";
-import type { StoryboardFromCraft, TrainingJourneyProgress } from "@/lib/proofdiveTypes";
+import type { TrainingJourneyProgress } from "@/lib/proofdiveTypes";
 
 export type JourneySignals = {
   hasCraftedStoryboard: boolean;
@@ -15,15 +15,14 @@ export type JourneySignals = {
  */
 export function deriveJourneySignals(ctx: {
   role: string;
-  fromCraft: StoryboardFromCraft | null;
+  /** True when the role has at least one saved Dive. */
+  hasSavedDives: boolean;
   roleExperienceCount: number;
   storyOverallScore: number;
 }): JourneySignals {
   if (!ctx.role) return { hasCraftedStoryboard: false, hasCreatedStoryboard: false };
 
-  const hasCraftedStoryboard = Boolean(
-    ctx.fromCraft && ctx.fromCraft.v === 1 && ctx.fromCraft.role === ctx.role,
-  );
+  const hasCraftedStoryboard = ctx.hasSavedDives;
   const hasCreatedStoryboard =
     hasCraftedStoryboard || ctx.roleExperienceCount > 0 || ctx.storyOverallScore > 0;
 

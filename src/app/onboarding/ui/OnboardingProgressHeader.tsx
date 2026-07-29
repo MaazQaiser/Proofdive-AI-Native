@@ -17,14 +17,17 @@ type OnboardingProgressHeaderProps = {
  * empty space — an empty left side reads as lopsided next to the percent
  * label on the right, since nothing else balances that side of the row.
  *
+ * Pinned under the logo navbar — the onboarding shell scrolls content below
+ * this row, so it stays fixed without needing `sticky`.
+ *
  * Not rendered on the finished ("done") step — onboarding is complete, so
- * the progress chrome is omitted and "Go to Home" lives on the composer. */
+ * the progress chrome is omitted. */
 export function OnboardingProgressHeader({
   percent,
   onBack,
 }: OnboardingProgressHeaderProps) {
   return (
-    <div className="sticky top-0 z-20 flex w-full flex-col gap-3 bg-background/90 py-2 backdrop-blur-sm">
+    <div className="flex w-full flex-col gap-3 bg-background py-2">
       <div className="flex w-full items-start justify-between">
         <Button
           type="button"

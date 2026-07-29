@@ -21,7 +21,8 @@ type CardButtonProps = React.ComponentProps<"button"> & {
 
 /** Module CTA — compact left content, diagonal arrow top-right, and a large
  * blurred illustration as a glass symbol (same treatment as SuccessDriverCard).
- * `primary` is the filled teal tile; `gray` is frosted white with accent chrome. */
+ * `primary` is the filled teal tile; `gray` is frosted white with accent chrome.
+ * Title: `text-body-lg` (20px). Subtitle: `text-caption` (14px). */
 function CardButton({
   className,
   variant = "primary",
@@ -42,10 +43,8 @@ function CardButton({
 
       <span
         className={cn(
-          "absolute top-3 right-3 z-10 grid size-8 place-items-center rounded-full transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0",
-          isPrimary
-            ? "bg-white/20 text-primary-foreground backdrop-blur-sm"
-            : "bg-white/70 text-primary shadow-sm backdrop-blur-sm",
+          "absolute top-3 right-3 z-10 grid size-8 place-items-center transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0",
+          isPrimary ? "text-primary-foreground" : "text-primary",
         )}
         aria-hidden
       >
@@ -72,7 +71,7 @@ function CardButton({
         >
           <p
             className={cn(
-              "text-[18px] leading-snug font-semibold tracking-tight",
+              "text-body-lg leading-snug font-semibold tracking-tight",
               isPrimary ? "text-primary-foreground" : "text-text-primary",
             )}
           >
@@ -80,7 +79,7 @@ function CardButton({
           </p>
           <p
             className={cn(
-              "max-w-[14rem] text-[13px] leading-snug",
+              "max-w-[14rem] text-caption leading-snug",
               isPrimary ? "text-primary-foreground/90" : "text-text-secondary",
             )}
           >
@@ -92,7 +91,7 @@ function CardButton({
   );
 
   const sharedClassName = cn(
-    "group relative flex min-h-[112px] w-full flex-col overflow-hidden rounded-2xl p-4 text-left",
+    "group relative flex min-h-[112px] w-full flex-col overflow-hidden rounded-[16px] p-4 text-left",
     "backdrop-blur-xl",
     "transition-[transform,box-shadow,background-color] duration-200 ease-out",
     "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",

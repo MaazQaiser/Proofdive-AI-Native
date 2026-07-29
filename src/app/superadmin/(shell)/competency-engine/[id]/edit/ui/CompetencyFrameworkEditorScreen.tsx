@@ -16,16 +16,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { SuccessDriverMark } from "@/components/ui/success-driver-card";
-import { SUCCESS_DRIVER_ORDER, SUCCESS_DRIVERS } from "@/lib/successDrivers";
+import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
+import { SUCCESS_DRIVER_SYMBOL_CLASS } from "@/components/ui/success-driver-card";
+import { SUCCESS_DRIVER_ORDER, SUCCESS_DRIVERS, type SuccessDriverId } from "@/lib/successDrivers";
 import {
   competenciesByDriver,
   type CompetencyFrameworkVersion,
   type FrameworkCompetency,
 } from "@/lib/superAdminCompetencyFrameworks";
 import { useCompetencyFrameworks } from "@/lib/useCompetencyFrameworks";
+import { cn } from "@/lib/utils";
 
 import { Disclosure, IconLabel } from "../../../ui/Disclosure";
+import { InlineRename } from "../../../ui/InlineRename";
 
 type Props = { frameworkId: string };
 
@@ -36,9 +39,13 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
 
   const [name, setName] = useState("");
   const [competencies, setCompetencies] = useState<FrameworkCompetency[]>([]);
+  const [driverLabels, setDriverLabels] = useState<
+    Partial<Record<SuccessDriverId, string>>
+  >({});
   const [baseline, setBaseline] = useState<{
     name: string;
     competencies: FrameworkCompetency[];
+    driverLabels: Partial<Record<SuccessDriverId, string>>;
   } | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
 
@@ -49,11 +56,14 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
       router.replace("/superadmin/competency-engine");
       return;
     }
+    const labels = structuredClone(stored.driverLabels ?? {});
     setName(stored.name);
     setCompetencies(structuredClone(stored.competencies));
+    setDriverLabels(labels);
     setBaseline({
       name: stored.name,
       competencies: structuredClone(stored.competencies),
+      driverLabels: structuredClone(labels),
     });
   }, [hydrated, stored, router]);
 
@@ -61,13 +71,14 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
     if (!baseline) return false;
     return (
       name.trim() !== baseline.name.trim() ||
-      JSON.stringify(competencies) !== JSON.stringify(baseline.competencies)
+      JSON.stringify(competencies) !== JSON.stringify(baseline.competencies) ||
+      JSON.stringify(driverLabels) !== JSON.stringify(baseline.driverLabels)
     );
-  }, [baseline, name, competencies]);
+  }, [baseline, name, competencies, driverLabels]);
 
   function updateCompetency(
     competencyId: string,
-    patch: Partial<Pick<FrameworkCompetency, "definition" | "coreQuestion">>,
+    patch: Partial<Pick<FrameworkCompetency, "definition" | "coreQuestion" | "name">>,
   ) {
     setCompetencies((prev) =>
       prev.map((c) => (c.id === competencyId ? { ...c, ...patch } : c)),
@@ -77,7 +88,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
   function updateLevel(
     competencyId: string,
     level: number,
-    patch: Partial<{ humanDescriptor: string; aiDescriptor: string }>,
+    patch: Partial<{ humanDescriptor: string; aiDescriptor: string; label: string }>,
   ) {
     setCompetencies((prev) =>
       prev.map((c) => {
@@ -90,6 +101,10 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
     );
   }
 
+  function updateDriverLabel(driverId: SuccessDriverId, label: string) {
+    setDriverLabels((prev) => ({ ...prev, [driverId]: label }));
+  }
+
   function persist(status: CompetencyFrameworkVersion["status"], leaveAfter: boolean) {
     const trimmed = name.trim();
     if (!trimmed) {
@@ -100,8 +115,16 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
       toast.error("A framework with that name already exists.");
       return;
     }
-    saveFrameworkContent(frameworkId, { name: trimmed, competencies }, status);
-    setBaseline({ name: trimmed, competencies: structuredClone(competencies) });
+    saveFrameworkContent(
+      frameworkId,
+      { name: trimmed, competencies, driverLabels },
+      status,
+    );
+    setBaseline({
+      name: trimmed,
+      competencies: structuredClone(competencies),
+      driverLabels: structuredClone(driverLabels),
+    });
     toast.success(status === "draft" ? "Draft saved." : "Framework published.");
     if (leaveAfter) router.push("/superadmin/competency-engine");
   }
@@ -130,15 +153,16 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
     <div className="-m-6 flex h-full flex-col overflow-hidden">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-12 py-4">
         <div className="min-w-0 space-y-0.5">
-          <p className="text-overline font-medium tracking-wide text-muted-foreground uppercase">
-            Competency framework
-          </p>
-          <h1 className="text-h6 text-foreground">Edit copy</h1>
+          <h1 className="text-h1 font-bold text-foreground">Edit copy</h1>
           <p className="text-caption text-muted-foreground">
             Update definitions, core questions, and level descriptors.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="ghost" onClick={handleClose}>
+            <X className="h-4 w-4" />
+            Cancel
+          </Button>
           <Button type="button" variant="outline" onClick={() => persist("draft", false)}>
             <FilePenLine className="h-4 w-4" />
             Save draft
@@ -146,10 +170,6 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
           <Button type="button" onClick={() => persist("published", false)}>
             <Save className="h-4 w-4" />
             Save changes
-          </Button>
-          <Button type="button" variant="ghost" onClick={handleClose}>
-            <X className="h-4 w-4" />
-            Close
           </Button>
         </div>
       </div>
@@ -179,26 +199,44 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
                 Success Drivers & competencies
               </h2>
               <p className="mt-0.5 text-caption text-muted-foreground">
-                Expand a driver, then a competency, to edit definition, core question, and
-                descriptors for each level.
+                Expand a competency to edit its definition, core question, and descriptors for
+                each level.
               </p>
             </div>
 
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-8">
               {SUCCESS_DRIVER_ORDER.map((driverId) => {
-                const driver = SUCCESS_DRIVERS[driverId];
                 const comps = competenciesByDriver(competencies, driverId);
+                const driverTitle =
+                  driverLabels[driverId]?.trim() || SUCCESS_DRIVERS[driverId].label;
                 return (
-                  <Disclosure
-                    key={driverId}
-                    tone="driver"
-                    title={<SuccessDriverMark driver={driverId} label="full" />}
-                    subtitle={`${comps.length} competencies · ${driver.shortLabel}`}
-                    defaultOpen={driverId === "thinking"}
-                  >
+                  <div key={driverId} className="flex flex-col gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <SuccessDriverIcon
+                        driver={driverId}
+                        className={cn("size-5 shrink-0", SUCCESS_DRIVER_SYMBOL_CLASS)}
+                      />
+                      <InlineRename
+                        value={driverTitle}
+                        onSave={(next) => updateDriverLabel(driverId, next)}
+                        ariaLabel={`Rename ${driverTitle}`}
+                        textClassName="font-semibold text-extended-cyan-green"
+                      />
+                    </div>
                     <div className="flex flex-col gap-3">
                       {comps.map((comp) => (
-                        <Disclosure key={comp.id} tone="competency" title={comp.name}>
+                        <Disclosure
+                          key={comp.id}
+                          tone="competency"
+                          title={
+                            <InlineRename
+                              value={comp.name}
+                              onSave={(next) => updateCompetency(comp.id, { name: next })}
+                              ariaLabel={`Rename ${comp.name}`}
+                              textClassName="text-body-sm font-semibold text-foreground"
+                            />
+                          }
+                        >
                           <div className="flex flex-col gap-5">
                             <div className="space-y-3">
                               <h4 className="text-overline font-medium tracking-wide text-muted-foreground uppercase">
@@ -250,11 +288,20 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
                                     key={level.level}
                                     tone="level"
                                     title={
-                                      <span className="inline-flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                      <span className="inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
                                         <span className="text-caption font-semibold text-muted-foreground">
                                           Level {level.level}
                                         </span>
-                                        <span>{level.label}</span>
+                                        <InlineRename
+                                          value={level.label}
+                                          onSave={(next) =>
+                                            updateLevel(comp.id, level.level, {
+                                              label: next,
+                                            })
+                                          }
+                                          ariaLabel={`Rename level ${level.level} label`}
+                                          textClassName="text-body-sm font-medium text-foreground"
+                                        />
                                       </span>
                                     }
                                   >
@@ -304,7 +351,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
                         </Disclosure>
                       ))}
                     </div>
-                  </Disclosure>
+                  </div>
                 );
               })}
             </div>

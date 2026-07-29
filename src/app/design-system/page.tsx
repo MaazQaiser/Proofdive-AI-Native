@@ -202,14 +202,14 @@ const TYPE_STYLES: TypeStyle[] = [
     key: "h1",
     className: "text-h1",
     label: "H1",
-    size: "52px",
+    size: "48px",
     weight: "400",
-    tracking: "-1.04px",
+    tracking: "-0.96px",
     note: "Reuses the Agent heading style below (same size/weight/tracking, but text-foreground instead of text-heading-teal) — the old 80px/700 slab read too heavy.",
   },
   { key: "h2", className: "text-h2", label: "H2", size: "42px", weight: "500", tracking: "-2.6px" },
   { key: "h3", className: "text-h3", label: "H3", size: "32px", weight: "500", tracking: "-2.6px" },
-  { key: "h4", className: "text-h4", label: "H4", size: "24px", weight: "500", tracking: "-2px" },
+  { key: "h4", className: "text-h4", label: "H4", size: "24px", weight: "500", tracking: "-2px", note: "Page titles in admin shells (e.g. Organizations, Competency Frameworks)." },
   { key: "h5", className: "text-h5", label: "H5", size: "18px", weight: "500", tracking: "-1.3px" },
   { key: "h6", className: "text-h6", label: "H6", size: "14px", weight: "500", tracking: "-0.65px" },
   {
@@ -265,9 +265,9 @@ const TYPE_STYLES: TypeStyle[] = [
     key: "agent-heading",
     className: "text-agent-heading",
     label: "Agent heading",
-    size: "52px",
+    size: "48px",
     weight: "400",
-    tracking: "-1.04px",
+    tracking: "-0.96px",
     colorClassName: "text-heading-teal",
     note: "Big greeting headline — used by onboarding's agent prompt and the Coach dashboard hero. Always paired with text-heading-teal (#094149), not text-foreground.",
   },
@@ -275,9 +275,9 @@ const TYPE_STYLES: TypeStyle[] = [
     key: "agent-question",
     className: "text-agent-question",
     label: "Agent question",
-    size: "32px",
+    size: "28px",
     weight: "400",
-    tracking: "-0.64px",
+    tracking: "-0.56px",
     note: "The question/subtext line beneath an agent heading. Pairs with text-text-primary.",
   },
 ];
@@ -1009,18 +1009,38 @@ export default function DesignSystemPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Selection chip</CardTitle>
-                  <CardDescription>Default, hover (try it), selected</CardDescription>
+                  <CardDescription>
+                    Default, hover (try it), selected. Text-only uses 16px
+                    horizontal padding. With a leading icon: 8px left / 16px right.
+                    With a trailing icon: 16px left / 8px right.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-wrap items-center gap-3">
-                  {CHIP_OPTIONS.map((option) => (
-                    <SelectionChip
-                      key={option}
-                      selected={selectedChip === option}
-                      onClick={() => setSelectedChip(option)}
-                    >
-                      {option}
+                <CardContent className="flex flex-col gap-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    {CHIP_OPTIONS.map((option) => (
+                      <SelectionChip
+                        key={option}
+                        selected={selectedChip === option}
+                        onClick={() => setSelectedChip(option)}
+                      >
+                        {option}
+                      </SelectionChip>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <SelectionChip>
+                      <Pencil className="size-4" />
+                      Edit
                     </SelectionChip>
-                  ))}
+                    <SelectionChip selected>
+                      <Pencil className="size-4" />
+                      Edit
+                    </SelectionChip>
+                    <SelectionChip>
+                      Use this draft
+                      <ArrowRight className="size-4" />
+                    </SelectionChip>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1075,6 +1095,8 @@ export default function DesignSystemPage() {
                   <CardDescription>
                     Module CTAs — glass fill, diagonal arrow, blurred corner symbol.
                     Primary (teal) and gray (frosted) variants share one component.
+                    Title uses <code>text-body-lg</code> (20px semibold); subtitle uses{" "}
+                    <code>text-caption</code> (14px).
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-4">
@@ -1091,7 +1113,7 @@ export default function DesignSystemPage() {
                     variant="gray"
                     icon={<UserCheck />}
                     title="Mock interview"
-                    subtitle="Evaluate yourself for UX role"
+                    subtitle="Practice for this role"
                     illustrationSrc="/brand/illustration-4.svg"
                   />
                 </CardContent>

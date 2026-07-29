@@ -12,10 +12,7 @@ import {
 import {
   ArrowRight,
   BookOpen,
-  Home,
   MessageCircleQuestion,
-  Pencil,
-  RotateCcw,
   UserCheck,
   WandSparkles,
 } from "lucide-react";
@@ -23,16 +20,12 @@ import {
 import type { ChatMessage } from "@/components/chat/chatTypes";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { ChatComposer } from "@/components/chat/ChatComposer";
-import { Card, CardContent } from "@/components/ui/card";
 import { CardButton } from "@/components/ui/card-button";
-import { Textarea } from "@/components/ui/textarea";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
 import { Logo } from "@/components/ui/logo";
-import {
-  SelectionChip,
-  selectionChipVariants,
-} from "@/components/ui/selection-chip";
+import { SelectionChip } from "@/components/ui/selection-chip";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
+import { GeneratedJdPanel } from "@/app/onboarding/ui/GeneratedJdPanel";
 import { OnboardingProgressHeader } from "@/app/onboarding/ui/OnboardingProgressHeader";
 import { makeId } from "@/lib/id";
 import { reportCountForRole, upsertSavedRole } from "@/lib/proofdiveLogic";
@@ -45,7 +38,7 @@ import {
 } from "@/lib/coreFourSuggestion";
 import { generateMockJobDescription } from "@/lib/jobDescriptionMock";
 import { cn } from "@/lib/utils";
-import type { CompetencyId } from "@/lib/storyboardDraft";
+import { COMPETENCY_SPECS, type CompetencyId } from "@/lib/storyboardDraft";
 import { CoreFourSelectionPanel } from "@/app/onboarding/ui/CoreFourSelectionPanel";
 
 type Step =
@@ -164,7 +157,7 @@ function computeInitialOnboardingState(
       role: "assistant",
       createdAt: new Date().toISOString(),
       content:
-        "Everything’s set. Start building your StoryBoard, practice your answers, or explore how ProofDive turns experience into proof.",
+        "Everything’s set.",
     });
   }
 
@@ -307,7 +300,7 @@ function OnboardingAgentInner({
     setRoleProfile(finalized);
     push(
       "assistant",
-      "Everything’s set. Start building your StoryBoard, practice your answers, or explore how ProofDive turns experience into proof.",
+      "Everything’s set.",
     );
     setStep("done");
   }
@@ -333,6 +326,7 @@ function OnboardingAgentInner({
   }
 
   function handleRegenerateJd() {
+    setIsEditingJd(false);
     setGeneratedJdDraft(null);
     setIsGeneratingJd(true);
     const input = jdMockInput();
@@ -344,39 +338,37 @@ function OnboardingAgentInner({
     }, 1400);
   }
 
-  function acceptGeneratedJobDescription(text: string) {
-    push("user", "📝 Used generated job description.");
-    const next = {
-      ...draft,
-      jobDescription: text,
-      jobDescriptionSource: "generated" as const,
-    };
-    setDraft(next);
-    setGeneratedJdDraft(null);
-    push(
-      "assistant",
-      "Got it. If you also have a resume, drop it here. It's totally optional, but it helps me prep you way better for this role.",
-    );
-    setStep("resume");
-  }
-
   function startEditingJd(text: string) {
     setEditedJdText(text);
     setIsEditingJd(true);
   }
 
-  function cancelEditingJd() {
+  function finishEditingJd(text: string) {
+    const next = text.trim();
+    if (!next) return;
+    setGeneratedJdDraft(next);
+    setEditedJdText(next);
     setIsEditingJd(false);
   }
 
-  function confirmEditedJd() {
-    const text = editedJdText.trim();
-    if (!text) return;
-    push("user", "📝 Edited generated job description before using it.");
+  function acceptGeneratedJobDescription(text: string) {
+    const payload = text.trim();
+    if (!payload) return;
+    const wasEdited =
+      isEditingJd ||
+      (generatedJdDraft != null && payload !== generatedJdDraft);
+    push(
+      "user",
+      wasEdited
+        ? "📝 Edited generated job description before using it."
+        : "📝 Used generated job description.",
+    );
     const next = {
       ...draft,
-      jobDescription: text,
-      jobDescriptionSource: "user" as const,
+      jobDescription: payload,
+      jobDescriptionSource: wasEdited
+        ? ("user" as const)
+        : ("generated" as const),
     };
     setDraft(next);
     setIsEditingJd(false);
@@ -391,12 +383,14 @@ function OnboardingAgentInner({
   function toggleCoreFourCompetency(id: CompetencyId) {
     setCoreFourError(null);
     setDraft((d) => {
-      const has = d.coreFourCompetencies.includes(id);
+      const targetPillar = COMPETENCY_SPECS.find((spec) => spec.id === id)?.pillar;
+      const nextSelected = d.coreFourCompetencies.filter((selectedId) => {
+        const pillar = COMPETENCY_SPECS.find((spec) => spec.id === selectedId)?.pillar;
+        return pillar !== targetPillar;
+      });
       return {
         ...d,
-        coreFourCompetencies: has
-          ? d.coreFourCompetencies.filter((x) => x !== id)
-          : [...d.coreFourCompetencies, id],
+        coreFourCompetencies: [...nextSelected, id],
       };
     });
   }
@@ -663,7 +657,7 @@ function OnboardingAgentInner({
       const role = next.targetRole.trim() || "your role";
       push(
         "assistant",
-        `Job description next.\n\nType or upload the Job description you are targeting for your ${role} role. Or Generate a Job Description`,
+        `Your job description.\n\nType or upload the Job description you are targeting for your ${role} role. Or AI assistant can help you Generate a Job Description`,
       );
       setStep("jobDescription");
       return;
@@ -724,8 +718,8 @@ function OnboardingAgentInner({
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-background">
-      <header className="relative z-10 flex h-14 w-full shrink-0 items-center border-b border-border bg-background px-6">
+    <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-background">
+      <header className="relative z-30 flex h-14 w-full shrink-0 items-center border-b border-border bg-background px-6">
         <Link
           href="/"
           className="flex h-full shrink-0 items-center border-r border-border pr-6"
@@ -733,25 +727,45 @@ function OnboardingAgentInner({
           <Logo size="xxs" />
         </Link>
       </header>
-      <div className="relative z-[2] mx-auto flex w-[800px] max-w-full flex-1 flex-col px-6 pb-32 pt-4">
+      <div className="relative z-[2] mx-auto flex min-h-0 w-[800px] max-w-full flex-1 flex-col px-6">
         {step !== "done" ? (
-          <OnboardingProgressHeader
-            percent={STEP_PERCENT[step]}
-            onBack={canGoBack ? goBack : undefined}
-          />
+          <div className="shrink-0 bg-background pt-4">
+            <OnboardingProgressHeader
+              percent={STEP_PERCENT[step]}
+              onBack={canGoBack ? goBack : undefined}
+            />
+          </div>
         ) : null}
 
-        <div className="flex flex-1 items-center justify-center py-10">
-          <div className="w-full">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-32">
+          <div
+            className={cn(
+              "flex min-h-full items-center justify-center py-10",
+              step === "done" && "pt-14",
+            )}
+          >
+            <div className="w-full">
             <AgentPrompt
               key={
-                step === "jobDescription" ? `${promptKey}-jd` : promptKey
+                step === "jobDescription"
+                  ? `${promptKey}-jd-${generatedJdDraft ? "ready" : isGeneratingJd ? "gen" : "ask"}`
+                  : promptKey
               }
               promptKey={
-                step === "jobDescription" ? `${promptKey}-jd` : promptKey
+                step === "jobDescription"
+                  ? `${promptKey}-jd-${generatedJdDraft ? "ready" : isGeneratingJd ? "gen" : "ask"}`
+                  : promptKey
               }
               prompt={
-                step === "jobDescription" ? "Job description next." : prompt
+                step === "jobDescription"
+                  ? generatedJdDraft
+                    ? "Here's your job description."
+                    : isGeneratingJd
+                      ? "Crafting your job description."
+                      : "Your job description."
+                  : step === "done"
+                    ? "Everything’s set."
+                    : prompt
               }
               ariaLabel="Onboarding prompt"
               headingClassName="text-agent-heading text-heading-teal"
@@ -763,15 +777,28 @@ function OnboardingAgentInner({
             !isGeneratingJd ? (
               <p className="mt-8 text-agent-question text-text-primary">
                 Type or upload the Job description you are targeting for your{" "}
-                {draft.targetRole.trim() || "role"} role. Or{" "}
+                {draft.targetRole.trim() || "role"} role. Or AI assistant can
+                help you{" "}
                 <button
                   type="button"
                   onClick={handleGenerateJd}
-                  className="inline-flex items-center gap-1.5 rounded-sm bg-extended-light-cyan px-1.5 py-0.5 font-medium text-[#095B73] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                 >
                   Generate a Job Description
-                  <WandSparkles className="size-[0.85em] shrink-0 text-primary" aria-hidden />
+                  <WandSparkles className="size-[0.7em] shrink-0 text-primary" aria-hidden />
                 </button>
+              </p>
+            ) : null}
+            {step === "done" ? (
+              <p className="mt-8 text-agent-question text-text-primary">
+                Onboarding is complete. You can{" "}
+                <Link
+                  href={homeHref}
+                  className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                >
+                  go to home
+                  <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />
+                </Link>
               </p>
             ) : null}
             {step === "role" ? (
@@ -811,78 +838,27 @@ function OnboardingAgentInner({
                   roleTitle={draft.targetRole.trim() || undefined}
                 />
               ) : generatedJdDraft ? (
-                <Card className="mt-6 gap-0 py-5">
-                  <CardContent className="flex flex-col gap-4 px-5">
-                    <div className="flex flex-col gap-1.5">
-                      <h2 className="text-h4 text-heading-teal">
-                        Generated Job Description
-                      </h2>
-                      <p className="text-body-sm text-text-secondary">
-                        {isEditingJd
-                          ? "Tweak the draft below, then confirm."
-                          : draft.targetRole.trim()
-                            ? `Drafted for ${draft.targetRole.trim()}${draft.industryVertical.trim() ? ` · ${draft.industryVertical.trim()}` : ""} — review before continuing.`
-                            : "Review before continuing."}
-                      </p>
-                    </div>
-                    {isEditingJd ? (
-                      <Textarea
-                        value={editedJdText}
-                        onChange={(e) => setEditedJdText(e.target.value)}
-                        className="min-h-64 w-full resize-y text-body-sm text-text-primary"
-                        autoFocus
-                      />
-                    ) : (
-                      <div className="whitespace-pre-wrap text-body-sm text-text-primary">
-                        {generatedJdDraft}
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-2">
-                      {isEditingJd ? (
-                        <>
-                          <SelectionChip selected onClick={confirmEditedJd}>
-                            Use this draft
-                            <ArrowRight className="size-4" />
-                          </SelectionChip>
-                          <SelectionChip onClick={cancelEditingJd}>
-                            Cancel
-                          </SelectionChip>
-                        </>
-                      ) : (
-                        <>
-                          <SelectionChip
-                            selected
-                            onClick={() =>
-                              acceptGeneratedJobDescription(generatedJdDraft)
-                            }
-                          >
-                            Use this draft
-                            <ArrowRight className="size-4" />
-                          </SelectionChip>
-                          <SelectionChip
-                            onClick={() => startEditingJd(generatedJdDraft)}
-                          >
-                            <Pencil className="size-4" />
-                            Edit before using
-                          </SelectionChip>
-                          <SelectionChip onClick={handleRegenerateJd}>
-                            <RotateCcw className="size-4" />
-                            Regenerate
-                          </SelectionChip>
-                        </>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                <GeneratedJdPanel
+                  text={generatedJdDraft}
+                  isEditing={isEditingJd}
+                  onEdit={() => startEditingJd(generatedJdDraft)}
+                  onDoneEdit={finishEditingJd}
+                  onRegenerate={handleRegenerateJd}
+                  onAccept={acceptGeneratedJobDescription}
+                  onDraftChange={setEditedJdText}
+                />
               ) : null
             ) : null}
             {step === "coreFourSelection" ? (
               <CoreFourSelectionPanel
                 selected={draft.coreFourCompetencies}
+                targetRole={draft.targetRole}
+                jobDescription={draft.jobDescription}
                 onToggle={toggleCoreFourCompetency}
                 onConfirm={confirmCoreFour}
                 onResetToSuggested={resetCoreFourToSuggested}
                 error={coreFourError}
+                selectionMode="singlePerPillar"
               />
             ) : null}
             {step === "done" ? (
@@ -901,60 +877,52 @@ function OnboardingAgentInner({
                   variant="gray"
                   icon={<UserCheck />}
                   title="Mock interview"
-                  subtitle={`Evaluate yourself for the ${role || "selected"} role`}
+                  subtitle="Practice for this role"
                   illustrationSrc="/brand/illustration-4.svg"
                 />
               </div>
             ) : null}
           </div>
+          </div>
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 z-40 w-full">
           <div className="mx-auto flex w-full max-w-[800px] flex-col gap-2 px-6 py-5">
-            {step === "done" ? (
-              <div className="flex flex-wrap gap-2 px-0.5">
-                <Link
-                  href={homeHref}
-                  className={cn(selectionChipVariants())}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <Home className="size-4" />
-                    Go to Home
-                  </span>
-                </Link>
-              </div>
-            ) : null}
             <ChatComposer
               placeholder={
-                faq.isFaqMode
+                step === "done" && faq.isFaqMode
                   ? "I am here to help you!"
                   : "Reply (paste here or upload)"
               }
-              onSend={handleAnswer}
-              disabled={
-                step === "coreFourSelection" ||
-                isEditingJd ||
-                faq.isFaqMode
+              onSend={
+                step === "done"
+                  ? (text) => faq.handleFreeText(text)
+                  : handleAnswer
               }
+              disabled={step === "coreFourSelection" || isEditingJd}
               uploadAccept=".pdf,.doc,.docx,.txt"
               onUpload={handleUpload}
               showUploadButton={
                 !(
                   step === "coreFourSelection" ||
                   isEditingJd ||
-                  faq.isFaqMode
+                  (step === "done" && faq.isFaqMode)
                 )
               }
               backgroundGlowIntensity="full"
-              modeToggle={{
-                isActive: faq.isFaqMode,
-                icon: MessageCircleQuestion,
-                activeLabel: "AI Assistant",
-                onToggle: () =>
-                  faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode(),
-              }}
+              modeToggle={
+                step === "done"
+                  ? {
+                      isActive: faq.isFaqMode,
+                      icon: MessageCircleQuestion,
+                      activeLabel: "AI Assistant",
+                      onToggle: () =>
+                        faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode(),
+                    }
+                  : undefined
+              }
               thread={
-                faq.isFaqMode ? (
+                step === "done" && faq.isFaqMode ? (
                   <FaqAssistantThread
                     screenData={faq.screenData}
                     onSelectRootItem={faq.selectRootItem}
@@ -964,7 +932,9 @@ function OnboardingAgentInner({
                   />
                 ) : undefined
               }
-              onThreadClose={faq.isFaqMode ? faq.exitFaqMode : undefined}
+              onThreadClose={
+                step === "done" && faq.isFaqMode ? faq.exitFaqMode : undefined
+              }
               threadHeaderTitle="AI Assistant"
             />
           </div>

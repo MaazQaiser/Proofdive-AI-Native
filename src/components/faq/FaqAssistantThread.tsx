@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, ChevronLeft, Sparkles } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, CornerDownLeft, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -18,16 +18,12 @@ type Props = {
   onBackToRootMenu: () => void;
 };
 
-/**
- * Soft brand suggestion chip — Soft UI Evolution + ProofDive teal wash.
- * No hard gray box borders; glass tint from brand-1000 with cyan text.
- */
+/** Text-only suggestion row — enter affordance + label, no chip background. */
 const SUGGESTION_CHIP_CLASSES = cn(
-  "w-full cursor-pointer rounded-2xl px-4 py-3.5 text-left text-body-sm font-medium",
-  "bg-brand-1000 text-extended-cyan-green",
-  "shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]",
+  "inline-flex w-full cursor-pointer items-start gap-2.5 rounded-lg py-2 text-left text-body-sm font-medium",
+  "bg-transparent text-extended-cyan-green",
   "transition duration-200 ease-out",
-  "hover:bg-brand-900 hover:text-extended-cyan-green",
+  "hover:text-primary",
   "active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
 );
@@ -134,7 +130,14 @@ export function FaqAssistantThread({
   if (screenData.kind === "root") {
     return (
       <div className="flex w-full flex-col gap-4 py-1" aria-label="AI Assistant menu">
-        {screenData.showGreeting ? (
+        {screenData.pendingFreeText ? (
+          <>
+            <UserBubble>{screenData.pendingFreeText}</UserBubble>
+            <AssistantText>
+              I can help best when you pick one of the options below.
+            </AssistantText>
+          </>
+        ) : screenData.showGreeting ? (
           <AssistantText>{`Hey ${screenData.candidateName}, what can I help you with today?`}</AssistantText>
         ) : null}
         <SuggestionList label="Suggested questions">
@@ -145,7 +148,8 @@ export function FaqAssistantThread({
               className={SUGGESTION_CHIP_CLASSES}
               onClick={() => onSelectRootItem(item.id)}
             >
-              {item.label}
+              <CornerDownLeft className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <span>{item.label}</span>
             </button>
           ))}
         </SuggestionList>
@@ -170,7 +174,8 @@ export function FaqAssistantThread({
                   className={SUGGESTION_CHIP_CLASSES}
                   onClick={() => onSelectFollowup(f.id)}
                 >
-                  {f.question}
+                  <CornerDownLeft className="mt-0.5 size-4 shrink-0" aria-hidden />
+                  <span>{f.question}</span>
                 </button>
               ))}
             </SuggestionList>

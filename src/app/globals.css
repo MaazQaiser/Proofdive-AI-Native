@@ -131,9 +131,9 @@
   --trend-up: #166534;
   --trend-down: #991B1B;
 
-  /* Brand corner radius — one 8px default for buttons, fields, and cards so
-     auth controls (Login vs Google/LinkedIn) and surfaces share the same
-     corner. Candy controls (selection chips) stay `rounded-full`. */
+  /* Brand corner radius — 8px default for buttons and fields. Cards use
+     16px (`rounded-[16px]` on Card / SuccessDriverCard / CardButton).
+     Candy controls (selection chips) stay `rounded-full`. */
   --radius: 0.5rem; /* 8px */
 
   /* Legacy page tokens — aliases into the foundation so older `var(--app-bg)` /
@@ -211,15 +211,15 @@
    caption, overline are interpolated to fill gaps Figma didn't define -
    confirm with design before shipping.
    H1 is a deliberate deviation from the original Figma spec (was 80px/700,
-   -4px tracking): it now reuses the Agent Heading style (52px/400/-1.04px)
+   -4px tracking): it now reuses the Agent Heading style (48px/400/-0.96px)
    because the bold 80px slab read too heavy. H2-H6 are rescaled to match
    (~0.65x of their old size, tracking scaled the same way) and dropped from
    700/600 to a uniform 500, so the whole scale reads as one consistent,
    editorial (non-bold) system instead of H1 being the odd one out. */
 :root {
-  --text-h1-size: 52px;
+  --text-h1-size: 48px;
   --text-h1-weight: 400;
-  --text-h1-tracking: -1.04px;
+  --text-h1-tracking: -0.96px;
   --text-h2-size: 42px;
   --text-h2-weight: 500;
   --text-h2-tracking: -2.6px;
@@ -263,18 +263,17 @@
   /* Agent/hero greeting styles — originally Figma "Onboarding Flow" (node
      43:82), now shared by any big greeting headline + question line (e.g.
      onboarding's agent prompt, the Coach dashboard's hero heading).
-     text-h1 above is intentionally identical to agent-heading (52px/400/
-     -1.04px) — h1 was rescaled to match this style. agent-question
-     (32px/400) is still distinct from h3, which shares its 32px size but
-     keeps h3's own bold weight. Both are Inter Regular (confirmed via
-     Figma's own typography inspector panel) — inherited from --font-sans,
-     no font-family override needed for either. */
-  --text-agent-heading-size: 52px;
+     text-h1 above is intentionally identical to agent-heading (48px/400/
+     -0.96px) — h1 was rescaled to match this style. agent-question
+     (28px/400) is still distinct from h3 (32px/500). Both are Inter
+     Regular (confirmed via Figma's own typography inspector panel) —
+     inherited from --font-sans, no font-family override needed for either. */
+  --text-agent-heading-size: 48px;
   --text-agent-heading-weight: 400;
-  --text-agent-heading-tracking: -1.04px;
-  --text-agent-question-size: 32px;
+  --text-agent-heading-tracking: -0.96px;
+  --text-agent-question-size: 28px;
   --text-agent-question-weight: 400;
-  --text-agent-question-tracking: -0.64px;
+  --text-agent-question-tracking: -0.56px;
 
   /* Logo scale - exact Figma values */
   --logo-xxl: 80px;
@@ -347,11 +346,11 @@
   --color-trend-down: var(--trend-down);
 
   --radius-sm: 0.375rem; /* 6px — tight nested controls */
-  --radius-md: 0.5rem; /* 8px — buttons, inputs, cards, CTAs */
+  --radius-md: 0.5rem; /* 8px — buttons, inputs, CTAs */
   --radius-lg: 0.5rem; /* 8px — same brand default as md */
-  --radius-xl: 0.5rem; /* 8px — brand max */
-  --radius-2xl: 0.5rem; /* capped to brand max */
-  --radius-3xl: 0.5rem; /* capped to brand max */
+  --radius-xl: 1rem; /* 16px — cards */
+  --radius-2xl: 1rem; /* 16px — cards / large surfaces */
+  --radius-3xl: 1rem; /* 16px — align with card radius */
 
   --font-sans: var(--font-sans);
   --font-gilroy: "Gilroy", var(--font-sans), sans-serif;

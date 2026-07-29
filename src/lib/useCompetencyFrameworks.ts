@@ -76,7 +76,7 @@ export function useCompetencyFrameworks() {
   const saveFrameworkContent = useCallback(
     (
       id: string,
-      content: Pick<CompetencyFrameworkVersion, "name" | "competencies">,
+      content: Pick<CompetencyFrameworkVersion, "name" | "competencies" | "driverLabels">,
       status: FrameworkStatus,
     ) => {
       const now = new Date().toISOString();
@@ -87,6 +87,7 @@ export function useCompetencyFrameworks() {
                 ...f,
                 name: content.name.trim(),
                 competencies: content.competencies,
+                driverLabels: content.driverLabels,
                 status,
                 updatedAt: now,
               }

@@ -8,6 +8,15 @@ export const StorageKeys = {
   trainingProgress: "proofdive.trainingProgress.v1",
   storyboardDraft: "proofdive.storyboardDraft.v1",
   storyboardFromCraft: "proofdive.storyboardFromCraft.v1",
+  /** Present while the user is editing a crafted draft and has not finalized with Save. */
+  storyboardCraftEditing: "proofdive.storyboardCraftEditing.v1",
+  /** Dive bank (schema v2): immutable saved Dives + optional editing Dive per role. */
+  storyboardDives: "proofdive.storyboardDives.v2",
+  /**
+   * Session-only: skip auto-resume to crafting so the user can capture more
+   * competencies while Dive 1 is still editing (Add Competency from crafting).
+   */
+  preferStoryboardIntake: "proofdive.preferStoryboardIntake.v1",
   /** `welcome` | `roadmap` (3 steps, empty readiness) | `journey` (3 steps, full readiness) | `final` (post-report home, pinned snapshot). */
   coachJourneyView: "proofdive.coachJourneyView.v1",
   /** When `coachJourneyView` is `final`, readiness uses this report id from `reports`. */
@@ -46,5 +55,7 @@ export const StorageKeys = {
   faqAssistantGreetingSeen: "proofdive.faqAssistantGreetingSeen.v1",
   /** Super Admin competency framework versions (default + custom copies). */
   superAdminCompetencyFrameworks: "proofdive.superAdmin.competencyFrameworks.v1",
+  /** Super Admin organization directory (seeded list + created orgs). */
+  superAdminOrganizations: "proofdive.superAdmin.organizations.v1",
 } as const;
 

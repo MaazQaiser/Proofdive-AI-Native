@@ -106,6 +106,9 @@ export type InterviewReport = {
 /** Set when the user saves from /storyboard/crafting; storyboard home reads this to show the “crafted” state. */
 export type StoryboardFromCraft = { v: 1; role: string; at: string };
 
+/** In-progress craft edit session — resume `/storyboard/crafting` until Save clears it. */
+export type StoryboardCraftEditing = { v: 1; role: string; at: string };
+
 export type RoleProfile = {
   name?: string;
   /** Account-level, not role-specific — kept in sync across every entry in `savedRoles`. */
@@ -124,6 +127,16 @@ export type RoleProfile = {
   industryVertical?: string;
   /** Core Four competency selection captured at onboarding — one per Success Driver minimum. */
   coreFourCompetencies?: CompetencyId[];
+  /**
+   * Competencies actively in the storyboard capture queue for this role.
+   * Starts as the demo focus pair; expands when the user adds competencies for a later Dive.
+   */
+  storyboardFocusCompetencies?: CompetencyId[];
+  /**
+   * One-time, flow-level answer after all focus experiences are enriched.
+   * Feeds TMAY / Core Introduction (Opening position + evidence themes), not CAR examples.
+   */
+  aboutYouAnswer?: string;
   createdAt: string;
 };
 

@@ -3,29 +3,23 @@
 import {
   ArrowLeft,
   ArrowRight,
-  Building2,
-  ChevronRight,
-  CreditCard,
   FileSpreadsheet,
-  GraduationCap,
+  ImageIcon,
   Info,
-  Layers,
   Plus,
   Trash2,
   Upload,
-  Users,
-  X,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 import { SUCCESS_DRIVER_ORDER, SUCCESS_DRIVERS } from "@/lib/successDrivers";
 import {
   AVAILABLE_COURSES,
@@ -41,11 +35,26 @@ import {
   type Organization,
   type OrganizationType,
 } from "@/lib/superAdminOrganizations";
+import { DEFAULT_FRAMEWORK_ID } from "@/lib/superAdminCompetencyFrameworks";
+import { useCompetencyFrameworks } from "@/lib/useCompetencyFrameworks";
+import { useOrganizations } from "@/lib/useOrganizations";
+import {
+  OrganizationWizardStepper,
+  type WizardStepperStep,
+} from "./OrganizationWizardStepper";
 
 type StepId = "landing" | "details" | "competency" | "courses" | "payment" | "users" | "review";
 
 const STEP_ORDER: StepId[] = ["landing", "details", "competency", "courses", "payment", "users", "review"];
-const TOTAL_STEPS = STEP_ORDER.length - 1;
+
+const STEPPER_STEPS: WizardStepperStep[] = [
+  { id: "details", title: "Org Details" },
+  { id: "competency", title: "Competency" },
+  { id: "courses", title: "Course Selection" },
+  { id: "payment", title: "Payment Plan" },
+  { id: "users", title: "User Onboarding" },
+  { id: "review", title: "Review" },
+];
 
 const STEP_TITLES: Record<StepId, string> = {
   landing: "Add New Organization",
@@ -56,14 +65,6 @@ const STEP_TITLES: Record<StepId, string> = {
   users: "User Onboarding",
   review: "Review & Send Invite",
 };
-
-const STEP_CARDS: { step: number; id: StepId; title: string; icon: typeof Building2 }[] = [
-  { step: 1, id: "details", title: "Org Details", icon: Building2 },
-  { step: 2, id: "competency", title: "Competency", icon: Layers },
-  { step: 3, id: "courses", title: "Course Selection", icon: GraduationCap },
-  { step: 4, id: "payment", title: "Payment Plan", icon: CreditCard },
-  { step: 5, id: "users", title: "User Onboarding", icon: Users },
-];
 
 function ReviewRow({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -139,23 +140,15 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type FieldErrors = Record<string, string>;
 
-type AddOrganizationDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  existingOrganizationNames: string[];
-  frameworks: CompetencyFramework[];
-  onCreateFramework: (name: string) => CompetencyFramework | null;
-  onCreate: (organization: Organization) => void;
-};
+export function AddOrganizationScreen() {
+  const router = useRouter();
+  const { existingNames, addOrganization } = useOrganizations();
+  const { summaries, createCopy } = useCompetencyFrameworks();
+  const frameworks: CompetencyFramework[] =
+    summaries.length > 0
+      ? summaries.map((f) => ({ id: f.id, name: f.name, isDefault: f.isDefault }))
+      : COMPETENCY_FRAMEWORKS;
 
-export function AddOrganizationDialog({
-  open,
-  onOpenChange,
-  existingOrganizationNames,
-  frameworks,
-  onCreateFramework,
-  onCreate,
-}: AddOrganizationDialogProps) {
   const [step, setStep] = useState<StepId>("landing");
   const [form, setForm] = useState<FormState>(createInitialFormState);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -163,17 +156,29 @@ export function AddOrganizationDialog({
   const [newCompetencyName, setNewCompetencyName] = useState("");
   const [competencyNameError, setCompetencyNameError] = useState("");
   const [csvError, setCsvError] = useState("");
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!open) {
-      setStep("landing");
-      setForm(createInitialFormState());
-      setErrors({});
-      setIsCreatingCompetency(false);
-      setCompetencyNameError("");
-      setCsvError("");
-    }
-  }, [open]);
+    return () => {
+      if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+    };
+  }, [logoPreviewUrl]);
+
+  function closeWizard() {
+    router.push("/superadmin/organizations");
+  }
+
+  function handleLogoUpload(file: File | undefined) {
+    setLogoPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return file ? URL.createObjectURL(file) : null;
+    });
+    updateField("logoFileName", file?.name ?? "");
+  }
+
+  function clearLogo() {
+    handleLogoUpload(undefined);
+  }
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -199,7 +204,7 @@ export function AddOrganizationDialog({
     const next: FieldErrors = {};
     const trimmedName = form.name.trim();
     if (!trimmedName) next.name = "Organization Name is required.";
-    else if (existingOrganizationNames.some((n) => n.toLowerCase() === trimmedName.toLowerCase()))
+    else if (existingNames.some((n) => n.toLowerCase() === trimmedName.toLowerCase()))
       next.name = "Organization Name already exists.";
     if (!form.industry) next.industry = "Industry / Domain is required.";
     if (!form.country) next.country = "Country is required.";
@@ -295,7 +300,11 @@ export function AddOrganizationDialog({
         activeUsers: 0,
         inactiveUsers: form.userEmails.length,
       };
-      onCreate(newOrganization);
+      addOrganization(newOrganization);
+      toast.success(
+        `"${newOrganization.name}" was created and an invitation was sent to the Organization Admin.`,
+      );
+      router.push("/superadmin/organizations");
     }
   }
 
@@ -367,58 +376,47 @@ export function AddOrganizationDialog({
       setCompetencyNameError("Competency version name already exists.");
       return;
     }
-    const created = onCreateFramework(trimmedName);
+    const created = createCopy(DEFAULT_FRAMEWORK_ID, trimmedName);
     if (!created) {
       setCompetencyNameError("Could not create competency framework copy.");
       return;
     }
+    toast.success(`Draft framework "${created.name}" created.`);
     updateField("competencyFrameworkId", created.id);
     setIsCreatingCompetency(false);
   }
 
-  const stepIndex = STEP_ORDER.indexOf(step);
+  const stepperIndex =
+    step === "landing"
+      ? -1
+      : STEPPER_STEPS.findIndex((s) => s.id === step);
   const isLastStep = step === "review";
   const selectedFramework = frameworks.find((f) => f.id === form.competencyFrameworkId);
   const selectedPlan = PRICING_PLANS.find((p) => p.id === form.pricingPlanId);
   const selectedCourses = AVAILABLE_COURSES.filter((c) => form.selectedCourseIds.includes(c.id));
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="flex h-[85vh] max-h-[760px] w-full max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl"
-      >
-        <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
-          {step === "landing" ? (
-            <DialogTitle className="text-h6 font-semibold text-foreground">Add New Organization</DialogTitle>
-          ) : (
-            <div className="flex items-center gap-3">
+    <div className="-m-6 flex h-full flex-col overflow-hidden bg-background">
+      <div className="flex shrink-0 flex-col gap-4 border-b border-border px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            {step !== "landing" ? (
               <Button variant="ghost" size="icon" onClick={handleBack} aria-label="Back">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <DialogTitle asChild>
-                <div className="flex items-center gap-1.5 text-body-sm">
-                  <button
-                    type="button"
-                    onClick={() => goToStep("landing")}
-                    className="text-muted-foreground hover:text-foreground hover:underline"
-                  >
-                    Add New Organization
-                  </button>
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="font-semibold text-foreground">{STEP_TITLES[step]}</span>
-                </div>
-              </DialogTitle>
+            ) : null}
+            <div className="min-w-0">
+              <h1 className="text-h6 font-semibold text-foreground">Add New Organization</h1>
+              {step !== "landing" ? (
+                <p className="text-caption text-muted-foreground">{STEP_TITLES[step]}</p>
+              ) : null}
             </div>
-          )}
-          {step !== "landing" && (
-            <span className="text-caption text-muted-foreground">
-              Step {stepIndex} of {TOTAL_STEPS}
-            </span>
-          )}
+          </div>
         </div>
+        <OrganizationWizardStepper steps={STEPPER_STEPS} currentIndex={stepperIndex} />
+      </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-8 py-8">
+      <div className="min-h-0 flex-1 overflow-y-auto px-8 py-8">
           {step === "landing" && (
             <div className="mx-auto flex max-w-3xl flex-col gap-8">
               <div className="flex flex-col gap-2">
@@ -442,58 +440,9 @@ export function AddOrganizationDialog({
                 </Select>
                 {errors.orgType && <p className="text-caption text-destructive">{errors.orgType}</p>}
               </div>
-
-              <div className="flex flex-col gap-6">
-                <h2 className="text-body-lg text-center font-semibold text-foreground">
-                  Follow the steps below to add new organization
-                </h2>
-                <div className="flex items-center">
-                  {STEP_CARDS.map((card, index) => (
-                    <div key={card.id} className="flex flex-1 items-center last:flex-none">
-                      <div
-                        className={cn(
-                          "flex size-9 shrink-0 items-center justify-center rounded-full border text-body-sm font-semibold",
-                          index === 0
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-border text-muted-foreground",
-                        )}
-                      >
-                        {card.step}
-                      </div>
-                      {index < STEP_CARDS.length - 1 && <div className="h-px flex-1 bg-border" />}
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-5 gap-3">
-                  {STEP_CARDS.map((card, index) => {
-                    const Icon = card.icon;
-                    return (
-                      <div
-                        key={card.id}
-                        className={cn(
-                          "flex flex-col gap-3 rounded-lg border p-3",
-                          index === 0 ? "border-primary bg-extended-light-cyan/20" : "border-border",
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "flex size-9 items-center justify-center rounded-md",
-                            index === 0
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-muted-foreground",
-                          )}
-                        >
-                          <Icon className="h-4.5 w-4.5" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-overline text-muted-foreground">STEP {card.step}</span>
-                          <span className="text-body-sm font-medium text-foreground">{card.title}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <p className="text-body-sm text-muted-foreground">
+                Choose the organization type to continue. The steps above outline the rest of setup.
+              </p>
             </div>
           )}
 
@@ -578,29 +527,71 @@ export function AddOrganizationDialog({
               <Separator />
 
               <section className="flex flex-col gap-4">
-                <h3 className="text-overline text-muted-foreground">White Labelling</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <h3 className="text-overline text-muted-foreground">Personalization</h3>
+                <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="org-logo">Organization Logo</Label>
-                    <div className="flex items-center gap-3">
-                      <Button variant="outline" size="sm" asChild>
-                        <label htmlFor="org-logo" className="cursor-pointer">
-                          <Upload className="h-4 w-4" />
-                          Upload Logo
-                        </label>
-                      </Button>
-                      <input
-                        id="org-logo"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => updateField("logoFileName", e.target.files?.[0]?.name ?? "")}
-                      />
-                      {form.logoFileName && (
-                        <span className="text-caption truncate text-muted-foreground">{form.logoFileName}</span>
-                      )}
+                    <div className="flex gap-4">
+                      <label
+                        htmlFor="org-logo"
+                        className="flex min-h-[140px] flex-1 cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-dashed border-border bg-muted/30 px-6 py-8 text-center transition hover:bg-muted/50"
+                      >
+                        <Upload className="size-8 text-muted-foreground" />
+                        <div className="flex flex-col gap-1">
+                          <span className="text-body-sm font-medium text-foreground">
+                            {form.logoFileName ? "Replace logo" : "Upload organization logo"}
+                          </span>
+                          <span className="text-caption text-muted-foreground">
+                            PNG, JPG, or SVG up to 5MB
+                          </span>
+                          {form.logoFileName ? (
+                            <span className="text-caption truncate text-muted-foreground">
+                              {form.logoFileName}
+                            </span>
+                          ) : null}
+                        </div>
+                        <input
+                          id="org-logo"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleLogoUpload(e.target.files?.[0])}
+                        />
+                      </label>
+
+                      <div className="flex w-40 shrink-0 flex-col gap-2">
+                        <span className="text-caption text-muted-foreground">Preview</span>
+                        <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-md border border-border bg-background">
+                          {logoPreviewUrl ? (
+                            <>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={logoPreviewUrl}
+                                alt="Organization logo preview"
+                                className="size-full object-contain p-3"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-1 right-1 size-7 bg-background/90"
+                                onClick={clearLogo}
+                                aria-label="Remove logo"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </Button>
+                            </>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
+                              <ImageIcon className="size-6" />
+                              <span className="text-caption">No logo</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
+
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="org-domain">Domain Details</Label>
                     <Input
@@ -1026,26 +1017,26 @@ export function AddOrganizationDialog({
           )}
         </div>
 
-        <div className="flex shrink-0 items-center justify-between border-t border-border px-6 py-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            <X className="h-4 w-4" />
-            Close
-          </Button>
-          {!isCreatingCompetency && (
-            <div className="flex items-center gap-2">
-              {step === "users" && (
-                <Button variant="ghost" onClick={handleSkipUsers}>
-                  Skip
+        <div className="flex shrink-0 items-center justify-end border-t border-border px-6 py-4">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={closeWizard}>
+              Cancel
+            </Button>
+            {!isCreatingCompetency && (
+              <>
+                {step === "users" && (
+                  <Button variant="ghost" onClick={handleSkipUsers}>
+                    Skip
+                  </Button>
+                )}
+                <Button onClick={handleNext}>
+                  {isLastStep ? "Send Invite" : "Next"}
+                  {!isLastStep && <ArrowRight className="h-4 w-4" />}
                 </Button>
-              )}
-              <Button onClick={handleNext}>
-                {isLastStep ? "Send Invite" : "Next"}
-                {!isLastStep && <ArrowRight className="h-4 w-4" />}
-              </Button>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+    </div>
   );
 }

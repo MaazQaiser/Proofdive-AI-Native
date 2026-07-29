@@ -50,8 +50,6 @@ type SuccessDriverCardProps = {
   className?: string;
   /** Optional white status pill in the top-left (inspiration pattern). */
   badge?: ReactNode;
-  /** Soft ring when the card is the active / selected driver. */
-  selected?: boolean;
 };
 
 /** Glass Success Driver surface — light tint of the brand symbol color with a
@@ -61,17 +59,15 @@ function SuccessDriverCard({
   children,
   className,
   badge,
-  selected = false,
 }: SuccessDriverCardProps) {
   return (
     <div
       data-slot="success-driver-card"
       data-driver={driver}
       className={cn(
-        "relative overflow-hidden rounded-lg transition",
+        "relative overflow-hidden rounded-[16px] border-0 transition",
         "bg-[color-mix(in_srgb,var(--extended-cyan-green)_9%,white)] backdrop-blur-xl",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]",
-        selected ? "ring-2 ring-extended-cyan-green/70" : null,
         className,
       )}
     >
@@ -82,7 +78,7 @@ function SuccessDriverCard({
         <SuccessDriverIcon
           driver={driver}
           className={cn(
-            "size-full opacity-50 blur-[26px] sm:blur-[30px]",
+            "size-full opacity-45 blur-[12px] sm:blur-[14px]",
             SUCCESS_DRIVER_SYMBOL_CLASS,
           )}
         />
