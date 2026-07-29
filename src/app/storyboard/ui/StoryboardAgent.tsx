@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactElement } from "react";
 import {
+  ArrowRight,
   BookOpen,
   Download,
-  FileText,
+  Plus,
   Sparkles,
   WandSparkles,
 } from "lucide-react";
@@ -16,45 +17,55 @@ import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
   CardNested,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { SuccessDriverMark } from "@/components/ui/success-driver-card";
-import { buildMockCraftingDraft } from "@/app/storyboard/crafting/mockCraftingDraft";
+import { buildEmptyCraftingDive } from "@/app/storyboard/crafting/mockCraftingDraft";
+import { CoreFourSelectionPanel } from "@/app/onboarding/ui/CoreFourSelectionPanel";
 import {
   DEMO_CONSULTANT_QUESTION_COUNT,
-  DEMO_FOCUS_COUNT,
   competencySpec,
+  completedCompetencyIds,
   consultantQuestionsFor,
   demoCompetencyQueue,
   experienceForCompetency,
   isDemoExperienceComplete,
   nextOpenDemoCompetency,
   pillarForCompetency,
-  seedDraftFromDemoExperiences,
+  seedDiveFromDemoExperiences,
 } from "@/lib/demoFocusCompetencies";
 import { makeId } from "@/lib/id";
-import {
-  latestReportOverallForRole,
-  pickLatestReport,
-  safeParseReportsMap,
-} from "@/lib/interviewReports";
 import { normalizeWhitespace } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { scoringTextClass } from "@/lib/scoringPalette";
 import {
-  createStoryboardDraft,
-  normalizeStoryboardDocument,
-  overallCompetencyStrength,
-  pillarStrength,
+  MAX_DIVES_PER_ROLE,
+  type CloneDiveUnlock,
   type CompetencyId,
-  type StoryboardDraftDocument,
-  type StoryboardDraftStore,
+  type StoryboardDive,
+  canStartNewDive,
+  cloneDiveForNext,
+  editingDiveForRole,
+  latestSavedDive,
+  remainingDives,
+  savedDivesForRole,
+  upsertEditingDive,
 } from "@/lib/storyboardDraft";
-import type { Experience, RoleProfile, StoryboardFromCraft } from "@/lib/proofdiveTypes";
+import type { Experience, RoleProfile } from "@/lib/proofdiveTypes";
+import { writeJson } from "@/lib/storage";
 import {
   SUCCESS_DRIVER_ORDER,
   SUCCESS_DRIVERS,
@@ -62,6 +73,7 @@ import {
 } from "@/lib/successDrivers";
 import { cn } from "@/lib/utils";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import { useStoryboardDiveStore } from "@/lib/useStoryboardDiveStore";
 
 type CarField = "context" | "action" | "result";
 
@@ -76,7 +88,16 @@ type CapturePhase =
       qIndex: number;
       question: string;
     }
+  /** One-time after all focus experiences; feeds TMAY intro, not consultant caps. */
+  | { kind: "aboutYou" }
   | { kind: "closing" };
+
+const ABOUT_YOU_PROMPT = `Is there anything you have missed, or do you want to add?
+
+We want to know you better, tell us more about yourself: what are your passions, achievements, or something that makes you YOU.`;
+
+const ABOUT_YOU_PREFILL =
+  "I'm energized by turning messy operational problems into clear systems people actually use. Outside work I coach a weekend robotics club, and I'm proudest of a catalog migration that cut stockouts while giving teams one shared source of truth.";
 
 const CAR_FIELDS: CarField[] = ["context", "action", "result"];
 
@@ -122,12 +143,20 @@ function emphasizeSuggestionText(s: string): ReactElement {
   );
 }
 
+/**
+ * Capture sequencing: greet → per experience (title → CAR → consultant) →
+ * aboutYou (once, flow-level) → closing → craft.
+ */
 function deriveCapturePhase(
   queue: readonly CompetencyId[],
   roleExperiences: readonly Experience[],
+  aboutYouAnswer?: string | null,
 ): CapturePhase {
   const openId = nextOpenDemoCompetency(queue, roleExperiences);
-  if (!openId) return { kind: "closing" };
+  if (!openId) {
+    if (!aboutYouAnswer?.trim()) return { kind: "aboutYou" };
+    return { kind: "closing" };
+  }
 
   const index = queue.indexOf(openId);
   const exp = experienceForCompetency(roleExperiences, openId);
@@ -162,27 +191,16 @@ function deriveCapturePhase(
     };
   }
 
+  // Current open competency is complete; nextOpenDemoCompetency should have
+  // advanced — fall through defensively to aboutYou / closing.
+  if (!aboutYouAnswer?.trim()) return { kind: "aboutYou" };
   return { kind: "closing" };
-}
-
-function latestReportIdForRole(roleTitle: string): string | null {
-  if (typeof window === "undefined" || !roleTitle.trim()) return null;
-  const map = safeParseReportsMap(window.localStorage.getItem(StorageKeys.reports));
-  const list = Object.values(map).filter(
-    (r) => (r.meta?.roleTitle ?? "").trim() === roleTitle.trim(),
-  );
-  if (!list.length) return pickLatestReport(map)?.meta.id ?? null;
-  return (
-    [...list].sort(
-      (a, b) => new Date(b.meta.createdAt).getTime() - new Date(a.meta.createdAt).getTime(),
-    )[0]?.meta.id ?? null
-  );
 }
 
 export function StoryboardAgent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [roleProfile] = useLocalStorageState<RoleProfile | null>(
+  const [roleProfile, setRoleProfile] = useLocalStorageState<RoleProfile | null>(
     StorageKeys.roleProfile,
     null,
   );
@@ -190,14 +208,7 @@ export function StoryboardAgent() {
     StorageKeys.experiences,
     [],
   );
-  const [fromCraft, setFromCraft] = useLocalStorageState<StoryboardFromCraft | null>(
-    StorageKeys.storyboardFromCraft,
-    null,
-  );
-  const [draftStore, setDraftStore] = useLocalStorageState<StoryboardDraftStore>(
-    StorageKeys.storyboardDraft,
-    { version: 1, byRole: {} },
-  );
+  const [diveStore, setDiveStore, diveHydrated] = useStoryboardDiveStore();
 
   const role = roleProfile?.targetRole?.trim() ?? "";
   const firstName = useMemo(
@@ -207,12 +218,22 @@ export function StoryboardAgent() {
 
   const focusQueue = useMemo(() => demoCompetencyQueue(roleProfile), [roleProfile]);
 
+  const allRoleExperiences = useMemo(
+    () => experiences.filter((e) => e.role === role && Boolean(e.competencyId)),
+    [experiences, role],
+  );
+
   const roleExperiences = useMemo(
     () =>
-      experiences.filter(
-        (e) => e.role === role && e.competencyId && focusQueue.includes(e.competencyId),
+      allRoleExperiences.filter(
+        (e) => e.competencyId && focusQueue.includes(e.competencyId),
       ),
-    [experiences, role, focusQueue],
+    [allRoleExperiences, focusQueue],
+  );
+
+  const lockedCompetencyIds = useMemo(
+    () => completedCompetencyIds(allRoleExperiences),
+    [allRoleExperiences],
   );
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -221,6 +242,34 @@ export function StoryboardAgent() {
   const [isDraftUpdating, setIsDraftUpdating] = useState(false);
   const [suggestionCursor, setSuggestionCursor] = useState(0);
   const [greetAcknowledged, setGreetAcknowledged] = useState(false);
+  const [diveConfirmOpen, setDiveConfirmOpen] = useState(false);
+  const [diveConfirmAction, setDiveConfirmAction] = useState<"edit" | "addCompetency" | null>(
+    null,
+  );
+  const [diveUnlock, setDiveUnlock] = useState<CloneDiveUnlock>({ kind: "all" });
+  const [addCompetencyOpen, setAddCompetencyOpen] = useState(false);
+  const [addCompetencySelected, setAddCompetencySelected] = useState<CompetencyId[]>([]);
+  const [addCompetencyError, setAddCompetencyError] = useState<string | null>(null);
+  const [pendingFocusIds, setPendingFocusIds] = useState<CompetencyId[] | null>(null);
+  /** True while capturing more competencies for a new Dive (skip post-craft home). */
+  const [intakeMode, setIntakeMode] = useState(false);
+
+  const savedDives = useMemo(
+    () => (role && diveHydrated ? savedDivesForRole(diveStore, role) : []),
+    [role, diveHydrated, diveStore],
+  );
+  const postCraftHome = savedDives.length > 0;
+  const showDiveHome = postCraftHome && !addCompetencyOpen && !intakeMode;
+  const divesLeft = role && diveHydrated ? remainingDives(diveStore, role) : MAX_DIVES_PER_ROLE;
+  const latestDive = savedDives[0] ?? null;
+
+  useEffect(() => {
+    try {
+      setIntakeMode(sessionStorage.getItem(StorageKeys.preferStoryboardIntake) === "1");
+    } catch {
+      setIntakeMode(false);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const wantNew = (searchParams.get("new") ?? "").trim();
@@ -229,34 +278,191 @@ export function StoryboardAgent() {
       setStatusLine(null);
       setCraftUi("idle");
       setGreetAcknowledged(false);
+      setAddCompetencyOpen(false);
+      setIntakeMode(true);
+      setRoleProfile((prev) =>
+        prev?.aboutYouAnswer ? { ...prev, aboutYouAnswer: undefined } : prev,
+      );
+      router.replace("/storyboard");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams, router, setRoleProfile]);
 
-  const postCraftHome = Boolean(
-    fromCraft && fromCraft.v === 1 && fromCraft.role === role,
+  useEffect(() => {
+    const wantAdd = (searchParams.get("addCompetency") ?? "").trim();
+    if (wantAdd !== "1" && wantAdd.toLowerCase() !== "true") return;
+    if (!role || !diveHydrated) return;
+    if (divesLeft <= 0 || !canStartNewDive(diveStore, role)) {
+      router.replace("/storyboard");
+      return;
+    }
+    setAddCompetencySelected(lockedCompetencyIds);
+    setAddCompetencyError(null);
+    setAddCompetencyOpen(true);
+    router.replace("/storyboard");
+  }, [
+    searchParams,
+    router,
+    role,
+    diveHydrated,
+    diveStore,
+    divesLeft,
+    lockedCompetencyIds,
+  ]);
+
+  /** Resume an unfinished editing Dive after leave / browser close. */
+  useEffect(() => {
+    const wantNew = (searchParams.get("new") ?? "").trim();
+    if (wantNew === "1" || wantNew.toLowerCase() === "true") return;
+    const wantAdd = (searchParams.get("addCompetency") ?? "").trim();
+    if (wantAdd === "1" || wantAdd.toLowerCase() === "true") return;
+    if (!role || !diveHydrated) return;
+    if (addCompetencyOpen) return;
+    if (intakeMode) return;
+    if (postCraftHome && !editingDiveForRole(diveStore, role)) return;
+    try {
+      if (sessionStorage.getItem(StorageKeys.preferStoryboardIntake) === "1") return;
+    } catch {
+      // ignore
+    }
+    const editing = editingDiveForRole(diveStore, role);
+    if (editing) {
+      router.replace("/storyboard/crafting");
+    }
+  }, [
+    role,
+    diveHydrated,
+    diveStore,
+    postCraftHome,
+    searchParams,
+    router,
+    addCompetencyOpen,
+    intakeMode,
+  ]);
+
+  function beginNewDiveFromLatest(
+    action: "edit" | "addCompetency",
+    unlock: CloneDiveUnlock = { kind: "all" },
+    focusIds?: CompetencyId[],
+  ) {
+    if (!role || !latestDive) return;
+    if (!canStartNewDive(diveStore, role)) return;
+    const nextNum = (latestDive.diveNumber + 1) as 1 | 2 | 3;
+    if (nextNum > 3) return;
+    const queue = focusIds?.length ? focusIds : focusQueue;
+    const cloned = cloneDiveForNext(latestDive, nextNum, unlock);
+    const seeded = seedDiveFromDemoExperiences(
+      cloned,
+      allRoleExperiences,
+      queue,
+      roleProfile?.aboutYouAnswer,
+    );
+    const nextStore = upsertEditingDive(diveStore, seeded);
+    setDiveStore(nextStore);
+    writeJson(StorageKeys.storyboardDives, nextStore);
+    setDiveConfirmOpen(false);
+    setDiveConfirmAction(null);
+    setDiveUnlock({ kind: "all" });
+    setPendingFocusIds(null);
+    setAddCompetencyOpen(false);
+    if (action === "addCompetency") {
+      setSelectedId(null);
+      setStatusLine(null);
+      setCraftUi("idle");
+      setGreetAcknowledged(false);
+      try {
+        sessionStorage.setItem(StorageKeys.preferStoryboardIntake, "1");
+      } catch {
+        // ignore
+      }
+      setIntakeMode(true);
+      setRoleProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              storyboardFocusCompetencies: queue,
+              aboutYouAnswer: undefined,
+            }
+          : prev,
+      );
+      router.push("/storyboard?new=1");
+    } else {
+      router.push("/storyboard/crafting");
+    }
+  }
+
+  function requestNewDive(
+    action: "edit" | "addCompetency",
+    unlock: CloneDiveUnlock = { kind: "all" },
+    focusIds?: CompetencyId[],
+  ) {
+    if (!role || !latestDive) return;
+    if (divesLeft <= 0) return;
+    setDiveConfirmAction(action);
+    setDiveUnlock(unlock);
+    setPendingFocusIds(focusIds ?? null);
+    setDiveConfirmOpen(true);
+  }
+
+  function openAddCompetencyPicker() {
+    if (!role || divesLeft <= 0) return;
+    if (!canStartNewDive(diveStore, role)) return;
+    setAddCompetencySelected(lockedCompetencyIds);
+    setAddCompetencyError(null);
+    setAddCompetencyOpen(true);
+  }
+
+  function startAddCompetency() {
+    if (postCraftHome) {
+      openAddCompetencyPicker();
+      return;
+    }
+    setSelectedId(null);
+    setStatusLine(null);
+    setCraftUi("idle");
+    setGreetAcknowledged(false);
+    setRoleProfile((prev) =>
+      prev?.aboutYouAnswer ? { ...prev, aboutYouAnswer: undefined } : prev,
+    );
+    router.push("/storyboard?new=1");
+  }
+
+  function toggleAddCompetency(id: CompetencyId) {
+    if (lockedCompetencyIds.includes(id)) return;
+    setAddCompetencyError(null);
+    setAddCompetencySelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  function confirmAddCompetencySelection() {
+    const locked = new Set(lockedCompetencyIds);
+    const newlySelected = addCompetencySelected.filter((id) => !locked.has(id));
+    if (!newlySelected.length) {
+      setAddCompetencyError("Select at least one new competency to add.");
+      return;
+    }
+    const nextFocus = [
+      ...lockedCompetencyIds,
+      ...newlySelected.filter((id) => !lockedCompetencyIds.includes(id)),
+    ];
+    requestNewDive("addCompetency", { kind: "all" }, nextFocus);
+  }
+
+  const pillarScores = useMemo(
+    () =>
+      SUCCESS_DRIVER_ORDER.map((id) => ({
+        id,
+        score: latestDive?.pillarScores?.[id] ?? 0,
+      })),
+    [latestDive],
   );
-
-  const storyDraftDocument = useMemo<StoryboardDraftDocument>(() => {
-    if (!role) return createStoryboardDraft("");
-    const raw = draftStore.byRole[role] ?? createStoryboardDraft(role);
-    return normalizeStoryboardDocument(raw);
-  }, [draftStore, role]);
-
-  const storyOverallScore = useMemo(
-    () => overallCompetencyStrength(storyDraftDocument),
-    [storyDraftDocument],
-  );
-
-  const storyScoreForCard = useMemo(() => {
-    if (storyOverallScore > 0) return storyOverallScore;
-    const fromReport = latestReportOverallForRole(role);
-    if (fromReport != null && Number.isFinite(fromReport)) return fromReport;
-    return storyOverallScore;
-  }, [storyOverallScore, role]);
 
   const phase = useMemo(() => {
-    const base = deriveCapturePhase(focusQueue, roleExperiences);
+    const base = deriveCapturePhase(
+      focusQueue,
+      roleExperiences,
+      roleProfile?.aboutYouAnswer,
+    );
     if (base.kind === "greet" && greetAcknowledged) {
       return {
         kind: "title" as const,
@@ -265,10 +471,10 @@ export function StoryboardAgent() {
       };
     }
     return base;
-  }, [focusQueue, roleExperiences, greetAcknowledged]);
+  }, [focusQueue, roleExperiences, greetAcknowledged, roleProfile?.aboutYouAnswer]);
 
   const activeCompetencyId = useMemo(() => {
-    if (phase.kind === "greet" || phase.kind === "closing") {
+    if (phase.kind === "greet" || phase.kind === "aboutYou" || phase.kind === "closing") {
       return selectedId
         ? roleExperiences.find((e) => e.id === selectedId)?.competencyId ?? null
         : roleExperiences[roleExperiences.length - 1]?.competencyId ?? focusQueue[0] ?? null;
@@ -290,23 +496,14 @@ export function StoryboardAgent() {
     ? pillarForCompetency(activeCompetencyId)
     : null;
 
-  const progressIndex =
-    phase.kind === "greet"
-      ? 0
-      : phase.kind === "closing"
-        ? DEMO_FOCUS_COUNT
-        : phase.index + 1;
-
   const storyPrompt = useMemo(() => {
     if (phase.kind === "greet") {
-      return `Hey ${firstName}, let's build interview-ready proof from real experience.
-
-Reply to start with the first competency.`;
+      return `Hey ${firstName}, let's build interview-ready proof from real experience.`;
     }
     if (phase.kind === "title") {
       const spec = competencySpec(phase.competencyId);
       const driver = SUCCESS_DRIVERS[spec.pillar];
-      return `Competency ${phase.index + 1} of ${DEMO_FOCUS_COUNT}: ${spec.title} (${driver.shortLabel}).
+      return `Competency ${phase.index + 1} of ${focusQueue.length}: ${spec.title} (${driver.shortLabel}).
 
 What should this experience be called? (short title, up to ~15 words)`;
     }
@@ -317,10 +514,13 @@ What should this experience be called? (short title, up to ~15 words)`;
     if (phase.kind === "consultant") {
       return phase.question;
     }
+    if (phase.kind === "aboutYou") {
+      return ABOUT_YOU_PROMPT;
+    }
     return `This is coming together really well.
 
 What would you like to do next?`;
-  }, [phase, firstName]);
+  }, [phase, firstName, focusQueue.length]);
 
   const storyPromptKey = `${phase.kind}-${activeCompetencyId ?? "none"}-${
     phase.kind === "car"
@@ -329,7 +529,9 @@ What would you like to do next?`;
         ? phase.qIndex
         : phase.kind === "title"
           ? phase.index
-          : "x"
+          : phase.kind === "aboutYou"
+            ? "personal"
+            : "x"
   }`;
 
   const exampleReplyPrefill = useMemo(() => {
@@ -345,6 +547,7 @@ What would you like to do next?`;
         ? "I personally owned the analysis and the rollout plan — I didn't wait for a mandate."
         : "We traded short-term dual systems for a cleaner long-term catalog; the risk was adoption, so I ran weekly reviews.";
     }
+    if (phase.kind === "aboutYou") return ABOUT_YOU_PREFILL;
     return "";
   }, [phase]);
 
@@ -357,6 +560,7 @@ What would you like to do next?`;
     if (phase.kind === "car") {
       return `${phase.field[0]!.toUpperCase()}${phase.field.slice(1)} (type or voice)…`;
     }
+    if (phase.kind === "aboutYou") return "Passions, achievements, what makes you you…";
     return "Your answer (type or voice)…";
   }, [phase]);
 
@@ -372,23 +576,40 @@ What would you like to do next?`;
 
   function startCrafting() {
     if (craftUi === "crafting" || !role) return;
-    setStatusLine("It will take a moment. I'm crafting your story…");
     setCraftUi("crafting");
+    setStatusLine("It will take a moment. I'm crafting your story…");
+    try {
+      sessionStorage.removeItem(StorageKeys.preferStoryboardIntake);
+    } catch {
+      // ignore
+    }
+    setIntakeMode(false);
 
-    // Generate a full 12-competency storyboard, then overlay the real CAR
-    // evidence captured for the focus competencies during intake.
-    const fullDraft = buildMockCraftingDraft(role);
-    const seeded = seedDraftFromDemoExperiences(fullDraft, roleExperiences, focusQueue);
-    setDraftStore((prev) => ({
-      ...prev,
-      byRole: { ...prev.byRole, [role]: seeded },
-    }));
+    if (!roleProfile?.storyboardFocusCompetencies?.length) {
+      setRoleProfile((prev) =>
+        prev ? { ...prev, storyboardFocusCompetencies: focusQueue } : prev,
+      );
+    }
 
-    window.setTimeout(() => {
-      setCraftUi("ready");
-      setStatusLine(null);
-      setFromCraft({ v: 1, role, at: new Date().toISOString() });
-    }, 900);
+    const existingEditing = editingDiveForRole(diveStore, role);
+    const diveNumber = (existingEditing?.diveNumber ??
+      ((latestSavedDive(diveStore, role)?.diveNumber ?? 0) + 1)) as 1 | 2 | 3;
+    const safeNumber = Math.min(3, Math.max(1, diveNumber)) as 1 | 2 | 3;
+
+    const base =
+      existingEditing ??
+      buildEmptyCraftingDive(role, safeNumber);
+    const seeded = seedDiveFromDemoExperiences(
+      base,
+      roleExperiences,
+      focusQueue,
+      roleProfile?.aboutYouAnswer,
+    );
+    const nextStore = upsertEditingDive(diveStore, seeded);
+    writeJson(StorageKeys.storyboardDives, nextStore);
+    setDiveStore(nextStore);
+
+    router.push("/storyboard/crafting");
   }
 
   function handleText(text: string) {
@@ -407,6 +628,11 @@ What would you like to do next?`;
 
     if (phase.kind === "greet") {
       setGreetAcknowledged(true);
+      return;
+    }
+
+    if (phase.kind === "aboutYou") {
+      setRoleProfile((prev) => (prev ? { ...prev, aboutYouAnswer: cleaned } : prev));
       return;
     }
 
@@ -481,10 +707,18 @@ What would you like to do next?`;
   type StoryQuick = { title: string; body: string; suggestions: Array<string | ReactElement> };
 
   const storyQuick = useMemo<StoryQuick>(() => {
+    if (phase.kind === "aboutYou") {
+      return {
+        title: "One more thing",
+        body: "Share passions, achievements, or what makes you you — this feeds your opening story, not a single competency.",
+        suggestions: ["Aim for about 120–150 words — treat this like a consultant response."],
+      };
+    }
+
     if (!selected) {
       return {
         title: "Ready when you are",
-        body: `We'll capture one experience for each of ${DEMO_FOCUS_COUNT} competencies, then craft your storyboard.`,
+        body: `We'll capture one experience for each of ${focusQueue.length} competencies, then craft your storyboard.`,
         suggestions: [
           <span key="start">
             Reply in chat to begin <span className="font-extrabold">Competency 1</span>.
@@ -523,27 +757,13 @@ What would you like to do next?`;
         "Add Context, Action, and Result to build this story.",
       suggestions: spec ? [`Anchored to ${spec.title}`, ...suggestions] : suggestions,
     };
-  }, [selected, phase]);
+  }, [selected, phase, focusQueue.length]);
 
   const activeSuggestion = useMemo(() => {
     const list = storyQuick.suggestions;
     if (!list.length) return null;
     return list[suggestionCursor % list.length] ?? null;
   }, [storyQuick.suggestions, suggestionCursor]);
-
-  const pillarScores = useMemo(
-    () =>
-      SUCCESS_DRIVER_ORDER.map((id) => ({
-        id,
-        score: pillarStrength(storyDraftDocument, id),
-      })),
-    [storyDraftDocument],
-  );
-
-  const reportHref = useMemo(() => {
-    const id = latestReportIdForRole(role);
-    return id ? `/report/${id}` : "/interview";
-  }, [role, craftUi, fromCraft]);
 
   if (!role) {
     return (
@@ -575,14 +795,17 @@ What would you like to do next?`;
 
   const storyboardRightPanel = (
     <div className="space-y-3">
-      <div className="text-overline text-text-secondary">Experience bank</div>
+      <div className="text-overline text-text-secondary">Competencies</div>
 
       <div className="space-y-2">
         {focusQueue.map((compId, idx) => {
           const exp = experienceForCompetency(roleExperiences, compId);
           const spec = competencySpec(compId);
           const driver = pillarForCompetency(compId);
-          const isActive = activeCompetencyId === compId && phase.kind !== "closing";
+          const isActive =
+            activeCompetencyId === compId &&
+            phase.kind !== "closing" &&
+            phase.kind !== "aboutYou";
           const done = isDemoExperienceComplete(exp);
           return (
             <button
@@ -611,7 +834,7 @@ What would you like to do next?`;
                   <div className="flex items-center gap-2">
                     <SuccessDriverIcon driver={driver} className="size-4" />
                     <span className="text-overline text-text-secondary">
-                      {idx + 1}/{DEMO_FOCUS_COUNT} · {SUCCESS_DRIVERS[driver].shortLabel}
+                      {idx + 1}/{focusQueue.length} · {SUCCESS_DRIVERS[driver].shortLabel}
                     </span>
                     {done ? (
                       <span className="ml-auto text-overline text-extended-cyan-green">Done</span>
@@ -690,64 +913,97 @@ What would you like to do next?`;
     </div>
   );
 
-  function renderStoryReadyCard(title: string, subtitle: string) {
+  function renderDiveCard(dive: StoryboardDive, isCurrent: boolean) {
+    const divePillars = SUCCESS_DRIVER_ORDER.map((id) => ({
+      id,
+      score: dive.pillarScores?.[id] ?? 0,
+    }));
+    const canAdd = divesLeft > 0 && (isCurrent || dive.diveNumber === 1);
+
     return (
-      <Card className="gap-0 py-0">
-        <CardContent className="space-y-4 p-6">
-          <div className="text-overline text-text-secondary">{title}</div>
-          <div className="text-h6 text-text-primary">{subtitle}</div>
-          <CardNested className="flex flex-wrap items-end justify-between gap-3 px-4 py-3">
-            <div>
-              <div className="text-caption font-semibold text-text-primary">Overall story score</div>
-              <div className="text-overline text-text-secondary">
-                Mean of 12 competencies (0–5)
-              </div>
+      <Card
+        key={dive.id}
+        className="gap-0 py-0"
+      >
+        <CardContent className="space-y-5 p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <h3 className="text-h3 text-primary">Dive {dive.diveNumber}</h3>
+              {isCurrent ? <Badge variant="secondary">Current</Badge> : null}
             </div>
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className="shrink-0 border-0 bg-card text-extended-cyan-green hover:bg-card hover:text-extended-cyan-green"
+              aria-label={`Download Dive ${dive.diveNumber}`}
+              title="Download"
+              onClick={() =>
+                router.push(`/storyboard/crafting?dive=${encodeURIComponent(dive.id)}&print=1`)
+              }
+            >
+              <Download />
+            </Button>
+          </div>
+
+          <CardNested className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <div className="text-caption font-semibold text-text-primary">Overall story score</div>
             <div
               className={cn(
-                "text-h5",
-                scoringTextClass(storyScoreForCard > 0 ? storyScoreForCard : null),
+                "text-h5 tabular-nums",
+                scoringTextClass(dive.overallScore > 0 ? dive.overallScore : null),
               )}
             >
-              {storyScoreForCard.toFixed(1)}
+              {dive.overallScore.toFixed(1)}
               <span className="pl-1 text-body text-text-secondary">/ 5</span>
             </div>
           </CardNested>
+
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {pillarScores.map(({ id, score }) => (
+            {divePillars.map(({ id, score }) => (
               <div
                 key={id}
-                className="flex flex-col items-start gap-1 rounded-lg border border-extended-cyan-green/20 bg-extended-cyan-green/10 px-2.5 py-2"
+                className="flex flex-col gap-1.5 rounded-lg border border-border bg-surface px-3 py-2.5"
               >
-                <SuccessDriverIcon driver={id} className="size-4 text-extended-cyan-green" />
+                <SuccessDriverMark
+                  driver={id}
+                  label="short"
+                  className="text-overline text-text-primary"
+                  iconClassName="size-3.5"
+                />
                 <span
                   className={cn(
-                    "text-overline tabular-nums",
+                    "text-body-sm font-medium tabular-nums",
                     scoringTextClass(score > 0 ? score : null),
                   )}
                 >
                   {score > 0 ? score.toFixed(1) : "—"}
+                  <span className="text-caption font-normal text-text-secondary"> / 5</span>
                 </span>
               </div>
             ))}
           </div>
+
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={() => router.push("/storyboard/crafting")}>
+            <Button
+              type="button"
+              onClick={() =>
+                router.push(`/storyboard/crafting?dive=${encodeURIComponent(dive.id)}`)
+              }
+            >
               <BookOpen />
               View story
             </Button>
-            <Button type="button" variant="outline" onClick={() => router.push(reportHref)}>
-              <FileText />
-              View report
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push("/storyboard/crafting?print=1")}
-            >
-              <Download />
-              Download
-            </Button>
+            {canAdd ? (
+              <Button
+                type="button"
+                className="border-0 bg-extended-light-cyan text-text-primary hover:bg-extended-light-cyan/80 hover:text-text-primary"
+                onClick={startAddCompetency}
+              >
+                <Plus />
+                Add Competency
+              </Button>
+            ) : null}
           </div>
         </CardContent>
       </Card>
@@ -755,50 +1011,93 @@ What would you like to do next?`;
   }
 
   const showCaptureChrome =
-    !postCraftHome && phase.kind !== "greet" && phase.kind !== "closing" && activeCompetencyId;
+    !showDiveHome &&
+    !addCompetencyOpen &&
+    phase.kind !== "greet" &&
+    phase.kind !== "aboutYou" &&
+    phase.kind !== "closing" &&
+    activeCompetencyId;
 
   return (
-    <AppShell rightPanel={storyboardRightPanel} rightPanelMaxWidth={400}>
+    <AppShell
+      rightPanel={showDiveHome || addCompetencyOpen ? undefined : storyboardRightPanel}
+      rightPanelMaxWidth={400}
+    >
       <CoachFloatingNav />
       <div className="mx-auto w-[800px] max-w-full">
-        {postCraftHome ? (
+        {addCompetencyOpen ? (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h2 className="text-h4 text-left text-text-primary">Add competencies</h2>
+              <p className="text-body leading-6 text-text-secondary">
+                Choose additional competencies to deepen this Dive. Competencies you&apos;ve
+                already captured stay selected and can&apos;t be removed.
+              </p>
+            </div>
+            <CoreFourSelectionPanel
+              selected={addCompetencySelected}
+              lockedIds={lockedCompetencyIds}
+              targetRole={role}
+              jobDescription={roleProfile?.jobDescription ?? ""}
+              onToggle={toggleAddCompetency}
+              onConfirm={confirmAddCompetencySelection}
+              onResetToSuggested={() => {
+                setAddCompetencySelected(lockedCompetencyIds);
+                setAddCompetencyError(null);
+              }}
+              onCancel={() => {
+                setAddCompetencyOpen(false);
+                setAddCompetencyError(null);
+              }}
+              error={addCompetencyError}
+              hideSuggestionReasoning
+              hideReset
+              confirmLabel="Confirm selection"
+              helperText="When you're happy with your selection, confirm to start the next Dive."
+              selectionMode="multi"
+            />
+          </div>
+        ) : showDiveHome ? (
           <div className="space-y-6">
             <div className="space-y-3">
               <h2 className="text-h4 text-left text-text-primary">
-                Hey {firstName}, we’ve crafted a story.
+                {savedDives.length > 1
+                  ? `Hey ${firstName}, we’ve enriched the story.`
+                  : `Hey ${firstName}, we’ve crafted a story.`}
               </h2>
               <p className="text-left text-body-lg font-semibold text-text-secondary">
                 For the role of <span className="text-text-primary">{role}</span>
               </p>
-              <p className="text-left text-caption leading-6 text-text-secondary">
-                Review your storyboard or jump to your report.
-              </p>
             </div>
-            {renderStoryReadyCard(
-              "Your storyboard",
-              `Your storyboard for ${role} is ready to review.`,
-            )}
+            {divesLeft <= 0 ? (
+              <div
+                role="status"
+                className="flex w-full items-start gap-3 rounded-lg border border-extended-light-cyan bg-extended-light-cyan/50 px-4 py-3"
+              >
+                <p className="min-w-0 flex-1 text-body-sm leading-6 text-extended-green-blue">
+                  You&apos;ve used all {MAX_DIVES_PER_ROLE} Dives for this role. Earlier Dives stay
+                  viewable and read-only.
+                </p>
+              </div>
+            ) : null}
+            <div className="space-y-4">
+              {savedDives.map((dive, idx) => renderDiveCard(dive, idx === 0))}
+            </div>
           </div>
         ) : (
           <>
             {showCaptureChrome ? (
               <div className="mb-6 flex flex-wrap items-center gap-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-extended-cyan-green/25 bg-extended-cyan-green/10 px-3 py-1.5">
+                <div className="inline-flex items-center gap-2 rounded-full bg-extended-cyan-green/10 py-1.5 pl-1.5 pr-3">
                   <SuccessDriverIcon
                     driver={pillarForCompetency(activeCompetencyId)}
                     className="size-4"
                   />
                   <span className="text-overline font-medium text-text-primary">
                     {SUCCESS_DRIVERS[pillarForCompetency(activeCompetencyId)].shortLabel}
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <div className="text-overline text-text-secondary">
-                    Competency {progressIndex} of {DEMO_FOCUS_COUNT}
-                  </div>
-                  <div className="text-body-sm font-semibold text-text-primary">
+                    {" · "}
                     {competencySpec(activeCompetencyId).title}
-                  </div>
+                  </span>
                 </div>
               </div>
             ) : null}
@@ -811,7 +1110,20 @@ What would you like to do next?`;
               subtextClassName="mt-4 text-agent-question text-text-primary"
             />
 
-            {phase.kind === "closing" && craftUi !== "ready" ? (
+            {phase.kind === "greet" ? (
+              <p className="mt-8 text-agent-question text-text-primary">
+                <button
+                  type="button"
+                  onClick={() => setGreetAcknowledged(true)}
+                  className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                >
+                  Let&apos;s Start
+                  <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />
+                </button>
+              </p>
+            ) : null}
+
+            {phase.kind === "closing" ? (
               <div className="mt-8 space-y-3">
                 <Button
                   className="w-full"
@@ -822,24 +1134,6 @@ What would you like to do next?`;
                   {craftUi === "crafting" ? <Sparkles /> : <WandSparkles />}
                   Craft my story
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => router.push(reportHref)}
-                >
-                  <FileText />
-                  Skip to report
-                </Button>
-              </div>
-            ) : null}
-
-            {phase.kind === "closing" && craftUi === "ready" ? (
-              <div className="mt-8 space-y-6">
-                {renderStoryReadyCard(
-                  "Your storyboard",
-                  `Your storyboard for ${role} is here.`,
-                )}
               </div>
             ) : null}
 
@@ -849,16 +1143,63 @@ What would you like to do next?`;
           </>
         )}
       </div>
+
+      <Dialog open={diveConfirmOpen} onOpenChange={setDiveConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Start a new Dive?</DialogTitle>
+            <DialogDescription>
+              This will start a new Dive, a deeper version of your storyboard built on everything
+              you&apos;ve captured so far. You have {divesLeft} of {MAX_DIVES_PER_ROLE} remaining.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setDiveConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (diveConfirmAction) {
+                  beginNewDiveFromLatest(
+                    diveConfirmAction,
+                    diveUnlock,
+                    pendingFocusIds ?? undefined,
+                  );
+                }
+              }}
+            >
+              Start Dive
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <CoachBottomChatBar
         placeholder={
-          postCraftHome ? "Storyboard ready — open View story or View report…" : composerPlaceholder
+          addCompetencyOpen
+            ? "Select competencies above to continue…"
+            : showDiveHome
+              ? "Storyboard ready — open View story to continue…"
+              : phase.kind === "greet"
+                ? "Use Let’s Start above…"
+              : composerPlaceholder
         }
         onSend={handleText}
-        disabled={postCraftHome || phase.kind === "closing" || craftUi === "crafting"}
-        prefill={postCraftHome ? "" : exampleReplyPrefill}
-        prefillKey={postCraftHome ? "post-craft" : replyPrefillKey}
+        freeTextMode="host"
+        disabled={
+          addCompetencyOpen ||
+          showDiveHome ||
+          phase.kind === "greet" ||
+          phase.kind === "closing" ||
+          craftUi === "crafting"
+        }
+        prefill={showDiveHome || addCompetencyOpen ? "" : exampleReplyPrefill}
+        prefillKey={
+          addCompetencyOpen ? "add-competency" : showDiveHome ? "post-craft" : replyPrefillKey
+        }
         showUploadButton={false}
-        rightPanelMaxWidth={400}
+        rightPanelMaxWidth={showDiveHome || addCompetencyOpen ? undefined : 400}
       />
     </AppShell>
   );

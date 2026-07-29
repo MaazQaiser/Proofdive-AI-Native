@@ -9,6 +9,13 @@ import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
 type Props = {
   placeholder?: string;
   onSend?: (text: string) => void;
+  /**
+   * `faq-redirect` (default): every free-text send opens Ask and nudges the user
+   * to pick a hardcoded FAQ option.
+   * `host`: free-text progresses the host flow (e.g. storyboard); Ask free-text
+   * still redirects to the FAQ menu.
+   */
+  freeTextMode?: "faq-redirect" | "host";
   /** Disables the composer (e.g. when the flow offers on-screen actions instead). */
   disabled?: boolean;
   prefill?: string;
@@ -25,6 +32,7 @@ type Props = {
 export function CoachBottomChatBar({
   placeholder,
   onSend,
+  freeTextMode = "faq-redirect",
   disabled,
   prefill,
   prefillKey,
@@ -33,12 +41,24 @@ export function CoachBottomChatBar({
 }: Props = {}) {
   const faq = useFaqAssistant();
 
+  function handleComposerSend(text: string) {
+    if (faq.isFaqMode) {
+      faq.handleFreeText(text);
+      return;
+    }
+    if (freeTextMode === "host" && onSend) {
+      onSend(text);
+      return;
+    }
+    faq.handleFreeText(text);
+  }
+
   const composer = (
     <ChatComposer
       key={prefillKey ?? "coach-bottom-chat-composer"}
-      placeholder={faq.isFaqMode ? "I am here to help you!" : (placeholder ?? "Ask AI Coach")}
-      onSend={onSend ?? (() => {})}
-      disabled={disabled || faq.isFaqMode}
+      placeholder={faq.isFaqMode ? "I am here to help you!" : (placeholder ?? "Ask AI Assistant")}
+      onSend={handleComposerSend}
+      disabled={disabled}
       prefill={prefill}
       showUploadButton={faq.isFaqMode ? false : showUploadButton}
       modeToggle={{

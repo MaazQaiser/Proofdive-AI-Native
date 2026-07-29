@@ -40,8 +40,8 @@ type ChatboxProps = {
   /** Hides the upload affordance for steps that don't accept attachments. */
   showUploadAction?: boolean;
   /**
-   * Ask / FAQ control. When `isActive`, matches Figma State=Asking (pill with X).
-   * Compact shows icon-only; expanded shows icon + label.
+   * Ask / FAQ control. Icon-only when idle (same in compact + expanded);
+   * when `isActive`, matches Figma State=Asking (pill with label + X).
    */
   askAction?: {
     isActive: boolean;
@@ -56,7 +56,7 @@ type ChatboxProps = {
     React.ComponentProps<"textarea">,
     "value" | "onChange" | "placeholder" | "disabled" | "className" | "rows"
   >;
-  textareaRef?: React.Ref<HTMLTextAreaElement>;
+  textareaRef?: React.Ref<HTMLTextAreaElement | HTMLInputElement>;
 };
 
 /**
@@ -93,7 +93,7 @@ function Chatbox({
 
   const isCompact = variant === "compact";
   const isAsking = Boolean(askAction?.isActive);
-  const canSend = !disabled && !isAsking && (value.trim().length > 0 || files.length > 0);
+  const canSend = !disabled && (value.trim().length > 0 || files.length > 0);
   const hasLeading = Boolean(leading);
   const showUpload = showUploadAction && !isAsking;
   const micDisabled = Boolean(disabled || isAsking);
@@ -140,7 +140,7 @@ function Chatbox({
         </span>
         <X className="size-[13px] shrink-0" aria-hidden />
       </button>
-    ) : isCompact ? (
+    ) : (
       <IconButton
         variant="ghost"
         onClick={askAction.onToggle}
@@ -149,18 +149,6 @@ function Chatbox({
       >
         <MessageCircleQuestion className="size-[13px]" />
       </IconButton>
-    ) : (
-      <button
-        type="button"
-        onClick={askAction.onToggle}
-        aria-label={askAction.label ?? "Ask"}
-        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full p-1 text-text-secondary transition hover:bg-muted hover:text-text-primary"
-      >
-        <MessageCircleQuestion className="size-[13px] shrink-0" aria-hidden />
-        <span className="pr-1 text-[12px] leading-[1.25] whitespace-nowrap">
-          {askAction.label ?? "Ask"}
-        </span>
-      </button>
     )
   ) : null;
 
@@ -190,10 +178,7 @@ function Chatbox({
       onClick={onSend}
       disabled={!canSend}
       aria-label="Send reply"
-      className={cn(
-        "disabled:bg-primary disabled:text-primary-foreground disabled:opacity-50",
-        isAsking ? "opacity-50" : undefined,
-      )}
+      className="disabled:bg-primary disabled:text-primary-foreground disabled:opacity-50"
     >
       <ArrowUp />
     </IconButton>
@@ -224,9 +209,11 @@ function Chatbox({
   ) : null;
 
   const textareaClass = cn(
-    "w-full resize-none bg-transparent text-body-sm leading-[1.25] text-text-primary outline-none",
+    "w-full resize-none bg-transparent text-text-primary outline-none",
     "placeholder:text-text-secondary disabled:cursor-not-allowed disabled:opacity-50",
-    isCompact ? "h-7 min-h-7 overflow-hidden whitespace-nowrap" : "min-h-0 flex-1",
+    isCompact
+      ? "block h-7 min-h-7 overflow-hidden whitespace-nowrap py-0 text-body-sm leading-7"
+      : "min-h-0 flex-1 text-body-sm leading-[1.25]",
   );
 
   return (
@@ -234,68 +221,80 @@ function Chatbox({
       data-slot="chatbox"
       data-variant={variant}
       className={cn(
-        "relative w-full max-w-[800px] overflow-clip border border-brand-200 bg-white/90 shadow-[0_4px_4px_rgba(0,0,0,0.12)] backdrop-blur-[42px]",
-        isCompact ? "rounded-full p-4" : "rounded-[20px] p-4",
+        "relative w-full max-w-[800px] p-px",
+        "bg-[linear-gradient(135deg,color-mix(in_srgb,var(--brand-500)_20%,transparent)_0%,var(--base)_41%,color-mix(in_srgb,var(--brand-500)_20%,transparent)_100%)]",
+        "shadow-[0_2px_30px_0_rgba(14,154,181,0.1)]",
+        isCompact ? "rounded-full" : "rounded-[20px]",
         hasLeading && "flex min-h-0 flex-col",
         className,
       )}
     >
-      {hasLeading ? (
-        <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">{leading}</div>
-      ) : null}
-
       <div
         className={cn(
-          "flex w-full flex-col",
-          hasLeading ? "shrink-0 gap-2.5 pt-3" : isCompact ? null : "gap-2.5",
+          "overflow-clip bg-white/90 backdrop-blur-[42px] outline-none ring-0 focus-within:outline-none focus-within:ring-0",
+          isCompact ? "rounded-full p-4" : "rounded-[20px] p-4",
+          hasLeading && "flex min-h-0 flex-1 flex-col",
         )}
       >
-        {fileChips}
+        {hasLeading ? (
+          <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">{leading}</div>
+        ) : null}
 
-        {isCompact ? (
-          <div className="flex h-7 w-full items-center gap-2">
-            <textarea
-              ref={textareaRef}
-              value={value}
-              onChange={(e) => onValueChange(e.target.value)}
-              placeholder={isListening ? "Speak now…" : placeholder}
-              disabled={disabled}
-              rows={1}
-              className={textareaClass}
-              {...textareaProps}
-            />
-            <div className="flex shrink-0 items-center gap-2">
-              {compactUpload}
-              {askControl}
-              {micControl}
-              {sendControl}
+        <div
+          className={cn(
+            "flex w-full flex-col",
+            hasLeading ? "shrink-0 gap-2.5 pt-3" : isCompact ? null : "gap-2.5",
+          )}
+        >
+          {fileChips}
+
+          {isCompact ? (
+            <div className="flex h-7 w-full items-center gap-2">
+              <input
+                ref={textareaRef as React.Ref<HTMLInputElement>}
+                type="text"
+                value={value}
+                onChange={(e) => onValueChange(e.target.value)}
+                placeholder={isListening ? "Speak now…" : placeholder}
+                disabled={disabled}
+                className="h-7 min-w-0 flex-1 bg-transparent py-0 text-body-sm leading-7 text-text-primary outline-none placeholder:text-text-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                onFocus={textareaProps?.onFocus as React.FocusEventHandler<HTMLInputElement> | undefined}
+                onBlur={textareaProps?.onBlur as React.FocusEventHandler<HTMLInputElement> | undefined}
+                onKeyDown={textareaProps?.onKeyDown as React.KeyboardEventHandler<HTMLInputElement> | undefined}
+              />
+              <div className="flex shrink-0 items-center gap-2">
+                {compactUpload}
+                {askControl}
+                {micControl}
+                {sendControl}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex h-[88px] w-full flex-col justify-between">
-            <textarea
-              ref={textareaRef}
-              value={value}
-              onChange={(e) => onValueChange(e.target.value)}
-              placeholder={isListening ? "Speak now…" : placeholder}
-              disabled={disabled}
-              rows={2}
-              className={textareaClass}
-              {...textareaProps}
-            />
-            <div className="flex flex-col gap-1">
-              {status ? <div className="min-h-0">{status}</div> : null}
-              <div className="flex h-7 w-full items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center">{expandedUpload}</div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {askControl}
-                  {micControl}
-                  {sendControl}
+          ) : (
+            <div className="flex h-[88px] w-full flex-col justify-between">
+              <textarea
+                ref={textareaRef as React.Ref<HTMLTextAreaElement>}
+                value={value}
+                onChange={(e) => onValueChange(e.target.value)}
+                placeholder={isListening ? "Speak now…" : placeholder}
+                disabled={disabled}
+                rows={2}
+                className={textareaClass}
+                {...textareaProps}
+              />
+              <div className="flex flex-col gap-1">
+                {status ? <div className="min-h-0">{status}</div> : null}
+                <div className="flex h-7 w-full items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center">{expandedUpload}</div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {askControl}
+                    {micControl}
+                    {sendControl}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

@@ -221,7 +221,7 @@ export function CompetencyFrameworksListScreen() {
                   <TableCell className="pl-6">
                     <button
                       type="button"
-                      className="text-left font-semibold text-primary hover:underline"
+                      className="text-left font-semibold text-text-primary hover:underline"
                       onClick={() => setSelectedId(framework.id)}
                     >
                       {framework.name}

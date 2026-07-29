@@ -17,11 +17,9 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { Separator } from "@/components/ui/separator";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import {
-  createStoryboardDraft,
-  normalizeStoryboardDocument,
+  latestSavedDive,
   overallCompetencyStrength,
-  type StoryboardDraftDocument,
-  type StoryboardDraftStore,
+  savedDivesForRole,
 } from "@/lib/storyboardDraft";
 import {
   SUCCESS_DRIVER_ORDER,
@@ -33,6 +31,7 @@ import { reportCountForRole } from "@/lib/proofdiveLogic";
 import { deriveJourneySignals } from "@/lib/recommendedNextStep";
 import { scoringBadgeClass, scoringLabelForScore, scoringTextClass } from "@/lib/scoringPalette";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
+import { useStoryboardDiveStore } from "@/lib/useStoryboardDiveStore";
 import { readJson } from "@/lib/storage";
 import { pickMostRecentForRole } from "@/lib/trainingJourneyProgress";
 import type {
@@ -40,7 +39,6 @@ import type {
   InterviewReport,
   ReadinessLabel,
   RoleProfile,
-  StoryboardFromCraft,
   TrainingJourneyProgress,
 } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
@@ -143,14 +141,7 @@ export function CoachHome() {
     StorageKeys.trainingProgress,
     {},
   );
-  const [draftStore] = useLocalStorageState<StoryboardDraftStore>(StorageKeys.storyboardDraft, {
-    version: 1,
-    byRole: {},
-  });
-  const [fromCraft] = useLocalStorageState<StoryboardFromCraft | null>(
-    StorageKeys.storyboardFromCraft,
-    null,
-  );
+  const [draftStore] = useStoryboardDiveStore();
   const [coachJourneyView, setCoachJourneyView] = useLocalStorageState<CoachJourneyView>(
     StorageKeys.coachJourneyView,
     DEFAULT_COACH_JOURNEY_VIEW,
@@ -490,15 +481,14 @@ export function CoachHome() {
     return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   }, [role]);
 
-  const storyDraftDocument = useMemo<StoryboardDraftDocument>(() => {
-    if (!role) return createStoryboardDraft("");
-    const raw = draftStore.byRole[role] ?? createStoryboardDraft(role);
-    return normalizeStoryboardDocument(raw);
-  }, [draftStore, role]);
+  const latestDive = useMemo(
+    () => (role ? latestSavedDive(draftStore, role) : null),
+    [draftStore, role],
+  );
 
   const storyOverallScore = useMemo(
-    () => overallCompetencyStrength(storyDraftDocument),
-    [storyDraftDocument],
+    () => (latestDive ? overallCompetencyStrength(latestDive) : 0),
+    [latestDive],
   );
 
   /** Draft mean of competencies; if 0, use latest mock report overall for this role (matches Storyboard). */
@@ -513,11 +503,11 @@ export function CoachHome() {
     () =>
       deriveJourneySignals({
         role,
-        fromCraft,
+        hasSavedDives: savedDivesForRole(draftStore, role).length > 0,
         roleExperienceCount: roleExperiences.length,
         storyOverallScore,
       }),
-    [role, fromCraft, storyOverallScore, roleExperiences.length],
+    [role, draftStore, storyOverallScore, roleExperiences.length],
   );
 
   return (

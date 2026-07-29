@@ -22,13 +22,6 @@ import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { removeSavedRole, rolesWithActive, upsertSavedRole } from "@/lib/proofdiveLogic";
@@ -67,6 +60,14 @@ function labelExperienceLevel(v: RoleProfile["experienceLevel"]): string {
   }
 }
 
+function formatCareerStage(profile: RoleProfile): string | undefined {
+  if (!profile.backgroundType) return undefined;
+  if (profile.backgroundType === "experienced" && profile.experienceLevel) {
+    return `${labelBackgroundType(profile.backgroundType)} · ${labelExperienceLevel(profile.experienceLevel)}`;
+  }
+  return labelBackgroundType(profile.backgroundType);
+}
+
 function memberSince(iso: string): string {
   const d = new Date(iso);
   const diff = Date.now() - d.getTime();
@@ -87,22 +88,6 @@ function DetailRow({ label, value }: { label: string; value?: string }) {
     </div>
   );
 }
-
-const CAREER_STAGE_OPTIONS: Array<{ value: NonNullable<RoleProfile["backgroundType"]>; label: string }> = [
-  { value: "fresh_grad", label: "Freshie" },
-  { value: "under_grad", label: "Undergraduate" },
-  { value: "diploma_holder", label: "Diploma Holder" },
-  { value: "experienced", label: "Experienced Professional" },
-];
-
-const EXPERIENCE_LEVEL_OPTIONS: Array<{
-  value: NonNullable<RoleProfile["experienceLevel"]>;
-  label: string;
-}> = [
-  { value: "1-5", label: "1–5 years" },
-  { value: "5-10", label: "5–10 years" },
-  { value: "10+", label: "10+ years" },
-];
 
 function PrefRow({
   label,
@@ -136,6 +121,9 @@ function RoleRow({
   isSelected: boolean;
   onRemove: () => void;
 }) {
+  const careerStage = formatCareerStage(profile);
+  const meta = [profile.industryVertical, careerStage].filter(Boolean).join(" · ");
+
   return (
     <div className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
       <div className="min-w-0 flex-1">
@@ -145,11 +133,9 @@ function RoleRow({
             <Badge className="border-transparent bg-primary/10 text-primary">Selected</Badge>
           )}
         </div>
-        {profile.industryVertical && (
-          <div className="mt-0.5 text-caption text-muted-foreground">
-            {profile.industryVertical}
-          </div>
-        )}
+        {meta ? (
+          <div className="mt-0.5 text-caption text-muted-foreground">{meta}</div>
+        ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <IconButton
@@ -207,9 +193,7 @@ export function ProfileScreen() {
   const [personalInfoDraft, setPersonalInfoDraft] = useState<{
     name: string;
     email: string;
-    careerStage: RoleProfile["backgroundType"] | "";
-    experienceLevel: RoleProfile["experienceLevel"] | "";
-  }>({ name: "", email: "", careerStage: "", experienceLevel: "" });
+  }>({ name: "", email: "" });
   const [emailNotice, setEmailNotice] = useState<string | null>(null);
 
   const roles = useMemo(() => rolesWithActive(savedRoles, roleProfile), [savedRoles, roleProfile]);
@@ -243,8 +227,6 @@ export function ProfileScreen() {
     setPersonalInfoDraft({
       name: roleProfile?.name ?? "",
       email: roleProfile?.email ?? "",
-      careerStage: roleProfile?.backgroundType ?? "",
-      experienceLevel: roleProfile?.experienceLevel ?? "",
     });
     setEmailNotice(null);
     setIsEditingPersonalInfo(true);
@@ -254,28 +236,20 @@ export function ProfileScreen() {
     if (!roleProfile) return;
     const trimmedName = personalInfoDraft.name.trim();
     const trimmedEmail = personalInfoDraft.email.trim();
-    const isExperienced = personalInfoDraft.careerStage === "experienced";
-    if (isExperienced && !personalInfoDraft.experienceLevel) return;
 
     const updated: RoleProfile = {
       ...roleProfile,
       name: trimmedName || undefined,
       email: trimmedEmail || undefined,
-      backgroundType: personalInfoDraft.careerStage || undefined,
-      experienceLevel: isExperienced
-        ? personalInfoDraft.experienceLevel || undefined
-        : undefined,
     };
 
     setSavedRoles((prev) => {
       const withActive = upsertSavedRole(prev, updated);
-      // Name/email/career stage are account-level, not per-role — keep every saved role in sync.
+      // Name/email are account-level — keep every saved role in sync.
       return withActive.map((r) => ({
         ...r,
         name: updated.name,
         email: updated.email,
-        backgroundType: updated.backgroundType,
-        experienceLevel: updated.experienceLevel,
       }));
     });
     setRoleProfile(updated);
@@ -297,24 +271,7 @@ export function ProfileScreen() {
   const avatarText = initials(roleProfile?.name, roleProfile?.targetRole);
   const hasProfile = Boolean(roleProfile?.targetRole);
 
-  const careerStage = roleProfile?.backgroundType
-    ? roleProfile.backgroundType === "experienced" && roleProfile.experienceLevel
-      ? `${labelBackgroundType(roleProfile.backgroundType)} · ${labelExperienceLevel(roleProfile.experienceLevel)}`
-      : labelBackgroundType(roleProfile.backgroundType)
-    : undefined;
-
-  const subtitleParts = [careerStage, roleProfile?.targetRole, roleProfile?.industryVertical].filter(
-    Boolean,
-  );
-
-  const careerStageChanged =
-    (personalInfoDraft.careerStage || "") !== (roleProfile?.backgroundType || "") ||
-    (personalInfoDraft.careerStage === "experienced"
-      ? (personalInfoDraft.experienceLevel || "") !== (roleProfile?.experienceLevel || "")
-      : Boolean(roleProfile?.experienceLevel));
-
-  const canSavePersonalInfo =
-    personalInfoDraft.careerStage !== "experienced" || Boolean(personalInfoDraft.experienceLevel);
+  const subtitleParts = [roleProfile?.targetRole, roleProfile?.industryVertical].filter(Boolean);
 
   return (
     <>
@@ -394,77 +351,13 @@ export function ProfileScreen() {
                             }
                           />
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                          <Label htmlFor="profile-career-stage">Career stage</Label>
-                          <Select
-                            value={personalInfoDraft.careerStage || undefined}
-                            onValueChange={(v) => {
-                              const careerStage = v as RoleProfile["backgroundType"];
-                              setPersonalInfoDraft((d) => ({
-                                ...d,
-                                careerStage,
-                                experienceLevel:
-                                  careerStage === "experienced" ? d.experienceLevel : "",
-                              }));
-                            }}
-                          >
-                            <SelectTrigger id="profile-career-stage" className="w-full">
-                              <SelectValue placeholder="—" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {CAREER_STAGE_OPTIONS.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        {personalInfoDraft.careerStage === "experienced" ? (
-                          <div className="flex flex-col gap-1.5">
-                            <Label htmlFor="profile-experience-level">Years of experience</Label>
-                            <Select
-                              value={personalInfoDraft.experienceLevel || undefined}
-                              onValueChange={(v) =>
-                                setPersonalInfoDraft((d) => ({
-                                  ...d,
-                                  experienceLevel: v as RoleProfile["experienceLevel"],
-                                }))
-                              }
-                            >
-                              <SelectTrigger id="profile-experience-level" className="w-full">
-                                <SelectValue placeholder="Select one" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {EXPERIENCE_LEVEL_OPTIONS.map((opt) => (
-                                  <SelectItem key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        ) : (
-                          <DetailRow
-                            label="Member since"
-                            value={roleProfile!.createdAt ? memberSince(roleProfile!.createdAt) : undefined}
-                          />
-                        )}
-                        {personalInfoDraft.careerStage === "experienced" ? (
-                          <DetailRow
-                            label="Member since"
-                            value={roleProfile!.createdAt ? memberSince(roleProfile!.createdAt) : undefined}
-                          />
-                        ) : null}
+                        <DetailRow
+                          label="Member since"
+                          value={roleProfile!.createdAt ? memberSince(roleProfile!.createdAt) : undefined}
+                        />
                       </div>
-                      {careerStageChanged && (
-                        <p className="rounded-lg border border-border bg-muted px-3 py-2 text-caption text-foreground">
-                          Changing your career stage will also adjust your Storyboard, Training
-                          modules, and Mock Interview practice to match the new stage.
-                        </p>
-                      )}
                       <div className="flex items-center gap-2">
-                        <Button size="sm" onClick={savePersonalInfo} disabled={!canSavePersonalInfo}>
+                        <Button size="sm" onClick={savePersonalInfo}>
                           Save
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => setIsEditingPersonalInfo(false)}>
@@ -476,7 +369,6 @@ export function ProfileScreen() {
                     <div className="grid grid-cols-2 gap-x-6 gap-y-5">
                       <DetailRow label="Full name" value={roleProfile!.name} />
                       <DetailRow label="Email" value={roleProfile?.email} />
-                      <DetailRow label="Career stage" value={careerStage} />
                       <DetailRow
                         label="Member since"
                         value={roleProfile!.createdAt ? memberSince(roleProfile!.createdAt) : undefined}

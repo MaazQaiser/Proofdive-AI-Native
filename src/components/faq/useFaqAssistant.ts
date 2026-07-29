@@ -12,15 +12,15 @@ import {
 } from "@/lib/faqAssistantContent";
 import { useLatestInterviewReport } from "@/lib/interviewReports";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
-import type { Experience, RoleProfile, StoryboardFromCraft, TrainingJourneyProgress } from "@/lib/proofdiveTypes";
+import type { Experience, RoleProfile, TrainingJourneyProgress } from "@/lib/proofdiveTypes";
 import { deriveJourneySignals, pickRecommendedNextStep } from "@/lib/recommendedNextStep";
 import {
-  createStoryboardDraft,
-  normalizeStoryboardDocument,
+  latestSavedDive,
   overallCompetencyStrength,
-  type StoryboardDraftStore,
+  savedDivesForRole,
 } from "@/lib/storyboardDraft";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import { useStoryboardDiveStore } from "@/lib/useStoryboardDiveStore";
 
 type FaqView =
   | { screen: "root" }
@@ -33,6 +33,8 @@ export type FaqScreenData =
       showGreeting: boolean;
       candidateName: string;
       items: { id: FaqRootItemId; label: string }[];
+      /** Free-text the user typed before being redirected to the menu. */
+      pendingFreeText?: string | null;
     }
   | { kind: "item"; item: FaqRootItem; answer: FaqAnswer }
   | { kind: "followup"; item: FaqRootItem; answer: FaqAnswer; followup: FaqFollowup };
@@ -50,6 +52,7 @@ export function useFaqAssistant() {
   const [isFaqMode, setIsFaqMode] = useState(false);
   const [faqView, setFaqView] = useState<FaqView>({ screen: "root" });
   const [showGreeting, setShowGreeting] = useState(false);
+  const [pendingFreeText, setPendingFreeText] = useState<string | null>(null);
   const [hasSeenGreeting, setHasSeenGreeting] = useLocalStorageState(
     StorageKeys.faqAssistantGreetingSeen,
     false,
@@ -61,14 +64,7 @@ export function useFaqAssistant() {
     StorageKeys.trainingProgress,
     {},
   );
-  const [draftStore] = useLocalStorageState<StoryboardDraftStore>(StorageKeys.storyboardDraft, {
-    version: 1,
-    byRole: {},
-  });
-  const [fromCraft] = useLocalStorageState<StoryboardFromCraft | null>(
-    StorageKeys.storyboardFromCraft,
-    null,
-  );
+  const [diveStore] = useStoryboardDiveStore();
   const latestReport = useLatestInterviewReport();
 
   const role = roleProfile?.targetRole?.trim() ?? "";
@@ -81,13 +77,19 @@ export function useFaqAssistant() {
 
   const storyOverallScore = useMemo(() => {
     if (!role) return 0;
-    const raw = draftStore.byRole[role] ?? createStoryboardDraft(role);
-    return overallCompetencyStrength(normalizeStoryboardDocument(raw));
-  }, [draftStore, role]);
+    const dive = latestSavedDive(diveStore, role);
+    return dive ? overallCompetencyStrength(dive) : 0;
+  }, [diveStore, role]);
 
   const { hasCraftedStoryboard, hasCreatedStoryboard } = useMemo(
-    () => deriveJourneySignals({ role, fromCraft, roleExperienceCount, storyOverallScore }),
-    [role, fromCraft, roleExperienceCount, storyOverallScore],
+    () =>
+      deriveJourneySignals({
+        role,
+        hasSavedDives: savedDivesForRole(diveStore, role).length > 0,
+        roleExperienceCount,
+        storyOverallScore,
+      }),
+    [role, diveStore, roleExperienceCount, storyOverallScore],
   );
 
   const recommendedNextStep = useMemo(
@@ -118,12 +120,26 @@ export function useFaqAssistant() {
 
   const exitFaqMode = useCallback(() => {
     setIsFaqMode(false);
+    setPendingFreeText(null);
     consumeGreeting();
   }, [consumeGreeting]);
+
+  const handleFreeText = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      setIsFaqMode(true);
+      setFaqView({ screen: "root" });
+      setPendingFreeText(trimmed);
+      consumeGreeting();
+    },
+    [consumeGreeting],
+  );
 
   const selectRootItem = useCallback(
     (itemId: FaqRootItemId) => {
       setFaqView({ screen: "item", itemId });
+      setPendingFreeText(null);
       consumeGreeting();
     },
     [consumeGreeting],
@@ -150,6 +166,7 @@ export function useFaqAssistant() {
         showGreeting,
         candidateName,
         items: FAQ_ROOT_ITEMS.map((i) => ({ id: i.id, label: i.menuLabel })),
+        pendingFreeText,
       };
     }
 
@@ -166,13 +183,14 @@ export function useFaqAssistant() {
     }
 
     return { kind: "item", item, answer };
-  }, [faqView, resolverCtx, showGreeting, candidateName]);
+  }, [faqView, resolverCtx, showGreeting, candidateName, pendingFreeText]);
 
   return {
     isFaqMode,
     screenData,
     enterFaqMode,
     exitFaqMode,
+    handleFreeText,
     selectRootItem,
     selectFollowup,
     backToItemMenu,

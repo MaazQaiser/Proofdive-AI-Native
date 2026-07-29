@@ -8,10 +8,13 @@ import {
   COMPETENCY_SPECS,
   type CompetencyId,
   type PillarId,
-  type StoryboardDraftDocument,
+  type StoryboardDive,
+  emptyCompetencySection,
+  recomputeDiveScores,
   strengthScore,
 } from "@/lib/storyboardDraft";
 import type { Experience, RoleProfile } from "@/lib/proofdiveTypes";
+import { clampToWordCap, INTRO_WORD_HARD_CAP } from "@/lib/storyboardGuardrails";
 
 /** Default demo pair when the profile has no Core selection yet. */
 export const DEMO_FOCUS_COMPETENCY_IDS: readonly CompetencyId[] = [
@@ -43,7 +46,25 @@ export function resolveFocusCompetencies(
 }
 
 export function demoCompetencyQueue(profile: RoleProfile | null | undefined): CompetencyId[] {
+  const expanded = (profile?.storyboardFocusCompetencies ?? []).filter((id) =>
+    COMPETENCY_SPECS.some((s) => s.id === id),
+  );
+  if (expanded.length >= DEMO_FOCUS_COUNT) {
+    return expanded;
+  }
   return resolveFocusCompetencies(profile?.coreFourCompetencies);
+}
+
+/** Competencies that already have a completed experience for this role. */
+export function completedCompetencyIds(
+  roleExperiences: readonly Experience[],
+): CompetencyId[] {
+  const out: CompetencyId[] = [];
+  for (const exp of roleExperiences) {
+    if (!exp.competencyId || !isDemoExperienceComplete(exp)) continue;
+    if (!out.includes(exp.competencyId)) out.push(exp.competencyId);
+  }
+  return out;
 }
 
 export function focusCompetencySpecs(ids: readonly CompetencyId[]) {
@@ -68,20 +89,20 @@ export function pillarForCompetency(id: CompetencyId): PillarId {
 
 /** Mean strength across the focus competencies only (intro excluded). */
 export function overallFocusCompetencyStrength(
-  d: StoryboardDraftDocument,
+  d: StoryboardDive,
   ids: readonly CompetencyId[],
 ) {
   const idxs = focusCompetencyIndexes(ids);
   if (!idxs.length) return 0;
   const scores = idxs.map((i) =>
-    Number(strengthScore(d.competencies[i]?.car ?? { context: "", action: "", result: "" })),
+    Number(d.competencies[i]?.score ?? strengthScore(d.competencies[i]?.car ?? { context: "", action: "", result: "" })),
   );
   const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
   return Math.round(avg * 10) / 10;
 }
 
 export function pillarFocusStrength(
-  d: StoryboardDraftDocument,
+  d: StoryboardDive,
   pillar: PillarId,
   ids: readonly CompetencyId[],
 ) {
@@ -90,7 +111,7 @@ export function pillarFocusStrength(
   );
   if (!idxs.length) return 0;
   const scores = idxs.map((i) =>
-    Number(strengthScore(d.competencies[i]?.car ?? { context: "", action: "", result: "" })),
+    Number(d.competencies[i]?.score ?? strengthScore(d.competencies[i]?.car ?? { context: "", action: "", result: "" })),
   );
   const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
   return Math.round(avg * 10) / 10;
@@ -186,25 +207,43 @@ export function consultantQuestionsFor(competencyId: CompetencyId): string[] {
   return (byId[competencyId] ?? fallback).slice(0, DEMO_CONSULTANT_QUESTION_COUNT);
 }
 
-/** Apply experience CAR blocks onto the matching draft competency sections. */
-export function seedDraftFromDemoExperiences(
-  d: StoryboardDraftDocument,
+/**
+ * Apply experience CAR onto competency sections, and seed Introduction text
+ * from the flow-level about-you answer (TMAY). Does not invent non-evidence CARs.
+ * Does not merge consultant answers into CAR examples.
+ */
+export function seedDiveFromDemoExperiences(
+  dive: StoryboardDive,
   roleExperiences: readonly Experience[],
   focusIds: readonly CompetencyId[],
-): StoryboardDraftDocument {
-  const next = {
-    ...d,
-    competencies: d.competencies.map((s) => ({
+  aboutYouAnswer?: string | null,
+): StoryboardDive {
+  const next: StoryboardDive = {
+    ...dive,
+    intro: { ...dive.intro },
+    competencies: dive.competencies.map((s) => ({
       ...s,
       car: { ...s.car },
+      matchedSignals: [...s.matchedSignals],
+      missingNextLevelSignals: [...s.missingNextLevelSignals],
+      secondaryCompetencies: [...(s.secondaryCompetencies ?? [])],
     })),
   };
-  for (const id of focusIds) {
-    const exp = experienceForCompetency(roleExperiences, id);
-    const idx = COMPETENCY_SPECS.findIndex((s) => s.id === id);
-    if (idx < 0 || !exp?.car) continue;
-    next.competencies[idx] = {
-      ...next.competencies[idx]!,
+
+  for (let i = 0; i < COMPETENCY_SPECS.length; i++) {
+    const spec = COMPETENCY_SPECS[i]!;
+    if (!focusIds.includes(spec.id)) {
+      // Guardrail: do not invent filler for competencies without user evidence.
+      next.competencies[i] = emptyCompetencySection();
+      continue;
+    }
+    const exp = experienceForCompetency(roleExperiences, spec.id);
+    if (!exp?.car) {
+      next.competencies[i] = emptyCompetencySection();
+      continue;
+    }
+    next.competencies[i] = {
+      ...next.competencies[i]!,
       car: {
         context: exp.car.context,
         action: exp.car.action,
@@ -212,5 +251,17 @@ export function seedDraftFromDemoExperiences(
       },
     };
   }
-  return next;
+
+  const about = aboutYouAnswer?.trim();
+  if (about) {
+    next.intro = {
+      ...next.intro,
+      text: clampToWordCap(about, INTRO_WORD_HARD_CAP),
+    };
+  }
+
+  return recomputeDiveScores(next);
 }
+
+/** @deprecated Use seedDiveFromDemoExperiences */
+export const seedDraftFromDemoExperiences = seedDiveFromDemoExperiences;

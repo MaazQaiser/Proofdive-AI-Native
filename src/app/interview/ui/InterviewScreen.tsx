@@ -31,21 +31,19 @@ import type {
   InterviewReport,
   InterviewSessionKind,
   RoleProfile,
-  StoryboardFromCraft,
   TrainingJourneyProgress,
 } from "@/lib/proofdiveTypes";
 import {
-  createStoryboardDraft,
-  normalizeStoryboardDocument,
+  latestSavedDive,
   overallCompetencyStrength,
   PILLAR_LABEL,
+  savedDivesForRole,
   type PillarId,
-  type StoryboardDraftDocument,
-  type StoryboardDraftStore,
 } from "@/lib/storyboardDraft";
 import { ONBOARDING_INTRO_VIDEO_SRC } from "@/lib/onboardingIntroVideo";
 import { hasCompletedAnyTrainingForRole } from "@/lib/trainingJourneyProgress";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import { useStoryboardDiveStore } from "@/lib/useStoryboardDiveStore";
 
 function parseReportsMap(raw: string | null): Record<string, InterviewReport> | null {
   try {
@@ -103,34 +101,26 @@ export function InterviewScreen() {
     StorageKeys.trainingProgress,
     {},
   );
-  const [draftStore] = useLocalStorageState<StoryboardDraftStore>(StorageKeys.storyboardDraft, {
-    version: 1,
-    byRole: {},
-  });
-  const [fromCraft] = useLocalStorageState<StoryboardFromCraft | null>(
-    StorageKeys.storyboardFromCraft,
-    null,
-  );
+  const [diveStore] = useStoryboardDiveStore();
 
   const name = roleProfile?.name?.trim() || "there";
   const role = roleProfile?.targetRole?.trim() ?? "";
 
-  const storyDraftDocument = useMemo<StoryboardDraftDocument>(() => {
-    if (!role) return createStoryboardDraft("");
-    const raw = draftStore.byRole[role] ?? createStoryboardDraft(role);
-    return normalizeStoryboardDocument(raw);
-  }, [draftStore, role]);
+  const latestDive = useMemo(
+    () => (role ? latestSavedDive(diveStore, role) : null),
+    [diveStore, role],
+  );
 
   const storyOverallScore = useMemo(
-    () => overallCompetencyStrength(storyDraftDocument),
-    [storyDraftDocument],
+    () => (latestDive ? overallCompetencyStrength(latestDive) : 0),
+    [latestDive],
   );
 
   const hasCreatedStoryboard = useMemo(() => {
     if (!role) return false;
-    if (fromCraft && fromCraft.v === 1 && fromCraft.role === role) return true;
+    if (savedDivesForRole(diveStore, role).length > 0) return true;
     return storyOverallScore > 0;
-  }, [role, fromCraft, storyOverallScore]);
+  }, [role, diveStore, storyOverallScore]);
 
   const trainingComplete = useMemo(
     () => hasCompletedAnyTrainingForRole(trainingJourneyProgressMap, role),

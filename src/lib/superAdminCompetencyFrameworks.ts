@@ -30,6 +30,8 @@ export type CompetencyFrameworkVersion = {
   updatedAt: string;
   sourceFrameworkId?: string;
   competencies: FrameworkCompetency[];
+  /** Optional display-name overrides for Success Drivers within this framework. */
+  driverLabels?: Partial<Record<SuccessDriverId, string>>;
 };
 
 /** Shallow picker shape used by the org create/edit wizard. */
@@ -87,6 +89,9 @@ export function deepCloneFramework(
     updatedAt: now,
     sourceFrameworkId: source.id,
     competencies: structuredClone(source.competencies),
+    driverLabels: source.driverLabels
+      ? structuredClone(source.driverLabels)
+      : undefined,
   };
 }
 

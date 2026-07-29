@@ -49,7 +49,7 @@ export default function SignupPage() {
           <div className="flex w-full max-w-[400px] flex-col items-stretch gap-5">
             <div className="flex flex-col items-center gap-1.5 text-center">
               <h1 className="text-h4 font-medium text-extended-dark-cyan">Signup</h1>
-              <p className="text-body-sm text-muted-foreground">To create your account</p>
+              <p className="text-body-sm text-muted-foreground">Enter your email to get started</p>
             </div>
 
             <form
@@ -140,7 +140,7 @@ export default function SignupPage() {
                 className={socialClassName}
               >
                 <GoogleIcon />
-                Google
+                Continue with Google
               </button>
               <button
                 type="button"
@@ -148,14 +148,14 @@ export default function SignupPage() {
                 className={socialClassName}
               >
                 <LinkedInIcon />
-                LinkedIn
+                Continue with LinkedIn
               </button>
             </div>
 
             <p className="text-center text-body-sm">
               <span className="text-muted-foreground">Already have an account? </span>
               <Link href="/login" className="font-medium text-primary hover:underline">
-                Log in
+                Sign in
               </Link>
             </p>
           </div>

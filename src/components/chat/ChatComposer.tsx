@@ -21,7 +21,7 @@ import { BackgroundGlow, type BackgroundGlowIntensity } from "@/components/share
 
 export type ChatComposerQuickChip = { label: string; value: string; id?: string };
 
-/** Ask / FAQ entry — rendered inside Chatbox per Figma Compact (icon) / Expanded (label). */
+/** Ask / FAQ entry — icon-only when idle; Asking state shows label + close in Chatbox. */
 export type ChatComposerModeToggle = {
   isActive: boolean;
   icon: LucideIcon;
@@ -82,10 +82,10 @@ export function ChatComposer({
   /** Full-screen FAQ portal (Maximize), not the compact/expanded Chatbox variant. */
   const [fullscreen, setFullscreen] = useState(false);
   const [textOverflows, setTextOverflows] = useState(false);
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const skipOpenOnNextFocusRef = useRef(false);
-  const measureRef = useRef<HTMLTextAreaElement | null>(null);
+  const measureRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (disabled) skipOpenOnNextFocusRef.current = false;
@@ -167,7 +167,7 @@ export function ChatComposer({
   }
 
   function send() {
-    if (disabled || modeToggle?.isActive) return;
+    if (disabled) return;
     const payload = displayText.trim();
     if (!payload && pendingUploads.length === 0) return;
     if (payload) {
@@ -262,7 +262,7 @@ export function ChatComposer({
       )}
     >
       <div
-        className="flex min-h-12 shrink-0 items-center justify-between gap-3 border-b border-brand-900/80 bg-brand-1000/50 px-5 py-3"
+        className="flex min-h-12 shrink-0 items-center justify-between gap-3 px-1 pb-3"
         role="group"
         aria-label={`${threadHeaderTitle} header`}
       >
@@ -298,7 +298,7 @@ export function ChatComposer({
         </div>
       </div>
       <div
-        className="w-full min-h-0 flex-1 overflow-y-auto scroll-smooth px-5 py-3"
+        className="w-full min-h-0 flex-1 overflow-y-auto scroll-smooth px-1 py-1"
         tabIndex={0}
         role="log"
         aria-relevant="additions"
@@ -364,7 +364,7 @@ export function ChatComposer({
           onFocus: handleTextareaFocus,
           onBlur: handleTextareaBlur,
           onKeyDown: (e) => {
-            if (disabled || modeToggle?.isActive) return;
+            if (disabled) return;
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               send();
@@ -380,14 +380,13 @@ export function ChatComposer({
   return (
     <>
       {/* Hidden measure mirror for compact single-line overflow detection. */}
-      <textarea
+      <input
         ref={measureRef}
         aria-hidden
         tabIndex={-1}
         readOnly
         value={displayText || " "}
-        rows={1}
-        className="pointer-events-none invisible absolute top-0 left-0 h-7 w-[min(100%,520px)] resize-none overflow-hidden whitespace-nowrap text-body-sm leading-[1.25]"
+        className="pointer-events-none invisible absolute top-0 left-0 h-7 w-[min(100%,520px)] overflow-hidden whitespace-nowrap text-body-sm leading-7"
       />
 
       <BackgroundGlow intensity={backgroundGlowIntensity} />
@@ -508,7 +507,7 @@ export function ChatComposer({
 
                 <div className="relative z-[2] mx-auto w-full max-w-2xl shrink-0 pt-3">
                   {renderChatbox({
-                    className: "max-w-none shadow-[0_8px_30px_rgba(0,0,0,0.06)]",
+                    className: "max-w-none",
                     forceVariant: "expanded",
                   })}
                 </div>

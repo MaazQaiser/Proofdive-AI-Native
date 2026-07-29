@@ -10,6 +10,7 @@ import {
   Plus,
   Search,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -50,23 +51,22 @@ import {
   ORGANIZATION_STATUS_LABEL,
   ORGANIZATION_TYPE_LABEL,
   SUBSCRIPTION_STATUS_LABEL,
-  SUPER_ADMIN_ORGANIZATIONS,
   type Organization,
   type OrganizationStatus,
   type OrganizationType,
   type SubscriptionStatus,
 } from "@/lib/superAdminOrganizations";
-import { DEFAULT_FRAMEWORK_ID } from "@/lib/superAdminCompetencyFrameworks";
 import { useCompetencyFrameworks } from "@/lib/useCompetencyFrameworks";
+import { useOrganizations } from "@/lib/useOrganizations";
 
-import { AddOrganizationDialog } from "./AddOrganizationDialog";
 import { OrganizationDetailDrawer } from "./OrganizationDetailDrawer";
 import { OrganizationStatusPill, SubscriptionStatusPill } from "./StatusPills";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
 
 export function OrganizationsListScreen() {
-  const [organizations, setOrganizations] = useState<Organization[]>(SUPER_ADMIN_ORGANIZATIONS);
+  const router = useRouter();
+  const { organizations, updateOrganization } = useOrganizations();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<OrganizationType | "all">("all");
   const [countryFilter, setCountryFilter] = useState<string>("all");
@@ -75,9 +75,8 @@ export function OrganizationsListScreen() {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(ROWS_PER_PAGE_OPTIONS[0]);
   const [confirmTarget, setConfirmTarget] = useState<{ org: Organization; nextStatus: OrganizationStatus } | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const { summaries: frameworks, createCopy } = useCompetencyFrameworks();
+  const { summaries: frameworks } = useCompetencyFrameworks();
 
   const selectedOrganization = organizations.find((o) => o.id === selectedOrgId) ?? null;
 
@@ -109,14 +108,7 @@ export function OrganizationsListScreen() {
   }
 
   function handleAddOrganization() {
-    setIsAddDialogOpen(true);
-  }
-
-  function handleCreateOrganization(org: Organization) {
-    setOrganizations((prev) => [org, ...prev]);
-    setIsAddDialogOpen(false);
-    resetToFirstPage();
-    toast.success(`"${org.name}" was created and an invitation was sent to the Organization Admin.`);
+    router.push("/superadmin/organizations/new");
   }
 
   function handleViewDetails(org: Organization) {
@@ -130,19 +122,19 @@ export function OrganizationsListScreen() {
   function handleConfirmStatusChange() {
     if (!confirmTarget) return;
     const { org, nextStatus } = confirmTarget;
-    setOrganizations((prev) => prev.map((o) => (o.id === org.id ? { ...o, status: nextStatus } : o)));
+    updateOrganization(org.id, { status: nextStatus });
     setConfirmTarget(null);
     toast.success("Organization status updated successfully.");
   }
 
   function handleUpdateOrganization(id: string, patch: Partial<Organization>) {
-    setOrganizations((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch } : o)));
+    updateOrganization(id, patch);
   }
 
   return (
     <div className="-m-6 flex h-full flex-col overflow-hidden">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
-        <h1 className="text-h6 text-foreground">Organizations</h1>
+        <h1 className="text-h4 text-foreground">Organizations</h1>
         <Button onClick={handleAddOrganization}>
           <Plus className="h-4 w-4" />
           Add Organization
@@ -269,7 +261,7 @@ export function OrganizationsListScreen() {
                     <button
                       type="button"
                       onClick={() => handleViewDetails(org)}
-                      className="text-left font-semibold text-primary hover:underline"
+                      className="text-left font-semibold text-text-primary hover:underline"
                     >
                       {org.name}
                     </button>
@@ -411,27 +403,6 @@ export function OrganizationsListScreen() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <AddOrganizationDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        existingOrganizationNames={organizations.map((o) => o.name)}
-        frameworks={frameworks.length > 0 ? frameworks : COMPETENCY_FRAMEWORKS}
-        onCreateFramework={(name) => {
-          const created = createCopy(DEFAULT_FRAMEWORK_ID, name);
-          if (!created) {
-            toast.error("Could not create competency framework copy.");
-            return null;
-          }
-          toast.success(`Draft framework "${created.name}" created.`);
-          return {
-            id: created.id,
-            name: created.name,
-            isDefault: created.isDefault,
-          };
-        }}
-        onCreate={handleCreateOrganization}
-      />
 
       <OrganizationDetailDrawer
         organization={selectedOrganization}

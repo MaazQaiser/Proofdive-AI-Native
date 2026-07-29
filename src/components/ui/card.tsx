@@ -7,7 +7,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-md py-6",
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-[16px] py-6",
         className,
       )}
       {...props}
@@ -88,7 +88,7 @@ function CardNested({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-nested"
-      className={cn("bg-surface rounded-md", className)}
+      className={cn("bg-surface rounded-[16px]", className)}
       {...props}
     />
   );

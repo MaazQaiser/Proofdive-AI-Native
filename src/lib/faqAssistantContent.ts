@@ -105,24 +105,26 @@ export const FAQ_ROOT_ITEMS: FaqRootItem[] = [
         },
         {
           id: "how_many_storyboards",
-          question: "How many storyboards can I create?",
-          answer: "You can generate and save up to 3 storyboard versions for each target role.",
+          question: "How many storyboard Dives can I create?",
+          answer:
+            "You can save up to 3 Dives for each target role. Each Dive is a full snapshot; earlier Dives stay viewable and read-only.",
         },
         {
           id: "edit_after_generated",
-          question: "Can I edit my storyboard after it's generated?",
+          question: "Can I edit my storyboard after it's saved?",
           answer:
-            "Yes. You can edit any competency section by adding more detail, and lock sections you're happy with so they stay unchanged in future versions.",
+            "A saved Dive is read-only. To change anything, start a new Dive (you have up to 3 total). The new Dive builds on everything you've captured so far.",
         },
         {
           id: "download_storyboard",
           question: "Can I download my storyboard?",
-          answer: "Yes, you can save and download your storyboard as a PDF.",
+          answer: "Yes, you can download a Dive from the storyboard page or while viewing it.",
         },
         {
           id: "role_specific_storyboard",
           question: "Is my storyboard specific to my target role?",
-          answer: "Yes, each target role you're preparing for has its own separate Experience Bank and storyboard.",
+          answer:
+            "Yes, each target role you're preparing for has its own Experience Bank and up to 3 Dives.",
         },
       ],
     }),

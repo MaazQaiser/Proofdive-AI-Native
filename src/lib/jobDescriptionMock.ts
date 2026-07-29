@@ -74,14 +74,14 @@ export function generateMockJobDescription(input: JdMockInput, variant = 0): str
   const requirements = REQUIREMENT_VARIANTS[variant % REQUIREMENT_VARIANTS.length];
 
   const lines = [
-    title,
+    `# ${title}`,
     "",
     intro,
     "",
-    "Responsibilities:",
+    "## Responsibilities",
     ...RESPONSIBILITY_BANK.map((line) => `- ${line}`),
     "",
-    "What we're looking for:",
+    "## What we're looking for",
     ...requirements.map((line) => `- ${line}`),
   ];
 

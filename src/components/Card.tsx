@@ -5,16 +5,16 @@ import { cn } from "@/components/cn";
 /** Report/section cards — solid white surface on `--background` (#F5F5F3).
  * Borderless to keep the canvas clutter-free. */
 const glassCardClassName =
-  "relative overflow-hidden rounded-md bg-card text-card-foreground";
+  "relative overflow-hidden rounded-[16px] bg-card text-card-foreground";
 
 const glassCardSectionClassName =
-  "relative overflow-x-clip overflow-y-visible rounded-md bg-card text-card-foreground";
+  "relative overflow-x-clip overflow-y-visible rounded-[16px] bg-card text-card-foreground";
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "rounded-md bg-[var(--app-surface)]",
+        "rounded-[16px] bg-[var(--app-surface)]",
         className,
       )}
       {...props}
@@ -60,7 +60,7 @@ export function NestedCard({
   return (
     <div
       className={cn(
-        "rounded-md bg-[var(--app-surface-nested)]",
+        "rounded-[16px] bg-[var(--app-surface-nested)]",
         className,
       )}
       {...props}
