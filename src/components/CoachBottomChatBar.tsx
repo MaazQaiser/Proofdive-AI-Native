@@ -1,10 +1,13 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { MessageCircleQuestion } from "lucide-react";
 
 import { ChatComposer } from "@/components/chat/ChatComposer";
+import { COACH_NAV_CONTENT_INSET_CLASS } from "@/components/coachNavLayout";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
+import { cn } from "@/lib/utils";
 
 type Props = {
   placeholder?: string;
@@ -20,11 +23,11 @@ type Props = {
   disabled?: boolean;
   prefill?: string;
   prefillKey?: string;
-  /** Hides the attachment control when nothing in this flow is actually uploadable. Defaults to shown. */
+  /** Hides the attachment control when nothing in this flow is actually uploadable. Defaults to hidden (post-onboarding). */
   showUploadButton?: boolean;
   /**
-   * When set (e.g. storyboard's flush 400px right rail), reserves that width on
-   * xl+ from the viewport edge so the composer centers in the main Q&A column.
+   * When set (e.g. storyboard's flush right rail), reserves that width from the
+   * viewport edge so the composer centers in the main Q&A column.
    */
   rightPanelMaxWidth?: number;
 };
@@ -36,7 +39,7 @@ export function CoachBottomChatBar({
   disabled,
   prefill,
   prefillKey,
-  showUploadButton,
+  showUploadButton = false,
   rightPanelMaxWidth,
 }: Props = {}) {
   const faq = useFaqAssistant();
@@ -89,18 +92,27 @@ export function CoachBottomChatBar({
           the main content column. When a flush right panel is present, reserve
           its width from the viewport edge instead of capping at max-w-6xl. */}
       {rightPanelMaxWidth ? (
-        <div className="flex w-full pl-20">
-          <div className="min-w-0 flex-1 pr-6">
+        <div className={cn("flex w-full", COACH_NAV_CONTENT_INSET_CLASS)}>
+          <div className="min-w-0 flex-1 pr-4 sm:pr-6">
             <div className="mx-auto w-[800px] max-w-full pb-4">{composer}</div>
           </div>
           <div
-            className="hidden shrink-0 xl:block"
-            style={{ width: rightPanelMaxWidth, maxWidth: rightPanelMaxWidth }}
+            className="w-[min(var(--coach-right-panel),42vw)] max-w-[var(--coach-right-panel)] shrink-0"
+            style={
+              {
+                "--coach-right-panel": `${rightPanelMaxWidth}px`,
+              } as CSSProperties
+            }
             aria-hidden
           />
         </div>
       ) : (
-        <div className="mx-auto max-w-6xl pr-6 pl-20">
+        <div
+          className={cn(
+            "mx-auto max-w-6xl pr-6",
+            COACH_NAV_CONTENT_INSET_CLASS,
+          )}
+        >
           <div className="mx-auto w-[800px] max-w-full pb-4">{composer}</div>
         </div>
       )}

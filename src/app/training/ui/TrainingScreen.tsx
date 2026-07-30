@@ -17,6 +17,10 @@ import {
 } from "@/components/ui/glass-blur-symbol";
 import { MediaListItem } from "@/components/ui/media-list-item";
 import { PixelMedia } from "@/components/ui/pixel-media";
+import {
+  SUCCESS_DRIVER_SYMBOL_CLASS,
+} from "@/components/ui/success-driver-card";
+import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { TrainingChapterOneJourney } from "@/app/training/ui/TrainingChapterOneJourney";
 import { TRAINING_CAMPAIGN } from "@/app/training/ui/trainingVisuals";
 import {
@@ -52,7 +56,6 @@ type SuggestedPillar = {
   suggestion: string;
   courseId: "competency-pillars";
   imageUrl: string;
-  rowClass: string;
 };
 
 const PILLAR_MEDIA: Record<SuggestedPillar["id"], string> = {
@@ -176,8 +179,6 @@ export function TrainingScreen() {
         suggestion: "Interview question: Walk me through how you’d break down an ambiguous problem from scratch.",
         courseId: "competency-pillars",
         imageUrl: PILLAR_MEDIA.thinking,
-        rowClass:
-          "border-extended-cyan-green/30 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--extended-cyan-green)_10%,white),#fff_42%)]",
       },
       {
         id: "action",
@@ -188,8 +189,6 @@ export function TrainingScreen() {
         suggestion: "Interview question: Tell me about a time you delivered results under tight constraints.",
         courseId: "competency-pillars",
         imageUrl: PILLAR_MEDIA.action,
-        rowClass:
-          "border-extended-cyan-green/30 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--extended-cyan-green)_10%,white),#fff_42%)]",
       },
       {
         id: "people",
@@ -200,8 +199,6 @@ export function TrainingScreen() {
         suggestion: "Interview question: Describe a time you aligned stakeholders who disagreed. What did you do first?",
         courseId: "competency-pillars",
         imageUrl: PILLAR_MEDIA.people,
-        rowClass:
-          "border-extended-cyan-green/30 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--extended-cyan-green)_10%,white),#fff_42%)]",
       },
     ],
     [],
@@ -287,7 +284,7 @@ export function TrainingScreen() {
                   prompt={entryIntro(name)}
                   ariaLabel="Training prompt"
                   headingClassName="text-agent-heading text-heading-teal"
-                  subtextClassName="mt-16 text-agent-question text-text-primary"
+                  subtextClassName="mt-8 text-agent-question text-text-primary"
                   mode="word"
                 />
                 <div className="mx-auto mt-6 w-[800px] max-w-full space-y-6">
@@ -402,51 +399,70 @@ export function TrainingScreen() {
                     })}
                   </div>
 
-                  <section aria-label="Suggested for you" className="px-1">
+                  <section aria-label="Suggested for you">
                     <div className="text-caption font-semibold text-text-primary">
                       Suggested for you
                     </div>
                     <div className="mt-1 text-caption leading-5 text-text-secondary">
                       Based on your recent session, these will help you improve where it matters most.
                     </div>
-                    <div className="mt-3 flex flex-col gap-3">
+                    <div className="mt-3 flex w-full flex-col gap-3">
                       {suggestedForYou.map((pill) => (
                         <button
                           key={pill.id}
                           type="button"
                           onClick={() => setSelectedCourseId(pill.courseId)}
                           className={cn(
-                            "group w-full overflow-hidden rounded-[20px] border px-4 py-4 text-left transition",
-                            "hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(14,154,181,0.12)]",
+                            "group relative flex w-full overflow-hidden rounded-2xl bg-white p-3 text-left backdrop-blur-xl transition",
+                            "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
+                            "hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
+                            "duration-200 ease-out active:scale-[0.985]",
+                            "motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100",
                             "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                            "motion-reduce:hover:translate-y-0",
-                            pill.rowClass,
                           )}
                         >
-                          <div className="flex items-start gap-4">
+                          <GlassBlurSymbol
+                            src="/brand/illustration-4.svg"
+                            variant="gray"
+                            className="-right-14 bottom-0 top-auto size-[7.5rem] translate-y-0 sm:-right-16 sm:size-[8.5rem]"
+                          />
+
+                          <div className="relative z-10 flex w-full items-center gap-3">
                             <PixelMedia
                               src={pill.imageUrl}
-                              className="h-16 w-20 rounded-xl"
+                              className="h-14 w-[4.5rem] shrink-0 rounded-md"
                             />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <div className="text-caption font-semibold text-text-primary">
+                            <div className="flex h-14 min-w-0 flex-1 flex-col justify-center gap-0.5">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <div className="min-w-0 truncate text-[15px] font-semibold leading-tight tracking-tight text-text-primary">
                                   {pill.title}
                                 </div>
-                                <Badge variant="outline" className="border-border bg-white/70">
+                                <span
+                                  className={cn(
+                                    "inline-flex shrink-0 items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 text-overline font-medium",
+                                    SUCCESS_DRIVER_SYMBOL_CLASS,
+                                  )}
+                                >
+                                  <SuccessDriverIcon
+                                    driver={pill.id}
+                                    className="size-3.5"
+                                  />
                                   {pill.badge}
-                                </Badge>
+                                </span>
                               </div>
-                              <div className="mt-1 text-caption leading-5 text-text-secondary">
+                              <p className="line-clamp-2 text-[12px] leading-tight text-text-secondary">
                                 {pill.summary}
-                              </div>
-                              <div className="mt-3 flex items-center gap-1.5 text-overline font-medium text-primary opacity-0 transition group-hover:opacity-100">
-                                Open path
-                                <ArrowRight className="size-3.5" aria-hidden />
-                              </div>
+                              </p>
                             </div>
-                            <div className="shrink-0 pt-0.5 text-caption text-text-secondary tabular-nums">
-                              {pill.duration}
+                            <div className="flex h-14 shrink-0 items-center gap-2.5">
+                              <span className="text-caption text-text-secondary tabular-nums">
+                                {pill.duration}
+                              </span>
+                              <ArrowRight
+                                className="size-4 text-primary transition-transform duration-200 group-hover:translate-x-0.5"
+                                strokeWidth={2.25}
+                                aria-hidden
+                              />
                             </div>
                           </div>
                         </button>

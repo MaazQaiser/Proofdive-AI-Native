@@ -8,8 +8,6 @@ import {
   ArrowUpRight,
   Download,
   Plus,
-  Sparkles,
-  WandSparkles,
 } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -67,7 +65,6 @@ import { writeJson } from "@/lib/storage";
 import {
   SUCCESS_DRIVER_ORDER,
   SUCCESS_DRIVERS,
-  type SuccessDriverId,
 } from "@/lib/successDrivers";
 import { cn } from "@/lib/utils";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
@@ -511,10 +508,6 @@ export function StoryboardAgent() {
     return null;
   }, [selectedId, roleExperiences, activeCompetencyId]);
 
-  const activeDriver: SuccessDriverId | null = activeCompetencyId
-    ? pillarForCompetency(activeCompetencyId)
-    : null;
-
   const storyPrompt = useMemo(() => {
     if (phase.kind === "greet") {
       return `Hey ${firstName}, let's build interview-ready proof from real experience.`;
@@ -536,9 +529,7 @@ What should this experience be called? (short title, up to ~15 words)`;
     if (phase.kind === "aboutYou") {
       return ABOUT_YOU_PROMPT;
     }
-    return `This is coming together really well.
-
-What would you like to do next?`;
+    return `This is coming together really well.`;
   }, [phase, firstName, focusQueue.length]);
 
   const storyPromptKey = `${phase.kind}-${activeCompetencyId ?? "none"}-${
@@ -573,7 +564,7 @@ What would you like to do next?`;
   const replyPrefillKey = storyPromptKey;
 
   const composerPlaceholder = useMemo(() => {
-    if (phase.kind === "closing") return "Choose an option above";
+    if (phase.kind === "closing") return "Craft your story above when ready…";
     if (phase.kind === "greet") return "Reply to start…";
     if (phase.kind === "title") return "Experience title…";
     if (phase.kind === "car") {
@@ -814,7 +805,7 @@ What would you like to do next?`;
 
   const storyboardRightPanel = (
     <div className="space-y-3">
-      <div className="text-overline text-text-secondary">Competencies</div>
+      <div className="text-overline text-text-primary">Competencies</div>
 
       <div className="space-y-2">
         {focusQueue.map((compId, idx) => {
@@ -853,7 +844,7 @@ What would you like to do next?`;
                   <div className="flex items-center gap-2">
                     <SuccessDriverIcon driver={driver} className="size-4" />
                     <span className="text-overline text-text-secondary">
-                      {idx + 1}/{focusQueue.length} · {SUCCESS_DRIVERS[driver].shortLabel}
+                      {SUCCESS_DRIVERS[driver].shortLabel} · {idx + 1}/{focusQueue.length}
                     </span>
                     {done ? (
                       <span className="ml-auto text-overline text-extended-cyan-green">Done</span>
@@ -870,7 +861,7 @@ What would you like to do next?`;
         })}
       </div>
 
-      <div className="pt-2 text-overline text-text-secondary">Success Drivers</div>
+      <div className="pt-2 text-overline text-text-primary">Success Drivers</div>
       <Card className="gap-0 py-0">
         <CardContent className="space-y-2.5 p-4">
           {pillarScores.map(({ id, score }) => (
@@ -889,7 +880,7 @@ What would you like to do next?`;
         </CardContent>
       </Card>
 
-      <div className="pt-2 text-overline text-text-secondary">Your story draft</div>
+      <div className="pt-2 text-overline text-text-primary">Your story draft</div>
       <Card className="gap-0 py-0">
         <CardContent className="space-y-3 p-5">
           {isDraftUpdating ? (
@@ -911,17 +902,9 @@ What would you like to do next?`;
         </CardContent>
       </Card>
 
-      <div className="pt-2 text-overline text-text-secondary">Suggestions</div>
+      <div className="pt-2 text-overline text-text-primary">Suggestions</div>
       <Card className="gap-0 py-0">
         <CardContent className="space-y-3 p-5">
-          {activeDriver ? (
-            <SuccessDriverMark
-              driver={activeDriver}
-              label="short"
-              className="text-overline"
-              iconClassName="size-3.5"
-            />
-          ) : null}
           <div className="text-caption leading-6 text-text-primary">
             {typeof activeSuggestion === "string"
               ? emphasizeSuggestionText(activeSuggestion)
@@ -978,7 +961,7 @@ What would you like to do next?`;
           <div className="flex h-[194px] min-w-0 flex-1 flex-col justify-between gap-[9px] rounded-tl-[12px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[12px] bg-card p-4">
             <div className="flex w-full flex-col gap-4">
               <div className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
-                Overall story score
+                Story Score
               </div>
               <div className="flex flex-col gap-1">
                 <div className="flex items-end gap-1 whitespace-nowrap">
@@ -994,9 +977,8 @@ What would you like to do next?`;
                     / 5
                   </span>
                 </div>
-                <div className="text-[14px] font-normal leading-none text-text-secondary">
-                  Mean of added competencies
-                </div>
+                {/* Reserve subtitle line height so score + card layout stay put */}
+                <div className="h-[14px]" aria-hidden />
               </div>
             </div>
             {canAdd ? (
@@ -1066,7 +1048,15 @@ What would you like to do next?`;
       rightPanelMaxWidth={400}
     >
       <CoachFloatingNav />
-      <div className="mx-auto w-[800px] max-w-full">
+      <div
+        className={cn(
+          "mx-auto w-[800px] max-w-full",
+          (phase.kind === "greet" || phase.kind === "closing") &&
+            !showDiveHome &&
+            !addCompetencyOpen &&
+            "flex min-h-[calc(100vh-3.5rem-10rem)] flex-col justify-center",
+        )}
+      >
         {addCompetencyOpen ? (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -1083,17 +1073,12 @@ What would you like to do next?`;
               jobDescription={roleProfile?.jobDescription ?? ""}
               onToggle={toggleAddCompetency}
               onConfirm={confirmAddCompetencySelection}
-              onResetToSuggested={() => {
-                setAddCompetencySelected(lockedCompetencyIds);
-                setAddCompetencyError(null);
-              }}
               onCancel={() => {
                 setAddCompetencyOpen(false);
                 setAddCompetencyError(null);
               }}
               error={addCompetencyError}
               hideSuggestionReasoning
-              hideReset
               confirmLabel="Confirm selection"
               helperText="When you're happy with your selection, confirm to start the next Dive."
               selectionMode="multi"
@@ -1102,13 +1087,14 @@ What would you like to do next?`;
         ) : showDiveHome ? (
           <div className="space-y-6">
             <div className="space-y-3">
-              <h2 className="text-h4 text-left text-text-primary">
+              <h2 className="text-agent-heading text-left text-heading-teal">
                 {savedDives.length > 1
                   ? `Hey ${firstName}, we’ve enriched the story.`
                   : `Hey ${firstName}, we’ve crafted a story.`}
               </h2>
-              <p className="text-left text-body-lg font-semibold text-text-secondary">
-                For the role of <span className="text-text-primary">{role}</span>
+              <p className="text-left text-agent-question text-text-primary">
+                For the role of{" "}
+                <span className="rounded-sm bg-[#B9EFF4] px-1 text-[#095B73]">{role}</span>
               </p>
             </div>
             {divesLeft <= 0 ? (
@@ -1154,6 +1140,8 @@ What would you like to do next?`;
 
             {phase.kind === "greet" ? (
               <p className="mt-8 text-agent-question text-text-primary">
+                I&apos;ll guide you through real experiences that become clear,
+                evidence-backed stories.{" "}
                 <button
                   type="button"
                   onClick={() => setGreetAcknowledged(true)}
@@ -1166,17 +1154,22 @@ What would you like to do next?`;
             ) : null}
 
             {phase.kind === "closing" ? (
-              <div className="mt-8 space-y-3">
-                <Button
-                  className="w-full"
+              <p className="mt-8 text-agent-question text-text-primary">
+                Your experiences are ready to shape into interview-ready proof.{" "}
+                <button
                   type="button"
                   onClick={startCrafting}
                   disabled={craftUi === "crafting"}
+                  className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-60"
                 >
-                  {craftUi === "crafting" ? <Sparkles /> : <WandSparkles />}
-                  Craft my story
-                </Button>
-              </div>
+                  {craftUi === "crafting" ? "Crafting…" : "Craft my story"}
+                  <ArrowRight
+                    className="size-[1.15em] shrink-0 text-primary"
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                </button>
+              </p>
             ) : null}
 
             {statusLine ? (

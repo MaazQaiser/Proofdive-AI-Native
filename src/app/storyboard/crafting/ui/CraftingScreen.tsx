@@ -12,7 +12,7 @@ import {
 } from "react";
 import {
   ArrowLeft,
-  ArrowRight,
+  ArrowUp,
   Download,
   Link2,
   Lock,
@@ -30,11 +30,8 @@ import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardNested,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { IconButton } from "@/components/ui/icon-button";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { SuccessDriverMark } from "@/components/ui/success-driver-card";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -66,7 +63,7 @@ import {
   isLargePaste,
 } from "@/lib/storyboardGuardrails";
 import { SUCCESS_DRIVER_ORDER, SUCCESS_DRIVERS } from "@/lib/successDrivers";
-import { scoringFillClass } from "@/lib/scoringPalette";
+import { scoringFillClass, scoringBandForScore } from "@/lib/scoringPalette";
 import type { RoleProfile } from "@/lib/proofdiveTypes";
 import {
   competencySpec,
@@ -78,10 +75,34 @@ import { cn } from "@/lib/utils";
 
 const PILLAR_ORDER = SUCCESS_DRIVER_ORDER;
 
+/** Bright scoring fills for large dive-card numerals (Figma color/scoring/*). */
+function diveScoreTextClass(score: number | null | undefined): string {
+  if (score == null || !Number.isFinite(score)) return "text-text-secondary";
+  const band = scoringBandForScore(score);
+  if (band === "cyan") return "text-scoring-cyan";
+  if (band === "green") return "text-scoring-green";
+  if (band === "yellow") return "text-scoring-yellow";
+  return "text-scoring-red";
+}
+
+/** Asymmetric radii on the 2×2 pillar grid (Figma Dive Card). */
+function pillarCardRadiusClass(index: number): string {
+  if (index === 1) {
+    return "rounded-tl-[4px] rounded-tr-[12px] rounded-br-[4px] rounded-bl-[4px]";
+  }
+  if (index === 3) {
+    return "rounded-tl-[4px] rounded-tr-[4px] rounded-br-[12px] rounded-bl-[4px]";
+  }
+  return "rounded-[4px]";
+}
+
 const TA =
   "min-h-24 w-full rounded-md border border-border bg-card px-4 py-3 text-caption leading-6 text-text-primary outline-none ring-0 placeholder:text-placeholder disabled:cursor-not-allowed disabled:opacity-60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
 
 const COMPETENCY_REGEN_LIMIT = 2;
+
+const addCompetencyBtnClass =
+  "h-auto gap-2 rounded-md bg-transparent py-0 pl-2! pr-4! text-[14px] font-medium leading-5 text-[#095B73] shadow-none hover:bg-transparent hover:text-[#095B73] hover:underline [&_svg]:text-[#095B73]";
 
 function shortSentence(text: string) {
   return text.trim().replace(/\s+/g, " ").replace(/[.?!]+$/g, "");
@@ -284,10 +305,14 @@ export function CraftingScreen() {
   }, [activeDive, router]);
 
   const overall = activeDive?.overallScore ?? 0;
-  const byPillar = PILLAR_ORDER.map((p) => ({
-    id: p,
-    v: activeDive?.pillarScores?.[p] ?? 0,
+  const overallScore = overall > 0 ? overall : null;
+  const divePillars = PILLAR_ORDER.map((id) => ({
+    id,
+    score: activeDive?.pillarScores?.[id] ?? 0,
   }));
+  const showAddOnDiveCard =
+    Boolean(activeDive) &&
+    (readOnly ? canDeepen : activeDive?.diveNumber === 1);
 
   if (!role) {
     return (
@@ -361,41 +386,35 @@ export function CraftingScreen() {
       <CoachFloatingNav />
       <div className="pb-44">
         <div className="mx-auto w-[800px] max-w-full space-y-6">
-          <Link
-            href="/storyboard"
-            className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-secondary transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background print:hidden"
-          >
-            <ArrowLeft className="size-4 shrink-0" />
-            Back to Storyboard
-          </Link>
+          <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
+            <Link
+              href="/storyboard"
+              className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-secondary transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              <ArrowLeft className="size-4 shrink-0" />
+              Back to Storyboard
+            </Link>
+            <span className="rounded-full bg-extended-light-cyan px-2.5 py-0.5 text-overline font-medium text-text-primary">
+              Dive {activeDive.diveNumber}
+            </span>
+          </div>
 
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-extended-light-cyan px-2.5 py-0.5 text-overline font-medium text-text-primary">
-                  Dive {activeDive.diveNumber}
-                  {readOnly ? " · Saved" : " · Editing"}
-                </span>
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <h1 className="text-h4 text-text-primary">
-                  {readOnly ? "Your storyboard" : "Edit your storyboard"}
-                </h1>
-              </div>
-              <p className="mt-1 text-caption leading-6 text-text-secondary">
-                Target role: <span className="font-semibold text-text-primary">{role}</span>
-                {readOnly ? null : " — edits auto-save until you finalize."}
-              </p>
+              <h1 className="text-h4 text-text-primary">
+                {readOnly ? "Your storyboard" : "Review Storyboard"}
+              </h1>
             </div>
             {readOnly ? (
               <div className="flex flex-wrap items-center gap-2 print:hidden">
                 {canDeepen ? (
                   <Button
                     type="button"
-                    className="border-0 bg-extended-light-cyan text-text-primary hover:bg-extended-light-cyan/80 hover:text-text-primary"
+                    variant="ghost"
+                    className={addCompetencyBtnClass}
                     onClick={handleAddCompetencyFromReadOnly}
                   >
-                    <Plus />
+                    <Plus className="size-4" />
                     Add Competency
                   </Button>
                 ) : null}
@@ -418,37 +437,85 @@ export function CraftingScreen() {
             <p className="text-caption text-destructive print:hidden">{pasteWarning}</p>
           ) : null}
 
-          <Card className="gap-0 py-0">
-            <CardContent className="space-y-3 p-5">
-              <div className="text-overline text-text-secondary">Story strength</div>
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                  <div className="text-caption font-semibold text-text-primary">Overall</div>
-                  <div className="text-overline text-text-secondary">Mean of 12 competencies</div>
+          <div className="flex w-full items-start gap-1">
+            <div className="flex h-[194px] min-w-0 flex-1 flex-col justify-between gap-[9px] rounded-tl-[12px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[12px] bg-card p-4">
+              <div className="flex w-full flex-col gap-4">
+                <div className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                  Story Score
                 </div>
-                <div className="text-h5 text-text-primary">
-                  {overall.toFixed(1)}
-                  <span className="pl-1 text-body text-text-secondary">/ 5</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-end gap-1 whitespace-nowrap">
+                    <span
+                      className={cn(
+                        "text-[48px] font-medium tracking-[-1.3px] tabular-nums leading-none",
+                        diveScoreTextClass(overallScore),
+                      )}
+                    >
+                      {overallScore != null ? overallScore.toFixed(1) : "—"}
+                    </span>
+                    <span className="text-[18px] leading-[1.2] tracking-[-1px] text-text-secondary">
+                      / 5
+                    </span>
+                  </div>
+                  {/* Reserve subtitle line height so score + card layout stay put */}
+                  <div className="h-[14px]" aria-hidden />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {byPillar.map(({ id, v }) => (
-                  <CardNested key={id} className="space-y-1 px-3 py-2">
-                    <SuccessDriverMark
-                      driver={id}
-                      label="short"
-                      className="text-overline"
-                      iconClassName="size-3.5"
-                    />
-                    <div className="text-caption font-semibold tabular-nums text-text-primary">
-                      {v > 0 ? v.toFixed(1) : "—"}
-                      <span className="text-text-secondary"> / 5</span>
+              {showAddOnDiveCard ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={cn(addCompetencyBtnClass, "self-start print:hidden")}
+                  onClick={
+                    readOnly
+                      ? handleAddCompetencyFromReadOnly
+                      : handleAddCompetencyWhileEditing
+                  }
+                >
+                  <Plus className="size-4" />
+                  Add Competency
+                </Button>
+              ) : null}
+            </div>
+
+            <div className="grid h-[194px] min-w-0 flex-1 grid-cols-2 grid-rows-2 gap-1">
+              {divePillars.map(({ id, score }, index) => {
+                const displayScore = score > 0 ? score : null;
+                return (
+                  <div
+                    key={id}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-4 bg-card p-4",
+                      pillarCardRadiusClass(index),
+                    )}
+                  >
+                    <div className="flex w-full items-center gap-2">
+                      <SuccessDriverIcon
+                        driver={id}
+                        className="size-4 text-text-primary"
+                      />
+                      <span className="truncate text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                        {SUCCESS_DRIVERS[id].shortLabel}
+                      </span>
                     </div>
-                  </CardNested>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                    <div className="flex w-full items-end gap-1 whitespace-nowrap tracking-[-1px]">
+                      <span
+                        className={cn(
+                          "text-[32px] font-medium tabular-nums leading-none",
+                          diveScoreTextClass(displayScore),
+                        )}
+                      >
+                        {displayScore != null ? displayScore.toFixed(1) : "—"}
+                      </span>
+                      <span className="text-[18px] leading-[27px] text-text-secondary">
+                        / 5
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           <section>
             <DraftSectionCard
@@ -456,7 +523,7 @@ export function CraftingScreen() {
               displayTitle="Core Introduction"
               score={introStrengthScore(activeDive.intro.text)}
               locked={activeDive.intro.locked || readOnly}
-              showEditLock={!activeDive.intro.locked || readOnly}
+              showEditLock
               showLockToggle={!readOnly}
               regenCount={activeDive.intro.regenCount ?? 0}
               regenLimit={COMPETENCY_REGEN_LIMIT}
@@ -468,36 +535,38 @@ export function CraftingScreen() {
                 }))
               }
             >
-              {readOnly || activeDive.intro.locked ? (
-                <p className="whitespace-pre-wrap text-caption leading-6 text-text-primary">
-                  {activeDive.intro.text.trim() || "No introduction captured."}
-                </p>
-              ) : (
-                <label className="block">
-                  <span className="text-body-sm font-medium text-text-primary">Introduction</span>
-                  <p className="mb-1 text-caption text-text-secondary">
-                    Your opening answer: who you are, what you&apos;re moving toward, and why it
-                    matters for this role.
+              {(sectionLocked) =>
+                sectionLocked ? (
+                  <p className="whitespace-pre-wrap text-caption leading-6 text-text-primary">
+                    {activeDive.intro.text.trim() || "No introduction captured."}
                   </p>
-                  <textarea
-                    className={TA}
-                    rows={8}
-                    value={activeDive.intro.text}
-                    onChange={(e) => {
-                      const raw = e.target.value;
-                      if (isLargePaste(raw)) {
-                        setPasteWarning(
-                          "That looks like a large paste. Please summarize in your own words (max 240).",
-                        );
-                        return;
-                      }
-                      setPasteWarning(null);
-                      const text = clampToWordCap(raw, INTRO_WORD_HARD_CAP);
-                      updateDive((d) => ({ ...d, intro: { ...d.intro, text } }));
-                    }}
-                  />
-                </label>
-              )}
+                ) : (
+                  <label className="block">
+                    <span className="text-body-sm font-medium text-text-primary">Introduction</span>
+                    <p className="mb-1 text-caption text-text-secondary">
+                      Your opening answer: who you are, what you&apos;re moving toward, and why it
+                      matters for this role.
+                    </p>
+                    <textarea
+                      className={TA}
+                      rows={8}
+                      value={activeDive.intro.text}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        if (isLargePaste(raw)) {
+                          setPasteWarning(
+                            "That looks like a large paste. Please summarize in your own words (max 240).",
+                          );
+                          return;
+                        }
+                        setPasteWarning(null);
+                        const text = clampToWordCap(raw, INTRO_WORD_HARD_CAP);
+                        updateDive((d) => ({ ...d, intro: { ...d.intro, text } }));
+                      }}
+                    />
+                  </label>
+                )
+              }
             </DraftSectionCard>
           </section>
 
@@ -518,7 +587,7 @@ export function CraftingScreen() {
                       displayTitle={spec.title}
                       score={s.score || strengthScore(s.car)}
                       locked={s.locked || readOnly}
-                      showEditLock={!s.locked || readOnly}
+                      showEditLock
                       showLockToggle={!readOnly}
                       regenCount={s.regenCount ?? 0}
                       regenLimit={COMPETENCY_REGEN_LIMIT}
@@ -534,52 +603,63 @@ export function CraftingScreen() {
                         })
                       }
                     >
-                      <div className="space-y-4">
-                        <CompetencyClassificationDetails
-                          matchedSignals={s.matchedSignals}
-                          missingNextLevelSignals={s.missingNextLevelSignals}
-                          secondaryCompetencies={
-                            s.secondaryCompetencies?.length
-                              ? s.secondaryCompetencies
-                              : classifySecondaryCompetencies(spec.id, s.car)
-                          }
-                        />
-                        {readOnly || s.locked ? (
-                          <ReadOnlyCar car={s.car} />
-                        ) : (
-                          <CarTextAreas
-                            value={s.car}
-                            disabled={false}
-                            onChange={(car) => {
-                              const total = carTotalWords(car);
-                              if (
-                                `${car.context}${car.action}${car.result}`.length >
-                                LARGE_PASTE_CHAR_THRESHOLD
-                              ) {
-                                setPasteWarning(
-                                  "That looks like a large paste. Keep the CAR story under 280 words from your evidence.",
-                                );
-                                return;
-                              }
-                              setPasteWarning(null);
-                              let next = car;
-                              if (total > CAR_WORD_HARD_CAP) {
-                                next = {
-                                  context: clampToWordCap(car.context, Math.floor(CAR_WORD_HARD_CAP / 3)),
-                                  action: clampToWordCap(car.action, Math.floor(CAR_WORD_HARD_CAP / 3)),
-                                  result: clampToWordCap(car.result, Math.ceil(CAR_WORD_HARD_CAP / 3)),
-                                };
-                              }
-                              updateDive((d) => {
-                                const competencies = d.competencies.map((c, i) =>
-                                  i === index ? { ...c, car: next } : c,
-                                );
-                                return { ...d, competencies };
-                              });
-                            }}
+                      {(sectionLocked) => (
+                        <div className="space-y-4">
+                          <CompetencyClassificationDetails
+                            matchedSignals={s.matchedSignals}
+                            missingNextLevelSignals={s.missingNextLevelSignals}
+                            secondaryCompetencies={
+                              s.secondaryCompetencies?.length
+                                ? s.secondaryCompetencies
+                                : classifySecondaryCompetencies(spec.id, s.car)
+                            }
                           />
-                        )}
-                      </div>
+                          {sectionLocked ? (
+                            <ReadOnlyCar car={s.car} />
+                          ) : (
+                            <CarTextAreas
+                              value={s.car}
+                              disabled={false}
+                              onChange={(car) => {
+                                const total = carTotalWords(car);
+                                if (
+                                  `${car.context}${car.action}${car.result}`.length >
+                                  LARGE_PASTE_CHAR_THRESHOLD
+                                ) {
+                                  setPasteWarning(
+                                    "That looks like a large paste. Keep the CAR story under 280 words from your evidence.",
+                                  );
+                                  return;
+                                }
+                                setPasteWarning(null);
+                                let next = car;
+                                if (total > CAR_WORD_HARD_CAP) {
+                                  next = {
+                                    context: clampToWordCap(
+                                      car.context,
+                                      Math.floor(CAR_WORD_HARD_CAP / 3),
+                                    ),
+                                    action: clampToWordCap(
+                                      car.action,
+                                      Math.floor(CAR_WORD_HARD_CAP / 3),
+                                    ),
+                                    result: clampToWordCap(
+                                      car.result,
+                                      Math.ceil(CAR_WORD_HARD_CAP / 3),
+                                    ),
+                                  };
+                                }
+                                updateDive((d) => {
+                                  const competencies = d.competencies.map((c, i) =>
+                                    i === index ? { ...c, car: next } : c,
+                                  );
+                                  return { ...d, competencies };
+                                });
+                              }}
+                            />
+                          )}
+                        </div>
+                      )}
                     </DraftSectionCard>
                   );
                 })}
@@ -597,10 +677,11 @@ export function CraftingScreen() {
                   {activeDive?.diveNumber === 1 ? (
                     <Button
                       type="button"
-                      className="border-0 bg-extended-light-cyan text-text-primary hover:bg-extended-light-cyan/80 hover:text-text-primary"
+                      variant="ghost"
+                      className={addCompetencyBtnClass}
                       onClick={handleAddCompetencyWhileEditing}
                     >
-                      <Plus />
+                      <Plus className="size-4" />
                       Add Competency
                     </Button>
                   ) : null}
@@ -744,12 +825,31 @@ function DraftSectionCard({
   onRegenerate?: (
     instruction: string,
   ) => { ok: true } | { ok: false; reason: "missing" | "limit" | "empty" };
-  children: ReactNode;
+  /** Renders section body; `sectionLocked` is true for read-only view, false for fields. */
+  children: (sectionLocked: boolean) => ReactNode;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [draftInput, setDraftInput] = useState("");
+  /** Local view mode so Lock/Unlock switches read-only ↔ fields immediately (mock). */
+  const [viewLocked, setViewLocked] = useState(locked);
   const regenBlocked = Boolean(onRegenerate && regenCount >= regenLimit);
   const regenRemaining = Math.max(0, regenLimit - regenCount);
+
+  useEffect(() => {
+    setViewLocked(locked);
+  }, [locked]);
+
+  function handleToggleLock() {
+    setViewLocked((prev) => {
+      const next = !prev;
+      if (next) {
+        setIsEditing(false);
+        setDraftInput("");
+      }
+      return next;
+    });
+    onToggleLock();
+  }
 
   function handleSendQuickChange() {
     if (!onRegenerate) return;
@@ -762,7 +862,7 @@ function DraftSectionCard({
 
   return (
     <Card className="gap-0 overflow-hidden py-0">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-surface px-4 py-3">
         <div className="min-w-0">
           {driver ? (
             <SuccessDriverMark
@@ -801,9 +901,22 @@ function DraftSectionCard({
           ) : null}
           {showEditLock ? (
             <>
+              {showLockToggle ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleToggleLock}
+                  className="print:hidden"
+                  title={viewLocked ? "Unlock to edit fields" : "Lock to read-only view"}
+                >
+                  {viewLocked ? <Unlock /> : <Lock />}
+                  {viewLocked ? "Unlock" : "Lock"}
+                </Button>
+              ) : null}
               <Button
                 type="button"
-                variant="ghost"
+                variant={isEditing ? "ghost" : "default"}
                 size="sm"
                 onClick={() => {
                   setIsEditing((v) => !v);
@@ -815,34 +928,21 @@ function DraftSectionCard({
                 {isEditing ? <X /> : <Pencil />}
                 {isEditing ? "Cancel" : "Edit"}
               </Button>
-              {showLockToggle ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={onToggleLock}
-                  className="print:hidden"
-                  title={locked ? "Unlock to edit" : "Lock to prevent edits"}
-                >
-                  {locked ? <Unlock /> : <Lock />}
-                  {locked ? "Unlock" : "Lock"}
-                </Button>
-              ) : null}
             </>
           ) : null}
         </div>
       </div>
       <div className="p-4">
-        {children}
+        {children(viewLocked)}
         {showEditLock && isEditing ? (
-          <div className="mt-4">
+          <div className="mt-4 -mx-4 border-t border-border/40 px-4 pt-4">
             <label className="block">
-              <span className="text-overline text-text-secondary">
+              <span className="text-overline text-text-primary">
                 {onRegenerate
                   ? "Share the quick change you want updated in this competency"
                   : "Share the quick change you want updated in this area of the story"}
               </span>
-              <div className="relative mt-1.5 overflow-hidden rounded-md">
+              <div className="mt-1.5 flex items-center rounded-full border border-border bg-card py-1.5 pr-1.5 pl-4 transition-[border-color,box-shadow] focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring/50">
                 <input
                   type="text"
                   value={draftInput}
@@ -855,18 +955,18 @@ function DraftSectionCard({
                   }}
                   disabled={regenBlocked}
                   placeholder={onRegenerate ? "Type the change you want..." : "Type here..."}
-                  className="w-full rounded-md border border-border bg-card px-3 py-2 pr-12 text-caption text-text-primary outline-none placeholder:text-placeholder focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-w-0 flex-1 border-0 bg-transparent py-0.5 text-caption text-text-primary outline-none placeholder:text-placeholder disabled:cursor-not-allowed disabled:opacity-60"
                 />
-                <button
-                  type="button"
+                <IconButton
+                  variant="solid"
                   aria-label="Send quick change"
                   title="Send quick change"
-                  disabled={regenBlocked}
-                  className="absolute right-1.5 top-1/2 z-10 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-md bg-primary text-primary-foreground transition hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+                  disabled={regenBlocked || !draftInput.trim()}
+                  className="shrink-0 disabled:bg-primary disabled:text-primary-foreground disabled:opacity-50"
                   onClick={handleSendQuickChange}
                 >
-                  <ArrowRight className="size-4" />
-                </button>
+                  <ArrowUp />
+                </IconButton>
               </div>
             </label>
             {onRegenerate ? (

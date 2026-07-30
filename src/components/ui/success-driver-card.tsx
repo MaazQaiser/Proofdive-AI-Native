@@ -10,6 +10,14 @@ import { cn } from "@/lib/utils";
 /** Canonical Success Driver symbol fill — brand dark cyan, used app-wide. */
 export const SUCCESS_DRIVER_SYMBOL_CLASS = "text-extended-cyan-green";
 
+/** Card-background-only art from Competency Selection Cards Images (not heading icons). */
+const CARD_BACKGROUND_SYMBOL: Record<SuccessDriverId, string> = {
+  thinking: "/brand/Competency Selection Cards Images/Power of Thinking.svg",
+  action: "/brand/Competency Selection Cards Images/Power of Action.svg",
+  people: "/brand/Competency Selection Cards Images/Power of People.svg",
+  mastery: "/brand/Competency Selection Cards Images/Power of Mastery.svg",
+};
+
 type SuccessDriverMarkProps = {
   driver: SuccessDriverId;
   /** Prefer full "Power of …" title; pass `short` for compact rows. */
@@ -52,8 +60,8 @@ type SuccessDriverCardProps = {
   badge?: ReactNode;
 };
 
-/** Glass Success Driver surface — light tint of the brand symbol color with a
- * frosted fill and a large noisy blur symbol on the right. */
+/** Success Driver surface — white fill with a large soft-blurred symbol
+ * tucked into the bottom-right corner, plus film-grain noise. */
 function SuccessDriverCard({
   driver,
   children,
@@ -66,21 +74,20 @@ function SuccessDriverCard({
       data-driver={driver}
       className={cn(
         "relative overflow-hidden rounded-[16px] border-0 transition",
-        "bg-[color-mix(in_srgb,var(--extended-cyan-green)_9%,white)] backdrop-blur-xl",
+        "bg-[#ffffff]",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]",
         className,
       )}
     >
       <div
-        className="pointer-events-none absolute -right-16 top-1/2 size-[18rem] -translate-y-1/2 select-none sm:-right-20 sm:size-[22rem]"
+        className="pointer-events-none absolute -right-6 -bottom-6 size-[14rem] select-none sm:-right-8 sm:-bottom-8 sm:size-[16rem]"
         aria-hidden
       >
-        <SuccessDriverIcon
-          driver={driver}
-          className={cn(
-            "size-full opacity-45 blur-[12px] sm:blur-[14px]",
-            SUCCESS_DRIVER_SYMBOL_CLASS,
-          )}
+        {/* eslint-disable-next-line @next/next/no-img-element -- decorative brand SVG */}
+        <img
+          src={CARD_BACKGROUND_SYMBOL[driver]}
+          alt=""
+          className="size-full object-contain opacity-45 blur-[2.5px] sm:blur-[3px]"
         />
       </div>
       <div className="success-driver-noise absolute inset-0" aria-hidden />

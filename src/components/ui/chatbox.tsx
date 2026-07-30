@@ -132,7 +132,7 @@ function Chatbox({
         type="button"
         onClick={askAction.onToggle}
         aria-label={`Close ${askAction.label ?? "Ask"}`}
-        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full bg-extended-light-cyan px-2 py-1 text-primary"
+        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full bg-[#f5f5f3] px-2 py-1 text-primary"
       >
         <MessageCircleQuestion className="size-[13px] shrink-0" aria-hidden />
         <span className="text-[12px] leading-[1.25] whitespace-nowrap">
@@ -145,7 +145,7 @@ function Chatbox({
         variant="ghost"
         onClick={askAction.onToggle}
         aria-label={askAction.label ?? "Ask"}
-        className="text-text-secondary"
+        className="text-primary"
       >
         <MessageCircleQuestion className="size-[13px]" />
       </IconButton>

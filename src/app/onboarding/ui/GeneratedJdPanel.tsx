@@ -1,6 +1,7 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ArrowRight, Check, Pencil } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,7 +40,26 @@ export function GeneratedJdPanel({
   onDraftChange,
 }: GeneratedJdPanelProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const regenerateRef = useRef<HTMLSpanElement | null>(null);
   const wasEditingRef = useRef(false);
+  const [regenTooltip, setRegenTooltip] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+
+  function showRegenTooltip() {
+    const el = regenerateRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setRegenTooltip({
+      top: rect.top + rect.height / 2,
+      left: rect.right + 8,
+    });
+  }
+
+  function hideRegenTooltip() {
+    setRegenTooltip(null);
+  }
 
   // Keep view-mode DOM in sync with the latest draft. Skip while editing so
   // parent re-renders (draft change callbacks) don't wipe the caret.
@@ -103,14 +123,9 @@ export function GeneratedJdPanel({
     <Card className="mt-6 gap-0 py-5">
       <CardContent className="flex flex-col gap-4 px-5">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <h2 className="truncate text-h4 text-heading-teal">
-              Generated Job Description
-            </h2>
-            <span className="inline-flex shrink-0 items-center rounded-full bg-extended-light-cyan px-2.5 py-0.5 text-body-sm font-medium text-[#095B73]">
-              Draft
-            </span>
-          </div>
+          <h2 className="min-w-0 truncate text-h4 text-heading-teal">
+            Generated Job Description
+          </h2>
           <div className="flex shrink-0 items-center gap-1.5">
             <SelectionChip
               selected={isEditing}
@@ -129,28 +144,49 @@ export function GeneratedJdPanel({
                 </>
               )}
             </SelectionChip>
-            <IconButton
-              variant="ghost"
-              size="md"
-              onClick={onRegenerate}
-              aria-label="Regenerate job description"
-              className="text-primary"
+            <span
+              ref={regenerateRef}
+              className="inline-flex"
+              onMouseEnter={showRegenTooltip}
+              onMouseLeave={hideRegenTooltip}
+              onFocus={showRegenTooltip}
+              onBlur={hideRegenTooltip}
             >
-              <span
-                aria-hidden
-                className="size-4 bg-primary"
-                style={{
-                  maskImage: "url(/brand/refresh-ccw.png)",
-                  maskSize: "contain",
-                  maskRepeat: "no-repeat",
-                  maskPosition: "center",
-                  WebkitMaskImage: "url(/brand/refresh-ccw.png)",
-                  WebkitMaskSize: "contain",
-                  WebkitMaskRepeat: "no-repeat",
-                  WebkitMaskPosition: "center",
-                }}
-              />
-            </IconButton>
+              <IconButton
+                variant="ghost"
+                size="md"
+                onClick={onRegenerate}
+                aria-label="Regenerate job description"
+                className="text-primary"
+              >
+                <span
+                  aria-hidden
+                  className="size-4 bg-primary"
+                  style={{
+                    maskImage: "url(/brand/refresh-ccw.png)",
+                    maskSize: "contain",
+                    maskRepeat: "no-repeat",
+                    maskPosition: "center",
+                    WebkitMaskImage: "url(/brand/refresh-ccw.png)",
+                    WebkitMaskSize: "contain",
+                    WebkitMaskRepeat: "no-repeat",
+                    WebkitMaskPosition: "center",
+                  }}
+                />
+              </IconButton>
+            </span>
+            {regenTooltip
+              ? createPortal(
+                  <span
+                    role="tooltip"
+                    className="pointer-events-none fixed z-50 -translate-y-1/2 whitespace-nowrap rounded-md bg-white px-2 py-1 text-caption text-text-secondary shadow-sm"
+                    style={{ top: regenTooltip.top, left: regenTooltip.left }}
+                  >
+                    Regenerate
+                  </span>,
+                  document.body,
+                )
+              : null}
           </div>
         </div>
 

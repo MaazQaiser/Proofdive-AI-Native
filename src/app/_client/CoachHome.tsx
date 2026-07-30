@@ -222,7 +222,7 @@ export function CoachHome() {
       ? "Take your first mock interview to get your interview readiness score."
       : journeyReadinessSnapshot
         ? null
-        : "Complete a mock interview to see your readiness snapshot here (same scores as your report page).";
+        : "Complete a mock interview to see your readiness snapshot here.";
 
     return { pillars, overall, overallText, bandText, bandClass, noteText };
   }, [interviewReadinessEmpty, journeyReadinessSnapshot]);
@@ -231,17 +231,11 @@ export function CoachHome() {
     if (!showInterviewReadinessCard) return null;
     return (
       <div className="mt-6 flex w-full flex-col gap-4 pb-4">
-        <div className="flex h-9 w-full flex-wrap content-start items-start justify-center">
-          <h3 className="w-full text-[24px] font-semibold leading-[30px] text-text-primary">
-            Interview Readiness
-          </h3>
-        </div>
-
         <div className="flex w-full items-start gap-1">
           <div className="flex h-[194px] min-w-0 flex-1 flex-col justify-between rounded-tl-[12px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[12px] bg-card p-4">
             <div className="flex w-full flex-col gap-4">
               <div className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
-                Overall story score
+                Readiness Score
               </div>
               <div className="flex flex-col gap-1">
                 <div className="flex items-end gap-1 whitespace-nowrap">
@@ -325,7 +319,7 @@ export function CoachHome() {
     !readinessBannerDismissed ? (
       <div
         role="status"
-        className="mt-6 flex w-full items-start gap-3 rounded-lg border border-extended-light-cyan bg-extended-light-cyan/50 px-4 py-3"
+        className="mt-6 flex w-full items-center gap-3 rounded-lg border border-extended-light-cyan bg-extended-light-cyan/50 px-4 py-3"
       >
         <p className="min-w-0 flex-1 text-body-sm leading-6 text-extended-green-blue">
           {readinessCardModel.noteText}
@@ -523,7 +517,15 @@ export function CoachHome() {
                             ? "Complete the guided journey to help you improve."
                             : "Based on your last session, let’s focus on strengthening your execution and depth.";
                         }
-                        return "Based on your last session, AI coach identified the areas to work on.";
+                        return (
+                          <>
+                            Based on your last session,{" "}
+                            <span className="rounded-sm bg-[#B9EFF4] px-1 text-[#095B73]">
+                              AI coach
+                            </span>{" "}
+                            identified the areas to work on.
+                          </>
+                        );
                       })()}
                     </p>
                   ) : null}

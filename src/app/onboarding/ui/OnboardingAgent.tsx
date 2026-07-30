@@ -14,7 +14,6 @@ import {
   BookOpen,
   MessageCircleQuestion,
   UserCheck,
-  WandSparkles,
 } from "lucide-react";
 
 import type { ChatMessage } from "@/components/chat/chatTypes";
@@ -393,17 +392,6 @@ function OnboardingAgentInner({
         coreFourCompetencies: [...nextSelected, id],
       };
     });
-  }
-
-  function resetCoreFourToSuggested() {
-    setCoreFourError(null);
-    setDraft((d) => ({
-      ...d,
-      coreFourCompetencies: suggestCoreFour({
-        targetRole: d.targetRole,
-        jobDescription: d.jobDescription,
-      }),
-    }));
   }
 
   function confirmCoreFour() {
@@ -785,20 +773,28 @@ function OnboardingAgentInner({
                   className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                 >
                   Generate a Job Description
-                  <WandSparkles className="size-[0.7em] shrink-0 text-primary" aria-hidden />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="lucide lucide-astroid-icon lucide-astroid size-[0.7em] shrink-0 text-primary"
+                    aria-hidden
+                  >
+                    <path d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203" />
+                  </svg>
                 </button>
               </p>
             ) : null}
             {step === "done" ? (
               <p className="mt-8 text-agent-question text-text-primary">
-                Onboarding is complete. You can{" "}
-                <Link
-                  href={homeHref}
-                  className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                >
-                  go to home
-                  <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />
-                </Link>
+                Choose how you&apos;d like to continue. Build your career
+                storyboard or practice a mock interview.
               </p>
             ) : null}
             {step === "role" ? (
@@ -856,31 +852,42 @@ function OnboardingAgentInner({
                 jobDescription={draft.jobDescription}
                 onToggle={toggleCoreFourCompetency}
                 onConfirm={confirmCoreFour}
-                onResetToSuggested={resetCoreFourToSuggested}
                 error={coreFourError}
                 selectionMode="singlePerPillar"
               />
             ) : null}
             {step === "done" ? (
-              <div className="mt-8 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
-                <CardButton
-                  href="/storyboard"
-                  variant="primary"
-                  icon={<BookOpen />}
-                  title="Storyboard"
-                  subtitle="Build your career storyboard"
-                  illustrationSrc="/brand/illustration-1.svg"
-                />
+              <>
+                <div className="mt-8 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+                  <CardButton
+                    href="/storyboard"
+                    variant="primary"
+                    icon={<BookOpen />}
+                    title="Storyboard"
+                    subtitle="Build your career storyboard"
+                    illustrationSrc="/brand/illustration-1.svg"
+                  />
 
-                <CardButton
-                  href="/interview"
-                  variant="gray"
-                  icon={<UserCheck />}
-                  title="Mock interview"
-                  subtitle="Practice for this role"
-                  illustrationSrc="/brand/illustration-4.svg"
-                />
-              </div>
+                  <CardButton
+                    href="/interview"
+                    variant="gray"
+                    icon={<UserCheck />}
+                    title="Mock interview"
+                    subtitle="Practice for this role"
+                    illustrationSrc="/brand/illustration-4.svg"
+                  />
+                </div>
+                <p className="mt-6 text-agent-question text-text-primary">
+                  Onboarding is complete. You can{" "}
+                  <Link
+                    href={homeHref}
+                    className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  >
+                    go to home
+                    <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />
+                  </Link>
+                </p>
+              </>
             ) : null}
           </div>
           </div>
@@ -906,7 +913,7 @@ function OnboardingAgentInner({
                 !(
                   step === "coreFourSelection" ||
                   isEditingJd ||
-                  (step === "done" && faq.isFaqMode)
+                  step === "done"
                 )
               }
               backgroundGlowIntensity="full"

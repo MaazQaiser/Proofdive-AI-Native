@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 
 /**
- * First-page landing — single composition: design-system base fill + brand
- * pattern PNG at 32% opacity. No split-screen.
+ * First-page landing — single composition: brand start-page image full-bleed.
+ * No split-screen.
  */
 export default function Home() {
   return (
@@ -13,9 +13,9 @@ export default function Home() {
       <div aria-hidden className="pointer-events-none absolute inset-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/brand/pattern-bg-light.png"
+          src="/brand/Start%20page%20image.png"
           alt=""
-          className="absolute inset-0 size-full object-cover opacity-[0.32] motion-safe:animate-landing-fade"
+          className="absolute inset-0 size-full object-cover motion-safe:animate-landing-fade"
         />
       </div>
 

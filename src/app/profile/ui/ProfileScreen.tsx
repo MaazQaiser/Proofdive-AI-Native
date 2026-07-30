@@ -303,7 +303,9 @@ export function ProfileScreen() {
                     </IconButton>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-h6 leading-tight">Your profile</div>
+                    <div className="text-h6 leading-tight">
+                      {roleProfile?.name?.trim() || "Your profile"}
+                    </div>
                     {subtitleParts.length > 0 && (
                       <div className="mt-0.5 text-caption text-muted-foreground">
                         {subtitleParts.join(" · ")}

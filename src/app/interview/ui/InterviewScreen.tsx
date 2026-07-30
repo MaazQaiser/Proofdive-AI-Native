@@ -389,7 +389,7 @@ export function InterviewScreen() {
                 Duration · 10 min
               </Badge>
 
-              <h1 className="mt-3 text-h3 text-heading-teal">
+              <h1 className="mt-3 text-agent-heading text-heading-teal">
                 <TypingText
                   key={`interview-first-${name}`}
                   text={`Hey ${name}, welcome to your first Mock Interview`}
@@ -400,12 +400,12 @@ export function InterviewScreen() {
                 />
               </h1>
 
-              <p className="mt-1 max-w-lg text-caption leading-relaxed text-text-secondary">
+              <p className="mt-1 w-full text-agent-question leading-relaxed text-text-primary">
                 This is a first mock interview. You’ll be judged based on the Proofdive Competency
                 Engine.{" "}
                 <button
                   type="button"
-                  className="font-semibold text-text-primary underline underline-offset-2"
+                  className="font-semibold text-primary underline-offset-2 hover:underline"
                   onClick={() => setIntroLearnModalOpen(true)}
                 >
                   Learn more

@@ -210,31 +210,28 @@
    NOTE: subheading/body are exact Figma values. h2-h6, body-lg, body-sm,
    caption, overline are interpolated to fill gaps Figma didn't define -
    confirm with design before shipping.
-   H1 is a deliberate deviation from the original Figma spec (was 80px/700,
-   -4px tracking): it now reuses the Agent Heading style (48px/400/-0.96px)
-   because the bold 80px slab read too heavy. H2-H6 are rescaled to match
-   (~0.65x of their old size, tracking scaled the same way) and dropped from
-   700/600 to a uniform 500, so the whole scale reads as one consistent,
-   editorial (non-bold) system instead of H1 being the odd one out. */
+   H1 reuses the Agent Heading style (40px/500/-0.8px). H2-H6 are stepped
+   down from that top so the scale stays one consistent medium-weight
+   editorial system (H1 never sits below H2). */
 :root {
-  --text-h1-size: 48px;
-  --text-h1-weight: 400;
-  --text-h1-tracking: -0.96px;
-  --text-h2-size: 42px;
+  --text-h1-size: 40px;
+  --text-h1-weight: 500;
+  --text-h1-tracking: -0.8px;
+  --text-h2-size: 32px;
   --text-h2-weight: 500;
-  --text-h2-tracking: -2.6px;
-  --text-h3-size: 32px;
+  --text-h2-tracking: -2px;
+  --text-h3-size: 24px;
   --text-h3-weight: 500;
-  --text-h3-tracking: -2.6px;
-  --text-h4-size: 24px;
+  --text-h3-tracking: -1.5px;
+  --text-h4-size: 20px;
   --text-h4-weight: 500;
-  --text-h4-tracking: -2px;
-  --text-h5-size: 18px;
+  --text-h4-tracking: -1.2px;
+  --text-h5-size: 16px;
   --text-h5-weight: 500;
-  --text-h5-tracking: -1.3px;
+  --text-h5-tracking: -0.8px;
   --text-h6-size: 14px;
   --text-h6-weight: 500;
-  --text-h6-tracking: -0.65px;
+  --text-h6-tracking: -0.5px;
   /* Updated to 36px per the Figma auth-page spec (was 48px) - this is the
      "Sub heading" style used for page headings (e.g. "Login" / "Signup").
      Tracking is -4% of size (Figma's actual convention), not a flat -4px -
@@ -263,16 +260,15 @@
   /* Agent/hero greeting styles — originally Figma "Onboarding Flow" (node
      43:82), now shared by any big greeting headline + question line (e.g.
      onboarding's agent prompt, the Coach dashboard's hero heading).
-     text-h1 above is intentionally identical to agent-heading (48px/400/
-     -0.96px) — h1 was rescaled to match this style. agent-question
-     (28px/400) is still distinct from h3 (32px/500). Both are Inter
-     Regular (confirmed via Figma's own typography inspector panel) —
-     inherited from --font-sans, no font-family override needed for either. */
-  --text-agent-heading-size: 48px;
-  --text-agent-heading-weight: 400;
-  --text-agent-heading-tracking: -0.96px;
+     text-h1 above is intentionally identical to agent-heading (40px/500/
+     -0.8px). agent-question (28px/500/-0.56px) stays distinct from the
+     heading scale. Both inherit Inter from --font-sans — no font-family
+     override needed for either. */
+  --text-agent-heading-size: 40px;
+  --text-agent-heading-weight: 500;
+  --text-agent-heading-tracking: -0.8px;
   --text-agent-question-size: 28px;
-  --text-agent-question-weight: 400;
+  --text-agent-question-weight: 500;
   --text-agent-question-tracking: -0.56px;
 
   /* Logo scale - exact Figma values */

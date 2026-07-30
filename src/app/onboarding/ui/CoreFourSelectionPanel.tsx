@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRight, CircleHelp, Undo2 } from "lucide-react";
+import { ArrowRight, CircleHelp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -27,14 +27,11 @@ type CoreFourSelectionPanelProps = {
   jobDescription: string;
   onToggle: (id: CompetencyId) => void;
   onConfirm: () => void;
-  onResetToSuggested: () => void;
   error: string | null;
   /** Already-captured competencies — checked and not toggleable. */
   lockedIds?: readonly CompetencyId[];
   /** Hide onboarding suggestion tooltips (Add Competency flow). */
   hideSuggestionReasoning?: boolean;
-  /** Hide Undo / reset-to-suggested (Add Competency flow). */
-  hideReset?: boolean;
   confirmLabel?: string;
   helperText?: string;
   selectionMode?: "singlePerPillar" | "multi";
@@ -48,11 +45,9 @@ export function CoreFourSelectionPanel({
   jobDescription,
   onToggle,
   onConfirm,
-  onResetToSuggested,
   error,
   lockedIds = [],
   hideSuggestionReasoning = false,
-  hideReset = false,
   confirmLabel = "Confirm selection",
   helperText = "When you're happy with your selection, proceed to confirm.",
   selectionMode = "singlePerPillar",
@@ -164,7 +159,7 @@ export function CoreFourSelectionPanel({
 
               {reasoning ? (
                 <div
-                  className="absolute right-3 bottom-3 z-20 sm:right-4 sm:bottom-4"
+                  className="absolute top-3 right-3 z-20 sm:top-4 sm:right-4"
                   onBlur={(e) => {
                     if (!e.currentTarget.contains(e.relatedTarget)) {
                       setOpenReasoningPillar((current) =>
@@ -189,7 +184,7 @@ export function CoreFourSelectionPanel({
                   {reasoningOpen ? (
                     <div
                       role="tooltip"
-                      className="absolute right-0 bottom-[calc(100%+8px)] w-[min(18rem,calc(100vw-3rem))] rounded-lg border border-border bg-white p-3 text-left text-caption leading-snug text-text-primary shadow-[0_8px_20px_rgba(14,154,181,0.12)]"
+                      className="absolute top-[calc(100%+8px)] right-0 w-[min(18rem,calc(100vw-3rem))] rounded-lg border border-border bg-white p-3 text-left text-caption leading-snug text-text-primary shadow-[0_8px_20px_rgba(14,154,181,0.12)]"
                     >
                       <p className="mb-1 font-medium text-extended-cyan-green">
                         Why we suggested {suggestedSpec?.title}
@@ -209,21 +204,15 @@ export function CoreFourSelectionPanel({
       {error ? <div className="text-body-sm text-destructive">{error}</div> : null}
 
       <div className="flex flex-wrap gap-3">
-        <Button onClick={onConfirm} className="pl-4! pr-2!">
-          {confirmLabel}
-          <ArrowRight />
-        </Button>
         {onCancel ? (
           <Button type="button" variant="outline" onClick={onCancel}>
             {cancelLabel}
           </Button>
         ) : null}
-        {!hideReset ? (
-          <Button variant="outline" onClick={onResetToSuggested}>
-            <Undo2 />
-            Undo
-          </Button>
-        ) : null}
+        <Button onClick={onConfirm} className="pl-4! pr-2!">
+          {confirmLabel}
+          <ArrowRight />
+        </Button>
       </div>
     </div>
   );
