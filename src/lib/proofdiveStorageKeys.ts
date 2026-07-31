@@ -71,5 +71,29 @@ export const StorageKeys = {
   candidateSubscription: "proofdive.candidate.subscription.v1",
   /** Candidate one-time free baseline remaining + purchased add-on deltas. */
   candidateEntitlements: "proofdive.candidate.entitlements.v1",
+  /** Super Admin partner / affiliate directory. */
+  superAdminPartners: "proofdive.superAdmin.partners.v1",
+  /** Selected Weekly/Monthly/All Time granularity on the Partner dashboard. */
+  partnerDashboardDateRange: "proofdive.partner.dashboardDateRange.v1",
+  /** Partial<Partner> patch overlaid on the demo partner by the Profile Details section. */
+  partnerProfileOverrides: "proofdive.partner.profileOverrides.v1",
+  /** Whether the Partner has requested account deletion. */
+  partnerAccountDeletionRequested: "proofdive.partner.accountDeletionRequested.v1",
+  /** Messages submitted via the Partner Contact Support section. */
+  partnerSupportMessages: "proofdive.partner.supportMessages.v1",
+  /** Audit log entries shown on the Partner Audit Logs section. */
+  partnerAuditLogEntries: "proofdive.partner.auditLogEntries.v1",
+  /** IDs of policy-update notices the Partner has acknowledged. */
+  partnerPolicyAcknowledgements: "proofdive.partner.policyAcknowledgements.v1",
+  /** Saved mock payment methods for Partner withdrawals. */
+  partnerPaymentMethods: "proofdive.partner.paymentMethods.v1",
+  /** Partner commission monthly invoice listing. */
+  partnerCommissionInvoices: "proofdive.partner.commissionInvoices.v1",
+  /** Partner withdrawal history. */
+  partnerWithdrawals: "proofdive.partner.withdrawals.v1",
+  /** Partner lifetime withdrawn total in cents (for Available Balance). */
+  partnerTotalWithdrawnCents: "proofdive.partner.totalWithdrawnCents.v1",
+  /** Partner in-app notifications list. */
+  partnerNotifications: "proofdive.partner.notifications.v1",
 } as const;
 

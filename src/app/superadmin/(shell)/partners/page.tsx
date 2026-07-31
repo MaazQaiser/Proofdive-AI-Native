@@ -1,10 +1,5 @@
-import { SuperAdminComingSoon } from "../ui/SuperAdminComingSoon";
+import { PartnersListScreen } from "./ui/PartnersListScreen";
 
 export default function SuperAdminPartnersPage() {
-  return (
-    <SuperAdminComingSoon
-      title="Partner Management"
-      description="Onboard and manage referral partners, commissions, and referral codes. Coming in a future batch."
-    />
-  );
+  return <PartnersListScreen />;
 }
