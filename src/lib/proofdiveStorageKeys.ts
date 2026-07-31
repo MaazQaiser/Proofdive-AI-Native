@@ -62,7 +62,7 @@ export const StorageKeys = {
   /** Super Admin add-on (top-up) rates keyed by item × client type. */
   superAdminAddOnRates: "proofdive.superAdmin.addOnRates.v1",
   /** Super Admin payment bundles catalog. */
-  superAdminPaymentBundles: "proofdive.superAdmin.paymentBundles.v1",
+  superAdminPaymentBundles: "proofdive.superAdmin.paymentBundles.v2",
   /** Super Admin discount codes. */
   superAdminDiscountCodes: "proofdive.superAdmin.discountCodes.v1",
   /** Org Admin active subscription snapshot (bundle assignment + cycle). */

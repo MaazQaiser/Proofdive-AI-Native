@@ -32,9 +32,7 @@ import {
   publishedMasterclasses,
   rateKey,
   roundMoney,
-  type BillingCycle,
   type ItemKind,
-  type PaymentBundle,
 } from "@/lib/superAdminPaymentsData";
 import { usePaymentBundles } from "@/lib/usePaymentBundles";
 import { useAddOnRates } from "@/lib/usePaymentRates";
@@ -58,18 +56,8 @@ export function CandidateBillingScreen() {
       ? bundles.find((b) => b.id === subscription.bundleId) ?? null
       : null;
 
-  const catalog = useMemo(
-    () => bundles.filter((b) => b.type === "B2C" && b.status === "active"),
-    [bundles],
-  );
-
-  const [catalogOpen, setCatalogOpen] = useState(false);
-  const [checkoutBundle, setCheckoutBundle] = useState<PaymentBundle | null>(null);
-  const [checkoutCycle, setCheckoutCycle] = useState<BillingCycle | null>(null);
-  const [checkoutStep, setCheckoutStep] = useState<"cycle" | "review">("cycle");
   const [cancelOpen, setCancelOpen] = useState(false);
   const [addOnsOpen, setAddOnsOpen] = useState(false);
-  const [forceFail, setForceFail] = useState(false);
 
   useEffect(() => {
     if (preselect === "storyboard") setAddOnsOpen(true);
@@ -87,40 +75,6 @@ export function CandidateBillingScreen() {
       accessEndsAt: null,
     });
   }, [subscription, setSubscription]);
-
-  function startSubscribe(bundle: PaymentBundle) {
-    setCheckoutBundle(bundle);
-    setCheckoutCycle(bundle.cycles[0]?.cycle ?? null);
-    setCheckoutStep("cycle");
-    setForceFail(false);
-    setCatalogOpen(false);
-  }
-
-  function completeCheckout() {
-    if (!checkoutBundle || !checkoutCycle) return;
-    if (forceFail) {
-      toast.error("Unable to process payment at the moment.");
-      setCheckoutStep("review");
-      return;
-    }
-    const cycle = checkoutBundle.cycles.find((c) => c.cycle === checkoutCycle);
-    const next = new Date();
-    if (checkoutCycle === "monthly") next.setMonth(next.getMonth() + 1);
-    else if (checkoutCycle === "quarterly") next.setMonth(next.getMonth() + 3);
-    else next.setFullYear(next.getFullYear() + 1);
-
-    setSubscription({
-      status: "active",
-      bundleId: checkoutBundle.id,
-      billingCycle: checkoutCycle,
-      nextBillingDate: next.toISOString().slice(0, 10),
-      accessEndsAt: null,
-    });
-    setCheckoutBundle(null);
-    toast.success(
-      `Subscribed to ${checkoutBundle.name} (${BILLING_CYCLE_LABEL[checkoutCycle]}, ${formatUsd(cycle?.price ?? 0)}).`,
-    );
-  }
 
   function confirmCancel() {
     if (!subscription.nextBillingDate) return;
@@ -180,9 +134,14 @@ export function CandidateBillingScreen() {
                     : ""}
                   .
                 </p>
-                <Button type="button" onClick={() => setCatalogOpen(true)}>
-                  Browse plans
-                </Button>
+                <div className="flex flex-wrap gap-3">
+                  <Button type="button" asChild>
+                    <Link href="/profile/pricing">Browse plans</Link>
+                  </Button>
+                  <Button type="button" onClick={() => setAddOnsOpen(true)}>
+                    Purchase Add-Ons
+                  </Button>
+                </div>
               </>
             ) : activeBundle ? (
               <>
@@ -239,23 +198,30 @@ export function CandidateBillingScreen() {
                       : null}
                   </ul>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" onClick={() => setCatalogOpen(true)}>
-                    Switch Bundle
+                <div className="flex flex-wrap gap-3">
+                  <Button type="button" variant="outline" asChild>
+                    <Link href="/profile/pricing">Switch Bundle</Link>
                   </Button>
                   {subscription.status === "active" ? (
                     <Button type="button" variant="outline" onClick={() => setCancelOpen(true)}>
                       Cancel Subscription
                     </Button>
                   ) : null}
+                  <Button type="button" onClick={() => setAddOnsOpen(true)}>
+                    Purchase Add-Ons
+                  </Button>
                 </div>
               </>
             ) : (
-              <p className="text-muted-foreground">Assigned bundle is unavailable.</p>
+              <>
+                <p className="text-muted-foreground">Assigned bundle is unavailable.</p>
+                <div className="flex flex-wrap gap-3">
+                  <Button type="button" onClick={() => setAddOnsOpen(true)}>
+                    Purchase Add-Ons
+                  </Button>
+                </div>
+              </>
             )}
-            <Button type="button" onClick={() => setAddOnsOpen(true)}>
-              Purchase Add-Ons
-            </Button>
             {(entitlements.addOnMockInterviews > 0 ||
               entitlements.addOnStoryboards > 0 ||
               entitlements.addOnMasterclassModuleIds.length > 0) && (
@@ -268,146 +234,6 @@ export function CandidateBillingScreen() {
           </CardContent>
         </Card>
       </div>
-
-      <Dialog open={catalogOpen} onOpenChange={setCatalogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Bundle Catalog</DialogTitle>
-            <DialogDescription>Active B2C bundles available for subscription.</DialogDescription>
-          </DialogHeader>
-          {catalog.length === 0 ? (
-            <p className="py-6 text-center text-caption text-muted-foreground">
-              No active B2C bundles yet.
-            </p>
-          ) : (
-            <ul className="space-y-3">
-              {catalog.map((bundle) => {
-                const isCurrent = bundle.id === subscription.bundleId;
-                return (
-                  <li key={bundle.id} className="rounded-xl border border-border p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="text-caption font-medium">{bundle.name}</div>
-                        <p className="mt-1 text-overline text-muted-foreground">
-                          {bundle.description}
-                        </p>
-                        <ul className="mt-2 space-y-0.5 text-overline text-muted-foreground">
-                          {bundle.cycles.map((c) => (
-                            <li key={c.cycle}>
-                              {BILLING_CYCLE_LABEL[c.cycle]}: {formatUsd(c.price)}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      {isCurrent ? (
-                        <Badge variant="secondary">Current</Badge>
-                      ) : (
-                        <Button type="button" size="sm" onClick={() => startSubscribe(bundle)}>
-                          {subscription.status === "free" ? "Subscribe" : "Switch"}
-                        </Button>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={Boolean(checkoutBundle)}
-        onOpenChange={(o) => !o && setCheckoutBundle(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {checkoutStep === "cycle" ? "Select Billing Cycle" : "Review & pay"}
-            </DialogTitle>
-            <DialogDescription>
-              {checkoutBundle?.name}
-              {subscription.status === "pending_cancel"
-                ? " — switching clears your pending cancellation."
-                : ""}
-            </DialogDescription>
-          </DialogHeader>
-          {checkoutStep === "cycle" && checkoutBundle ? (
-            <div className="space-y-2">
-              {checkoutBundle.cycles.map((c) => (
-                <label
-                  key={c.cycle}
-                  className="flex cursor-pointer items-center justify-between rounded-xl border border-border px-3 py-2 text-caption"
-                >
-                  <span className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="cycle"
-                      checked={checkoutCycle === c.cycle}
-                      onChange={() => setCheckoutCycle(c.cycle)}
-                    />
-                    {BILLING_CYCLE_LABEL[c.cycle]}
-                  </span>
-                  <span className="font-medium">{formatUsd(c.price)}</span>
-                </label>
-              ))}
-            </div>
-          ) : checkoutBundle && checkoutCycle ? (
-            <div className="space-y-3 text-caption">
-              <div className="flex justify-between">
-                <span>Bundle</span>
-                <span className="font-medium">{checkoutBundle.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Cycle</span>
-                <span className="font-medium">{BILLING_CYCLE_LABEL[checkoutCycle]}</span>
-              </div>
-              <div className="flex justify-between border-t border-border pt-2 font-medium">
-                <span>Total</span>
-                <span>
-                  {formatUsd(
-                    checkoutBundle.cycles.find((c) => c.cycle === checkoutCycle)?.price ?? 0,
-                  )}
-                </span>
-              </div>
-              <label className="flex items-center gap-2 text-overline text-muted-foreground">
-                <Checkbox checked={forceFail} onCheckedChange={(c) => setForceFail(Boolean(c))} />
-                Simulate payment failure
-              </label>
-            </div>
-          ) : null}
-          <DialogFooter>
-            {checkoutStep === "cycle" ? (
-              <>
-                <Button type="button" variant="outline" onClick={() => setCheckoutBundle(null)}>
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  disabled={!checkoutCycle}
-                  onClick={() => {
-                    if (!checkoutCycle) {
-                      toast.error("Please select a billing cycle.");
-                      return;
-                    }
-                    setCheckoutStep("review");
-                  }}
-                >
-                  Review
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button type="button" variant="outline" onClick={() => setCheckoutStep("cycle")}>
-                  Back
-                </Button>
-                <Button type="button" onClick={completeCheckout}>
-                  Pay with Stripe (demo)
-                </Button>
-              </>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent>
