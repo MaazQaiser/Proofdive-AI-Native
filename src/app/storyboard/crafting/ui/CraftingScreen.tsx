@@ -13,14 +13,14 @@ import {
 import {
   ArrowLeft,
   ArrowUp,
+  CircleDashed,
   Download,
-  Link2,
+  FileCheck,
   Lock,
   Pencil,
   Plus,
-  Radar,
   Save,
-  Sparkles,
+  Tags,
   Unlock,
   X,
 } from "lucide-react";
@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { IconButton } from "@/components/ui/icon-button";
+import { SelectionChip } from "@/components/ui/selection-chip";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { SuccessDriverMark } from "@/components/ui/success-driver-card";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -100,6 +101,40 @@ const TA =
   "min-h-24 w-full rounded-md border border-border bg-card px-4 py-3 text-caption leading-6 text-text-primary outline-none ring-0 placeholder:text-placeholder disabled:cursor-not-allowed disabled:opacity-60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
 
 const COMPETENCY_REGEN_LIMIT = 2;
+
+/** Quick-action presets for the inline Edit / regenerate bar (craft + read-only). */
+const STORYBOARD_IMPROVE_CHIPS = [
+  {
+    id: "more-dramatic",
+    label: "More dramatic",
+    prompt:
+      "Heighten the stakes and tension so the challenge feels vivid and urgent, without inventing facts.",
+  },
+  {
+    id: "richer-context",
+    label: "Richer context",
+    prompt:
+      "Add clearer situation, constraints, and why it mattered so a listener can picture the setup quickly.",
+  },
+  {
+    id: "executive-polish",
+    label: "Executive polish",
+    prompt:
+      "Tighten language for senior interviewers: crisp ownership, decisions, and trade-offs — less filler.",
+  },
+  {
+    id: "measurable-impact",
+    label: "Measurable impact",
+    prompt:
+      "Strengthen outcomes with numbers where possible (%, $, time, adoption); if none exist, state the clearest qualitative business effect.",
+  },
+] as const;
+
+/** Compact chip sizing scoped to the storyboard improve bar only. */
+const improveChipClassName =
+  "h-7 pl-2.5 pr-2.5 text-[12px] font-medium leading-none";
+
+type StoryboardImproveChipId = (typeof STORYBOARD_IMPROVE_CHIPS)[number]["id"];
 
 const addCompetencyBtnClass =
   "h-auto gap-2 rounded-md bg-transparent py-0 pl-2! pr-4! text-[14px] font-medium leading-5 text-[#095B73] shadow-none hover:bg-transparent hover:text-[#095B73] hover:underline [&_svg]:text-[#095B73]";
@@ -723,7 +758,7 @@ function CompetencyClassificationDetails({
       {evidenceText.length ? (
         <div className="space-y-1.5">
           <div className="flex items-center gap-1.5 text-[14px] font-medium text-text-primary">
-            <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+            <FileCheck className="size-4 shrink-0 text-primary" aria-hidden />
             Evidence
           </div>
           <p className="text-[14px] leading-6 text-text-secondary">{evidenceText.join(". ")}.</p>
@@ -733,7 +768,7 @@ function CompetencyClassificationDetails({
       {missing.length ? (
         <div className="space-y-1.5">
           <div className="flex items-center gap-1.5 text-[14px] font-medium text-text-primary">
-            <Radar className="size-4 shrink-0 text-primary" aria-hidden />
+            <CircleDashed className="size-4 shrink-0 text-primary" aria-hidden />
             Missing Strengths
           </div>
           <p className="text-body-sm leading-6 text-text-secondary">{missing.join(", ")}</p>
@@ -743,7 +778,7 @@ function CompetencyClassificationDetails({
       {related.length ? (
         <div className="space-y-1.5">
           <div className="flex items-center gap-1.5 text-[14px] font-medium text-text-primary">
-            <Link2 className="size-4 shrink-0 text-primary" aria-hidden />
+            <Tags className="size-4 shrink-0 text-primary" aria-hidden />
             Related Competencies
           </div>
           <div className="flex flex-wrap gap-2">
@@ -830,6 +865,9 @@ function DraftSectionCard({
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [draftInput, setDraftInput] = useState("");
+  const [selectedChipId, setSelectedChipId] = useState<StoryboardImproveChipId | null>(
+    null,
+  );
   /** Local view mode so Lock/Unlock switches read-only ↔ fields immediately (mock). */
   const [viewLocked, setViewLocked] = useState(locked);
   const regenBlocked = Boolean(onRegenerate && regenCount >= regenLimit);
@@ -839,16 +877,29 @@ function DraftSectionCard({
     setViewLocked(locked);
   }, [locked]);
 
+  function resetEditBar() {
+    setIsEditing(false);
+    setDraftInput("");
+    setSelectedChipId(null);
+  }
+
   function handleToggleLock() {
     setViewLocked((prev) => {
       const next = !prev;
       if (next) {
         setIsEditing(false);
         setDraftInput("");
+        setSelectedChipId(null);
       }
       return next;
     });
     onToggleLock();
+  }
+
+  function handleSelectChip(chip: (typeof STORYBOARD_IMPROVE_CHIPS)[number]) {
+    if (regenBlocked) return;
+    setSelectedChipId(chip.id);
+    setDraftInput(chip.prompt);
   }
 
   function handleSendQuickChange() {
@@ -856,8 +907,7 @@ function DraftSectionCard({
     if (regenBlocked) return;
     const result = onRegenerate(draftInput);
     if (!result.ok) return;
-    setDraftInput("");
-    setIsEditing(false);
+    resetEditBar();
   }
 
   return (
@@ -919,11 +969,14 @@ function DraftSectionCard({
                 variant={isEditing ? "ghost" : "default"}
                 size="sm"
                 onClick={() => {
-                  setIsEditing((v) => !v);
-                  setDraftInput("");
+                  if (isEditing) {
+                    resetEditBar();
+                  } else {
+                    setIsEditing(true);
+                  }
                 }}
                 className="print:hidden"
-                title={isEditing ? "Cancel edit" : "Show an inline edit field"}
+                title={isEditing ? "Cancel edit" : "Show improve options"}
               >
                 {isEditing ? <X /> : <Pencil />}
                 {isEditing ? "Cancel" : "Edit"}
@@ -935,14 +988,29 @@ function DraftSectionCard({
       <div className="p-4">
         {children(viewLocked)}
         {showEditLock && isEditing ? (
-          <div className="mt-4 -mx-4 border-t border-border/40 px-4 pt-4">
+          <div className="mt-4 -mx-4 space-y-2 border-t border-border/40 px-4 pt-4">
+            <div className="space-y-1.5">
+              <p className="text-overline text-text-primary">
+                How do you want to improve this?
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {STORYBOARD_IMPROVE_CHIPS.map((chip) => (
+                  <SelectionChip
+                    key={chip.id}
+                    selected={selectedChipId === chip.id}
+                    disabled={regenBlocked}
+                    className={improveChipClassName}
+                    onClick={() => handleSelectChip(chip)}
+                  >
+                    {chip.label}
+                  </SelectionChip>
+                ))}
+              </div>
+            </div>
+
             <label className="block">
-              <span className="text-overline text-text-primary">
-                {onRegenerate
-                  ? "Share the quick change you want updated in this competency"
-                  : "Share the quick change you want updated in this area of the story"}
-              </span>
-              <div className="mt-1.5 flex items-center rounded-full border border-border bg-card py-1.5 pr-1.5 pl-4 transition-[border-color,box-shadow] focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring/50">
+              <span className="sr-only">Improvement instruction</span>
+              <div className="mt-0.5 flex items-center rounded-full border border-border bg-card py-1 pr-1 pl-3 transition-[border-color,box-shadow] focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring/50">
                 <input
                   type="text"
                   value={draftInput}
@@ -954,7 +1022,11 @@ function DraftSectionCard({
                     }
                   }}
                   disabled={regenBlocked}
-                  placeholder={onRegenerate ? "Type the change you want..." : "Type here..."}
+                  placeholder={
+                    onRegenerate
+                      ? "Pick a quick action or type the change you want…"
+                      : "Type the change you want…"
+                  }
                   className="min-w-0 flex-1 border-0 bg-transparent py-0.5 text-caption text-text-primary outline-none placeholder:text-placeholder disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <IconButton
@@ -969,29 +1041,43 @@ function DraftSectionCard({
                 </IconButton>
               </div>
             </label>
-            {onRegenerate ? (
-              <p
-                className={cn(
-                  "mt-1.5 text-caption leading-5",
-                  regenBlocked ? "text-destructive" : "text-text-secondary",
-                )}
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              {onRegenerate ? (
+                <p
+                  className={cn(
+                    "text-caption leading-5",
+                    regenBlocked ? "text-destructive" : "text-text-secondary",
+                  )}
+                >
+                  {regenBlocked
+                    ? `Regeneration limit reached (${regenLimit} of ${regenLimit} used).`
+                    : `${regenRemaining} of ${regenLimit} regenerations remaining.`}
+                  {regenBlocked ? (
+                    <>
+                      {" "}
+                      <a
+                        href="/profile/billing?addon=storyboard"
+                        className="font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        Purchase Storyboard add-on
+                      </a>
+                    </>
+                  ) : null}
+                </p>
+              ) : (
+                <span />
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={resetEditBar}
+                className="print:hidden"
               >
-                {regenBlocked
-                  ? `Regeneration limit reached (${regenLimit} of ${regenLimit} used).`
-                  : `${regenRemaining} of ${regenLimit} regenerations remaining.`}
-                {regenBlocked ? (
-                  <>
-                    {" "}
-                    <a
-                      href="/profile/billing?addon=storyboard"
-                      className="font-medium text-primary underline-offset-2 hover:underline"
-                    >
-                      Purchase Storyboard add-on
-                    </a>
-                  </>
-                ) : null}
-              </p>
-            ) : null}
+                Cancel
+              </Button>
+            </div>
           </div>
         ) : null}
       </div>
