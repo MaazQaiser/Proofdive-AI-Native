@@ -125,6 +125,13 @@ export default function LoginPage() {
               >
                 Organization Admin login →
               </button>
+              <button
+                type="button"
+                onClick={() => router.push("/partner/accept-invite")}
+                className="text-caption text-muted-foreground/70 hover:text-foreground hover:underline"
+              >
+                Partner login →
+              </button>
             </div>
           </div>
         </div>

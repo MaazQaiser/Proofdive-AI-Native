@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   Target,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -29,6 +30,7 @@ export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/superadmin/payments", label: "Payments", icon: CreditCard },
   { href: "/superadmin/content", label: "Content", icon: BookOpen },
   { href: "/superadmin/partners", label: "Partners", icon: Handshake },
+  { href: "/superadmin/commissions", label: "Commissions", icon: Wallet },
   { href: "/superadmin/employers", label: "Employers", icon: Briefcase },
   { href: "/superadmin/competency-engine", label: "Competency Engine", icon: Target },
   { href: "/superadmin/support", label: "Support Requests", icon: LifeBuoy },
