@@ -12,6 +12,7 @@ export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/superadmin/payments", label: "Payments" },
   { href: "/superadmin/content", label: "Content" },
   { href: "/superadmin/partners", label: "Partners" },
+  { href: "/superadmin/commissions", label: "Commissions" },
   { href: "/superadmin/employers", label: "Employers" },
   { href: "/superadmin/competency-engine", label: "Competency Engine" },
   { href: "/superadmin/support", label: "Support Tickets" },

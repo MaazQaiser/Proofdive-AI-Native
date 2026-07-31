@@ -95,5 +95,15 @@ export const StorageKeys = {
   partnerTotalWithdrawnCents: "proofdive.partner.totalWithdrawnCents.v1",
   /** Partner in-app notifications list. */
   partnerNotifications: "proofdive.partner.notifications.v1",
+  /** Selected date range on Super Admin Commissions listing. */
+  superAdminCommissionsDateRange: "proofdive.superAdmin.commissionsDateRange.v1",
+  /** Super Admin support request inbox. */
+  superAdminSupportRequests: "proofdive.superAdmin.supportRequests.v1",
+  /** Super Admin in-app notifications. */
+  superAdminNotifications: "proofdive.superAdmin.notifications.v1",
+  /** Super Admin profile overrides (full name). */
+  superAdminProfileOverrides: "proofdive.superAdmin.profileOverrides.v1",
+  /** Super Admin audit log entries. */
+  superAdminAuditLogEntries: "proofdive.superAdmin.auditLogEntries.v1",
 } as const;
 
