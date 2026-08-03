@@ -358,6 +358,9 @@
   --animate-landing-fade: landing-fade 1s ease-out both;
   --animate-landing-visual: landing-visual 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
   --animate-landing-cta: landing-cta 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+  --animate-pricing-rise: pricing-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pricing-blob: pricing-blob 18s ease-in-out infinite;
+  --animate-pricing-blob-alt: pricing-blob 22s ease-in-out infinite reverse;
 }
 
 @keyframes shimmer-sweep {
@@ -426,6 +429,25 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+@keyframes pricing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pricing-blob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(12px, -18px) scale(1.04);
   }
 }
 

@@ -1,22 +1,14 @@
 "use client";
 
 import { Check } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
@@ -86,6 +78,53 @@ function yearlySavingsPercent(bundle: PaymentBundle): number | null {
   return Math.round(((fullYear - yearly.price) / fullYear) * 100);
 }
 
+/** Large display price — drop trailing .00 for whole-dollar amounts. */
+function formatDisplayPrice(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+  }).format(amount);
+}
+
+function PlanBadge({
+  children,
+  featured = false,
+}: {
+  children: ReactNode;
+  featured?: boolean;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex w-fit items-center rounded-full px-3.5 py-1.5 text-[13px] font-semibold tracking-[-0.01em]",
+        featured
+          ? "bg-white text-extended-green-blue shadow-sm"
+          : "bg-primary text-primary-foreground",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function FeatureList({ items }: { items: string[] }) {
+  return (
+    <ul className="flex flex-col gap-3">
+      {items.map((item) => (
+        <li key={item} className="flex items-start gap-2.5 text-[15px] leading-snug text-foreground/80">
+          <Check
+            className="mt-0.5 size-4 shrink-0 text-extended-green-blue"
+            aria-hidden
+            strokeWidth={2.5}
+          />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function CandidatePricingScreen() {
   const [subscription, setSubscription] = useCandidateSubscription();
   const { bundles, hydrated } = usePaymentBundles();
@@ -93,8 +132,6 @@ export function CandidatePricingScreen() {
   const catalog = useMemo(() => {
     const byId = new Map<string, PaymentBundle>();
 
-    // Always surface Career Starter + Career Pro from seed so demo allocations
-    // (e.g. Starter storyboards × 5) stay correct even if localStorage is stale.
     for (const id of CANDIDATE_DEMO_BUNDLE_IDS) {
       const fromSeed = SEED_BUNDLES.find((b) => b.id === id);
       if (fromSeed) byId.set(id, fromSeed);
@@ -128,12 +165,22 @@ export function CandidatePricingScreen() {
   }, [catalog]);
 
   const [cycleFilter, setCycleFilter] = useState<CycleFilter>("monthly");
-  const effectiveCycle: CycleFilter =
-    availableCycles.includes(cycleFilter) ? cycleFilter : (availableCycles[0] ?? "monthly");
+  const effectiveCycle: CycleFilter = availableCycles.includes(cycleFilter)
+    ? cycleFilter
+    : (availableCycles[0] ?? "monthly");
 
-  const recommendedId = useMemo(() => {
-    if (catalog.some((b) => b.id === "bundle_career_starter")) return "bundle_career_starter";
-    return catalog[Math.min(1, catalog.length - 1)]?.id ?? null;
+  const maxYearlySavings = useMemo(() => {
+    let max = 0;
+    for (const b of catalog) {
+      const s = yearlySavingsPercent(b);
+      if (s != null && s > max) max = s;
+    }
+    return max > 0 ? max : null;
+  }, [catalog]);
+
+  const featuredId = useMemo(() => {
+    if (catalog.some((b) => b.id === "bundle_career_pro")) return "bundle_career_pro";
+    return catalog[catalog.length - 1]?.id ?? null;
   }, [catalog]);
 
   const [checkoutBundle, setCheckoutBundle] = useState<PaymentBundle | null>(null);
@@ -177,270 +224,306 @@ export function CandidatePricingScreen() {
   }
 
   const isFree = subscription.status === "free";
-  const ctaLabel = isFree || subscription.status === "pending_cancel" ? "Subscribe" : "Switch to this Bundle";
+  const ctaLabel =
+    isFree || subscription.status === "pending_cancel" ? "Get started" : "Switch to this Bundle";
 
   return (
     <AppShell>
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-8 pb-28">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-2xl">
-            <p className="text-caption font-medium text-primary">Bundle Catalog</p>
-            <h1 className="text-h2 mt-2 text-foreground">
-              Choose the plan that fits your interview prep
-            </h1>
-            <p className="text-body-sm mt-3 text-muted-foreground">
-              Pick the Free baseline or a paid plan that matches how you prep. Subscribe or switch
-              anytime and your new plan starts as soon as payment succeeds.
-            </p>
-          </div>
-          <Button type="button" variant="outline" asChild>
-            <Link href="/profile/billing">Back to billing</Link>
-          </Button>
+      <div className="relative isolate -mx-2 overflow-hidden rounded-[24px] sm:-mx-4">
+        {/* Ambient gradient blobs */}
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+          <Image
+            src="/brand/pricing/blob-2.png"
+            alt=""
+            width={720}
+            height={720}
+            className="absolute -top-32 -left-28 w-[min(520px,70vw)] motion-safe:animate-pricing-blob opacity-55 mix-blend-screen"
+            priority
+          />
+          <Image
+            src="/brand/pricing/blob-3.png"
+            alt=""
+            width={640}
+            height={640}
+            className="absolute -top-24 -right-20 w-[min(460px,60vw)] motion-safe:animate-pricing-blob-alt opacity-50 mix-blend-screen"
+            priority
+          />
+          <Image
+            src="/brand/pricing/blob-1.png"
+            alt=""
+            width={560}
+            height={560}
+            className="absolute top-[42%] left-1/2 w-[min(420px,55vw)] -translate-x-1/2 opacity-40 mix-blend-screen"
+          />
         </div>
 
-        {availableCycles.includes("monthly") && availableCycles.includes("yearly") ? (
-          <div className="flex flex-col items-center gap-3">
-            <Tabs
-              value={effectiveCycle}
-              onValueChange={(v) => setCycleFilter(v as CycleFilter)}
-              className="w-auto items-center"
-            >
-              <TabsList
-                aria-label="Billing cycle"
-                className="mx-0 mt-0 h-auto w-auto gap-1 rounded-full bg-muted p-1"
-              >
-                <TabsTrigger
-                  value="monthly"
-                  className="flex-none rounded-full border-transparent px-5 py-2 text-caption data-[state=active]:border-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
-                >
-                  Monthly
-                </TabsTrigger>
-                <TabsTrigger
-                  value="yearly"
-                  className="flex-none rounded-full border-transparent px-5 py-2 text-caption data-[state=active]:border-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
-                >
-                  Yearly
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            {effectiveCycle === "yearly" ? (
-              <p className="text-caption text-muted-foreground">
-                Yearly billing saves versus paying monthly.
-              </p>
-            ) : (
-              <p className="text-caption invisible" aria-hidden>
-                Yearly billing saves versus paying monthly.
-              </p>
-            )}
+        <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-12 px-2 py-6 pb-16 sm:px-4 sm:py-10">
+          <div className="flex justify-end">
+            <Button type="button" variant="ghost" size="sm" className="text-muted-foreground" asChild>
+              <Link href="/profile/billing">Back to billing</Link>
+            </Button>
           </div>
-        ) : null}
 
-        {!hydrated ? (
-          <p className="text-center text-caption text-muted-foreground">Loading plans…</p>
-        ) : (
-          <section
-            aria-label="Available plans"
-            className="grid grid-cols-1 gap-6 md:grid-cols-3"
-          >
-            <Card className="border border-border bg-card shadow-none">
-              <CardHeader>
-                <div className="flex items-center justify-between gap-2">
-                  <CardTitle className="text-h5">Free</CardTitle>
-                  {isFree ? <Badge variant="secondary">Current</Badge> : null}
-                </div>
-                <CardDescription>One-time baseline at signup — not renewable.</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-1 flex-col gap-6">
-                <div>
-                  <p className="text-h3 font-medium text-foreground">$0</p>
-                  <p className="text-caption text-muted-foreground">Forever free baseline</p>
-                </div>
-                <ul className="flex flex-col gap-2.5">
-                  {[
-                    `Mock Interviews × ${FREE_MOCK_INTERVIEW_ALLOCATION}`,
-                    `Storyboards × ${FREE_STORYBOARD_ALLOCATION}`,
-                  ].map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-caption">
-                        <Check
-                          className="mt-0.5 size-4 shrink-0 text-primary"
-                          aria-hidden
-                          strokeWidth={2.5}
-                        />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button type="button" variant="outline" className="w-full" disabled={isFree}>
-                  {isFree ? "Current plan" : "Included at signup"}
-                </Button>
-              </CardFooter>
-            </Card>
+          <header className="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center motion-safe:animate-pricing-rise">
+            <h1 className="text-[clamp(2rem,4vw,2.75rem)] font-semibold leading-[1.15] tracking-[-0.04em] text-heading-teal">
+              Choose your right plan!
+            </h1>
+            <p className="max-w-lg text-[15px] leading-relaxed text-muted-foreground sm:text-body-sm">
+              Pick the Free baseline or a paid plan that matches how you prep. Subscribe or switch
+              anytime — your new plan starts as soon as payment succeeds.
+            </p>
+          </header>
 
-            {catalog.map((bundle) => {
-              const priced = priceForCycle(bundle, effectiveCycle);
-              const isCurrent = bundle.id === subscription.bundleId;
-              const isRecommended = bundle.id === recommendedId;
-              const savings = yearlySavingsPercent(bundle);
-              const features = bundleFeatures(bundle);
-              const unavailableForCycle = !priced;
-
-              return (
-                <Card
-                  key={bundle.id}
-                  className={cn(
-                    "border bg-card shadow-none transition-colors duration-200",
-                    isRecommended
-                      ? "border-primary ring-2 ring-primary/20"
-                      : "border-border",
-                  )}
+          {availableCycles.includes("monthly") && availableCycles.includes("yearly") ? (
+            <div className="flex justify-center motion-safe:animate-pricing-rise">
+              <Tabs
+                value={effectiveCycle}
+                onValueChange={(v) => setCycleFilter(v as CycleFilter)}
+                className="w-auto items-center"
+              >
+                <TabsList
+                  aria-label="Billing cycle"
+                  className="mx-0 mt-0 h-auto w-auto gap-1 rounded-full border border-border/60 bg-white/80 p-1.5 shadow-sm backdrop-blur-sm"
                 >
-                  <CardHeader>
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <CardTitle className="text-h5">{bundle.name}</CardTitle>
-                      <div className="flex flex-wrap gap-1.5">
-                        {isRecommended ? <Badge>Most popular</Badge> : null}
-                        {isCurrent ? <Badge variant="secondary">Current</Badge> : null}
-                      </div>
-                    </div>
-                    <CardDescription>{bundle.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-1 flex-col gap-6">
-                    <div>
-                      {priced ? (
-                        <>
-                          <p className="text-h3 font-medium text-foreground">
-                            {formatUsd(priced.price)}
-                            <span className="text-body-sm font-normal text-muted-foreground">
-                              /{effectiveCycle === "yearly" ? "year" : "mo"}
-                            </span>
-                          </p>
-                          {effectiveCycle === "yearly" && savings != null ? (
-                            <p className="text-caption text-primary">Save {savings}% vs monthly</p>
-                          ) : (
-                            <p className="text-caption text-muted-foreground">
-                              Billed {BILLING_CYCLE_LABEL[effectiveCycle].toLowerCase()}
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-h3 font-medium text-foreground">—</p>
-                          <p className="text-caption text-muted-foreground">
-                            Not offered on {BILLING_CYCLE_LABEL[effectiveCycle].toLowerCase()}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                    <ul className="flex flex-col gap-2.5">
-                      {features.length > 0 ? (
-                        features.map((item) => (
-                          <li key={item} className="flex items-start gap-2 text-caption">
-                            <Check
-                              className="mt-0.5 size-4 shrink-0 text-primary"
-                              aria-hidden
-                              strokeWidth={2.5}
-                            />
-                            <span>{item}</span>
-                          </li>
-                        ))
-                      ) : (
-                        <li className="text-caption text-muted-foreground">No included items</li>
-                      )}
-                    </ul>
-                  </CardContent>
-                  <CardFooter>
-                    {isCurrent ? (
-                      <div className="flex w-full flex-col items-center gap-2">
-                        <Button type="button" variant="outline" className="w-full" disabled>
-                          {subscription.status === "pending_cancel"
-                            ? "Canceling"
-                            : "Current plan"}
-                        </Button>
-                        {subscription.status === "active" ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-auto px-0 text-caption font-medium text-muted-foreground hover:bg-transparent hover:text-destructive"
-                            onClick={() => {
-                              if (subscription.status !== "active" || !subscription.nextBillingDate) {
-                                toast.error("Unable to cancel right now. Open billing to try again.");
-                                return;
-                              }
-                              setSubscription((prev) => ({
-                                ...prev,
-                                status: "pending_cancel",
-                                accessEndsAt: prev.nextBillingDate,
-                              }));
-                              toast.success(
-                                "Cancellation scheduled. Reverting to Free in a few seconds for this demo.",
-                              );
-                            }}
-                          >
-                            Cancel plan
-                          </Button>
+                  <TabsTrigger
+                    value="monthly"
+                    className="flex-none rounded-full border-transparent px-5 py-2.5 text-[14px] font-medium data-[state=active]:border-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
+                  >
+                    Monthly
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="yearly"
+                    className="flex-none rounded-full border-transparent px-5 py-2.5 text-[14px] font-medium data-[state=active]:border-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
+                  >
+                    Yearly{maxYearlySavings != null ? ` (save ${maxYearlySavings}%)` : ""}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          ) : null}
+
+          {!hydrated ? (
+            <p className="text-center text-caption text-muted-foreground">Loading plans…</p>
+          ) : (
+            <section
+              aria-label="Available plans"
+              className="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-6 motion-safe:animate-pricing-rise"
+            >
+              {/* Free */}
+              <article
+                className={cn(
+                  "flex flex-col rounded-[20px] border border-border/70 bg-white/90 p-7 shadow-[0_12px_40px_-24px_rgba(7,62,76,0.35)] backdrop-blur-sm",
+                )}
+              >
+                <div className="grid grid-rows-[auto_4.5rem_auto] gap-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <PlanBadge>Free</PlanBadge>
+                    {isFree ? (
+                      <span className="text-overline text-muted-foreground">Current</span>
+                    ) : null}
+                  </div>
+                  <p className="text-[14px] leading-relaxed text-muted-foreground">
+                    One-time baseline at signup — not renewable. Start exploring with core practice.
+                  </p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[2.75rem] font-semibold leading-none tracking-[-0.04em] text-heading-teal">
+                      $0
+                    </span>
+                    <span className="text-[15px] font-medium text-muted-foreground">/forever</span>
+                  </div>
+                </div>
+
+                <div className="my-6 h-px w-full bg-border/80" />
+
+                <div className="flex flex-1 flex-col gap-8">
+                  <FeatureList
+                    items={[
+                      `Mock Interviews × ${FREE_MOCK_INTERVIEW_ALLOCATION}`,
+                      `Storyboards × ${FREE_STORYBOARD_ALLOCATION}`,
+                    ]}
+                  />
+                  <Button type="button" variant="outline" className="mt-auto w-full rounded-full" disabled={isFree}>
+                    {isFree ? "Current plan" : "Included at signup"}
+                  </Button>
+                </div>
+              </article>
+
+              {catalog.map((bundle) => {
+                const priced = priceForCycle(bundle, effectiveCycle);
+                const isCurrent = bundle.id === subscription.bundleId;
+                const isFeatured = bundle.id === featuredId;
+                const savings = yearlySavingsPercent(bundle);
+                const features = bundleFeatures(bundle);
+                const unavailableForCycle = !priced;
+                const period = effectiveCycle === "yearly" ? "/year" : "/month";
+
+                return (
+                  <article
+                    key={bundle.id}
+                    className={cn(
+                      "flex flex-col rounded-[20px] border p-7 shadow-[0_12px_40px_-24px_rgba(7,62,76,0.35)] backdrop-blur-sm",
+                      isFeatured
+                        ? "border-primary/25 bg-gradient-to-b from-brand-1000 via-white to-white"
+                        : "border-border/70 bg-white/90",
+                    )}
+                  >
+                    <div className="grid grid-rows-[auto_4.5rem_auto] gap-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <PlanBadge featured={isFeatured}>{bundle.name}</PlanBadge>
+                        {isCurrent ? (
+                          <span className="text-overline text-muted-foreground">Current</span>
                         ) : null}
                       </div>
-                    ) : (
-                      <Button
-                        type="button"
-                        className="w-full"
-                        variant={isRecommended ? "default" : "outline"}
-                        disabled={unavailableForCycle && bundle.cycles.length === 0}
-                        onClick={() => startSubscribe(bundle)}
-                      >
-                        {ctaLabel}
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              );
-            })}
+                      <p className="text-[14px] leading-relaxed text-muted-foreground">
+                        {bundle.description}
+                      </p>
+                      <div>
+                        {priced ? (
+                          <>
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-[2.75rem] font-semibold leading-none tracking-[-0.04em] text-heading-teal">
+                                {formatDisplayPrice(priced.price)}
+                              </span>
+                              <span className="text-[15px] font-medium text-muted-foreground">
+                                {period}
+                              </span>
+                            </div>
+                            {effectiveCycle === "yearly" && savings != null ? (
+                              <p className="mt-2 text-[13px] font-medium text-primary">
+                                Save {savings}% vs monthly
+                              </p>
+                            ) : null}
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-[2.75rem] font-semibold leading-none tracking-[-0.04em] text-heading-teal">
+                              —
+                            </span>
+                            <p className="mt-2 text-[13px] text-muted-foreground">
+                              Not offered on {BILLING_CYCLE_LABEL[effectiveCycle].toLowerCase()}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="my-6 h-px w-full bg-border/80" />
+
+                    <div className="flex flex-1 flex-col gap-8">
+                      {features.length > 0 ? (
+                        <FeatureList items={features} />
+                      ) : (
+                        <p className="text-[15px] text-muted-foreground">No included items</p>
+                      )}
+
+                      {isCurrent ? (
+                        <div className="mt-auto flex w-full flex-col items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full rounded-full"
+                            disabled
+                          >
+                            {subscription.status === "pending_cancel" ? "Canceling" : "Current plan"}
+                          </Button>
+                          {subscription.status === "active" ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="h-auto px-0 text-caption font-medium text-muted-foreground hover:bg-transparent hover:text-destructive"
+                              onClick={() => {
+                                if (
+                                  subscription.status !== "active" ||
+                                  !subscription.nextBillingDate
+                                ) {
+                                  toast.error(
+                                    "Unable to cancel right now. Open billing to try again.",
+                                  );
+                                  return;
+                                }
+                                setSubscription((prev) => ({
+                                  ...prev,
+                                  status: "pending_cancel",
+                                  accessEndsAt: prev.nextBillingDate,
+                                }));
+                                toast.success(
+                                  "Cancellation scheduled. Reverting to Free in a few seconds for this demo.",
+                                );
+                              }}
+                            >
+                              Cancel plan
+                            </Button>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          className={cn(
+                            "mt-auto w-full rounded-full",
+                            isFeatured &&
+                              "bg-extended-green-blue text-white hover:bg-extended-cyan-green",
+                          )}
+                          variant={isFeatured ? "default" : "outline"}
+                          disabled={unavailableForCycle && bundle.cycles.length === 0}
+                          onClick={() => startSubscribe(bundle)}
+                        >
+                          {ctaLabel}
+                        </Button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+          )}
+
+          {hydrated && catalog.length === 0 ? (
+            <p className="text-center text-caption text-muted-foreground">
+              No active B2C bundles yet. Check back soon or return to billing.
+            </p>
+          ) : null}
+
+          <section className="rounded-[20px] border border-border/70 bg-white/80 px-6 py-8 text-center shadow-[0_12px_40px_-24px_rgba(7,62,76,0.25)] backdrop-blur-sm">
+            <h2 className="text-[1.35rem] font-semibold tracking-[-0.02em] text-heading-teal">
+              Need more usage on your current plan?
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-[14px] leading-relaxed text-muted-foreground">
+              Purchase Mock Interview, Storyboard, or Masterclass add-ons anytime — available on Free
+              and paid Bundles.
+            </p>
+            <Button type="button" className="mt-5 rounded-full" asChild>
+              <Link href="/profile/billing?addon=storyboard">Purchase Add-Ons</Link>
+            </Button>
           </section>
-        )}
 
-        {hydrated && catalog.length === 0 ? (
-          <p className="text-center text-caption text-muted-foreground">
-            No active B2C bundles yet. Check back soon or return to billing.
-          </p>
-        ) : null}
-
-        <section className="rounded-[16px] border border-border bg-card px-6 py-8 text-center">
-          <h2 className="text-h5 text-foreground">Need more usage on your current plan?</h2>
-          <p className="text-caption mx-auto mt-2 max-w-md text-muted-foreground">
-            Purchase Mock Interview, Storyboard, or Masterclass add-ons anytime — available on Free
-            and paid Bundles.
-          </p>
-          <Button type="button" className="mt-5" asChild>
-            <Link href="/profile/billing?addon=storyboard">Purchase Add-Ons</Link>
-          </Button>
-        </section>
-
-        <section aria-labelledby="pricing-faq-heading" className="w-full">
-          <h2 id="pricing-faq-heading" className="text-h4 text-foreground">
-            Billing FAQ
-          </h2>
-          <div className="mt-6 divide-y divide-border border-y border-border">
-            {FAQ_ITEMS.map((item) => (
-              <details key={item.q} className="group py-4">
-                <summary className="cursor-pointer list-none text-body-sm font-medium text-foreground outline-none transition-colors marker:content-none focus-visible:text-primary [&::-webkit-details-marker]:hidden">
-                  <span className="flex items-center justify-between gap-4">
-                    {item.q}
-                    <span
-                      className="text-muted-foreground transition-transform duration-200 group-open:rotate-45"
-                      aria-hidden
-                    >
-                      +
+          <section aria-labelledby="pricing-faq-heading" className="w-full">
+            <h2
+              id="pricing-faq-heading"
+              className="text-[1.5rem] font-semibold tracking-[-0.02em] text-heading-teal"
+            >
+              Billing FAQ
+            </h2>
+            <div className="mt-6 divide-y divide-border border-y border-border">
+              {FAQ_ITEMS.map((item) => (
+                <details key={item.q} className="group py-4">
+                  <summary className="cursor-pointer list-none text-body-sm font-medium text-foreground outline-none transition-colors marker:content-none focus-visible:text-primary [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-center justify-between gap-4">
+                      {item.q}
+                      <span
+                        className="text-muted-foreground transition-transform duration-200 group-open:rotate-45"
+                        aria-hidden
+                      >
+                        +
+                      </span>
                     </span>
-                  </span>
-                </summary>
-                <p className="text-caption mt-3 max-w-prose text-muted-foreground">{item.a}</p>
-              </details>
-            ))}
-          </div>
-        </section>
-      </main>
+                  </summary>
+                  <p className="mt-3 max-w-prose text-caption text-muted-foreground">{item.a}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
 
       <BundleCheckoutDialog
         bundle={checkoutBundle}
