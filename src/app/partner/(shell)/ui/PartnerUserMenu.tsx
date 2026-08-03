@@ -59,14 +59,16 @@ export function PartnerUserMenu() {
           </div>
         </div>
         <DropdownMenuSeparator className="my-0" />
-        <DropdownMenuItem
-          variant="destructive"
-          className="m-1 justify-end gap-2 py-2.5 font-medium"
-          onClick={() => router.push("/login")}
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </DropdownMenuItem>
+        <div className="flex justify-end p-1">
+          <DropdownMenuItem
+            variant="destructive"
+            className="w-auto gap-2 py-2.5 font-medium"
+            onClick={() => router.push("/login")}
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </DropdownMenuItem>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

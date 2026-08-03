@@ -356,12 +356,19 @@ export function CraftingScreen() {
   );
 
   useEffect(() => {
-    if (searchParams.get("print") !== "1") return;
+    if (searchParams.get("print") !== "1") {
+      hasTriggeredPrintRef.current = false;
+      return;
+    }
     if (hasTriggeredPrintRef.current) return;
     hasTriggeredPrintRef.current = true;
-    const id = window.setTimeout(() => window.print(), 200);
-    const diveQs = diveParam ? `?dive=${encodeURIComponent(diveParam)}` : "";
-    router.replace(`/storyboard/crafting${diveQs}`);
+    // Replace the URL only after print is invoked so effect cleanup does not
+    // cancel the timeout when `print` is stripped from searchParams.
+    const id = window.setTimeout(() => {
+      window.print();
+      const diveQs = diveParam ? `?dive=${encodeURIComponent(diveParam)}` : "";
+      router.replace(`/storyboard/crafting${diveQs}`);
+    }, 200);
     return () => window.clearTimeout(id);
   }, [searchParams, router, diveParam]);
 
@@ -392,8 +399,8 @@ export function CraftingScreen() {
 
   const handleDownload = useCallback(() => {
     if (!activeDive) return;
-    router.push(`/storyboard/crafting?dive=${encodeURIComponent(activeDive.id)}&print=1`);
-  }, [activeDive, router]);
+    window.print();
+  }, [activeDive]);
 
   const overall = activeDive?.overallScore ?? 0;
   const overallScore = overall > 0 ? overall : null;
