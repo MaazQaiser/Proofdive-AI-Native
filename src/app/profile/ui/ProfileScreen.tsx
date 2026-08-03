@@ -24,10 +24,17 @@ import { Label } from "@/components/ui/label";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { computeCandidateUsage, type UsageMeter } from "@/lib/candidateUsage";
 import { removeSavedRole, rolesWithActive, upsertSavedRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
-import type { InterviewReport, RoleProfile } from "@/lib/proofdiveTypes";
+import type { InterviewReport, RoleProfile, TrainingJourneyProgress } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import { usePaymentBundles } from "@/lib/usePaymentBundles";
+import { useStoryboardDiveStore } from "@/lib/useStoryboardDiveStore";
+import {
+  useCandidateEntitlements,
+  useCandidateSubscription,
+} from "@/lib/useSubscriberPayments";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -85,6 +92,24 @@ function DetailRow({ label, value }: { label: string; value?: string }) {
     <div className="flex flex-col gap-0.5">
       <span className="text-caption text-muted-foreground">{label}</span>
       <span className="text-body-sm text-foreground">{value || "—"}</span>
+    </div>
+  );
+}
+
+function UsageMeterRow({ meter }: { meter: UsageMeter }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-body-sm font-medium text-foreground">{meter.label}</span>
+        <span className="text-caption text-muted-foreground">
+          {meter.used}/{meter.limit} used
+        </span>
+      </div>
+      <div className="mt-1.5 flex items-center justify-between">
+        <span className="text-overline text-muted-foreground">Rolling 30-day window</span>
+        <span className="text-overline text-primary">{meter.pct}%</span>
+      </div>
+      <ProgressBar className="mt-2 h-1.5" value={meter.pct} />
     </div>
   );
 }
@@ -169,6 +194,18 @@ export function ProfileScreen() {
   const [reports, setReports] = useLocalStorageState<Record<string, InterviewReport>>(
     StorageKeys.reports,
     {},
+  );
+  const [trainingProgress] = useLocalStorageState<Record<string, TrainingJourneyProgress>>(
+    StorageKeys.trainingProgress,
+    {},
+  );
+  const [subscription] = useCandidateSubscription();
+  const [entitlements] = useCandidateEntitlements();
+  const { bundles } = usePaymentBundles();
+  const [diveStore] = useStoryboardDiveStore();
+  const [storyboardGenerationCount] = useLocalStorageState<number>(
+    StorageKeys.candidateStoryboardGenerations,
+    0,
   );
   const [aiTrainingConsent, setAiTrainingConsent] = useLocalStorageState<boolean>(
     StorageKeys.aiTrainingConsent,
@@ -263,10 +300,34 @@ export function ProfileScreen() {
     setIsEditingPersonalInfo(false);
   }
 
+  const activeBundle =
+    subscription.bundleId != null
+      ? bundles.find((b) => b.id === subscription.bundleId) ?? null
+      : null;
+
+  const usage = useMemo(
+    () =>
+      computeCandidateUsage({
+        subscription,
+        entitlements,
+        activeBundle,
+        reports,
+        diveStore,
+        trainingProgress,
+        storyboardGenerationCount,
+      }),
+    [
+      subscription,
+      entitlements,
+      activeBundle,
+      reports,
+      diveStore,
+      trainingProgress,
+      storyboardGenerationCount,
+    ],
+  );
+
   const reportCount = Object.keys(reports ?? {}).length;
-  const usageUsed = reportCount;
-  const usageLimit = 12;
-  const usagePct = Math.min(100, Math.round((usageUsed / usageLimit) * 100));
 
   const avatarText = initials(roleProfile?.name, roleProfile?.targetRole);
   const hasProfile = Boolean(roleProfile?.targetRole);
@@ -512,21 +573,24 @@ export function ProfileScreen() {
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
-                  <div>
-                    <div className="text-h5">
-                      {usageUsed}/{usageLimit} used
-                    </div>
-                    <div className="mt-1.5 flex items-center justify-between">
-                      <span className="text-overline text-muted-foreground">Rolling 30-day window</span>
-                      <span className="text-overline text-primary">{usagePct}%</span>
-                    </div>
-                    <ProgressBar className="mt-2 h-1.5" value={usagePct} />
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-caption text-muted-foreground">Current plan</span>
+                    <Badge variant="secondary" className="font-medium">
+                      {usage.planLabel}
+                    </Badge>
                   </div>
 
+                  <UsageMeterRow meter={usage.mockInterviews} />
+                  <UsageMeterRow meter={usage.storyboards} />
+                  <UsageMeterRow meter={usage.otherBenefits} />
+
                   <p className="text-caption leading-5 text-muted-foreground">
-                    We count generated feedback reports toward this limit. Manage your plan and
-                    purchase add-ons from Payments & Subscription.
+                    We count mock interviews, storyboard generations, and masterclass benefits toward
+                    these limits. Manage your plan and purchase add-ons from Payments &amp; Subscription.
                   </p>
+                  <Button asChild size="sm" className="w-full">
+                    <Link href="/profile/pricing">Upgrade Plan</Link>
+                  </Button>
                   <Button asChild size="sm" variant="outline" className="w-full">
                     <Link href="/profile/billing">Payments & Subscription</Link>
                   </Button>

@@ -28,6 +28,7 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +36,7 @@ import { IconButton } from "@/components/ui/icon-button";
 import { SelectionChip } from "@/components/ui/selection-chip";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { SuccessDriverMark } from "@/components/ui/success-driver-card";
+import { computeCandidateUsage } from "@/lib/candidateUsage";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import {
   COMPETENCY_SPECS,
@@ -65,13 +67,18 @@ import {
 } from "@/lib/storyboardGuardrails";
 import { SUCCESS_DRIVER_ORDER, SUCCESS_DRIVERS } from "@/lib/successDrivers";
 import { scoringFillClass, scoringBandForScore } from "@/lib/scoringPalette";
-import type { RoleProfile } from "@/lib/proofdiveTypes";
+import type { InterviewReport, RoleProfile, TrainingJourneyProgress } from "@/lib/proofdiveTypes";
 import {
   competencySpec,
   pillarForCompetency,
 } from "@/lib/demoFocusCompetencies";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import { usePaymentBundles } from "@/lib/usePaymentBundles";
 import { useStoryboardDiveStore } from "@/lib/useStoryboardDiveStore";
+import {
+  useCandidateEntitlements,
+  useCandidateSubscription,
+} from "@/lib/useSubscriberPayments";
 import { cn } from "@/lib/utils";
 
 const PILLAR_ORDER = SUCCESS_DRIVER_ORDER;
@@ -193,6 +200,46 @@ export function CraftingScreen() {
   );
   const [diveStore, setDiveStore, diveHydrated] = useStoryboardDiveStore();
   const [pasteWarning, setPasteWarning] = useState<string | null>(null);
+  const [subscription] = useCandidateSubscription();
+  const [entitlements] = useCandidateEntitlements();
+  const { bundles } = usePaymentBundles();
+  const [reports] = useLocalStorageState<Record<string, InterviewReport>>(StorageKeys.reports, {});
+  const [trainingProgress] = useLocalStorageState<Record<string, TrainingJourneyProgress>>(
+    StorageKeys.trainingProgress,
+    {},
+  );
+  const [storyboardGenerationCount, setStoryboardGenerationCount] = useLocalStorageState<number>(
+    StorageKeys.candidateStoryboardGenerations,
+    0,
+  );
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+
+  const activeBundle =
+    subscription.bundleId != null
+      ? bundles.find((b) => b.id === subscription.bundleId) ?? null
+      : null;
+
+  const usage = useMemo(
+    () =>
+      computeCandidateUsage({
+        subscription,
+        entitlements,
+        activeBundle,
+        reports,
+        diveStore,
+        trainingProgress,
+        storyboardGenerationCount,
+      }),
+    [
+      subscription,
+      entitlements,
+      activeBundle,
+      reports,
+      diveStore,
+      trainingProgress,
+      storyboardGenerationCount,
+    ],
+  );
 
   const role = roleProfile?.targetRole?.trim() ?? "";
   const diveParam = (searchParams.get("dive") ?? "").trim();
@@ -252,6 +299,10 @@ export function CraftingScreen() {
   const handleCompetencyRegenerate = useCallback(
     (index: number, instruction: string) => {
       if (!activeDive) return { ok: false, reason: "missing" as const };
+      if (usage.isStoryboardAtLimit) {
+        setUpgradeModalOpen(true);
+        return { ok: false, reason: "limit" as const };
+      }
       const section = activeDive.competencies[index];
       if (!section) return { ok: false, reason: "missing" as const };
       if (section.regenCount >= COMPETENCY_REGEN_LIMIT) {
@@ -272,14 +323,19 @@ export function CraftingScreen() {
         );
         return { ...d, competencies };
       });
+      setStoryboardGenerationCount((n) => n + 1);
       return { ok: true as const };
     },
-    [activeDive, updateActiveDive],
+    [activeDive, updateActiveDive, usage.isStoryboardAtLimit, setStoryboardGenerationCount],
   );
 
   const handleIntroRegenerate = useCallback(
     (instruction: string) => {
       if (!activeDive) return { ok: false, reason: "missing" as const };
+      if (usage.isStoryboardAtLimit) {
+        setUpgradeModalOpen(true);
+        return { ok: false, reason: "limit" as const };
+      }
       if ((activeDive.intro.regenCount ?? 0) >= COMPETENCY_REGEN_LIMIT) {
         return { ok: false, reason: "limit" as const };
       }
@@ -294,9 +350,10 @@ export function CraftingScreen() {
           regenCount: (d.intro.regenCount ?? 0) + 1,
         },
       }));
+      setStoryboardGenerationCount((n) => n + 1);
       return { ok: true as const };
     },
-    [activeDive, updateActiveDive],
+    [activeDive, updateActiveDive, usage.isStoryboardAtLimit, setStoryboardGenerationCount],
   );
 
   useEffect(() => {
@@ -732,6 +789,7 @@ export function CraftingScreen() {
       </div>
 
       <CoachBottomChatBar showUploadButton={false} />
+      <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
     </AppShell>
   );
 }

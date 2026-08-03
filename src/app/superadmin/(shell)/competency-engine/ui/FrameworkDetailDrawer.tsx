@@ -61,7 +61,7 @@ export function FrameworkDetailDrawer({
 
   return (
     <Sheet open={framework !== null} onOpenChange={onOpenChange}>
-      <SheetContent className="gap-0 w-1/2 overflow-y-auto sm:max-w-[50vw]" side="right">
+      <SheetContent className="w-1/2 max-w-[50vw] gap-0 overflow-y-auto sm:max-w-[50vw]" side="right">
         {framework ? (
           <>
             <div className="shrink-0 space-y-3 border-b border-border px-6 py-4 pr-12">

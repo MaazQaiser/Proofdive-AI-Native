@@ -115,7 +115,7 @@ export function SupportRequestsScreen() {
   }
 
   return (
-    <div className="-m-6 flex h-full flex-col overflow-hidden">
+    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
         <div>
           <h1 className="text-h4 text-foreground">Support Tickets</h1>

@@ -284,7 +284,7 @@ export function OrganizationDetailDrawer({
 
   return (
     <Sheet open={!!organization} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
+      <SheetContent className="flex w-1/2 max-w-[50vw] flex-col gap-0 p-0 sm:max-w-[50vw]">
         <SheetHeader>
           <SheetTitle>Organization Details</SheetTitle>
         </SheetHeader>

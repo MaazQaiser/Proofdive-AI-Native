@@ -58,7 +58,7 @@ export function SuperAdminNotificationsScreen() {
   const sorted = [...notifications].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6 pt-6">
       <div>
         <h1 className="text-h5 text-foreground">Notifications</h1>
         <p className="mt-0.5 text-caption text-muted-foreground">

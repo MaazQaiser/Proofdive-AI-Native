@@ -71,6 +71,12 @@ export const StorageKeys = {
   candidateSubscription: "proofdive.candidate.subscription.v1",
   /** Candidate one-time free baseline remaining + purchased add-on deltas. */
   candidateEntitlements: "proofdive.candidate.entitlements.v1",
+  /** Cumulative storyboard generation count (crafts + regenerations) for usage limits. */
+  candidateStoryboardGenerations: "proofdive.candidate.storyboardGenerations.v1",
+  /** Report ids a Free candidate has successfully viewed (story 3.2: 1 report allocation). */
+  candidateAccessedReportIds: "proofdive.candidate.accessedReportIds.v1",
+  /** Whether the Free-plan post-interview upgrade nudge has been shown once. */
+  candidatePostInterviewUpgradeNudgeSeen: "proofdive.candidate.postInterviewUpgradeNudgeSeen.v1",
   /** Super Admin partner / affiliate directory. */
   superAdminPartners: "proofdive.superAdmin.partners.v1",
   /** Selected Weekly/Monthly/All Time granularity on the Partner dashboard. */

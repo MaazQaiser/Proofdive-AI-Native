@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import { Textarea } from "@/components/ui/textarea";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { SUCCESS_DRIVER_SYMBOL_CLASS } from "@/components/ui/success-driver-card";
@@ -139,7 +140,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
 
   if (!hydrated) {
     return (
-      <div className="-m-6 flex h-full items-center justify-center">
+      <div className="-mx-6 -mb-6 flex h-full items-center justify-center">
         <p className="text-body-sm text-muted-foreground">Loading framework…</p>
       </div>
     );
@@ -150,14 +151,13 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
   }
 
   return (
-    <div className="-m-6 flex h-full flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-12 py-4">
-        <div className="min-w-0 space-y-0.5">
-          <h1 className="text-h4 text-foreground">Edit copy</h1>
-          <p className="text-caption text-muted-foreground">
-            Update definitions, core questions, and level descriptors.
-          </p>
-        </div>
+    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
+      <div className="sticky top-0 z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-6 py-6">
+        <PageBreadcrumb
+          parentHref="/superadmin/competency-engine"
+          parentLabel="Competency Engine"
+          title={name.trim() ? `Edit: ${name.trim()}` : "Edit copy"}
+        />
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="ghost" onClick={handleClose}>
             <X className="h-4 w-4" />
@@ -174,7 +174,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-12 py-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
           <section className="space-y-3 rounded-xl border border-border bg-card p-5">
             <h2 className="text-body font-semibold text-foreground">Competency framework</h2>

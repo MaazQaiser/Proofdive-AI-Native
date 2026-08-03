@@ -36,6 +36,7 @@ import {
 type StepId = "landing" | "basic" | "entity" | "type" | "volume" | "commission" | "review";
 
 const STEP_ORDER: StepId[] = ["landing", "basic", "entity", "type", "volume", "commission", "review"];
+const TOTAL_STEPS = STEP_ORDER.length - 1;
 
 const STEP_TITLES: Record<StepId, string> = {
   landing: "Add New Partner",
@@ -174,7 +175,6 @@ export function AddPartnerDialog({
 
   function validateEntity(): FieldErrors {
     const next: FieldErrors = {};
-    if (!form.entityType) next.entityType = "Entity Type is required.";
     if (form.entityType === "company" && !form.companyName.trim())
       next.companyName = "Company Name is required.";
     if (!form.audienceType) next.audienceType = "Audience Type is required.";
@@ -200,18 +200,25 @@ export function AddPartnerDialog({
     if (!form.commissionType) next.commissionType = "Commission Type is required.";
     if (form.commissionType === "percentage") {
       const pct = Number(form.commissionPercent);
-      if (Number.isNaN(pct) || pct <= 0 || pct > 100) next.commissionPercent = "Enter a percentage between 1 and 100.";
+      if (Number.isNaN(pct) || pct <= 0 || pct > 100)
+        next.commissionPercent = "Enter a percentage between 1 and 100.";
     }
     if (form.commissionType === "fixed") {
       const dollars = Number(form.commissionFixedDollars);
-      if (Number.isNaN(dollars) || dollars <= 0) next.commissionFixedDollars = "Enter a fixed amount greater than zero.";
+      if (Number.isNaN(dollars) || dollars <= 0)
+        next.commissionFixedDollars = "Enter a fixed amount greater than zero.";
     }
     return next;
   }
 
   function handleNext() {
     let nextErrors: FieldErrors = {};
-    if (step === "basic") nextErrors = validateBasic();
+    if (step === "landing") {
+      if (!form.entityType) {
+        setErrors({ entityType: "Please select an entity type." });
+        return;
+      }
+    } else if (step === "basic") nextErrors = validateBasic();
     else if (step === "entity") nextErrors = validateEntity();
     else if (step === "type") nextErrors = validateType();
     else if (step === "volume") nextErrors = validateVolume();
@@ -219,6 +226,11 @@ export function AddPartnerDialog({
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
+      return;
+    }
+
+    if (step === "review") {
+      handleSubmit();
       return;
     }
 
@@ -262,6 +274,7 @@ export function AddPartnerDialog({
     onCreate(partner);
   }
 
+  const stepIndex = STEP_ORDER.indexOf(step);
   const isLanding = step === "landing";
   const isReview = step === "review";
 
@@ -269,43 +282,119 @@ export function AddPartnerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className={cn(
-          "flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0",
-          isLanding ? "sm:max-w-2xl" : "sm:max-w-3xl",
-        )}
+        className="flex h-[85vh] max-h-[760px] w-full max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
-          <DialogTitle className="text-h6 text-foreground">{STEP_TITLES[step]}</DialogTitle>
-          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} aria-label="Close">
-            <X className="h-4 w-4" />
-          </Button>
+          {isLanding ? (
+            <DialogTitle className="text-h6 font-semibold text-foreground">Add New Partner</DialogTitle>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" onClick={handleBack} aria-label="Back">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <DialogTitle asChild>
+                <div className="flex items-center gap-1.5 text-body-sm">
+                  <button
+                    type="button"
+                    onClick={() => goToStep("landing")}
+                    className="text-muted-foreground hover:text-foreground hover:underline"
+                  >
+                    Add New Partner
+                  </button>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="font-semibold text-foreground">{STEP_TITLES[step]}</span>
+                </div>
+              </DialogTitle>
+            </div>
+          )}
+          {!isLanding ? (
+            <span className="text-caption text-muted-foreground">
+              Step {stepIndex} of {TOTAL_STEPS}
+            </span>
+          ) : null}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-8 py-8">
           {isLanding ? (
-            <div className="flex flex-col gap-4">
-              <p className="text-body-sm text-muted-foreground">
-                Onboard a Partner/Affiliate so they can receive a referral code, access the platform, and start
-                referring users to ProofDive.
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {STEP_CARDS.map(({ step: n, id, title, icon: Icon }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => goToStep(id)}
-                    className="flex items-center gap-3 rounded-md border border-border p-4 text-left transition hover:border-primary hover:bg-extended-light-cyan/40"
+            <div className="mx-auto flex max-w-3xl flex-col gap-8">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="partner-entity-type">Entity Type</Label>
+                <Select
+                  value={form.entityType}
+                  onValueChange={(v) => updateField("entityType", v as EntityType)}
+                >
+                  <SelectTrigger
+                    id="partner-entity-type"
+                    className="w-full"
+                    aria-invalid={!!errors.entityType}
                   >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <div className="flex flex-col">
-                      <span className="text-overline text-muted-foreground">Step {n}</span>
-                      <span className="text-body-sm font-medium text-foreground">{title}</span>
+                    <SelectValue placeholder="Select Entity Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.entries(ENTITY_TYPE_LABEL) as [EntityType, string][]).map(
+                      ([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ),
+                    )}
+                  </SelectContent>
+                </Select>
+                {errors.entityType ? (
+                  <p className="text-caption text-destructive">{errors.entityType}</p>
+                ) : null}
+              </div>
+
+              <div className="flex flex-col gap-6">
+                <h2 className="text-body-lg text-center font-semibold text-foreground">
+                  Follow the steps below to add a new partner
+                </h2>
+                <div className="flex items-center">
+                  {STEP_CARDS.map((card, index) => (
+                    <div key={card.id} className="flex flex-1 items-center last:flex-none">
+                      <div
+                        className={cn(
+                          "flex size-9 shrink-0 items-center justify-center rounded-full border text-body-sm font-semibold",
+                          index === 0
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border text-muted-foreground",
+                        )}
+                      >
+                        {card.step}
+                      </div>
+                      {index < STEP_CARDS.length - 1 ? <div className="h-px flex-1 bg-border" /> : null}
                     </div>
-                    <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground" />
-                  </button>
-                ))}
+                  ))}
+                </div>
+                <div className="grid grid-cols-5 gap-3">
+                  {STEP_CARDS.map((card, index) => {
+                    const Icon = card.icon;
+                    return (
+                      <div
+                        key={card.id}
+                        className={cn(
+                          "flex flex-col gap-3 rounded-lg border p-3",
+                          index === 0 ? "border-primary bg-extended-light-cyan/20" : "border-border",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "flex size-9 items-center justify-center rounded-md",
+                            index === 0
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          <Icon className="h-4.5 w-4.5" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-overline text-muted-foreground">STEP {card.step}</span>
+                          <span className="text-body-sm font-medium text-foreground">{card.title}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ) : null}
@@ -380,70 +469,63 @@ export function AddPartnerDialog({
           ) : null}
 
           {step === "entity" ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <Label>Entity Type</Label>
-                <Select
-                  value={form.entityType}
-                  onValueChange={(v) => updateField("entityType", v as EntityType)}
-                >
-                  <SelectTrigger aria-invalid={!!errors.entityType}>
-                    <SelectValue placeholder="Select entity type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.entries(ENTITY_TYPE_LABEL) as [EntityType, string][]).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.entityType ? <p className="text-caption text-destructive">{errors.entityType}</p> : null}
+            <div className="mx-auto flex max-w-3xl flex-col gap-6">
+              <div className="rounded-md border border-border bg-muted px-4 py-2 text-body-sm text-muted-foreground">
+                Entity Type:{" "}
+                <span className="font-medium text-foreground">
+                  {form.entityType ? ENTITY_TYPE_LABEL[form.entityType] : "—"}
+                </span>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <Label>Audience Type</Label>
-                <Select
-                  value={form.audienceType}
-                  onValueChange={(v) => updateField("audienceType", v as AudienceType)}
-                >
-                  <SelectTrigger aria-invalid={!!errors.audienceType}>
-                    <SelectValue placeholder="Select audience" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.entries(AUDIENCE_TYPE_LABEL) as [AudienceType, string][]).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.audienceType ? <p className="text-caption text-destructive">{errors.audienceType}</p> : null}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <Label>Audience Type</Label>
+                  <Select
+                    value={form.audienceType}
+                    onValueChange={(v) => updateField("audienceType", v as AudienceType)}
+                  >
+                    <SelectTrigger aria-invalid={!!errors.audienceType}>
+                      <SelectValue placeholder="Select audience" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.entries(AUDIENCE_TYPE_LABEL) as [AudienceType, string][]).map(
+                        ([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {errors.audienceType ? (
+                    <p className="text-caption text-destructive">{errors.audienceType}</p>
+                  ) : null}
+                </div>
+                {form.entityType === "company" ? (
+                  <>
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                      <Label htmlFor="partner-company">Company Name</Label>
+                      <Input
+                        id="partner-company"
+                        value={form.companyName}
+                        onChange={(e) => updateField("companyName", e.target.value)}
+                        aria-invalid={!!errors.companyName}
+                      />
+                      {errors.companyName ? (
+                        <p className="text-caption text-destructive">{errors.companyName}</p>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-col gap-1.5 sm:col-span-2">
+                      <Label htmlFor="partner-website">Website (optional)</Label>
+                      <Input
+                        id="partner-website"
+                        value={form.website}
+                        onChange={(e) => updateField("website", e.target.value)}
+                        placeholder="https://"
+                      />
+                    </div>
+                  </>
+                ) : null}
               </div>
-              {form.entityType === "company" ? (
-                <>
-                  <div className="flex flex-col gap-1.5 sm:col-span-2">
-                    <Label htmlFor="partner-company">Company Name</Label>
-                    <Input
-                      id="partner-company"
-                      value={form.companyName}
-                      onChange={(e) => updateField("companyName", e.target.value)}
-                      aria-invalid={!!errors.companyName}
-                    />
-                    {errors.companyName ? (
-                      <p className="text-caption text-destructive">{errors.companyName}</p>
-                    ) : null}
-                  </div>
-                  <div className="flex flex-col gap-1.5 sm:col-span-2">
-                    <Label htmlFor="partner-website">Website (optional)</Label>
-                    <Input
-                      id="partner-website"
-                      value={form.website}
-                      onChange={(e) => updateField("website", e.target.value)}
-                      placeholder="https://"
-                    />
-                  </div>
-                </>
-              ) : null}
             </div>
           ) : null}
 
@@ -613,29 +695,16 @@ export function AddPartnerDialog({
           ) : null}
         </div>
 
-        {!isLanding ? (
-          <div className="flex shrink-0 items-center justify-between border-t border-border px-6 py-4">
-            <Button variant="secondary" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            {isReview ? (
-              <Button onClick={handleSubmit}>Generate Referral Code & Send Invite</Button>
-            ) : (
-              <Button onClick={handleNext}>
-                Next
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="flex shrink-0 justify-end border-t border-border px-6 py-4">
-            <Button onClick={() => goToStep("basic")}>
-              Get Started
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+        <div className="flex shrink-0 items-center justify-between border-t border-border px-6 py-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <X className="h-4 w-4" />
+            Close
+          </Button>
+          <Button onClick={handleNext}>
+            {isReview ? "Generate Referral Code & Send Invite" : "Next"}
+            {!isReview ? <ArrowRight className="h-4 w-4" /> : null}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

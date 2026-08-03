@@ -656,7 +656,7 @@ export type CandidateEntitlements = {
 export function defaultCandidateEntitlements(): CandidateEntitlements {
   return {
     freeMockInterviews: 1,
-    freeStoryboards: 2,
+    freeStoryboards: 3,
     freeMasterclassModuleIds: ["mod_r1"],
     addOnMockInterviews: 0,
     addOnStoryboards: 0,

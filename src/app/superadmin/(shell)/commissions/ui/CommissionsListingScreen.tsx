@@ -92,14 +92,9 @@ export function CommissionsListingScreen() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-h5 text-foreground">Commissions &amp; Payouts</h1>
-          <p className="mt-0.5 text-caption text-muted-foreground">
-            Platform-wide partner commission activity and earnings oversight.
-          </p>
-        </div>
+        <h1 className="text-h4 text-foreground">Commissions &amp; Payouts</h1>
         <Button variant="outline" onClick={handleExport} disabled={filteredRows.length === 0}>
           <Download className="h-4 w-4" />
           Export Listing

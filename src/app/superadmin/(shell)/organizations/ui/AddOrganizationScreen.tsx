@@ -396,7 +396,7 @@ export function AddOrganizationScreen() {
   const selectedCourses = AVAILABLE_COURSES.filter((c) => form.selectedCourseIds.includes(c.id));
 
   return (
-    <div className="-m-6 flex h-full flex-col overflow-hidden bg-background">
+    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden bg-background">
       <div className="flex shrink-0 flex-col gap-4 border-b border-border px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="flex min-w-0 items-center gap-3">

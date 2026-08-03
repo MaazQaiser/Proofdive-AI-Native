@@ -84,7 +84,7 @@ export function CommissionDetailScreen({ partnerId }: Props) {
 
   if (!partner) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 pt-6">
         <Button variant="ghost" className="w-fit" asChild>
           <Link href="/superadmin/commissions">
             <ArrowLeft className="h-4 w-4" />
@@ -101,7 +101,7 @@ export function CommissionDetailScreen({ partnerId }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pt-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-2">
           <Button variant="ghost" className="w-fit px-0" asChild>

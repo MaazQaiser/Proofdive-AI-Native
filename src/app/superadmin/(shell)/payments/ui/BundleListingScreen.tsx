@@ -63,7 +63,7 @@ import { usePaymentBundles } from "@/lib/usePaymentBundles";
 import { useGlobalRates } from "@/lib/usePaymentRates";
 import { cn } from "@/lib/utils";
 
-import { PaymentsSubNav } from "./PaymentsSubNav";
+import { PaymentsShell } from "./PaymentsShell";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
 
@@ -228,21 +228,17 @@ export function BundleListingScreen() {
         : "No bundles found.";
 
   return (
-    <div className="-m-6 flex h-full flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
-        <h1 className="text-h4 text-foreground">Payments</h1>
+    <PaymentsShell
+      title="Payments"
+      actions={
         <Button asChild>
           <Link href="/superadmin/payments/bundles/new">
             <Plus className="h-4 w-4" />
             Create New Bundle
           </Link>
         </Button>
-      </div>
-
-      <div className="shrink-0 border-b border-border px-6">
-        <PaymentsSubNav />
-      </div>
-
+      }
+    >
       <div className="grid shrink-0 gap-3 border-b border-border px-6 py-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryChip title="Total Active Bundles" value={String(stats.totalActiveBundles)} />
         <SummaryChip title="Earnings" value={formatUsd(stats.earnings)} expandable>
@@ -541,6 +537,6 @@ export function BundleListingScreen() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PaymentsShell>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { Check, Pencil, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -41,6 +42,7 @@ function RateSection({
   editingKey,
   errors,
   onStartEdit,
+  onConfirmEdit,
   onCancelEdit,
   onChange,
 }: {
@@ -52,6 +54,7 @@ function RateSection({
   editingKey: RateKey | null;
   errors: Partial<Record<RateKey, string>>;
   onStartEdit: (section: SectionId, key: RateKey) => void;
+  onConfirmEdit: (section: SectionId, key: RateKey) => void;
   onCancelEdit: (section: SectionId, key: RateKey) => void;
   onChange: (section: SectionId, key: RateKey, value: string) => void;
 }) {
@@ -71,11 +74,11 @@ function RateSection({
             return (
               <div key={`${sectionId}-${key}`} className="rounded-xl border border-border p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <div className="text-caption font-medium text-foreground">
                       {ITEM_KIND_LABEL[kind]}
                     </div>
-                    <div className="text-overline text-muted-foreground">{clientType}</div>
+                    <Badge variant="secondary">{clientType}</Badge>
                   </div>
                   {!editing ? (
                     <Button
@@ -87,41 +90,66 @@ function RateSection({
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                  ) : null}
+                  ) : (
+                    <div className="size-9 shrink-0" aria-hidden />
+                  )}
                 </div>
-                {editing ? (
-                  <div className="mt-3 space-y-2">
-                    <Label htmlFor={`${sectionId}-${key}`} className="sr-only">
-                      Price
-                    </Label>
-                    <Input
-                      id={`${sectionId}-${key}`}
-                      type="number"
-                      min={0.01}
-                      step={0.01}
-                      value={display ?? ""}
-                      onChange={(e) => onChange(sectionId, key, e.target.value)}
-                      aria-invalid={Boolean(error)}
-                    />
-                    {error ? <p className="text-caption text-destructive">{error}</p> : null}
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onCancelEdit(sectionId, key)}
-                    >
-                      Cancel edit
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="mt-3 text-h6 text-foreground">
-                    {isValidPrice(display) ? (
-                      formatUsd(display)
-                    ) : (
-                      <span className="text-muted-foreground">Not set</span>
-                    )}
-                  </p>
-                )}
+                <div className="mt-3 flex min-h-9 items-center gap-2">
+                  {editing ? (
+                    <>
+                      <Label htmlFor={`${sectionId}-${key}`} className="sr-only">
+                        Price
+                      </Label>
+                      <Input
+                        id={`${sectionId}-${key}`}
+                        type="number"
+                        min={0.01}
+                        step={0.01}
+                        className="h-9 min-w-0 flex-1"
+                        value={display ?? ""}
+                        onChange={(e) => onChange(sectionId, key, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            onConfirmEdit(sectionId, key);
+                          }
+                          if (e.key === "Escape") {
+                            e.preventDefault();
+                            onCancelEdit(sectionId, key);
+                          }
+                        }}
+                        aria-invalid={Boolean(error)}
+                        autoFocus
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        aria-label="Confirm price"
+                        onClick={() => onConfirmEdit(sectionId, key)}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        aria-label="Cancel edit"
+                        onClick={() => onCancelEdit(sectionId, key)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-h6 text-foreground">
+                      {isValidPrice(display) ? (
+                        formatUsd(display)
+                      ) : (
+                        <span className="text-muted-foreground">Not set</span>
+                      )}
+                    </p>
+                  )}
+                </div>
+                {error ? <p className="mt-1 text-caption text-destructive">{error}</p> : null}
                 {!editing && display !== saved[key] ? (
                   <p className="mt-1 text-overline text-amber-700">Unsaved change</p>
                 ) : null}
@@ -163,6 +191,23 @@ export function SetPriceScreen() {
   function startEdit(section: SectionId, key: RateKey) {
     setEditingSection(section);
     setEditingKey(key);
+  }
+
+  function confirmEdit(section: SectionId, key: RateKey) {
+    const value = section === "global" ? globalDraft[key] : addOnDraft[key];
+    if (value !== undefined && !isValidPrice(value)) {
+      setErrors((prev) => ({ ...prev, [key]: "Please enter a valid price." }));
+      return;
+    }
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    if (editingKey === key && editingSection === section) {
+      setEditingKey(null);
+      setEditingSection(null);
+    }
   }
 
   function cancelEdit(section: SectionId, key: RateKey) {
@@ -248,8 +293,7 @@ export function SetPriceScreen() {
 
   return (
     <PaymentsShell
-      title="Set Price"
-      description="Configure global bundle-inclusion rates and add-on top-up rates by item and client type."
+      title="Payments"
       actions={
         <>
           <Button type="button" variant="outline" disabled={!dirty} onClick={discardAll}>
@@ -261,52 +305,56 @@ export function SetPriceScreen() {
         </>
       }
     >
-      <div className="flex flex-col gap-6">
-        <RateSection
-          title="Global Rates"
-          description="Prefill prices when including items in a bundle. Changes apply from each subscriber’s next billing cycle."
-          sectionId="global"
-          saved={globalRates}
-          draft={globalDraft}
-          editingKey={editingSection === "global" ? editingKey : null}
-          errors={errors}
-          onStartEdit={startEdit}
-          onCancelEdit={cancelEdit}
-          onChange={onChange}
-        />
-        <RateSection
-          title="Add-On Rates"
-          description="Rates charged when subscribers purchase items beyond their bundle allocation. Changes apply immediately."
-          sectionId="addon"
-          saved={addOnRates}
-          draft={addOnDraft}
-          editingKey={editingSection === "addon" ? editingKey : null}
-          errors={errors}
-          onStartEdit={startEdit}
-          onCancelEdit={cancelEdit}
-          onChange={onChange}
-        />
-      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex flex-col gap-6">
+          <RateSection
+            title="Global Rates"
+            description="Prefill prices when including items in a bundle. Changes apply from each subscriber’s next billing cycle."
+            sectionId="global"
+            saved={globalRates}
+            draft={globalDraft}
+            editingKey={editingSection === "global" ? editingKey : null}
+            errors={errors}
+            onStartEdit={startEdit}
+            onConfirmEdit={confirmEdit}
+            onCancelEdit={cancelEdit}
+            onChange={onChange}
+          />
+          <RateSection
+            title="Add-On Rates"
+            description="Rates charged when subscribers purchase items beyond their bundle allocation. Changes apply immediately."
+            sectionId="addon"
+            saved={addOnRates}
+            draft={addOnDraft}
+            editingKey={editingSection === "addon" ? editingKey : null}
+            errors={errors}
+            onStartEdit={startEdit}
+            onConfirmEdit={confirmEdit}
+            onCancelEdit={cancelEdit}
+            onChange={onChange}
+          />
+        </div>
 
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Update rates?</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to update these rates? Add-on rate changes will apply
-              immediately; global rate changes will apply from each subscriber’s next billing cycle.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={discardAll}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={confirmSave}>
-              Confirm
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Update rates?</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to update these rates? Add-on rate changes will apply
+                immediately; global rate changes will apply from each subscriber’s next billing cycle.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={discardAll}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={confirmSave}>
+                Confirm
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </PaymentsShell>
   );
 }

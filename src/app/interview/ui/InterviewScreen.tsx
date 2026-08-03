@@ -10,6 +10,7 @@ import { AppShell } from "@/components/AppShell";
 import { cn } from "@/components/cn";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
 import { TypingText } from "@/components/TypingText";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { Switch } from "@/components/ui/switch";
+import { canAccessReport, isFreePlan } from "@/lib/candidateUsage";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { scoringBadgeClass, scoringTextClass } from "@/lib/scoringPalette";
 import type {
@@ -44,6 +46,7 @@ import { ONBOARDING_INTRO_VIDEO_SRC } from "@/lib/onboardingIntroVideo";
 import { hasCompletedAnyTrainingForRole } from "@/lib/trainingJourneyProgress";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 import { useStoryboardDiveStore } from "@/lib/useStoryboardDiveStore";
+import { useCandidateSubscription } from "@/lib/useSubscriberPayments";
 
 function parseReportsMap(raw: string | null): Record<string, InterviewReport> | null {
   try {
@@ -102,9 +105,24 @@ export function InterviewScreen() {
     {},
   );
   const [diveStore] = useStoryboardDiveStore();
+  const [subscription] = useCandidateSubscription();
+  const [accessedReportIds] = useLocalStorageState<string[]>(
+    StorageKeys.candidateAccessedReportIds,
+    [],
+  );
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   const name = roleProfile?.name?.trim() || "there";
   const role = roleProfile?.targetRole?.trim() ?? "";
+  const freePlan = isFreePlan(subscription);
+
+  function tryViewReport(reportId: string) {
+    if (!canAccessReport(reportId, accessedReportIds, freePlan)) {
+      setUpgradeModalOpen(true);
+      return;
+    }
+    router.push(`/report/${reportId}`);
+  }
 
   const latestDive = useMemo(
     () => (role ? latestSavedDive(diveStore, role) : null),
@@ -189,7 +207,7 @@ export function InterviewScreen() {
         scoreText: rep.overallScore.toFixed(1),
         status: rep.overallStatus,
         sessionType: sessionTypeLabel(rep),
-        onView: () => router.push(`/report/${rep.meta.id}`),
+        onView: () => tryViewReport(rep.meta.id),
       }));
     }
 
@@ -213,7 +231,7 @@ export function InterviewScreen() {
       };
     };
     return [mk(1), mk(2)];
-  }, [recentReports, recentDemoSeed, role, router]);
+  }, [recentReports, recentDemoSeed, role, router, accessedReportIds, freePlan]);
 
   function openConsent(nextKind: InterviewSessionKind) {
     setSessionKind(nextKind);
@@ -805,6 +823,7 @@ export function InterviewScreen() {
         : null}
 
       <CoachBottomChatBar />
+      <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
     </AppShell>
   );
 }

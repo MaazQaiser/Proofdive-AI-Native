@@ -30,7 +30,10 @@ import {
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { SuccessDriverMark } from "@/components/ui/success-driver-card";
 import { buildEmptyCraftingDive } from "@/app/storyboard/crafting/mockCraftingDraft";
+import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
+import { StoryboardUpgradeBanner } from "@/app/storyboard/ui/StoryboardUpgradeBanner";
 import { CoreFourSelectionPanel } from "@/app/onboarding/ui/CoreFourSelectionPanel";
+import { computeCandidateUsage } from "@/lib/candidateUsage";
 import {
   DEMO_CONSULTANT_QUESTION_COUNT,
   competencySpec,
@@ -46,6 +49,7 @@ import {
 import { makeId } from "@/lib/id";
 import { normalizeWhitespace } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
+import type { Experience, InterviewReport, RoleProfile, TrainingJourneyProgress } from "@/lib/proofdiveTypes";
 import { scoringBandForScore } from "@/lib/scoringPalette";
 import {
   MAX_DIVES_PER_ROLE,
@@ -60,7 +64,6 @@ import {
   savedDivesForRole,
   upsertEditingDive,
 } from "@/lib/storyboardDraft";
-import type { Experience, RoleProfile } from "@/lib/proofdiveTypes";
 import { writeJson } from "@/lib/storage";
 import {
   SUCCESS_DRIVER_ORDER,
@@ -68,7 +71,12 @@ import {
 } from "@/lib/successDrivers";
 import { cn } from "@/lib/utils";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import { usePaymentBundles } from "@/lib/usePaymentBundles";
 import { useStoryboardDiveStore } from "@/lib/useStoryboardDiveStore";
+import {
+  useCandidateEntitlements,
+  useCandidateSubscription,
+} from "@/lib/useSubscriberPayments";
 
 type CarField = "context" | "action" | "result";
 
@@ -225,6 +233,46 @@ export function StoryboardAgent() {
     [],
   );
   const [diveStore, setDiveStore, diveHydrated] = useStoryboardDiveStore();
+  const [subscription] = useCandidateSubscription();
+  const [entitlements] = useCandidateEntitlements();
+  const { bundles } = usePaymentBundles();
+  const [reports] = useLocalStorageState<Record<string, InterviewReport>>(StorageKeys.reports, {});
+  const [trainingProgress] = useLocalStorageState<Record<string, TrainingJourneyProgress>>(
+    StorageKeys.trainingProgress,
+    {},
+  );
+  const [storyboardGenerationCount, setStoryboardGenerationCount] = useLocalStorageState<number>(
+    StorageKeys.candidateStoryboardGenerations,
+    0,
+  );
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+
+  const activeBundle =
+    subscription.bundleId != null
+      ? bundles.find((b) => b.id === subscription.bundleId) ?? null
+      : null;
+
+  const usage = useMemo(
+    () =>
+      computeCandidateUsage({
+        subscription,
+        entitlements,
+        activeBundle,
+        reports,
+        diveStore,
+        trainingProgress,
+        storyboardGenerationCount,
+      }),
+    [
+      subscription,
+      entitlements,
+      activeBundle,
+      reports,
+      diveStore,
+      trainingProgress,
+      storyboardGenerationCount,
+    ],
+  );
 
   const role = roleProfile?.targetRole?.trim() ?? "";
   const firstName = useMemo(
@@ -362,6 +410,11 @@ export function StoryboardAgent() {
   ) {
     if (!role || !latestDive) return;
     if (!canStartNewDive(diveStore, role)) return;
+    if (usage.isStoryboardAtLimit) {
+      setDiveConfirmOpen(false);
+      setUpgradeModalOpen(true);
+      return;
+    }
     const nextNum = (latestDive.diveNumber + 1) as 1 | 2 | 3;
     if (nextNum > 3) return;
     const queue = focusIds?.length ? focusIds : focusQueue;
@@ -402,6 +455,7 @@ export function StoryboardAgent() {
       );
       router.push("/storyboard?new=1");
     } else {
+      setStoryboardGenerationCount((n) => n + 1);
       router.push("/storyboard/crafting");
     }
   }
@@ -413,6 +467,10 @@ export function StoryboardAgent() {
   ) {
     if (!role || !latestDive) return;
     if (divesLeft <= 0) return;
+    if (usage.isStoryboardAtLimit) {
+      setUpgradeModalOpen(true);
+      return;
+    }
     setDiveConfirmAction(action);
     setDiveUnlock(unlock);
     setPendingFocusIds(focusIds ?? null);
@@ -586,6 +644,10 @@ What should this experience be called? (short title, up to ~15 words)`;
 
   function startCrafting() {
     if (craftUi === "crafting" || !role) return;
+    if (usage.isStoryboardAtLimit) {
+      setUpgradeModalOpen(true);
+      return;
+    }
     setCraftUi("crafting");
     setStatusLine("It will take a moment. I'm crafting your story…");
     try {
@@ -618,6 +680,7 @@ What should this experience be called? (short title, up to ~15 words)`;
     const nextStore = upsertEditingDive(diveStore, seeded);
     writeJson(StorageKeys.storyboardDives, nextStore);
     setDiveStore(nextStore);
+    setStoryboardGenerationCount((n) => n + 1);
 
     router.push("/storyboard/crafting");
   }
@@ -780,6 +843,7 @@ What should this experience be called? (short title, up to ~15 words)`;
       <AppShell>
         <CoachFloatingNav />
         <div className="pb-44">
+          {usage.isNearStoryboardLimit ? <StoryboardUpgradeBanner /> : null}
           <Card className="gap-0 py-0">
             <CardContent className="space-y-4 p-6">
               <h2 className="text-h4 text-text-primary">First, set a target role.</h2>
@@ -1057,6 +1121,7 @@ What should this experience be called? (short title, up to ~15 words)`;
             "flex min-h-[calc(100vh-3.5rem-10rem)] flex-col justify-center",
         )}
       >
+        {usage.isNearStoryboardLimit ? <StoryboardUpgradeBanner /> : null}
         {addCompetencyOpen ? (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -1100,12 +1165,15 @@ What should this experience be called? (short title, up to ~15 words)`;
             {divesLeft <= 0 ? (
               <div
                 role="status"
-                className="flex w-full items-start gap-3 rounded-lg border border-extended-light-cyan bg-extended-light-cyan/50 px-4 py-3"
+                className="flex w-full flex-col gap-3 rounded-lg border border-extended-light-cyan bg-extended-light-cyan/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <p className="min-w-0 flex-1 text-body-sm leading-6 text-extended-green-blue">
                   You&apos;ve used all {MAX_DIVES_PER_ROLE} Dives for this role. Earlier Dives stay
                   viewable and read-only.
                 </p>
+                <Button asChild size="sm" className="shrink-0 self-start sm:self-center">
+                  <Link href="/profile/pricing">Upgrade Plan</Link>
+                </Button>
               </div>
             ) : null}
             <div className="space-y-4">
@@ -1209,6 +1277,8 @@ What should this experience be called? (short title, up to ~15 words)`;
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
 
       <CoachBottomChatBar
         placeholder={
