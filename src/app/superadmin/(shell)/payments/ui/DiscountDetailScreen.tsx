@@ -87,18 +87,10 @@ export function DiscountDetailScreen({ codeId }: { codeId: string }) {
   return (
     <PaymentsShell
       title={code.code}
-      description={`${DISCOUNT_TYPE_LABEL[code.discountType]} · ${DISCOUNT_STATUS_LABEL[status]}`}
       actions={
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/superadmin/payments/discounts")}
-          >
-            Back
-          </Button>
           {!code.deactivated && status !== "expired" ? (
-            <Button type="button" variant="outline" onClick={() => setConfirmDeactivate(true)}>
+            <Button type="button" variant="destructive" onClick={() => setConfirmDeactivate(true)}>
               Deactivate
             </Button>
           ) : null}

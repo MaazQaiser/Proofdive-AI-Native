@@ -341,11 +341,26 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
     return (
       <PaymentsShell
         title="Bundle preview"
-        description="Review the configuration before saving."
         actions={
-          <Button type="button" variant="outline" onClick={() => setStep("form")}>
-            Back to edit
-          </Button>
+          <>
+            <Button type="button" variant="outline" onClick={() => setStep("form")}>
+              Back to edit
+            </Button>
+            {isActiveEdit ? (
+              <Button type="button" onClick={() => save("active")}>
+                Save
+              </Button>
+            ) : (
+              <>
+                <Button type="button" variant="outline" onClick={() => save("draft")}>
+                  Save as Draft
+                </Button>
+                <Button type="button" onClick={() => save("active")}>
+                  Save & Activate
+                </Button>
+              </>
+            )}
+          </>
         }
       >
         <Card>
@@ -368,22 +383,6 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
                 ))}
               </ul>
             </div>
-            <div className="flex flex-wrap gap-2 pt-2">
-              {isActiveEdit ? (
-                <Button type="button" onClick={() => save("active")}>
-                  Save
-                </Button>
-              ) : (
-                <>
-                  <Button type="button" variant="outline" onClick={() => save("draft")}>
-                    Save as Draft
-                  </Button>
-                  <Button type="button" onClick={() => save("active")}>
-                    Save & Activate
-                  </Button>
-                </>
-              )}
-            </div>
           </CardContent>
         </Card>
       </PaymentsShell>
@@ -393,11 +392,15 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
   return (
     <PaymentsShell
       title={mode === "create" ? "Create New Bundle" : `Edit: ${bundle.name || "Bundle"}`}
-      description="Configure items, pricing, and billing cycles."
       actions={
-        <Button type="button" variant="outline" onClick={() => router.push("/superadmin/payments")}>
-          Cancel
-        </Button>
+        <>
+          <Button type="button" variant="outline" onClick={() => router.push("/superadmin/payments")}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={goPreview}>
+            Continue to preview
+          </Button>
+        </>
       }
     >
       <div className="flex flex-col gap-6">
@@ -712,12 +715,6 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
             })}
           </CardContent>
         </Card>
-
-        <div className="flex justify-end">
-          <Button type="button" onClick={goPreview}>
-            Continue to preview
-          </Button>
-        </div>
       </div>
     </PaymentsShell>
   );

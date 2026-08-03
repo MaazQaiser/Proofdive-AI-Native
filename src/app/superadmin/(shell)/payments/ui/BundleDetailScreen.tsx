@@ -91,7 +91,6 @@ export function BundleDetailScreen({ bundleId }: { bundleId: string }) {
   return (
     <PaymentsShell
       title={bundle.name}
-      description={bundle.description || undefined}
       actions={
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="outline" onClick={() => router.push("/superadmin/payments")}>

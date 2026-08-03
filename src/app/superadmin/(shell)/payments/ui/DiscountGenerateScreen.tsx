@@ -169,7 +169,6 @@ export function DiscountGenerateScreen() {
   return (
     <PaymentsShell
       title="Generate Discount Code"
-      description="Create a promotional code targeted by client type."
       actions={
         <Button type="button" variant="outline" onClick={() => router.push("/superadmin/payments/discounts")}>
           Cancel

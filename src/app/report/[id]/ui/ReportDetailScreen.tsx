@@ -8,10 +8,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/components/cn";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
 import { Button } from "@/components/ui/button";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { SuccessDriverMark } from "@/components/ui/success-driver-card";
-import { Download, RotateCcw } from "lucide-react";
+import { Download, RotateCcw, Sparkles } from "lucide-react";
+import {
+  canAccessReport,
+  isFreePlan,
+  withReportAccessRecorded,
+} from "@/lib/candidateUsage";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type {
   InterviewReport,
@@ -29,6 +35,8 @@ import {
   scoringLabelForScore,
   scoringTextClass,
 } from "@/lib/scoringPalette";
+import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import { useCandidateSubscription } from "@/lib/useSubscriberPayments";
 
 type Props = { reportId: string };
 
@@ -340,6 +348,21 @@ export function ReportDetailScreen({ reportId }: Props) {
 
   /** `undefined` = not read yet (after mount we always read from localStorage). */
   const [report, setReport] = useState<InterviewReport | null | undefined>(undefined);
+  const [subscription] = useCandidateSubscription();
+  const [accessedReportIds, setAccessedReportIds] = useLocalStorageState<string[]>(
+    StorageKeys.candidateAccessedReportIds,
+    [],
+  );
+  const [nudgeSeen, setNudgeSeen] = useLocalStorageState<boolean>(
+    StorageKeys.candidatePostInterviewUpgradeNudgeSeen,
+    false,
+  );
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [showNudge, setShowNudge] = useState(false);
+  const accessRecordedRef = useRef<string | null>(null);
+
+  const freePlan = isFreePlan(subscription);
+  const reportAllowed = canAccessReport(reportId, accessedReportIds, freePlan);
 
   useEffect(() => {
     try {
@@ -351,11 +374,33 @@ export function ReportDetailScreen({ reportId }: Props) {
     }
   }, [reportId]);
 
-  const missing = report === null;
+  useEffect(() => {
+    if (report == null) return;
+    if (!reportAllowed) {
+      setUpgradeModalOpen(true);
+      return;
+    }
+    if (accessRecordedRef.current === reportId) return;
+    accessRecordedRef.current = reportId;
+    setAccessedReportIds((prev) => withReportAccessRecorded(reportId, prev));
+    if (freePlan && !nudgeSeen) {
+      setShowNudge(true);
+      setNudgeSeen(true);
+    }
+  }, [
+    report,
+    reportAllowed,
+    reportId,
+    freePlan,
+    nudgeSeen,
+    setAccessedReportIds,
+    setNudgeSeen,
+  ]);
 
   const [driverExpanded, setDriverExpanded] = useState<Record<string, boolean>>({});
   const [openQuestions, setOpenQuestions] = useState<Record<string, boolean>>({});
 
+  const missing = report === null;
   const overall = report?.overallScore ?? 0;
 
   const spotlightQuestion = useMemo(() => {
@@ -375,6 +420,7 @@ export function ReportDetailScreen({ reportId }: Props) {
           </Card>
         </div>
         <CoachBottomChatBar placeholder="Ask about this report (e.g. “How do I improve Q4?”)" />
+        <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
       </AppShell>
     );
   }
@@ -403,6 +449,36 @@ export function ReportDetailScreen({ reportId }: Props) {
           </Card>
         </div>
         <CoachBottomChatBar placeholder="Ask about this report (e.g. “How do I improve Q4?”)" />
+        <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
+      </AppShell>
+    );
+  }
+
+  if (!reportAllowed) {
+    return (
+      <AppShell>
+        <CoachFloatingNav />
+        <div className="pb-44">
+          <Card className="gap-0 py-0">
+            <CardContent className="space-y-4 p-6">
+              <div className="text-h4 text-text-primary">Report locked</div>
+              <p className="max-w-2xl text-caption leading-6 text-text-secondary">
+                Your Free plan includes one interview report. Upgrade to view or download additional
+                reports.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" onClick={() => setUpgradeModalOpen(true)}>
+                  Upgrade Plan
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/interview">Back to sessions</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <CoachBottomChatBar placeholder="Ask about this report (e.g. “How do I improve Q4?”)" />
+        <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
       </AppShell>
     );
   }
@@ -437,6 +513,25 @@ export function ReportDetailScreen({ reportId }: Props) {
       ) : null}
 
       <div className="pb-44">
+        {showNudge ? (
+          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <div className="min-w-0">
+                <p className="text-caption font-semibold text-text-primary">
+                  Get more from your interview prep
+                </p>
+                <p className="mt-1 text-caption leading-5 text-text-secondary">
+                  Upgrade your plan for additional mock interviews, reports, and coaching access.
+                </p>
+              </div>
+            </div>
+            <Button asChild size="sm" className="shrink-0 self-start sm:self-center">
+              <Link href="/profile/pricing">Upgrade Plan</Link>
+            </Button>
+          </div>
+        ) : null}
+
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="min-w-0 flex-1">
             <Link
@@ -484,6 +579,10 @@ export function ReportDetailScreen({ reportId }: Props) {
               variant="outline"
               size="default"
               onClick={() => {
+                if (!canAccessReport(reportId, accessedReportIds, freePlan)) {
+                  setUpgradeModalOpen(true);
+                  return;
+                }
                 // stub: v1 non-functional
                 window.alert("PDF download is stubbed in v1.");
               }}
@@ -903,6 +1002,7 @@ export function ReportDetailScreen({ reportId }: Props) {
       </div>
 
       <CoachBottomChatBar placeholder="Ask about this report (e.g. “How do I improve Q4?”)" />
+      <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
     </AppShell>
   );
 }

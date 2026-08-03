@@ -187,8 +187,8 @@ export function PartnerDetailDrawer({
 
   return (
     <Sheet open={!!partner} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-hidden sm:max-w-xl">
-        <SheetHeader className="shrink-0 space-y-3 border-b border-border pb-4">
+      <SheetContent className="flex w-1/2 max-w-[50vw] flex-col gap-0 overflow-hidden sm:max-w-[50vw]">
+        <SheetHeader className="shrink-0 space-y-3 border-b border-border px-6 py-4">
           <div className="flex items-start justify-between gap-3 pr-8">
             <div className="flex min-w-0 flex-col gap-1">
               <SheetTitle className="truncate text-h6">{partner.fullName}</SheetTitle>
@@ -231,7 +231,7 @@ export function PartnerDetailDrawer({
         </SheetHeader>
 
         <Tabs defaultValue="details" className="flex min-h-0 flex-1 flex-col">
-          <TabsList className="mx-0 mt-4 w-full shrink-0 justify-start rounded-none border-b border-border bg-transparent p-0">
+          <TabsList className="mx-0 mt-0 w-full shrink-0 justify-start rounded-none border-b border-border bg-transparent px-6">
             <TabsTrigger value="details" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
               Details
             </TabsTrigger>
@@ -240,7 +240,7 @@ export function PartnerDetailDrawer({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details" className="mt-0 min-h-0 flex-1 overflow-y-auto py-4">
+          <TabsContent value="details" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 py-4">
             {isEditing ? (
               <div className="flex flex-col gap-4">
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -511,7 +511,7 @@ export function PartnerDetailDrawer({
             )}
           </TabsContent>
 
-          <TabsContent value="performance" className="mt-0 min-h-0 flex-1 overflow-y-auto py-4">
+          <TabsContent value="performance" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 py-4">
             <div className={cn("grid gap-3 sm:grid-cols-2")}>
               <StatTile label="Total Referrals" value={String(partner.performance.totalReferrals)} />
               <StatTile label="Total Signups" value={String(partner.performance.totalSignups)} />

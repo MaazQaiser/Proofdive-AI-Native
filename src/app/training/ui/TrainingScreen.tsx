@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -31,10 +32,12 @@ import {
   OPTION_INTERVIEW_ESSENTIALS_TITLE,
   entryIntro,
 } from "@/app/training/trainingCopy";
+import { isFreePlan } from "@/lib/candidateUsage";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { buildTrainingJourneyProgress, trainingProgressKey } from "@/lib/trainingJourneyProgress";
 import type { RoleProfile, TrainingJourneyProgress, TrainingJourneyPhase } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import { useCandidateSubscription } from "@/lib/useSubscriberPayments";
 import { cn } from "@/lib/utils";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 
@@ -77,6 +80,15 @@ export function TrainingScreen() {
     StorageKeys.roleProfile,
     null,
   );
+  const [subscription] = useCandidateSubscription();
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const freePlan = isFreePlan(subscription);
+
+  useEffect(() => {
+    if (freePlan) setUpgradeModalOpen(true);
+    else setUpgradeModalOpen(false);
+  }, [freePlan]);
+
   const [journeyProgressMap, setJourneyProgressMap] = useLocalStorageState<
     Record<string, TrainingJourneyProgress>
   >(StorageKeys.trainingProgress, {});
@@ -599,6 +611,7 @@ export function TrainingScreen() {
         </div>
       </div>
       <CoachBottomChatBar />
+      <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
     </AppShell>
   );
 }

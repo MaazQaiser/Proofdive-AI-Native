@@ -7,7 +7,7 @@ type Props = {
 
 export function SuperAdminComingSoon({ title, description }: Props) {
   return (
-    <Card className="gap-0 py-0">
+    <Card className="mt-6 gap-0 py-0">
       <CardContent className="py-16 text-center">
         <p className="text-overline text-text-secondary">COMING SOON</p>
         <h1 className="mt-3 text-h4 text-text-primary">{title}</h1>

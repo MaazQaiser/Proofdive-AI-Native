@@ -37,7 +37,7 @@ export function SuperAdminDashboardScreen() {
   const { kpis } = dataset;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-h4 text-foreground">Overview</h1>
         <DateRangeFilter value={granularity} onChange={setGranularity} options={DATE_RANGE_OPTIONS} />
