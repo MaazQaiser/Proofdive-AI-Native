@@ -21,7 +21,7 @@ export function isPristineDive(raw: StoryboardDive): boolean {
  */
 export function buildEmptyCraftingDive(
   targetRole: string,
-  diveNumber: 1 | 2 | 3 = 1,
+  diveNumber: number = 1,
 ): StoryboardDive {
   return recomputeDiveScores(createEmptyDive(targetRole, diveNumber, "editing"));
 }

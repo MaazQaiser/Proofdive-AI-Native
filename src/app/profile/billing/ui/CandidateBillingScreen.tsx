@@ -24,12 +24,8 @@ import { Label } from "@/components/ui/label";
 import {
   BILLING_CYCLE_LABEL,
   formatUsd,
-  getMasterclassById,
   hasConfiguredRate,
   ITEM_KIND_LABEL,
-  moduleShare,
-  priceForSelectedModules,
-  publishedMasterclasses,
   rateKey,
   roundMoney,
   type ItemKind,
@@ -63,28 +59,17 @@ export function CandidateBillingScreen() {
     if (preselect === "storyboard") setAddOnsOpen(true);
   }, [preselect]);
 
-  // Simulate end-of-cycle revert for pending_cancel when accessEndsAt has passed
-  useEffect(() => {
-    if (subscription.status !== "pending_cancel" || !subscription.accessEndsAt) return;
-    if (subscription.accessEndsAt > new Date().toISOString().slice(0, 10)) return;
-    setSubscription({
-      status: "free",
-      bundleId: null,
-      billingCycle: null,
-      nextBillingDate: null,
-      accessEndsAt: null,
-    });
-  }, [subscription, setSubscription]);
+  // Demo revert to Free is handled in useCandidateSubscription after a short delay.
 
   function confirmCancel() {
-    if (!subscription.nextBillingDate) return;
+    if (subscription.status !== "active" || !subscription.nextBillingDate) return;
     setSubscription((prev) => ({
       ...prev,
       status: "pending_cancel",
       accessEndsAt: prev.nextBillingDate,
     }));
     setCancelOpen(false);
-    toast.success("Cancellation scheduled. Paid access continues until the end of this cycle.");
+    toast.success("Cancellation scheduled. Reverting to Free in a few seconds for this demo.");
   }
 
   return (
@@ -128,17 +113,18 @@ export function CandidateBillingScreen() {
                 </p>
                 <p className="text-muted-foreground">
                   One-time free baseline remaining: {entitlements.freeMockInterviews} mock
-                  interviews, {entitlements.freeStoryboards} storyboards
-                  {entitlements.freeMasterclassModuleIds.length
-                    ? `, ${entitlements.freeMasterclassModuleIds.length} masterclass modules`
-                    : ""}
-                  .
+                  interviews, {entitlements.freeStoryboards} storyboards.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Button type="button" asChild>
                     <Link href="/profile/pricing">Browse plans</Link>
                   </Button>
-                  <Button type="button" onClick={() => setAddOnsOpen(true)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
+                    onClick={() => setAddOnsOpen(true)}
+                  >
                     Purchase Add-Ons
                   </Button>
                 </div>
@@ -174,9 +160,8 @@ export function CandidateBillingScreen() {
                 </dl>
                 {subscription.status === "pending_cancel" ? (
                   <p className="rounded-lg bg-amber-50 px-3 py-2 text-amber-900">
-                    Cancellation pending. Paid access continues until{" "}
-                    {subscription.accessEndsAt}, then your account reverts to Free with any unused
-                    free baseline remaining.
+                    Cancellation pending. For this demo, your account reverts to Free in a few
+                    seconds.
                   </p>
                 ) : null}
                 <div>
@@ -188,14 +173,9 @@ export function CandidateBillingScreen() {
                     {activeBundle.storyboard.included ? (
                       <li>Storyboards × {activeBundle.storyboard.quantity}</li>
                     ) : null}
-                    {activeBundle.masterclass.included
-                      ? activeBundle.masterclass.selections.map((sel) => (
-                          <li key={sel.masterclassId}>
-                            {getMasterclassById(sel.masterclassId)?.name}:{" "}
-                            {sel.selectedModuleIds.length} modules
-                          </li>
-                        ))
-                      : null}
+                    {activeBundle.masterclass.included ? (
+                      <li>Masterclass included</li>
+                    ) : null}
                   </ul>
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -207,7 +187,12 @@ export function CandidateBillingScreen() {
                       Cancel Subscription
                     </Button>
                   ) : null}
-                  <Button type="button" onClick={() => setAddOnsOpen(true)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
+                    onClick={() => setAddOnsOpen(true)}
+                  >
                     Purchase Add-Ons
                   </Button>
                 </div>
@@ -216,7 +201,12 @@ export function CandidateBillingScreen() {
               <>
                 <p className="text-muted-foreground">Assigned bundle is unavailable.</p>
                 <div className="flex flex-wrap gap-3">
-                  <Button type="button" onClick={() => setAddOnsOpen(true)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
+                    onClick={() => setAddOnsOpen(true)}
+                  >
                     Purchase Add-Ons
                   </Button>
                 </div>
@@ -224,11 +214,16 @@ export function CandidateBillingScreen() {
             )}
             {(entitlements.addOnMockInterviews > 0 ||
               entitlements.addOnStoryboards > 0 ||
+              entitlements.addOnMasterclassIncluded ||
               entitlements.addOnMasterclassModuleIds.length > 0) && (
               <p className="text-overline text-muted-foreground">
                 Add-ons on account: {entitlements.addOnMockInterviews} mock,{" "}
-                {entitlements.addOnStoryboards} storyboard,{" "}
-                {entitlements.addOnMasterclassModuleIds.length} masterclass modules.
+                {entitlements.addOnStoryboards} storyboard
+                {entitlements.addOnMasterclassIncluded ||
+                entitlements.addOnMasterclassModuleIds.length > 0
+                  ? ", Masterclass included"
+                  : ""}
+                .
               </p>
             )}
           </CardContent>
@@ -266,9 +261,8 @@ export function CandidateBillingScreen() {
             ...prev,
             addOnMockInterviews: prev.addOnMockInterviews + (deltas.mock ?? 0),
             addOnStoryboards: prev.addOnStoryboards + (deltas.storyboard ?? 0),
-            addOnMasterclassModuleIds: [
-              ...new Set([...prev.addOnMasterclassModuleIds, ...(deltas.modules ?? [])]),
-            ],
+            addOnMasterclassIncluded:
+              prev.addOnMasterclassIncluded || Boolean(deltas.masterclassIncluded),
           }));
           toast.success("Add-ons added to your account.");
           if (preselect === "storyboard") {
@@ -293,18 +287,19 @@ function CandidateAddOnsDialog({
   onOpenChange: (open: boolean) => void;
   preselectStoryboard: boolean;
   addOnRates: ReturnType<typeof useAddOnRates>["rates"];
-  onSuccess: (deltas: { mock?: number; storyboard?: number; modules?: string[] }) => void;
+  onSuccess: (deltas: {
+    mock?: number;
+    storyboard?: number;
+    masterclassIncluded?: boolean;
+  }) => void;
 }) {
   const [selected, setSelected] = useState<Partial<Record<ItemKind, boolean>>>({});
   const [mockQty, setMockQty] = useState("1");
   const [storyQty, setStoryQty] = useState("1");
-  const [moduleIds, setModuleIds] = useState<string[]>([]);
   const [step, setStep] = useState<"configure" | "review">("configure");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [forceFail, setForceFail] = useState(false);
 
-  const masterclasses = publishedMasterclasses();
-  const totalModules = masterclasses.reduce((n, mc) => n + mc.modules.length, 0);
   const absoluteMc = addOnRates[rateKey("masterclass", "B2C")];
 
   useEffect(() => {
@@ -312,7 +307,6 @@ function CandidateAddOnsDialog({
     setSelected(preselectStoryboard ? { storyboard: true } : {});
     setMockQty("1");
     setStoryQty("1");
-    setModuleIds(masterclasses.flatMap((mc) => mc.modules.map((m) => m.id)));
     setStep("configure");
     setErrors({});
     setForceFail(false);
@@ -345,12 +339,12 @@ function CandidateAddOnsDialog({
       items.push({
         kind: "masterclass",
         label: ITEM_KIND_LABEL.masterclass,
-        price: priceForSelectedModules(absoluteMc, totalModules, moduleIds.length),
-        detail: `${moduleIds.length} modules`,
+        price: roundMoney(absoluteMc),
+        detail: "included",
       });
     }
     return items;
-  }, [selected, mockQty, storyQty, moduleIds, addOnRates, absoluteMc, totalModules]);
+  }, [selected, mockQty, storyQty, addOnRates, absoluteMc]);
 
   const total = roundMoney(lineItems.reduce((s, i) => s + i.price, 0));
 
@@ -370,8 +364,9 @@ function CandidateAddOnsDialog({
       if (!hasConfiguredRate(addOnRates, "storyboard", "B2C")) next.storyQty = "Unavailable.";
     }
     if (selected.masterclass) {
-      if (moduleIds.length < 1) next.modules = "Please select at least one module.";
-      if (!hasConfiguredRate(addOnRates, "masterclass", "B2C")) next.modules = "Unavailable.";
+      if (!hasConfiguredRate(addOnRates, "masterclass", "B2C")) {
+        next.masterclass = "Unavailable.";
+      }
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -385,7 +380,7 @@ function CandidateAddOnsDialog({
     onSuccess({
       mock: selected.mockInterview ? Number(mockQty) : undefined,
       storyboard: selected.storyboard ? Number(storyQty) : undefined,
-      modules: selected.masterclass ? moduleIds : undefined,
+      masterclassIncluded: selected.masterclass ? true : undefined,
     });
     onOpenChange(false);
   }
@@ -446,37 +441,12 @@ function CandidateAddOnsDialog({
                     </div>
                   ) : null}
                   {selected[kind] && kind === "masterclass" ? (
-                    <div className="mt-2 space-y-2">
-                      {masterclasses.map((mc) => (
-                        <div key={mc.id}>
-                          <div className="text-overline text-muted-foreground">{mc.name}</div>
-                          {mc.modules.map((mod) => (
-                            <label
-                              key={mod.id}
-                              className="mt-1 flex items-center gap-2 text-caption"
-                            >
-                              <Checkbox
-                                checked={moduleIds.includes(mod.id)}
-                                onCheckedChange={(c) =>
-                                  setModuleIds((prev) =>
-                                    c
-                                      ? [...new Set([...prev, mod.id])]
-                                      : prev.filter((id) => id !== mod.id),
-                                  )
-                                }
-                              />
-                              {mod.name}
-                              {typeof absoluteMc === "number" ? (
-                                <span className="text-muted-foreground">
-                                  ({formatUsd(moduleShare(absoluteMc, totalModules))})
-                                </span>
-                              ) : null}
-                            </label>
-                          ))}
-                        </div>
-                      ))}
-                      {errors.modules ? (
-                        <p className="text-caption text-destructive">{errors.modules}</p>
+                    <div className="mt-2 space-y-1">
+                      {typeof absoluteMc === "number" ? (
+                        <p className="text-caption font-medium">{formatUsd(absoluteMc)}</p>
+                      ) : null}
+                      {errors.masterclass ? (
+                        <p className="text-caption text-destructive">{errors.masterclass}</p>
                       ) : null}
                     </div>
                   ) : null}

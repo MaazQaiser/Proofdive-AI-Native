@@ -44,7 +44,7 @@ type EditFormState = {
   website: string;
   audienceType: AudienceType;
   partnerType: PartnerType;
-  expectedUserVolume: string;
+  discountPercent: string;
   commissionType: CommissionType;
   commissionPercent: string;
   commissionFixedDollars: string;
@@ -62,7 +62,7 @@ function buildForm(partner: Partner): EditFormState {
     website: partner.website,
     audienceType: partner.audienceType,
     partnerType: partner.partnerType,
-    expectedUserVolume: String(partner.expectedUserVolume),
+    discountPercent: partner.discountPercent ? String(partner.discountPercent) : "",
     commissionType: partner.commissionType,
     commissionPercent: String(partner.commissionPercent),
     commissionFixedDollars: String(partner.commissionFixedCents / 100),
@@ -149,8 +149,6 @@ export function PartnerDetailDrawer({
     if (!form.country) next.country = "Country / Region is required.";
     if (form.entityType === "company" && !form.companyName.trim())
       next.companyName = "Company Name is required.";
-    const volume = Number(form.expectedUserVolume);
-    if (Number.isNaN(volume) || volume < 1) next.expectedUserVolume = "Enter a valid expected user volume.";
     if (form.commissionType === "percentage") {
       const pct = Number(form.commissionPercent);
       if (Number.isNaN(pct) || pct <= 0 || pct > 100) next.commissionPercent = "Enter a percentage between 1 and 100.";
@@ -158,6 +156,11 @@ export function PartnerDetailDrawer({
     if (form.commissionType === "fixed") {
       const dollars = Number(form.commissionFixedDollars);
       if (Number.isNaN(dollars) || dollars <= 0) next.commissionFixedDollars = "Enter a fixed amount greater than zero.";
+    }
+    if (form.discountPercent.trim()) {
+      const discount = Number(form.discountPercent);
+      if (Number.isNaN(discount) || discount < 0 || discount > 100)
+        next.discountPercent = "Enter a discount between 0 and 100.";
     }
 
     if (Object.keys(next).length > 0) {
@@ -176,7 +179,8 @@ export function PartnerDetailDrawer({
       website: form.website.trim(),
       audienceType: form.audienceType,
       partnerType: form.partnerType,
-      expectedUserVolume: volume,
+      expectedUserVolume: partner.expectedUserVolume,
+      discountPercent: form.discountPercent.trim() ? Number(form.discountPercent) : 0,
       commissionType: form.commissionType,
       commissionPercent: Number(form.commissionPercent) || partner.commissionPercent,
       commissionFixedCents: Math.round((Number(form.commissionFixedDollars) || 0) * 100),
@@ -188,7 +192,7 @@ export function PartnerDetailDrawer({
   return (
     <Sheet open={!!partner} onOpenChange={onOpenChange}>
       <SheetContent className="flex w-1/2 max-w-[50vw] flex-col gap-0 overflow-hidden sm:max-w-[50vw]">
-        <SheetHeader className="shrink-0 space-y-3 border-b border-border px-6 py-4">
+        <SheetHeader className="flex shrink-0 flex-col items-stretch gap-3 space-y-0 border-b border-border px-6 py-4">
           <div className="flex items-start justify-between gap-3 pr-8">
             <div className="flex min-w-0 flex-col gap-1">
               <SheetTitle className="truncate text-h6">{partner.fullName}</SheetTitle>
@@ -196,7 +200,7 @@ export function PartnerDetailDrawer({
             </div>
             <PartnerStatusPill status={partner.status} />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             <Button
               size="sm"
               className="bg-extended-light-cyan text-extended-green-blue hover:bg-extended-light-cyan/80"
@@ -230,14 +234,10 @@ export function PartnerDetailDrawer({
           </div>
         </SheetHeader>
 
-        <Tabs defaultValue="details" className="flex min-h-0 flex-1 flex-col">
-          <TabsList className="mx-0 mt-0 w-full shrink-0 justify-start rounded-none border-b border-border bg-transparent px-6">
-            <TabsTrigger value="details" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-              Details
-            </TabsTrigger>
-            <TabsTrigger value="performance" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
-              Performance
-            </TabsTrigger>
+        <Tabs defaultValue="details" className="flex min-h-0 flex-1 flex-col gap-0">
+          <TabsList className="mx-6 mt-4 w-fit shrink-0">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="performance">Performance</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 py-4">
@@ -377,15 +377,23 @@ export function PartnerDetailDrawer({
                     </Select>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Label>Expected User Volume</Label>
-                    <Input
-                      type="number"
-                      value={form.expectedUserVolume}
-                      onChange={(e) => updateField("expectedUserVolume", e.target.value)}
-                      aria-invalid={!!errors.expectedUserVolume}
-                    />
-                    {errors.expectedUserVolume ? (
-                      <p className="text-caption text-destructive">{errors.expectedUserVolume}</p>
+                    <Label>Discount (Optional)</Label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={form.discountPercent}
+                        onChange={(e) => updateField("discountPercent", e.target.value)}
+                        className="pr-8"
+                        aria-invalid={!!errors.discountPercent}
+                      />
+                      <span className="absolute top-1/2 right-3 -translate-y-1/2 text-caption text-muted-foreground">
+                        %
+                      </span>
+                    </div>
+                    {errors.discountPercent ? (
+                      <p className="text-caption text-destructive">{errors.discountPercent}</p>
                     ) : null}
                   </div>
                   <div className="flex flex-col gap-1.5 sm:col-span-2">
@@ -484,10 +492,13 @@ export function PartnerDetailDrawer({
                   <h3 className="text-overline text-muted-foreground">Partner Configuration</h3>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <DetailRow label="Partner Type" value={PARTNER_TYPE_LABEL[partner.partnerType]} />
-                    <DetailRow label="Expected User Volume" value={partner.expectedUserVolume} />
                     <DetailRow
                       label="Referral Code"
                       value={<span className="font-mono">{partner.referralCode}</span>}
+                    />
+                    <DetailRow
+                      label="Applied Discount"
+                      value={partner.discountPercent ? `${partner.discountPercent}%` : "None"}
                     />
                   </div>
                 </section>

@@ -35,6 +35,8 @@ export type Partner = {
   audienceType: AudienceType;
   partnerType: PartnerType;
   expectedUserVolume: number;
+  /** Optional referral discount percent for signups via this partner (0 = none). */
+  discountPercent: number;
   referralCode: string;
   commissionType: CommissionType;
   /** Percentage rate when commissionType is percentage (e.g. 15 = 15%). */
@@ -122,6 +124,7 @@ type SeedInput = {
   audienceType: AudienceType;
   partnerType: PartnerType;
   expectedUserVolume: number;
+  discountPercent?: number;
   referralCode: string;
   commissionType: CommissionType;
   commissionPercent?: number;
@@ -148,6 +151,7 @@ function seedPartner(input: SeedInput): Partner {
     audienceType: input.audienceType,
     partnerType: input.partnerType,
     expectedUserVolume: input.expectedUserVolume,
+    discountPercent: input.discountPercent ?? 0,
     referralCode: input.referralCode,
     commissionType: input.commissionType,
     commissionPercent: input.commissionPercent ?? 10,
@@ -177,6 +181,7 @@ export const SUPER_ADMIN_PARTNERS: Partner[] = [
     referralCode: "MAYACH42",
     commissionType: "percentage",
     commissionPercent: 15,
+    discountPercent: 10,
     status: "active",
     performance: {
       totalReferrals: 420,
@@ -196,6 +201,7 @@ export const SUPER_ADMIN_PARTNERS: Partner[] = [
     audienceType: "students",
     partnerType: "university_institution",
     expectedUserVolume: 1500,
+    discountPercent: 15,
     referralCode: "CAMPUS88",
     commissionType: "tiered",
     commissionTiers: [

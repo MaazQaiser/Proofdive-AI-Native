@@ -244,7 +244,6 @@ function PartnerProfileRecap({ partner }: { partner: Partner }) {
           <h3 className="text-overline text-muted-foreground">Partner Configuration</h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <DetailRow label="Partner Type" value={PARTNER_TYPE_LABEL[partner.partnerType]} />
-            <DetailRow label="Expected User Volume" value={partner.expectedUserVolume} />
             <DetailRow
               label="Referral Code"
               value={<span className="font-mono">{partner.referralCode}</span>}

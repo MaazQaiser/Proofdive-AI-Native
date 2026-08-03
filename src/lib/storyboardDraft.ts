@@ -85,7 +85,7 @@ export type CompetencySection = {
 export type StoryboardDive = {
   schemaVersion: 2;
   id: string;
-  diveNumber: 1 | 2 | 3;
+  diveNumber: number;
   targetRole: string;
   status: "editing" | "saved";
   savedAt: string | null;
@@ -153,7 +153,7 @@ export function emptyPillarScores(): Record<PillarId, number> {
 
 export function createEmptyDive(
   targetRole: string,
-  diveNumber: 1 | 2 | 3,
+  diveNumber: number,
   status: "editing" | "saved" = "editing",
 ): StoryboardDive {
   return {
@@ -197,7 +197,8 @@ export function normalizeDive(d: StoryboardDive): StoryboardDive {
       : [],
     developmentRecommendation: s?.developmentRecommendation ?? "",
   }));
-  const diveNumber = ([1, 2, 3].includes(d.diveNumber) ? d.diveNumber : 1) as 1 | 2 | 3;
+  const diveNumber =
+    Number.isFinite(d.diveNumber) && d.diveNumber >= 1 ? Math.floor(d.diveNumber) : 1;
   return {
     schemaVersion: 2,
     id: d.id || makeId(),
@@ -380,7 +381,7 @@ export type CloneDiveUnlock =
 /** Clone latest saved dive into a new editing dive (does not mutate the source). */
 export function cloneDiveForNext(
   source: StoryboardDive,
-  diveNumber: 1 | 2 | 3,
+  diveNumber: number,
   unlock: CloneDiveUnlock = { kind: "all" },
 ): StoryboardDive {
   const base = normalizeDive(structuredClone(source));
@@ -439,13 +440,22 @@ export function latestSavedDive(
   return saved[0] ?? null;
 }
 
-export function remainingDives(store: StoryboardDiveStore, role: string): number {
+export function remainingDives(
+  store: StoryboardDiveStore,
+  role: string,
+  maxDives: number = MAX_DIVES_PER_ROLE,
+): number {
   const savedCount = savedDivesForRole(store, role).length;
-  return Math.max(0, MAX_DIVES_PER_ROLE - savedCount);
+  const cap = Math.max(0, Math.floor(maxDives));
+  return Math.max(0, cap - savedCount);
 }
 
-export function canStartNewDive(store: StoryboardDiveStore, role: string): boolean {
-  return remainingDives(store, role) > 0 && !editingDiveForRole(store, role);
+export function canStartNewDive(
+  store: StoryboardDiveStore,
+  role: string,
+  maxDives: number = MAX_DIVES_PER_ROLE,
+): boolean {
+  return remainingDives(store, role, maxDives) > 0 && !editingDiveForRole(store, role);
 }
 
 /**

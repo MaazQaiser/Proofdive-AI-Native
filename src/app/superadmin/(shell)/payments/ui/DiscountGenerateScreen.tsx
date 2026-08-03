@@ -129,7 +129,7 @@ export function DiscountGenerateScreen() {
           </Button>
         }
       >
-        <Card>
+        <Card className="mx-auto w-full max-w-[800px]">
           <CardHeader>
             <CardTitle>{code.toUpperCase()}</CardTitle>
             <CardDescription>
@@ -170,14 +170,23 @@ export function DiscountGenerateScreen() {
     <PaymentsShell
       title="Generate Discount Code"
       actions={
-        <Button type="button" variant="outline" onClick={() => router.push("/superadmin/payments/discounts")}>
-          Cancel
-        </Button>
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/superadmin/payments/discounts")}
+          >
+            Cancel
+          </Button>
+          <Button type="button" onClick={goPreview}>
+            Continue to preview
+          </Button>
+        </>
       }
     >
-      <Card>
+      <Card className="mx-auto w-full max-w-[800px]">
         <CardContent className="grid gap-4 pt-6 sm:grid-cols-2">
-          <div className="space-y-2 sm:col-span-2">
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
             <Label htmlFor="dc-code">Code</Label>
             <div className="flex gap-2">
               <Input
@@ -186,20 +195,24 @@ export function DiscountGenerateScreen() {
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 aria-invalid={Boolean(errors.code)}
               />
-              <Button type="button" variant="outline" onClick={() => setCode(generateDiscountCodeString())}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCode(generateDiscountCodeString())}
+              >
                 Regenerate
               </Button>
             </div>
             {errors.code ? <p className="text-caption text-destructive">{errors.code}</p> : null}
           </div>
 
-          <div className="space-y-2">
+          <div className="flex flex-col gap-1.5">
             <Label>Discount Type</Label>
             <Select
               value={discountType}
               onValueChange={(v) => setDiscountType(v as DiscountType)}
             >
-              <SelectTrigger aria-invalid={Boolean(errors.discountType)}>
+              <SelectTrigger className="w-full" aria-invalid={Boolean(errors.discountType)}>
                 <SelectValue placeholder="Select Discount Type" />
               </SelectTrigger>
               <SelectContent>
@@ -214,7 +227,7 @@ export function DiscountGenerateScreen() {
           </div>
 
           {discountType === "percentage" ? (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <Label>Percentage (1–100)</Label>
               <Input
                 type="number"
@@ -230,7 +243,7 @@ export function DiscountGenerateScreen() {
           ) : null}
 
           {discountType === "fixed" ? (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <Label>Fixed Amount</Label>
               <Input
                 type="number"
@@ -243,9 +256,11 @@ export function DiscountGenerateScreen() {
             </div>
           ) : null}
 
-          <div className="space-y-2 sm:col-span-2">
+          {discountType === "free" || !discountType ? <div className="hidden sm:block" /> : null}
+
+          <div className="flex flex-col gap-1.5">
             <Label>Applies To</Label>
-            <div className="flex gap-4">
+            <div className="flex min-h-9 items-center gap-4">
               {(["B2C", "B2B"] as ClientType[]).map((t) => (
                 <label key={t} className="flex items-center gap-2 text-caption">
                   <Checkbox
@@ -261,13 +276,13 @@ export function DiscountGenerateScreen() {
             ) : null}
           </div>
 
-          <div className="space-y-2 sm:col-span-2">
+          <div className="flex flex-col gap-1.5">
             <Label>Usage Limit</Label>
             <Select
               value={usageLimit}
               onValueChange={(v) => setUsageLimit(v as DiscountUsageLimit)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -279,19 +294,20 @@ export function DiscountGenerateScreen() {
           </div>
 
           {usageLimit === "max" ? (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
               <Label>Max Redemptions Count</Label>
               <Input
                 type="number"
                 min={1}
                 value={maxRedemptions}
                 onChange={(e) => setMaxRedemptions(e.target.value)}
+                className="sm:max-w-[calc(50%-0.5rem)]"
               />
               {errors.max ? <p className="text-caption text-destructive">{errors.max}</p> : null}
             </div>
           ) : null}
 
-          <div className="space-y-2">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="start">Start Date</Label>
             <Input
               id="start"
@@ -300,7 +316,7 @@ export function DiscountGenerateScreen() {
               onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="expiry">Expiry Date</Label>
             <Input
               id="expiry"
@@ -310,12 +326,6 @@ export function DiscountGenerateScreen() {
               aria-invalid={Boolean(errors.expiry)}
             />
             {errors.expiry ? <p className="text-caption text-destructive">{errors.expiry}</p> : null}
-          </div>
-
-          <div className="sm:col-span-2">
-            <Button type="button" onClick={goPreview}>
-              Continue to preview
-            </Button>
           </div>
         </CardContent>
       </Card>

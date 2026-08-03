@@ -26,7 +26,10 @@ function ProgressBar({ className, value, indicatorClassName, ...props }: Progres
     >
       <div
         className={cn(
-          "h-2 rounded-full border border-brand-500 bg-primary transition-[width] duration-300 ease-out",
+          "h-2 rounded-full border transition-[width,background-color,border-color] duration-300 ease-out",
+          clamped >= 100
+            ? "border-scoring-yellow bg-scoring-yellow"
+            : "border-brand-500 bg-primary",
           indicatorClassName,
         )}
         style={{ width: `${clamped}%` }}

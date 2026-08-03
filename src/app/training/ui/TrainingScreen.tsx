@@ -32,12 +32,16 @@ import {
   OPTION_INTERVIEW_ESSENTIALS_TITLE,
   entryIntro,
 } from "@/app/training/trainingCopy";
-import { isFreePlan } from "@/lib/candidateUsage";
+import { hasMasterclassAccess } from "@/lib/candidateUsage";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { buildTrainingJourneyProgress, trainingProgressKey } from "@/lib/trainingJourneyProgress";
 import type { RoleProfile, TrainingJourneyProgress, TrainingJourneyPhase } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
-import { useCandidateSubscription } from "@/lib/useSubscriberPayments";
+import { usePaymentBundles } from "@/lib/usePaymentBundles";
+import {
+  useCandidateEntitlements,
+  useCandidateSubscription,
+} from "@/lib/useSubscriberPayments";
 import { cn } from "@/lib/utils";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 
@@ -81,13 +85,20 @@ export function TrainingScreen() {
     null,
   );
   const [subscription] = useCandidateSubscription();
+  const [entitlements] = useCandidateEntitlements();
+  const { bundles } = usePaymentBundles();
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const freePlan = isFreePlan(subscription);
+
+  const activeBundle =
+    subscription.bundleId != null
+      ? bundles.find((b) => b.id === subscription.bundleId) ?? null
+      : null;
+  const masterclassAccess = hasMasterclassAccess(subscription, entitlements, activeBundle);
 
   useEffect(() => {
-    if (freePlan) setUpgradeModalOpen(true);
+    if (!masterclassAccess) setUpgradeModalOpen(true);
     else setUpgradeModalOpen(false);
-  }, [freePlan]);
+  }, [masterclassAccess]);
 
   const [journeyProgressMap, setJourneyProgressMap] = useLocalStorageState<
     Record<string, TrainingJourneyProgress>

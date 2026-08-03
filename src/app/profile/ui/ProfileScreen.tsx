@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, Fragment, useMemo, useRef, useState } from "react";
-import { ChevronRight, Pencil, Sparkles, Trash2, UserRound } from "lucide-react";
+import { ChevronRight, Pencil, Trash2, UserRound } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
@@ -104,10 +104,6 @@ function UsageMeterRow({ meter }: { meter: UsageMeter }) {
         <span className="text-caption text-muted-foreground">
           {meter.used}/{meter.limit} used
         </span>
-      </div>
-      <div className="mt-1.5 flex items-center justify-between">
-        <span className="text-overline text-muted-foreground">Rolling 30-day window</span>
-        <span className="text-overline text-primary">{meter.pct}%</span>
       </div>
       <ProgressBar className="mt-2 h-1.5" value={meter.pct} />
     </div>
@@ -564,13 +560,7 @@ export function ProfileScreen() {
               {/* Usage limit card */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-start justify-between gap-3">
-                    <CardTitle>Usage limit</CardTitle>
-                    <Badge className="gap-1 border-transparent bg-primary/10 text-primary">
-                      <Sparkles className="h-3 w-3" />
-                      AI insights
-                    </Badge>
-                  </div>
+                  <CardTitle>Usage limit</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                   <div className="flex items-center justify-between gap-2">
@@ -582,12 +572,7 @@ export function ProfileScreen() {
 
                   <UsageMeterRow meter={usage.mockInterviews} />
                   <UsageMeterRow meter={usage.storyboards} />
-                  <UsageMeterRow meter={usage.otherBenefits} />
 
-                  <p className="text-caption leading-5 text-muted-foreground">
-                    We count mock interviews, storyboard generations, and masterclass benefits toward
-                    these limits. Manage your plan and purchase add-ons from Payments &amp; Subscription.
-                  </p>
                   <Button asChild size="sm" className="w-full">
                     <Link href="/profile/pricing">Upgrade Plan</Link>
                   </Button>
@@ -603,12 +588,7 @@ export function ProfileScreen() {
                   <CardTitle>Account</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
-                  <div>
-                    <DetailRow label="Status" value="Active" />
-                    <p className="mt-1.5 text-caption leading-5 text-muted-foreground">
-                      This is a prototype account stored locally in your browser for now.
-                    </p>
-                  </div>
+                  <DetailRow label="Status" value="Active" />
 
                   <Button variant="destructive" className="w-full" onClick={() => router.push("/login")}>
                     Sign out

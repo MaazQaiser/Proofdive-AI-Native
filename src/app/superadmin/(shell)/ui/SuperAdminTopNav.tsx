@@ -29,6 +29,7 @@ export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
       { href: "/superadmin/organizations", label: "Organizations" },
       { href: "/superadmin/employers", label: "Employers" },
       { href: "/superadmin/partners", label: "Partners" },
+      { href: "/superadmin/candidates", label: "Candidates" },
     ],
   },
   {
