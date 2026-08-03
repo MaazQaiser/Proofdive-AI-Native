@@ -35,6 +35,7 @@ export function CoachFloatingNav() {
   return (
     <nav
       aria-label="Coach shortcuts"
+      data-slot="coach-floating-nav"
       className="pointer-events-none fixed inset-y-0 left-0 z-50 flex w-16 items-center justify-center print:hidden"
     >
       <div className="pointer-events-auto flex flex-col gap-2">

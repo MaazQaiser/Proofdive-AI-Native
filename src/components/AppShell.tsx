@@ -29,7 +29,7 @@ export function AppShell({
   const hasRightPanel = Boolean(rightPanel);
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground">
+    <div className="min-h-screen w-full bg-background text-foreground print:bg-white">
       <header className="sticky top-0 z-20 flex h-14 w-full shrink-0 items-center gap-6 border-b border-border/40 bg-background/75 px-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 print:hidden">
         <Link
           href="/"
@@ -45,9 +45,9 @@ export function AppShell({
           (z-[1]); pb-32 clears the fixed ChatComposer so the last blocks
           aren't trapped under the footer. Left inset clears CoachFloatingNav. */}
       {hasRightPanel ? (
-        <div className="relative z-[2] flex min-h-[calc(100vh-3.5rem)] w-full flex-row items-stretch">
+        <div className="relative z-[2] flex min-h-[calc(100vh-3.5rem)] w-full flex-row items-stretch print:min-h-0">
           <div
-            className={`min-w-0 flex-1 pt-3 pr-4 pb-32 sm:pr-6 ${COACH_NAV_CONTENT_INSET_CLASS}`}
+            className={`min-w-0 flex-1 pt-3 pr-4 pb-32 sm:pr-6 print:p-0 print:pl-0 ${COACH_NAV_CONTENT_INSET_CLASS}`}
           >
             <main className="min-w-0 w-full">{children}</main>
           </div>
@@ -64,7 +64,7 @@ export function AppShell({
         </div>
       ) : (
         <div
-          className={`relative z-[2] mx-auto flex w-full max-w-6xl gap-10 pt-3 pr-6 pb-32 ${COACH_NAV_CONTENT_INSET_CLASS}`}
+          className={`relative z-[2] mx-auto flex w-full max-w-6xl gap-10 pt-3 pr-6 pb-32 print:max-w-none print:gap-0 print:p-0 print:pl-0 ${COACH_NAV_CONTENT_INSET_CLASS}`}
         >
           <main className="min-w-0 flex-1">{children}</main>
         </div>

@@ -87,7 +87,10 @@ export function CoachBottomChatBar({
   );
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 w-full print:hidden">
+    <div
+      data-slot="coach-bottom-chat"
+      className="fixed bottom-0 left-0 right-0 z-40 w-full print:hidden"
+    >
       {/* Mirrors AppShell's frame so this fixed bar's centering axis matches
           the main content column. When a flush right panel is present, reserve
           its width from the viewport edge instead of capping at max-w-6xl. */}

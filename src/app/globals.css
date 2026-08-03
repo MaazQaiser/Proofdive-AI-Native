@@ -567,3 +567,34 @@ body {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* Storyboard / candidate print: keep page content colors, drop app chrome. */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Flatten app beige (#F5F5F3) / surface greys to white in the report. */
+  .bg-background,
+  .bg-card,
+  .bg-surface,
+  .bg-muted,
+  [data-slot="card"] {
+    background: #ffffff !important;
+  }
+
+  /* Fixed / sticky chrome that can still paint in some browsers. */
+  header,
+  [data-slot="coach-floating-nav"],
+  [data-slot="coach-bottom-chat"],
+  .toaster {
+    display: none !important;
+  }
+}
