@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { IconButton } from "@/components/ui/icon-button";
+import { Logo } from "@/components/ui/logo";
 import { SelectionChip } from "@/components/ui/selection-chip";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { SuccessDriverMark } from "@/components/ui/success-driver-card";
@@ -190,10 +191,25 @@ function regenerateIntroText(current: string, instruction: string) {
   return clampToWordCap(`${current}\n\nUpdated emphasis: ${note}.`, INTRO_WORD_HARD_CAP);
 }
 
+function formatDownloadTimestamp(date: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function formatReportScore(score: number | null | undefined) {
+  if (score == null || !Number.isFinite(score) || score <= 0) return "—";
+  return score.toFixed(1);
+}
+
 export function CraftingScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasTriggeredPrintRef = useRef(false);
+  const [printRequest, setPrintRequest] = useState<{ stamp: string; id: number } | null>(
+    null,
+  );
   const [roleProfile] = useLocalStorageState<RoleProfile | null>(
     StorageKeys.roleProfile,
     null,
@@ -362,6 +378,8 @@ export function CraftingScreen() {
     }
     if (hasTriggeredPrintRef.current) return;
     hasTriggeredPrintRef.current = true;
+    const stamp = formatDownloadTimestamp(new Date());
+    setPrintRequest({ stamp, id: Date.now() });
     // Replace the URL only after print is invoked so effect cleanup does not
     // cancel the timeout when `print` is stripped from searchParams.
     const id = window.setTimeout(() => {
@@ -371,6 +389,17 @@ export function CraftingScreen() {
     }, 200);
     return () => window.clearTimeout(id);
   }, [searchParams, router, diveParam]);
+
+  useEffect(() => {
+    if (!printRequest || searchParams.get("print") === "1") return;
+    if (hasTriggeredPrintRef.current) return;
+    hasTriggeredPrintRef.current = true;
+    const id = window.setTimeout(() => {
+      window.print();
+      hasTriggeredPrintRef.current = false;
+    }, 50);
+    return () => window.clearTimeout(id);
+  }, [printRequest, searchParams]);
 
   const handleSaveStoryboard = useCallback(() => {
     if (!role || !activeDive || activeDive.status === "saved") return;
@@ -399,15 +428,32 @@ export function CraftingScreen() {
 
   const handleDownload = useCallback(() => {
     if (!activeDive) return;
-    window.print();
+    hasTriggeredPrintRef.current = false;
+    setPrintRequest({ stamp: formatDownloadTimestamp(new Date()), id: Date.now() });
   }, [activeDive]);
 
+  const printTimestamp = printRequest?.stamp ?? "";
+  const candidateName = roleProfile?.name?.trim() || "Candidate";
+  const targetRoleLabel = role || activeDive?.targetRole?.trim() || "—";
   const overall = activeDive?.overallScore ?? 0;
   const overallScore = overall > 0 ? overall : null;
   const divePillars = PILLAR_ORDER.map((id) => ({
     id,
     score: activeDive?.pillarScores?.[id] ?? 0,
   }));
+  const competencyScoreRows = useMemo(() => {
+    if (!activeDive) return [];
+    return COMPETENCY_SPECS.map((spec, index) => {
+      const section = activeDive.competencies[index];
+      const score = section ? section.score || strengthScore(section.car) : 0;
+      return {
+        id: spec.id,
+        title: spec.title,
+        pillar: spec.pillar,
+        score,
+      };
+    });
+  }, [activeDive]);
 
   if (!role) {
     return (
@@ -479,8 +525,8 @@ export function CraftingScreen() {
   return (
     <AppShell>
       <CoachFloatingNav />
-      <div className="pb-44">
-        <div className="mx-auto w-[800px] max-w-full space-y-6">
+      <div className="pb-44 print:pb-0">
+        <div className="mx-auto w-[800px] max-w-full space-y-6 print:w-full print:space-y-0">
           <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
             <Link
               href="/storyboard"
@@ -494,14 +540,14 @@ export function CraftingScreen() {
             </span>
           </div>
 
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3 print:hidden">
             <div className="min-w-0">
               <h1 className="text-h4 text-text-primary">
                 {readOnly ? "Your storyboard" : "Review Storyboard"}
               </h1>
             </div>
             {readOnly ? (
-              <div className="flex flex-wrap items-center gap-2 print:hidden">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   type="button"
                   size="icon"
@@ -517,11 +563,42 @@ export function CraftingScreen() {
             ) : null}
           </div>
 
+          {/* Print-only report cover: logo + candidate metadata. */}
+          <section className="mb-5 hidden space-y-5 print:block">
+            <div>
+              <Logo size="sm" className="print:block" />
+              <h1 className="mt-3 text-h4 text-text-primary">Your storyboard</h1>
+            </div>
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-caption">
+              <div>
+                <dt className="text-text-secondary">Candidate Name</dt>
+                <dd className="mt-0.5 font-medium text-text-primary">{candidateName}</dd>
+              </div>
+              <div>
+                <dt className="text-text-secondary">Target Role</dt>
+                <dd className="mt-0.5 font-medium text-text-primary">{targetRoleLabel}</dd>
+              </div>
+              <div>
+                <dt className="text-text-secondary">Storyboard Version</dt>
+                <dd className="mt-0.5 font-medium text-text-primary">
+                  Dive {activeDive.diveNumber}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-text-secondary">Download Timestamp</dt>
+                <dd className="mt-0.5 font-medium text-text-primary">
+                  {printTimestamp || formatDownloadTimestamp(new Date())}
+                </dd>
+              </div>
+            </dl>
+          </section>
+
           {pasteWarning ? (
             <p className="text-caption text-destructive print:hidden">{pasteWarning}</p>
           ) : null}
 
-          <div className="flex w-full items-start gap-1">
+          {/* Screen dive cards */}
+          <div className="flex w-full items-start gap-1 print:hidden">
             <div className="flex h-[194px] min-w-0 flex-1 flex-col justify-between gap-[9px] rounded-tl-[12px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[12px] bg-card p-4">
               <div className="flex w-full flex-col gap-4">
                 <div className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
@@ -541,7 +618,6 @@ export function CraftingScreen() {
                       / 5
                     </span>
                   </div>
-                  {/* Reserve subtitle line height so score + card layout stay put */}
                   <div className="h-[14px]" aria-hidden />
                 </div>
               </div>
@@ -549,7 +625,7 @@ export function CraftingScreen() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className={cn(addCompetencyBtnClass, "self-start print:hidden")}
+                  className={cn(addCompetencyBtnClass, "self-start")}
                   onClick={
                     readOnly
                       ? handleAddCompetencyFromReadOnly
@@ -601,10 +677,99 @@ export function CraftingScreen() {
             </div>
           </div>
 
-          <section>
+          {/* Print dive score table: 1 left cell + 4 right cells */}
+          <table className="mt-5 hidden w-full border-collapse print:table">
+            <tbody>
+              <tr>
+                <td
+                  rowSpan={2}
+                  className="w-1/2 border border-border bg-white p-4 align-top"
+                >
+                  <div className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                    Story Score
+                  </div>
+                  <div className="mt-4 flex items-end gap-1 whitespace-nowrap">
+                    <span
+                      className={cn(
+                        "text-[48px] font-medium tracking-[-1.3px] tabular-nums leading-none",
+                        diveScoreTextClass(overallScore),
+                      )}
+                    >
+                      {overallScore != null ? overallScore.toFixed(1) : "—"}
+                    </span>
+                    <span className="text-[18px] leading-[1.2] tracking-[-1px] text-text-secondary">
+                      / 5
+                    </span>
+                  </div>
+                </td>
+                {divePillars.slice(0, 2).map(({ id, score }) => {
+                  const displayScore = score > 0 ? score : null;
+                  return (
+                    <td key={id} className="w-1/4 border border-border bg-white p-4 align-top">
+                      <div className="flex w-full items-center gap-2">
+                        <SuccessDriverIcon
+                          driver={id}
+                          className="size-4 text-text-primary"
+                        />
+                        <span className="truncate text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                          {SUCCESS_DRIVERS[id].shortLabel}
+                        </span>
+                      </div>
+                      <div className="mt-4 flex w-full items-end gap-1 whitespace-nowrap tracking-[-1px]">
+                        <span
+                          className={cn(
+                            "text-[32px] font-medium tabular-nums leading-none",
+                            diveScoreTextClass(displayScore),
+                          )}
+                        >
+                          {displayScore != null ? displayScore.toFixed(1) : "—"}
+                        </span>
+                        <span className="text-[18px] leading-[27px] text-text-secondary">
+                          / 5
+                        </span>
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+              <tr>
+                {divePillars.slice(2, 4).map(({ id, score }) => {
+                  const displayScore = score > 0 ? score : null;
+                  return (
+                    <td key={id} className="w-1/4 border border-border bg-white p-4 align-top">
+                      <div className="flex w-full items-center gap-2">
+                        <SuccessDriverIcon
+                          driver={id}
+                          className="size-4 text-text-primary"
+                        />
+                        <span className="truncate text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                          {SUCCESS_DRIVERS[id].shortLabel}
+                        </span>
+                      </div>
+                      <div className="mt-4 flex w-full items-end gap-1 whitespace-nowrap tracking-[-1px]">
+                        <span
+                          className={cn(
+                            "text-[32px] font-medium tabular-nums leading-none",
+                            diveScoreTextClass(displayScore),
+                          )}
+                        >
+                          {displayScore != null ? displayScore.toFixed(1) : "—"}
+                        </span>
+                        <span className="text-[18px] leading-[27px] text-text-secondary">
+                          / 5
+                        </span>
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
+
+          <section className="print:mt-5 print:border-b print:border-border">
             <DraftSectionCard
               pillarLabel="Introduction"
-              displayTitle="Core Introduction"
+              displayTitle="My Introduction"
               score={introStrengthScore(activeDive.intro.text)}
               locked={activeDive.intro.locked || readOnly}
               showEditLock
@@ -660,12 +825,12 @@ export function CraftingScreen() {
               globalIndex,
             })).filter((x) => x.spec.pillar === pillar);
             return (
-              <section key={pillar} className="space-y-4">
+              <section key={pillar} className="space-y-4 print:space-y-0">
                 {rows.map(({ spec, globalIndex: index }) => {
                   const s = activeDive.competencies[index]!;
                   return (
+                    <div key={spec.id} className="print:border-b print:border-border">
                     <DraftSectionCard
-                      key={spec.id}
                       pillarLabel={spec.pillar}
                       driver={spec.pillar}
                       displayTitle={spec.title}
@@ -745,11 +910,45 @@ export function CraftingScreen() {
                         </div>
                       )}
                     </DraftSectionCard>
+                    </div>
                   );
                 })}
               </section>
             );
           })}
+
+          {/* Print-only competency scores summary at end of report. */}
+          <section className="mt-8 hidden space-y-5 print:block">
+            <div>
+              <h2 className="text-overline font-medium text-text-secondary">Overall Story Score</h2>
+              <p className="mt-1 text-[28px] font-medium tabular-nums leading-none text-text-primary">
+                {formatReportScore(overallScore)}
+                <span className="ml-1 text-[16px] text-text-secondary">/ 5</span>
+              </p>
+            </div>
+            <div>
+              <h2 className="text-h6 text-text-primary">Individual Competency Scores</h2>
+              <ul className="mt-3 divide-y divide-border border-y border-border">
+                {competencyScoreRows.map((row) => (
+                  <li
+                    key={row.id}
+                    className="flex items-center justify-between gap-3 py-2 text-caption"
+                  >
+                    <span className="min-w-0 text-text-primary">
+                      <span className="text-text-secondary">
+                        {SUCCESS_DRIVERS[row.pillar].shortLabel}
+                        {" · "}
+                      </span>
+                      {row.title}
+                    </span>
+                    <span className="shrink-0 tabular-nums font-medium text-text-primary">
+                      {formatReportScore(row.score)} / 5
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
 
           {!readOnly ? (
             <div className="space-y-3 border-t border-border pt-6 print:hidden">
@@ -793,7 +992,7 @@ function CompetencyClassificationDetails({
   if (!evidenceText.length && !missing.length && !related.length) return null;
 
   return (
-    <div className="space-y-3 rounded-lg bg-primary/10 px-3.5 py-3">
+    <div className="space-y-3 rounded-lg bg-primary/10 px-3.5 py-3 print:rounded-none print:border print:border-border print:bg-white">
       {evidenceText.length ? (
         <div className="space-y-1.5">
           <div className="flex items-center gap-1.5 text-[14px] font-medium text-text-primary">
@@ -950,8 +1149,8 @@ function DraftSectionCard({
   }
 
   return (
-    <Card className="gap-0 overflow-hidden py-0">
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-surface px-4 py-3">
+    <Card className="gap-0 overflow-hidden py-0 print:break-inside-avoid print:rounded-none print:bg-white print:shadow-none">
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-surface px-4 py-3 print:border-b print:border-border print:bg-white">
         <div className="min-w-0">
           {driver ? (
             <SuccessDriverMark
@@ -975,59 +1174,58 @@ function DraftSectionCard({
           >
             Strength {score} / 5
           </Badge>
-          {showDeepenEdit ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onDeepenEdit}
-              className="print:hidden"
-              title="Edit this section in a new Dive"
-            >
-              <Pencil />
-              Edit
-            </Button>
-          ) : null}
-          {showEditLock ? (
-            <>
-              {showLockToggle ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleToggleLock}
-                  className="print:hidden"
-                  title={viewLocked ? "Unlock to edit fields" : "Lock to read-only view"}
-                >
-                  {viewLocked ? <Unlock /> : <Lock />}
-                  {viewLocked ? "Unlock" : "Lock"}
-                </Button>
-              ) : null}
+          <div className="flex flex-wrap items-center gap-2 print:hidden">
+            {showDeepenEdit ? (
               <Button
                 type="button"
-                variant={isEditing ? "ghost" : "default"}
+                variant="ghost"
                 size="sm"
-                onClick={() => {
-                  if (isEditing) {
-                    resetEditBar();
-                  } else {
-                    setIsEditing(true);
-                  }
-                }}
-                className="print:hidden"
-                title={isEditing ? "Cancel edit" : "Show improve options"}
+                onClick={onDeepenEdit}
+                title="Edit this section in a new Dive"
               >
-                {isEditing ? <X /> : <Pencil />}
-                {isEditing ? "Cancel" : "Edit"}
+                <Pencil />
+                Edit
               </Button>
-            </>
-          ) : null}
+            ) : null}
+            {showEditLock ? (
+              <>
+                {showLockToggle ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleToggleLock}
+                    title={viewLocked ? "Unlock to edit fields" : "Lock to read-only view"}
+                  >
+                    {viewLocked ? <Unlock /> : <Lock />}
+                    {viewLocked ? "Unlock" : "Lock"}
+                  </Button>
+                ) : null}
+                <Button
+                  type="button"
+                  variant={isEditing ? "ghost" : "default"}
+                  size="sm"
+                  onClick={() => {
+                    if (isEditing) {
+                      resetEditBar();
+                    } else {
+                      setIsEditing(true);
+                    }
+                  }}
+                  title={isEditing ? "Cancel edit" : "Show improve options"}
+                >
+                  {isEditing ? <X /> : <Pencil />}
+                  {isEditing ? "Cancel" : "Edit"}
+                </Button>
+              </>
+            ) : null}
+          </div>
         </div>
       </div>
       <div className="p-4">
         {children(viewLocked)}
         {showEditLock && isEditing ? (
-          <div className="mt-4 -mx-4 space-y-2 border-t border-border/40 px-4 pt-4">
+          <div className="mt-4 -mx-4 space-y-2 border-t border-border/40 px-4 pt-4 print:hidden">
             <div className="space-y-1.5">
               <p className="text-overline text-text-primary">
                 How do you want to improve this?
@@ -1112,7 +1310,6 @@ function DraftSectionCard({
                 variant="ghost"
                 size="sm"
                 onClick={resetEditBar}
-                className="print:hidden"
               >
                 Cancel
               </Button>
