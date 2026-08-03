@@ -448,7 +448,7 @@ export const SEED_BUNDLES: PaymentBundle[] = [
     description: "Core interview prep for individual candidates.",
     type: "B2C",
     mockInterview: { included: true, quantity: 2, unitPrice: 15 },
-    storyboard: { included: true, quantity: 3, unitPrice: 10 },
+    storyboard: { included: true, quantity: 5, unitPrice: 10 },
     masterclass: {
       included: true,
       selections: [
@@ -552,9 +552,41 @@ export const SEED_BUNDLES: PaymentBundle[] = [
       { cycle: "monthly", price: 60 },
       { cycle: "yearly", price: 600, priceOverridden: true },
     ],
-    status: "active",
+    status: "inactive",
     createdAt: seedDate(3),
     updatedAt: seedDate(3),
+    subscribers: [],
+  },
+  {
+    id: "bundle_career_pro",
+    name: "Career Pro",
+    description:
+      "Full interview prep with coaching-led training, richer storyboard capacity, and more mock practice.",
+    type: "B2C",
+    mockInterview: { included: true, quantity: 3, unitPrice: 15 },
+    storyboard: { included: true, quantity: 7, unitPrice: 10 },
+    masterclass: {
+      included: true,
+      selections: [
+        {
+          masterclassId: "mc_resume_101",
+          selectedModuleIds: ["mod_r1", "mod_r2", "mod_r3", "mod_r4"],
+          price: 80,
+        },
+        {
+          masterclassId: "mc_behavioral",
+          selectedModuleIds: ["mod_b1", "mod_b2", "mod_b3"],
+          price: 65,
+        },
+      ],
+    },
+    cycles: [
+      { cycle: "monthly", price: 249 },
+      { cycle: "yearly", price: 2490, priceOverridden: true },
+    ],
+    status: "active",
+    createdAt: seedDate(14),
+    updatedAt: seedDate(2),
     subscribers: [],
   },
 ];
@@ -651,16 +683,19 @@ export type CandidateEntitlements = {
   addOnMockInterviews: number;
   addOnStoryboards: number;
   addOnMasterclassModuleIds: string[];
+  /** Whole Masterclass add-on (modules not configurable by candidate). */
+  addOnMasterclassIncluded: boolean;
 };
 
 export function defaultCandidateEntitlements(): CandidateEntitlements {
   return {
     freeMockInterviews: 1,
     freeStoryboards: 3,
-    freeMasterclassModuleIds: ["mod_r1"],
+    freeMasterclassModuleIds: [],
     addOnMockInterviews: 0,
     addOnStoryboards: 0,
     addOnMasterclassModuleIds: [],
+    addOnMasterclassIncluded: false,
   };
 }
 

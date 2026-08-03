@@ -42,7 +42,7 @@ export function SuperAdminUserMenu() {
         <button
           type="button"
           aria-label="Account menu"
-          className="mb-2.5 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-muted text-caption font-medium text-muted-foreground">

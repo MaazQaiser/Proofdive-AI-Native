@@ -62,7 +62,7 @@ export const StorageKeys = {
   /** Super Admin add-on (top-up) rates keyed by item × client type. */
   superAdminAddOnRates: "proofdive.superAdmin.addOnRates.v1",
   /** Super Admin payment bundles catalog. */
-  superAdminPaymentBundles: "proofdive.superAdmin.paymentBundles.v2",
+  superAdminPaymentBundles: "proofdive.superAdmin.paymentBundles.v7",
   /** Super Admin discount codes. */
   superAdminDiscountCodes: "proofdive.superAdmin.discountCodes.v1",
   /** Org Admin active subscription snapshot (bundle assignment + cycle). */
@@ -70,15 +70,18 @@ export const StorageKeys = {
   /** Candidate subscription state (free / paid / pending cancel). */
   candidateSubscription: "proofdive.candidate.subscription.v1",
   /** Candidate one-time free baseline remaining + purchased add-on deltas. */
-  candidateEntitlements: "proofdive.candidate.entitlements.v1",
+  candidateEntitlements: "proofdive.candidate.entitlements.v2",
   /** Cumulative storyboard generation count (crafts + regenerations) for usage limits. */
   candidateStoryboardGenerations: "proofdive.candidate.storyboardGenerations.v1",
   /** Report ids a Free candidate has successfully viewed (story 3.2: 1 report allocation). */
   candidateAccessedReportIds: "proofdive.candidate.accessedReportIds.v1",
   /** Whether the Free-plan post-interview upgrade nudge has been shown once. */
   candidatePostInterviewUpgradeNudgeSeen: "proofdive.candidate.postInterviewUpgradeNudgeSeen.v1",
+  /** Storyboard near-limit banner dismissed for this plan storyboard limit (paid plans). */
+  candidateStoryboardNearLimitBannerDismissed:
+    "proofdive.candidate.storyboardNearLimitBannerDismissed.v1",
   /** Super Admin partner / affiliate directory. */
-  superAdminPartners: "proofdive.superAdmin.partners.v1",
+  superAdminPartners: "proofdive.superAdmin.partners.v2",
   /** Selected Weekly/Monthly/All Time granularity on the Partner dashboard. */
   partnerDashboardDateRange: "proofdive.partner.dashboardDateRange.v1",
   /** Partial<Partner> patch overlaid on the demo partner by the Profile Details section. */

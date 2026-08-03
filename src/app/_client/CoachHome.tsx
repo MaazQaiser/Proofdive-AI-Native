@@ -37,7 +37,7 @@ import { useLocalStorageState } from "@/lib/useLocalStorageState";
 export type CoachJourneyView = "welcome" | "roadmap" | "journey" | "final";
 
 /** `welcome` = 2 CTAs + empty readiness; `roadmap` = 3 step cards + same empty readiness; `journey` = 3 steps + full readiness from latest mock; `final` = same layout, readiness pinned to the report opened from `/report/[id]` → Coach. */
-/** Default when opening Coach without `?welcome=1` / `?roadmap=1` (those come only from onboarding + interview skip CTAs). */
+/** Default when opening Coach without `?welcome=1` / `?roadmap=1` / `?empty=1` (welcome/roadmap come from onboarding + interview skip; `?empty=1` is a bookmarkable developer preview of the empty welcome landing). */
 const DEFAULT_COACH_JOURNEY_VIEW: CoachJourneyView = "journey";
 
 /** Session-only: this tab used `?welcome=1` (onboarding / interview skip). Used so stale localStorage `welcome` does not show on plain `/coach`. */
@@ -340,6 +340,15 @@ export function CoachHome() {
       const v = searchParams.get(k);
       return v === "1" || v?.toLowerCase() === "true";
     };
+    // Developer preview: force empty welcome landing (Storyboard + Roadmap CTAs)
+    // regardless of stored data. Keeps `?empty=1` in the URL so it stays bookmarkable.
+    if (is("empty")) {
+      setCoachFinalReportId(null);
+      if (coachJourneyView !== "welcome") {
+        setCoachJourneyView("welcome");
+      }
+      return;
+    }
     if (is("welcome")) {
       // Read directly from localStorage instead of the (async-hydrated) `roleProfile`
       // state — this effect can run before that hook's own hydration effect has
@@ -462,7 +471,7 @@ export function CoachHome() {
                 <p className="mt-2 max-w-xl text-left text-body leading-7 text-text-secondary">
                   Choose a path to get started.
                 </p>
-                <div className="mt-8 grid w-full max-w-xl grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="mt-8 grid w-full max-w-[800px] grid-cols-1 gap-4 sm:grid-cols-2">
                   <CardButton
                     href="/storyboard"
                     variant="primary"
@@ -470,6 +479,7 @@ export function CoachHome() {
                     title="Storyboard"
                     subtitle="Turn your experience into proof"
                     illustrationSrc="/brand/illustration-1.svg"
+                    className="w-full"
                   />
                   <CardButton
                     href="/coach?roadmap=1"
@@ -478,6 +488,7 @@ export function CoachHome() {
                     title="Roadmap"
                     subtitle="Get a personalized prep plan"
                     illustrationSrc="/brand/illustration-2.svg"
+                    className="w-full"
                   />
                 </div>
                 {readinessNoteBanner}

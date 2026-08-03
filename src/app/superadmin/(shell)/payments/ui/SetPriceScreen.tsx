@@ -5,8 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -18,12 +16,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   CLIENT_TYPES,
   formatUsd,
   isValidPrice,
   ITEM_KIND_LABEL,
   ITEM_KINDS,
   rateKey,
+  type ClientType,
+  type ItemKind,
   type RateKey,
   type RateMap,
 } from "@/lib/superAdminPaymentsData";
@@ -33,133 +40,28 @@ import { PaymentsShell } from "./PaymentsShell";
 
 type SectionId = "global" | "addon";
 
-function RateSection({
-  title,
-  description,
-  sectionId,
-  saved,
-  draft,
-  editingKey,
-  errors,
-  onStartEdit,
-  onConfirmEdit,
-  onCancelEdit,
-  onChange,
-}: {
-  title: string;
-  description: string;
-  sectionId: SectionId;
-  saved: RateMap;
-  draft: RateMap;
-  editingKey: RateKey | null;
-  errors: Partial<Record<RateKey, string>>;
-  onStartEdit: (section: SectionId, key: RateKey) => void;
-  onConfirmEdit: (section: SectionId, key: RateKey) => void;
-  onCancelEdit: (section: SectionId, key: RateKey) => void;
-  onChange: (section: SectionId, key: RateKey, value: string) => void;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {ITEM_KINDS.flatMap((kind) =>
-          CLIENT_TYPES.map((clientType) => {
-            const key = rateKey(kind, clientType);
-            const editing = editingKey === key;
-            const error = errors[key];
-            const display = draft[key];
-            return (
-              <div key={`${sectionId}-${key}`} className="rounded-xl border border-border p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <div className="text-caption font-medium text-foreground">
-                      {ITEM_KIND_LABEL[kind]}
-                    </div>
-                    <Badge variant="secondary">{clientType}</Badge>
-                  </div>
-                  {!editing ? (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      aria-label={`Edit ${ITEM_KIND_LABEL[kind]} ${clientType}`}
-                      onClick={() => onStartEdit(sectionId, key)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                  ) : (
-                    <div className="size-9 shrink-0" aria-hidden />
-                  )}
-                </div>
-                <div className="mt-3 flex min-h-9 items-center gap-2">
-                  {editing ? (
-                    <>
-                      <Label htmlFor={`${sectionId}-${key}`} className="sr-only">
-                        Price
-                      </Label>
-                      <Input
-                        id={`${sectionId}-${key}`}
-                        type="number"
-                        min={0.01}
-                        step={0.01}
-                        className="h-9 min-w-0 flex-1"
-                        value={display ?? ""}
-                        onChange={(e) => onChange(sectionId, key, e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            onConfirmEdit(sectionId, key);
-                          }
-                          if (e.key === "Escape") {
-                            e.preventDefault();
-                            onCancelEdit(sectionId, key);
-                          }
-                        }}
-                        aria-invalid={Boolean(error)}
-                        autoFocus
-                      />
-                      <Button
-                        type="button"
-                        size="icon"
-                        aria-label="Confirm price"
-                        onClick={() => onConfirmEdit(sectionId, key)}
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        aria-label="Cancel edit"
-                        onClick={() => onCancelEdit(sectionId, key)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <p className="text-h6 text-foreground">
-                      {isValidPrice(display) ? (
-                        formatUsd(display)
-                      ) : (
-                        <span className="text-muted-foreground">Not set</span>
-                      )}
-                    </p>
-                  )}
-                </div>
-                {error ? <p className="mt-1 text-caption text-destructive">{error}</p> : null}
-                {!editing && display !== saved[key] ? (
-                  <p className="mt-1 text-overline text-amber-700">Unsaved change</p>
-                ) : null}
-              </div>
-            );
-          }),
-        )}
-      </CardContent>
-    </Card>
-  );
+type CellSpec = {
+  section: SectionId;
+  clientType: ClientType;
+  label: string;
+};
+
+const PRICE_CELLS: CellSpec[] = [
+  { section: "global", clientType: "B2C", label: "Global B2C" },
+  { section: "global", clientType: "B2B", label: "Global B2B" },
+  { section: "addon", clientType: "B2C", label: "Add-on B2C" },
+  { section: "addon", clientType: "B2B", label: "Add-on B2B" },
+];
+
+function keysForKind(kind: ItemKind): RateKey[] {
+  return CLIENT_TYPES.map((clientType) => rateKey(kind, clientType));
+}
+
+function PriceDisplay({ value }: { value: number | undefined }) {
+  if (isValidPrice(value)) {
+    return <span className="text-foreground">{formatUsd(value)}</span>;
+  }
+  return <span className="text-muted-foreground">Not set</span>;
 }
 
 export function SetPriceScreen() {
@@ -168,9 +70,8 @@ export function SetPriceScreen() {
 
   const [globalDraft, setGlobalDraft] = useState<RateMap>({});
   const [addOnDraft, setAddOnDraft] = useState<RateMap>({});
-  const [editingSection, setEditingSection] = useState<SectionId | null>(null);
-  const [editingKey, setEditingKey] = useState<RateKey | null>(null);
-  const [errors, setErrors] = useState<Partial<Record<RateKey, string>>>({});
+  const [editingKind, setEditingKind] = useState<ItemKind | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<`${SectionId}:${RateKey}`, string>>>({});
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
@@ -188,53 +89,71 @@ export function SetPriceScreen() {
     [globalDraft, globalRates, addOnDraft, addOnRates],
   );
 
-  function startEdit(section: SectionId, key: RateKey) {
-    setEditingSection(section);
-    setEditingKey(key);
+  function draftFor(section: SectionId): RateMap {
+    return section === "global" ? globalDraft : addOnDraft;
   }
 
-  function confirmEdit(section: SectionId, key: RateKey) {
-    const value = section === "global" ? globalDraft[key] : addOnDraft[key];
-    if (value !== undefined && !isValidPrice(value)) {
-      setErrors((prev) => ({ ...prev, [key]: "Please enter a valid price." }));
-      return;
+  function savedFor(section: SectionId): RateMap {
+    return section === "global" ? globalRates : addOnRates;
+  }
+
+  function errorKey(section: SectionId, key: RateKey): `${SectionId}:${RateKey}` {
+    return `${section}:${key}`;
+  }
+
+  function startEdit(kind: ItemKind) {
+    setEditingKind(kind);
+  }
+
+  function confirmEdit(kind: ItemKind) {
+    const nextErrors: Partial<Record<`${SectionId}:${RateKey}`, string>> = { ...errors };
+    let hasError = false;
+
+    for (const cell of PRICE_CELLS) {
+      const key = rateKey(kind, cell.clientType);
+      const value = draftFor(cell.section)[key];
+      const ek = errorKey(cell.section, key);
+      if (value !== undefined && !isValidPrice(value)) {
+        nextErrors[ek] = "Please enter a valid price.";
+        hasError = true;
+      } else {
+        delete nextErrors[ek];
+      }
     }
-    setErrors((prev) => {
+
+    setErrors(nextErrors);
+    if (hasError) return;
+    if (editingKind === kind) setEditingKind(null);
+  }
+
+  function cancelEdit(kind: ItemKind) {
+    const keys = keysForKind(kind);
+    setGlobalDraft((prev) => {
       const next = { ...prev };
-      delete next[key];
-      return next;
-    });
-    if (editingKey === key && editingSection === section) {
-      setEditingKey(null);
-      setEditingSection(null);
-    }
-  }
-
-  function cancelEdit(section: SectionId, key: RateKey) {
-    if (section === "global") {
-      setGlobalDraft((prev) => {
-        const next = { ...prev };
+      for (const key of keys) {
         if (globalRates[key] === undefined) delete next[key];
         else next[key] = globalRates[key];
-        return next;
-      });
-    } else {
-      setAddOnDraft((prev) => {
-        const next = { ...prev };
-        if (addOnRates[key] === undefined) delete next[key];
-        else next[key] = addOnRates[key];
-        return next;
-      });
-    }
-    setErrors((prev) => {
-      const next = { ...prev };
-      delete next[key];
+      }
       return next;
     });
-    if (editingKey === key && editingSection === section) {
-      setEditingKey(null);
-      setEditingSection(null);
-    }
+    setAddOnDraft((prev) => {
+      const next = { ...prev };
+      for (const key of keys) {
+        if (addOnRates[key] === undefined) delete next[key];
+        else next[key] = addOnRates[key];
+      }
+      return next;
+    });
+    setErrors((prev) => {
+      const next = { ...prev };
+      for (const section of ["global", "addon"] as SectionId[]) {
+        for (const key of keys) {
+          delete next[errorKey(section, key)];
+        }
+      }
+      return next;
+    });
+    if (editingKind === kind) setEditingKind(null);
   }
 
   function onChange(section: SectionId, key: RateKey, value: string) {
@@ -247,14 +166,20 @@ export function SetPriceScreen() {
     };
     if (section === "global") setGlobalDraft(apply);
     else setAddOnDraft(apply);
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[errorKey(section, key)];
+      return next;
+    });
   }
 
   function validate(): boolean {
-    const nextErrors: Partial<Record<RateKey, string>> = {};
-    for (const map of [globalDraft, addOnDraft]) {
+    const nextErrors: Partial<Record<`${SectionId}:${RateKey}`, string>> = {};
+    for (const section of ["global", "addon"] as SectionId[]) {
+      const map = draftFor(section);
       for (const [k, v] of Object.entries(map) as [RateKey, number | undefined][]) {
         if (v === undefined) continue;
-        if (!isValidPrice(v)) nextErrors[k] = "Please enter a valid price.";
+        if (!isValidPrice(v)) nextErrors[errorKey(section, k)] = "Please enter a valid price.";
       }
     }
     setErrors(nextErrors);
@@ -276,8 +201,7 @@ export function SetPriceScreen() {
   function confirmSave() {
     saveGlobal(globalDraft);
     saveAddOn(addOnDraft);
-    setEditingKey(null);
-    setEditingSection(null);
+    setEditingKind(null);
     setConfirmOpen(false);
     toast.success("Rates updated.");
   }
@@ -286,8 +210,7 @@ export function SetPriceScreen() {
     setGlobalDraft(globalRates);
     setAddOnDraft(addOnRates);
     setErrors({});
-    setEditingKey(null);
-    setEditingSection(null);
+    setEditingKind(null);
     setConfirmOpen(false);
   }
 
@@ -306,33 +229,127 @@ export function SetPriceScreen() {
       }
     >
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
-        <div className="flex flex-col gap-6">
-          <RateSection
-            title="Global Rates"
-            description="Prefill prices when including items in a bundle. Changes apply from each subscriber’s next billing cycle."
-            sectionId="global"
-            saved={globalRates}
-            draft={globalDraft}
-            editingKey={editingSection === "global" ? editingKey : null}
-            errors={errors}
-            onStartEdit={startEdit}
-            onConfirmEdit={confirmEdit}
-            onCancelEdit={cancelEdit}
-            onChange={onChange}
-          />
-          <RateSection
-            title="Add-On Rates"
-            description="Rates charged when subscribers purchase items beyond their bundle allocation. Changes apply immediately."
-            sectionId="addon"
-            saved={addOnRates}
-            draft={addOnDraft}
-            editingKey={editingSection === "addon" ? editingKey : null}
-            errors={errors}
-            onStartEdit={startEdit}
-            onConfirmEdit={confirmEdit}
-            onCancelEdit={cancelEdit}
-            onChange={onChange}
-          />
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full min-w-[800px] table-fixed caption-bottom text-sm">
+            <colgroup>
+              <col className="w-[180px]" />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col className="w-[96px]" />
+            </colgroup>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-4">Item</TableHead>
+                {PRICE_CELLS.map((cell) => (
+                  <TableHead key={`${cell.section}-${cell.clientType}`}>{cell.label}</TableHead>
+                ))}
+                <TableHead className="pr-4 text-right">Edit</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ITEM_KINDS.map((kind) => {
+                const editing = editingKind === kind;
+                return (
+                  <TableRow key={kind}>
+                    <TableCell className="pl-4 font-medium text-foreground">
+                      {ITEM_KIND_LABEL[kind]}
+                    </TableCell>
+                    {PRICE_CELLS.map((cell) => {
+                      const key = rateKey(kind, cell.clientType);
+                      const value = draftFor(cell.section)[key];
+                      const saved = savedFor(cell.section)[key];
+                      const ek = errorKey(cell.section, key);
+                      const error = errors[ek];
+                      const inputId = `${cell.section}-${key}`;
+
+                      return (
+                        <TableCell key={inputId} className="align-middle">
+                          <div className="w-full max-w-[9rem]">
+                            <div className="flex h-9 items-center">
+                              {editing ? (
+                                <>
+                                  <Label htmlFor={inputId} className="sr-only">
+                                    {ITEM_KIND_LABEL[kind]} {cell.label}
+                                  </Label>
+                                  <Input
+                                    id={inputId}
+                                    type="number"
+                                    min={0.01}
+                                    step={0.01}
+                                    className="h-9 w-full"
+                                    value={value ?? ""}
+                                    onChange={(e) => onChange(cell.section, key, e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        confirmEdit(kind);
+                                      }
+                                      if (e.key === "Escape") {
+                                        e.preventDefault();
+                                        cancelEdit(kind);
+                                      }
+                                    }}
+                                    aria-invalid={Boolean(error)}
+                                  />
+                                </>
+                              ) : (
+                                <PriceDisplay value={value} />
+                              )}
+                            </div>
+                            <div className="mt-0.5 min-h-4">
+                              {editing && error ? (
+                                <p className="text-caption text-destructive">{error}</p>
+                              ) : null}
+                              {!editing && value !== saved ? (
+                                <span className="text-overline text-amber-700">Unsaved</span>
+                              ) : null}
+                            </div>
+                          </div>
+                        </TableCell>
+                      );
+                    })}
+                    <TableCell className="pr-4 text-right align-middle">
+                      <div className="ml-auto flex h-9 w-[76px] items-center justify-end gap-1">
+                        {editing ? (
+                          <>
+                            <Button
+                              type="button"
+                              size="icon"
+                              aria-label={`Confirm ${ITEM_KIND_LABEL[kind]} prices`}
+                              onClick={() => confirmEdit(kind)}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              aria-label={`Cancel ${ITEM_KIND_LABEL[kind]} edit`}
+                              onClick={() => cancelEdit(kind)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            aria-label={`Edit ${ITEM_KIND_LABEL[kind]}`}
+                            onClick={() => startEdit(kind)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </table>
         </div>
 
         <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -341,7 +358,8 @@ export function SetPriceScreen() {
               <DialogTitle>Update rates?</DialogTitle>
               <DialogDescription>
                 Are you sure you want to update these rates? Add-on rate changes will apply
-                immediately; global rate changes will apply from each subscriber’s next billing cycle.
+                immediately; global rate changes will apply from each subscriber’s next billing
+                cycle.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

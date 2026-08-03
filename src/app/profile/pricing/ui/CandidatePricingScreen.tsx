@@ -17,24 +17,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { SelectionChip } from "@/components/ui/selection-chip";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import {
+  FREE_MOCK_INTERVIEW_ALLOCATION,
+  FREE_STORYBOARD_ALLOCATION,
+} from "@/lib/candidateUsage";
 import {
   BILLING_CYCLE_LABEL,
   formatUsd,
-  getMasterclassById,
+  SEED_BUNDLES,
   type BillingCycle,
   type PaymentBundle,
 } from "@/lib/superAdminPaymentsData";
 import { usePaymentBundles } from "@/lib/usePaymentBundles";
-import {
-  useCandidateEntitlements,
-  useCandidateSubscription,
-} from "@/lib/useSubscriberPayments";
+import { useCandidateSubscription } from "@/lib/useSubscriberPayments";
 
 import { BundleCheckoutDialog } from "../../billing/ui/BundleCheckoutDialog";
 
 type CycleFilter = "monthly" | "yearly";
+
+/** Demo B2C plans that must always appear on the candidate pricing page. */
+const CANDIDATE_DEMO_BUNDLE_IDS = ["bundle_career_starter", "bundle_career_pro"] as const;
 
 const FAQ_ITEMS = [
   {
@@ -64,10 +68,7 @@ function bundleFeatures(bundle: PaymentBundle): string[] {
     features.push(`Storyboards × ${bundle.storyboard.quantity}`);
   }
   if (bundle.masterclass.included) {
-    for (const sel of bundle.masterclass.selections) {
-      const name = getMasterclassById(sel.masterclassId)?.name ?? "Masterclass";
-      features.push(`${name}: ${sel.selectedModuleIds.length} modules`);
-    }
+    features.push("Masterclass included");
   }
   return features;
 }
@@ -87,13 +88,34 @@ function yearlySavingsPercent(bundle: PaymentBundle): number | null {
 
 export function CandidatePricingScreen() {
   const [subscription, setSubscription] = useCandidateSubscription();
-  const [entitlements] = useCandidateEntitlements();
   const { bundles, hydrated } = usePaymentBundles();
 
-  const catalog = useMemo(
-    () => bundles.filter((b) => b.type === "B2C" && b.status === "active"),
-    [bundles],
-  );
+  const catalog = useMemo(() => {
+    const byId = new Map<string, PaymentBundle>();
+
+    // Always surface Career Starter + Career Pro from seed so demo allocations
+    // (e.g. Starter storyboards × 5) stay correct even if localStorage is stale.
+    for (const id of CANDIDATE_DEMO_BUNDLE_IDS) {
+      const fromSeed = SEED_BUNDLES.find((b) => b.id === id);
+      if (fromSeed) byId.set(id, fromSeed);
+    }
+
+    for (const b of bundles) {
+      if (b.type === "B2C" && b.status === "active" && !byId.has(b.id)) {
+        byId.set(b.id, b);
+      }
+    }
+
+    const order = ["bundle_career_starter", "bundle_interview_prep", "bundle_career_pro"];
+    return Array.from(byId.values()).sort((a, b) => {
+      const ai = order.indexOf(a.id);
+      const bi = order.indexOf(b.id);
+      const aRank = ai === -1 ? order.length : ai;
+      const bRank = bi === -1 ? order.length : bi;
+      if (aRank !== bRank) return aRank - bRank;
+      return a.name.localeCompare(b.name);
+    });
+  }, [bundles]);
 
   const availableCycles = useMemo(() => {
     const set = new Set<CycleFilter>();
@@ -167,8 +189,8 @@ export function CandidatePricingScreen() {
               Choose the plan that fits your interview prep
             </h1>
             <p className="text-body-sm mt-3 text-muted-foreground">
-              Compare Free and Active B2C Bundles. Subscribe or switch anytime — your new Bundle
-              takes effect as soon as payment succeeds.
+              Pick the Free baseline or a paid plan that matches how you prep. Subscribe or switch
+              anytime and your new plan starts as soon as payment succeeds.
             </p>
           </div>
           <Button type="button" variant="outline" asChild>
@@ -176,28 +198,40 @@ export function CandidatePricingScreen() {
           </Button>
         </div>
 
-        {availableCycles.length > 1 ? (
+        {availableCycles.includes("monthly") && availableCycles.includes("yearly") ? (
           <div className="flex flex-col items-center gap-3">
-            <div
-              className="inline-flex flex-wrap items-center justify-center gap-2"
-              role="group"
-              aria-label="Billing cycle"
+            <Tabs
+              value={effectiveCycle}
+              onValueChange={(v) => setCycleFilter(v as CycleFilter)}
+              className="w-auto items-center"
             >
-              {availableCycles.map((cycle) => (
-                <SelectionChip
-                  key={cycle}
-                  selected={effectiveCycle === cycle}
-                  onClick={() => setCycleFilter(cycle)}
+              <TabsList
+                aria-label="Billing cycle"
+                className="mx-0 mt-0 h-auto w-auto gap-1 rounded-full bg-muted p-1"
+              >
+                <TabsTrigger
+                  value="monthly"
+                  className="flex-none rounded-full border-transparent px-5 py-2 text-caption data-[state=active]:border-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
                 >
-                  {BILLING_CYCLE_LABEL[cycle]}
-                </SelectionChip>
-              ))}
-            </div>
+                  Monthly
+                </TabsTrigger>
+                <TabsTrigger
+                  value="yearly"
+                  className="flex-none rounded-full border-transparent px-5 py-2 text-caption data-[state=active]:border-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
+                >
+                  Yearly
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
             {effectiveCycle === "yearly" ? (
               <p className="text-caption text-muted-foreground">
                 Yearly billing saves versus paying monthly.
               </p>
-            ) : null}
+            ) : (
+              <p className="text-caption invisible" aria-hidden>
+                Yearly billing saves versus paying monthly.
+              </p>
+            )}
           </div>
         ) : null}
 
@@ -206,7 +240,7 @@ export function CandidatePricingScreen() {
         ) : (
           <section
             aria-label="Available plans"
-            className="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
+            className="grid grid-cols-1 gap-6 md:grid-cols-3"
           >
             <Card className="border border-border bg-card shadow-none">
               <CardHeader>
@@ -223,15 +257,10 @@ export function CandidatePricingScreen() {
                 </div>
                 <ul className="flex flex-col gap-2.5">
                   {[
-                    `Mock Interviews × ${entitlements.freeMockInterviews}`,
-                    `Storyboards × ${entitlements.freeStoryboards}`,
-                    entitlements.freeMasterclassModuleIds.length
-                      ? `Masterclass modules × ${entitlements.freeMasterclassModuleIds.length}`
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .map((item) => (
-                      <li key={item as string} className="flex items-start gap-2 text-caption">
+                    `Mock Interviews × ${FREE_MOCK_INTERVIEW_ALLOCATION}`,
+                    `Storyboards × ${FREE_STORYBOARD_ALLOCATION}`,
+                  ].map((item) => (
+                      <li key={item} className="flex items-start gap-2 text-caption">
                         <Check
                           className="mt-0.5 size-4 shrink-0 text-primary"
                           aria-hidden
@@ -320,21 +349,39 @@ export function CandidatePricingScreen() {
                         <li className="text-caption text-muted-foreground">No included items</li>
                       )}
                     </ul>
-                    {bundle.cycles.length > 1 ? (
-                      <p className="text-overline text-muted-foreground">
-                        Also available:{" "}
-                        {bundle.cycles
-                          .filter((c) => c.cycle !== effectiveCycle)
-                          .map((c) => `${BILLING_CYCLE_LABEL[c.cycle]} ${formatUsd(c.price)}`)
-                          .join(" · ")}
-                      </p>
-                    ) : null}
                   </CardContent>
                   <CardFooter>
                     {isCurrent ? (
-                      <Button type="button" variant="outline" className="w-full" disabled>
-                        Current plan
-                      </Button>
+                      <div className="flex w-full flex-col items-center gap-2">
+                        <Button type="button" variant="outline" className="w-full" disabled>
+                          {subscription.status === "pending_cancel"
+                            ? "Canceling"
+                            : "Current plan"}
+                        </Button>
+                        {subscription.status === "active" ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-auto px-0 text-caption font-medium text-muted-foreground hover:bg-transparent hover:text-destructive"
+                            onClick={() => {
+                              if (subscription.status !== "active" || !subscription.nextBillingDate) {
+                                toast.error("Unable to cancel right now. Open billing to try again.");
+                                return;
+                              }
+                              setSubscription((prev) => ({
+                                ...prev,
+                                status: "pending_cancel",
+                                accessEndsAt: prev.nextBillingDate,
+                              }));
+                              toast.success(
+                                "Cancellation scheduled. Reverting to Free in a few seconds for this demo.",
+                              );
+                            }}
+                          >
+                            Cancel plan
+                          </Button>
+                        ) : null}
+                      </div>
                     ) : (
                       <Button
                         type="button"
@@ -359,7 +406,18 @@ export function CandidatePricingScreen() {
           </p>
         ) : null}
 
-        <section aria-labelledby="pricing-faq-heading" className="mx-auto w-full max-w-3xl">
+        <section className="rounded-[16px] border border-border bg-card px-6 py-8 text-center">
+          <h2 className="text-h5 text-foreground">Need more usage on your current plan?</h2>
+          <p className="text-caption mx-auto mt-2 max-w-md text-muted-foreground">
+            Purchase Mock Interview, Storyboard, or Masterclass add-ons anytime — available on Free
+            and paid Bundles.
+          </p>
+          <Button type="button" className="mt-5" asChild>
+            <Link href="/profile/billing?addon=storyboard">Purchase Add-Ons</Link>
+          </Button>
+        </section>
+
+        <section aria-labelledby="pricing-faq-heading" className="w-full">
           <h2 id="pricing-faq-heading" className="text-h4 text-foreground">
             Billing FAQ
           </h2>
@@ -381,17 +439,6 @@ export function CandidatePricingScreen() {
               </details>
             ))}
           </div>
-        </section>
-
-        <section className="rounded-[16px] border border-border bg-card px-6 py-8 text-center">
-          <h2 className="text-h5 text-foreground">Need more usage on your current plan?</h2>
-          <p className="text-caption mx-auto mt-2 max-w-md text-muted-foreground">
-            Purchase Mock Interview, Storyboard, or Masterclass add-ons anytime — available on Free
-            and paid Bundles.
-          </p>
-          <Button type="button" className="mt-5" asChild>
-            <Link href="/profile/billing?addon=storyboard">Purchase Add-Ons</Link>
-          </Button>
         </section>
       </main>
 

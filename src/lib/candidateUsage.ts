@@ -1,5 +1,4 @@
 import {
-  defaultCandidateEntitlements,
   type CandidateEntitlements,
   type CandidateSubscriptionState,
   type PaymentBundle,
@@ -15,8 +14,8 @@ export const FREE_MOCK_INTERVIEW_ALLOCATION = 1;
 export const FREE_STORYBOARD_ALLOCATION = 3;
 export const FREE_REPORT_ALLOCATION = 1;
 
-/** Show storyboard upgrade banner at or above this usage percentage. */
-export const STORYBOARD_NEAR_LIMIT_PCT = 80;
+/** Soft near-limit threshold as a fraction of the subscriber’s plan storyboard limit. */
+const STORYBOARD_NEAR_LIMIT_PCT = 80;
 
 export type UsageMeter = {
   label: string;
@@ -77,14 +76,11 @@ export function countCompletedMasterclassModules(
   ).length;
 }
 
-/** Storyboard used count: preferential generation counter; falls back to saved dives. */
+/** Storyboard used count = saved Dive versions (not generation attempts). */
 export function resolveStoryboardUsed(
-  generationCount: number | null | undefined,
+  _generationCount: number | null | undefined,
   diveStore: StoryboardDiveStore | null | undefined,
 ): number {
-  if (typeof generationCount === "number" && Number.isFinite(generationCount)) {
-    return Math.max(0, Math.floor(generationCount));
-  }
   return countSavedStoryboardDives(diveStore);
 }
 
@@ -103,39 +99,73 @@ export function isFreePlan(subscription: CandidateSubscriptionState): boolean {
   return subscription.status === "free";
 }
 
+/** Paid active / pending_cancel with a resolved bundle (limits = bundle qty + add-ons only). */
+export function hasPaidBundleAccess(
+  subscription: CandidateSubscriptionState,
+  activeBundle: PaymentBundle | null,
+): boolean {
+  return (
+    (subscription.status === "active" || subscription.status === "pending_cancel") &&
+    activeBundle != null
+  );
+}
+
+/** Masterclass access: paid bundle inclusion or whole Masterclass add-on. */
+export function hasMasterclassAccess(
+  subscription: CandidateSubscriptionState,
+  entitlements: CandidateEntitlements,
+  activeBundle: PaymentBundle | null,
+): boolean {
+  if (
+    hasPaidBundleAccess(subscription, activeBundle) &&
+    activeBundle !== null &&
+    activeBundle.masterclass.included
+  ) {
+    return true;
+  }
+  if (entitlements.addOnMasterclassIncluded) return true;
+  // Legacy add-on path (module IDs) still grants access.
+  return entitlements.addOnMasterclassModuleIds.length > 0;
+}
+
 export function computeMockInterviewLimit(
+  subscription: CandidateSubscriptionState,
   entitlements: CandidateEntitlements,
   activeBundle: PaymentBundle | null,
 ): number {
-  const bundleQty =
-    activeBundle?.mockInterview.included ? activeBundle.mockInterview.quantity : 0;
-  return FREE_MOCK_INTERVIEW_ALLOCATION + entitlements.addOnMockInterviews + bundleQty;
+  const addOns = entitlements.addOnMockInterviews;
+  if (hasPaidBundleAccess(subscription, activeBundle) && activeBundle) {
+    const bundleQty = activeBundle.mockInterview.included
+      ? activeBundle.mockInterview.quantity
+      : 0;
+    return bundleQty + addOns;
+  }
+  return FREE_MOCK_INTERVIEW_ALLOCATION + addOns;
 }
 
 export function computeStoryboardLimit(
+  subscription: CandidateSubscriptionState,
   entitlements: CandidateEntitlements,
   activeBundle: PaymentBundle | null,
 ): number {
-  const bundleQty = activeBundle?.storyboard.included ? activeBundle.storyboard.quantity : 0;
-  return FREE_STORYBOARD_ALLOCATION + entitlements.addOnStoryboards + bundleQty;
+  const addOns = entitlements.addOnStoryboards;
+  if (hasPaidBundleAccess(subscription, activeBundle) && activeBundle) {
+    const bundleQty = activeBundle.storyboard.included ? activeBundle.storyboard.quantity : 0;
+    return bundleQty + addOns;
+  }
+  return FREE_STORYBOARD_ALLOCATION + addOns;
 }
 
+/**
+ * Other-benefits meter: 1 when Masterclass is included (plan or add-on), else 0 on Free.
+ * Candidates do not configure modules — this is an inclusion slot, not a per-module count.
+ */
 export function computeOtherBenefitsLimit(
+  subscription: CandidateSubscriptionState,
   entitlements: CandidateEntitlements,
   activeBundle: PaymentBundle | null,
 ): number {
-  const freeIds = new Set(entitlements.freeMasterclassModuleIds);
-  for (const id of entitlements.addOnMasterclassModuleIds) freeIds.add(id);
-  if (activeBundle?.masterclass.included) {
-    for (const sel of activeBundle.masterclass.selections) {
-      for (const id of sel.selectedModuleIds) freeIds.add(id);
-    }
-  }
-  // Fallback so empty entitlements still show a meaningful masterclass slot on Free.
-  if (freeIds.size === 0) {
-    return defaultCandidateEntitlements().freeMasterclassModuleIds.length || 1;
-  }
-  return freeIds.size;
+  return hasMasterclassAccess(subscription, entitlements, activeBundle) ? 1 : 0;
 }
 
 export function computeCandidateUsage(input: {
@@ -149,21 +179,40 @@ export function computeCandidateUsage(input: {
 }): CandidateUsageSnapshot {
   const planLabel = resolvePlanLabel(input.subscription, input.activeBundle);
 
-  const mockLimit = computeMockInterviewLimit(input.entitlements, input.activeBundle);
-  const storyLimit = computeStoryboardLimit(input.entitlements, input.activeBundle);
-  const otherLimit = computeOtherBenefitsLimit(input.entitlements, input.activeBundle);
+  const mockLimit = computeMockInterviewLimit(
+    input.subscription,
+    input.entitlements,
+    input.activeBundle,
+  );
+  const storyLimit = computeStoryboardLimit(
+    input.subscription,
+    input.entitlements,
+    input.activeBundle,
+  );
+  const otherLimit = computeOtherBenefitsLimit(
+    input.subscription,
+    input.entitlements,
+    input.activeBundle,
+  );
 
   const mockUsed = countInterviewReports(input.reports);
-  const storyUsed = resolveStoryboardUsed(input.storyboardGenerationCount, input.diveStore);
-  const otherUsed = countCompletedMasterclassModules(input.trainingProgress);
+  const savedStoryboards = countSavedStoryboardDives(input.diveStore);
+  const storyUsed = savedStoryboards;
+  const otherUsed = Math.min(
+    otherLimit,
+    countCompletedMasterclassModules(input.trainingProgress) > 0 ? 1 : 0,
+  );
 
   const mockInterviews = meter("Mock interviews", mockUsed, mockLimit);
   const storyboards = meter("Storyboards", storyUsed, storyLimit);
   const otherBenefits = meter("Other benefits", otherUsed, otherLimit);
 
   const storyboardUsagePct = storyboards.pct;
+  // Soft banner after the first saved storyboard, when at/near the subscriber’s plan limit.
   const isNearStoryboardLimit =
-    storyLimit > 0 && storyboardUsagePct >= STORYBOARD_NEAR_LIMIT_PCT;
+    savedStoryboards >= 1 &&
+    storyLimit > 0 &&
+    (storyUsed >= storyLimit || storyboardUsagePct >= STORYBOARD_NEAR_LIMIT_PCT);
   const isStoryboardAtLimit = storyLimit > 0 && storyUsed >= storyLimit;
 
   return {

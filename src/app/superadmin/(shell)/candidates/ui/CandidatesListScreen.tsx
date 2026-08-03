@@ -5,15 +5,15 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Handshake,
   MoreHorizontal,
-  Plus,
   Search,
+  Users,
 } from "lucide-react";
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { OrgAdminUserDetailDrawer } from "@/app/orgadmin/(shell)/users/ui/OrgAdminUserDetailDrawer";
+import { OrgAdminUserStatusPill } from "@/app/orgadmin/(shell)/users/ui/OrgAdminUserStatusPill";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,51 +41,39 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  COMMISSION_TYPE_LABEL,
-  PARTNER_STATUS_LABEL,
-  PARTNER_TYPE_LABEL,
-  type CommissionType,
-  type Partner,
-  type PartnerStatus,
-  type PartnerType,
-} from "@/lib/superAdminPartners";
-import { usePartners } from "@/lib/usePartners";
-
-import { PartnerDetailDrawer } from "./PartnerDetailDrawer";
-import { PartnerStatusPill } from "./PartnerStatusPills";
+  ORG_ADMIN_USERS,
+  ORG_ADMIN_USER_STATUS_LABEL,
+  type OrgAdminUser,
+  type OrgAdminUserStatus,
+} from "@/lib/orgAdminUsers";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
 
-export function PartnersListScreen() {
-  const { partners, updatePartner, existingEmails } = usePartners();
+export function CandidatesListScreen() {
+  const [candidates, setCandidates] = useState<OrgAdminUser[]>(ORG_ADMIN_USERS);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<PartnerType | "all">("all");
-  const [commissionFilter, setCommissionFilter] = useState<CommissionType | "all">("all");
-  const [statusFilter, setStatusFilter] = useState<PartnerStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<OrgAdminUserStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(ROWS_PER_PAGE_OPTIONS[0]);
-  const [confirmTarget, setConfirmTarget] = useState<{ partner: Partner; nextStatus: PartnerStatus } | null>(null);
-  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{
+    user: OrgAdminUser;
+    nextStatus: OrgAdminUserStatus;
+  } | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<OrgAdminUser | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-  const selectedPartner = partners.find((p) => p.id === selectedPartnerId) ?? null;
+  const selectedUser = candidates.find((u) => u.id === selectedUserId) ?? null;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return partners.filter((partner) => {
-      if (
-        q &&
-        !partner.fullName.toLowerCase().includes(q) &&
-        !partner.email.toLowerCase().includes(q) &&
-        !partner.referralCode.toLowerCase().includes(q)
-      ) {
+    return candidates.filter((user) => {
+      if (q && !user.name.toLowerCase().includes(q) && !user.email.toLowerCase().includes(q)) {
         return false;
       }
-      if (typeFilter !== "all" && partner.partnerType !== typeFilter) return false;
-      if (commissionFilter !== "all" && partner.commissionType !== commissionFilter) return false;
-      if (statusFilter !== "all" && partner.status !== statusFilter) return false;
+      if (statusFilter !== "all" && user.status !== statusFilter) return false;
       return true;
     });
-  }, [partners, search, typeFilter, commissionFilter, statusFilter]);
+  }, [candidates, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
   const currentPage = Math.min(page, totalPages);
@@ -97,39 +85,59 @@ export function PartnersListScreen() {
     setPage(1);
   }
 
-  function handleViewDetails(partner: Partner) {
-    setSelectedPartnerId(partner.id);
+  function handleViewDetails(user: OrgAdminUser) {
+    setSelectedUserId(user.id);
   }
 
-  function handleRequestStatusChange(partner: Partner) {
-    setConfirmTarget({
-      partner,
-      nextStatus: partner.status === "active" ? "inactive" : "active",
-    });
+  function handleUpdateUser(id: string, patch: Partial<OrgAdminUser>) {
+    setCandidates((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)));
+  }
+
+  function handleRequestStatusChange(user: OrgAdminUser) {
+    setConfirmTarget({ user, nextStatus: user.status === "active" ? "inactive" : "active" });
   }
 
   function handleConfirmStatusChange() {
     if (!confirmTarget) return;
-    const { partner, nextStatus } = confirmTarget;
-    updatePartner(partner.id, { status: nextStatus });
-    setConfirmTarget(null);
-    toast.success(
-      nextStatus === "inactive"
-        ? "Partner deactivated. Referral code is inactive; history is preserved."
-        : "Partner reactivated successfully.",
+    const { user, nextStatus } = confirmTarget;
+    setCandidates((prev) =>
+      prev.map((u) =>
+        u.id === user.id
+          ? {
+              ...u,
+              status: nextStatus,
+              joinedDate:
+                nextStatus === "active"
+                  ? (u.joinedDate ?? new Date().toISOString().slice(0, 10))
+                  : u.joinedDate,
+            }
+          : u,
+      ),
     );
+    setConfirmTarget(null);
+    toast.success("Candidate status updated successfully.");
+  }
+
+  function handleResendInvite(user: OrgAdminUser) {
+    toast.success(`Invitation resent to ${user.email}.`);
+  }
+
+  function handleRequestRemove(user: OrgAdminUser) {
+    setRemoveTarget(user);
+  }
+
+  function handleConfirmRemove() {
+    if (!removeTarget) return;
+    setCandidates((prev) => prev.filter((u) => u.id !== removeTarget.id));
+    setRemoveTarget(null);
+    if (selectedUserId === removeTarget.id) setSelectedUserId(null);
+    toast.success(`${removeTarget.name} was removed.`);
   }
 
   return (
     <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
-        <h1 className="text-h4 text-foreground">Partners</h1>
-        <Button asChild>
-          <Link href="/superadmin/partners/new">
-            <Plus className="h-4 w-4" />
-            Add Partner
-          </Link>
-        </Button>
+        <h1 className="text-h4 text-foreground">Candidates</h1>
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-6 py-3">
@@ -141,53 +149,15 @@ export function PartnersListScreen() {
               setSearch(e.target.value);
               resetToFirstPage();
             }}
-            placeholder="Search by name, email, or referral code"
+            placeholder="Search by name or email"
             className="pl-9"
           />
         </div>
         <Separator orientation="vertical" className="h-6" />
         <Select
-          value={typeFilter}
-          onValueChange={(v) => {
-            setTypeFilter(v as PartnerType | "all");
-            resetToFirstPage();
-          }}
-        >
-          <SelectTrigger size="sm" className="w-[200px]">
-            <SelectValue placeholder="Partner Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            {(Object.entries(PARTNER_TYPE_LABEL) as [PartnerType, string][]).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={commissionFilter}
-          onValueChange={(v) => {
-            setCommissionFilter(v as CommissionType | "all");
-            resetToFirstPage();
-          }}
-        >
-          <SelectTrigger size="sm" className="w-[180px]">
-            <SelectValue placeholder="Commission Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Commission Types</SelectItem>
-            {(Object.entries(COMMISSION_TYPE_LABEL) as [CommissionType, string][]).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
           value={statusFilter}
           onValueChange={(v) => {
-            setStatusFilter(v as PartnerStatus | "all");
+            setStatusFilter(v as OrgAdminUserStatus | "all");
             resetToFirstPage();
           }}
         >
@@ -196,11 +166,13 @@ export function PartnersListScreen() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            {(Object.entries(PARTNER_STATUS_LABEL) as [PartnerStatus, string][]).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
+            {(Object.entries(ORG_ADMIN_USER_STATUS_LABEL) as [OrgAdminUserStatus, string][]).map(
+              ([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ),
+            )}
           </SelectContent>
         </Select>
       </div>
@@ -208,63 +180,82 @@ export function PartnersListScreen() {
       <div className="min-h-0 flex-1 overflow-y-auto">
         {pageRows.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-6 py-20 text-center">
-            <Handshake className="h-8 w-8 text-muted-foreground" />
+            <Users className="h-8 w-8 text-muted-foreground" />
             <p className="text-body-sm font-medium text-foreground">
-              {partners.length === 0 ? "No partners found." : "No matching partners found."}
+              {candidates.length === 0 ? "No candidates found." : "No matching candidates found."}
             </p>
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
             <TableHeader className="sticky top-0 z-10 border-b border-border bg-background">
               <TableRow>
-                <TableHead className="text-overline pl-6 text-muted-foreground">Full Name</TableHead>
+                <TableHead className="text-overline pl-6 text-muted-foreground">Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Email</TableHead>
-                <TableHead className="text-overline text-muted-foreground">Partner Type</TableHead>
-                <TableHead className="text-overline text-muted-foreground">Referral Code</TableHead>
-                <TableHead className="text-overline text-muted-foreground">Commission</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Status</TableHead>
-                <TableHead className="text-overline pr-6 text-right text-muted-foreground">Actions</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Invited Date</TableHead>
+                <TableHead className="text-overline pr-6 text-right text-muted-foreground">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pageRows.map((partner) => (
-                <TableRow key={partner.id}>
+              {pageRows.map((user) => (
+                <TableRow key={user.id}>
                   <TableCell className="pl-6">
                     <button
                       type="button"
-                      onClick={() => handleViewDetails(partner)}
+                      onClick={() => handleViewDetails(user)}
                       className="text-left font-semibold text-text-primary hover:underline"
                     >
-                      {partner.fullName}
+                      {user.name}
                     </button>
                   </TableCell>
-                  <TableCell className="text-caption text-muted-foreground">{partner.email}</TableCell>
-                  <TableCell className="text-caption text-muted-foreground">
-                    {PARTNER_TYPE_LABEL[partner.partnerType]}
-                  </TableCell>
-                  <TableCell className="font-mono text-caption text-foreground">{partner.referralCode}</TableCell>
-                  <TableCell className="text-caption text-muted-foreground">
-                    {COMMISSION_TYPE_LABEL[partner.commissionType]}
-                  </TableCell>
+                  <TableCell className="text-caption text-muted-foreground">{user.email}</TableCell>
                   <TableCell>
-                    <PartnerStatusPill status={partner.status} />
+                    <OrgAdminUserStatusPill status={user.status} />
+                  </TableCell>
+                  <TableCell className="text-caption text-muted-foreground">
+                    {user.invitedDate}
                   </TableCell>
                   <TableCell className="pr-6 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label={`Actions for ${partner.fullName}`}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Actions for ${user.name}`}
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleViewDetails(partner)}>View Details</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleViewDetails(partner)}>Edit Partner</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleViewDetails(user)}>
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleViewDetails(user)}>
+                          Edit User
+                        </DropdownMenuItem>
+                        {user.status === "invited" ? (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleResendInvite(user)}>
+                              Resend Invite
+                            </DropdownMenuItem>
+                          </>
+                        ) : null}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          variant={partner.status === "active" ? "destructive" : "default"}
-                          onClick={() => handleRequestStatusChange(partner)}
+                          variant={user.status === "active" ? "destructive" : "default"}
+                          onClick={() => handleRequestStatusChange(user)}
                         >
-                          {partner.status === "active" ? "Deactivate Partner" : "Activate Partner"}
+                          {user.status === "active" ? "Deactivate User" : "Activate User"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => handleRequestRemove(user)}
+                        >
+                          Remove User
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -354,12 +345,12 @@ export function PartnersListScreen() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {confirmTarget?.nextStatus === "inactive" ? "Deactivate partner?" : "Activate partner?"}
+              {confirmTarget?.nextStatus === "inactive" ? "Deactivate user?" : "Activate user?"}
             </DialogTitle>
             <DialogDescription>
               {confirmTarget?.nextStatus === "inactive"
-                ? `Are you sure you want to deactivate "${confirmTarget?.partner.fullName}"? They will lose login access and their referral code will stop accepting new signups. History and earnings are preserved.`
-                : `Are you sure you want to activate "${confirmTarget?.partner.fullName}"? They will regain platform access and their referral code will become active again.`}
+                ? `Are you sure you want to deactivate "${confirmTarget?.user.name}"? They will lose platform access immediately.`
+                : `Are you sure you want to activate "${confirmTarget?.user.name}"? They will regain platform access immediately.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -376,13 +367,36 @@ export function PartnersListScreen() {
         </DialogContent>
       </Dialog>
 
-      <PartnerDetailDrawer
-        partner={selectedPartner}
+      <Dialog
+        open={!!removeTarget}
         onOpenChange={(open) => {
-          if (!open) setSelectedPartnerId(null);
+          if (!open) setRemoveTarget(null);
         }}
-        existingEmails={existingEmails}
-        onUpdate={(id, patch) => updatePartner(id, patch)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove user?</DialogTitle>
+            <DialogDescription>
+              {`Are you sure you want to remove "${removeTarget?.name}"? This permanently removes them from the candidate list.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setRemoveTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmRemove}>
+              Remove
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <OrgAdminUserDetailDrawer
+        user={selectedUser}
+        onOpenChange={(open) => {
+          if (!open) setSelectedUserId(null);
+        }}
+        onUpdate={handleUpdateUser}
         onRequestStatusChange={handleRequestStatusChange}
       />
     </div>

@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   Download,
   Plus,
+  X,
 } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
@@ -15,6 +16,7 @@ import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/ui/icon-button";
 import {
   Card,
   CardContent,
@@ -31,9 +33,8 @@ import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { SuccessDriverMark } from "@/components/ui/success-driver-card";
 import { buildEmptyCraftingDive } from "@/app/storyboard/crafting/mockCraftingDraft";
 import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
-import { StoryboardUpgradeBanner } from "@/app/storyboard/ui/StoryboardUpgradeBanner";
 import { CoreFourSelectionPanel } from "@/app/onboarding/ui/CoreFourSelectionPanel";
-import { computeCandidateUsage } from "@/lib/candidateUsage";
+import { computeCandidateUsage, isFreePlan } from "@/lib/candidateUsage";
 import {
   DEMO_CONSULTANT_QUESTION_COUNT,
   competencySpec,
@@ -63,6 +64,7 @@ import {
   remainingDives,
   savedDivesForRole,
   upsertEditingDive,
+  commitSavedDive,
 } from "@/lib/storyboardDraft";
 import { writeJson } from "@/lib/storage";
 import {
@@ -246,6 +248,11 @@ export function StoryboardAgent() {
     0,
   );
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [nearLimitBannerDismissedFor, setNearLimitBannerDismissedFor] =
+    useLocalStorageState<number | null>(
+      StorageKeys.candidateStoryboardNearLimitBannerDismissed,
+      null,
+    );
 
   const activeBundle =
     subscription.bundleId != null
@@ -273,6 +280,11 @@ export function StoryboardAgent() {
       storyboardGenerationCount,
     ],
   );
+
+  const freePlan = isFreePlan(subscription);
+  const showNearLimitBanner =
+    usage.isNearStoryboardLimit &&
+    (freePlan || nearLimitBannerDismissedFor !== usage.storyboardLimit);
 
   const role = roleProfile?.targetRole?.trim() ?? "";
   const firstName = useMemo(
@@ -324,7 +336,10 @@ export function StoryboardAgent() {
   );
   const postCraftHome = savedDives.length > 0;
   const showDiveHome = postCraftHome && !addCompetencyOpen && !intakeMode;
-  const divesLeft = role && diveHydrated ? remainingDives(diveStore, role) : MAX_DIVES_PER_ROLE;
+  const maxDives =
+    usage.storyboardLimit > 0 ? usage.storyboardLimit : MAX_DIVES_PER_ROLE;
+  const divesLeft =
+    role && diveHydrated ? remainingDives(diveStore, role, maxDives) : maxDives;
   const latestDive = savedDives[0] ?? null;
 
   useEffect(() => {
@@ -355,7 +370,7 @@ export function StoryboardAgent() {
     const wantAdd = (searchParams.get("addCompetency") ?? "").trim();
     if (wantAdd !== "1" && wantAdd.toLowerCase() !== "true") return;
     if (!role || !diveHydrated) return;
-    if (divesLeft <= 0 || !canStartNewDive(diveStore, role)) {
+    if (divesLeft <= 0 || !canStartNewDive(diveStore, role, maxDives)) {
       router.replace("/storyboard");
       return;
     }
@@ -370,6 +385,7 @@ export function StoryboardAgent() {
     diveHydrated,
     diveStore,
     divesLeft,
+    maxDives,
     lockedCompetencyIds,
   ]);
 
@@ -409,14 +425,14 @@ export function StoryboardAgent() {
     focusIds?: CompetencyId[],
   ) {
     if (!role || !latestDive) return;
-    if (!canStartNewDive(diveStore, role)) return;
+    if (!canStartNewDive(diveStore, role, maxDives)) return;
     if (usage.isStoryboardAtLimit) {
       setDiveConfirmOpen(false);
       setUpgradeModalOpen(true);
       return;
     }
-    const nextNum = (latestDive.diveNumber + 1) as 1 | 2 | 3;
-    if (nextNum > 3) return;
+    const nextNum = latestDive.diveNumber + 1;
+    if (nextNum > maxDives) return;
     const queue = focusIds?.length ? focusIds : focusQueue;
     const cloned = cloneDiveForNext(latestDive, nextNum, unlock);
     const seeded = seedDiveFromDemoExperiences(
@@ -479,7 +495,7 @@ export function StoryboardAgent() {
 
   function openAddCompetencyPicker() {
     if (!role || divesLeft <= 0) return;
-    if (!canStartNewDive(diveStore, role)) return;
+    if (!canStartNewDive(diveStore, role, maxDives)) return;
     setAddCompetencySelected(lockedCompetencyIds);
     setAddCompetencyError(null);
     setAddCompetencyOpen(true);
@@ -664,9 +680,9 @@ What should this experience be called? (short title, up to ~15 words)`;
     }
 
     const existingEditing = editingDiveForRole(diveStore, role);
-    const diveNumber = (existingEditing?.diveNumber ??
-      ((latestSavedDive(diveStore, role)?.diveNumber ?? 0) + 1)) as 1 | 2 | 3;
-    const safeNumber = Math.min(3, Math.max(1, diveNumber)) as 1 | 2 | 3;
+    const diveNumber =
+      existingEditing?.diveNumber ?? (latestSavedDive(diveStore, role)?.diveNumber ?? 0) + 1;
+    const safeNumber = Math.min(maxDives, Math.max(1, diveNumber));
 
     const base =
       existingEditing ??
@@ -677,12 +693,13 @@ What should this experience be called? (short title, up to ~15 words)`;
       focusQueue,
       roleProfile?.aboutYouAnswer,
     );
-    const nextStore = upsertEditingDive(diveStore, seeded);
+    const nextStore = commitSavedDive(diveStore, seeded);
     writeJson(StorageKeys.storyboardDives, nextStore);
     setDiveStore(nextStore);
     setStoryboardGenerationCount((n) => n + 1);
-
-    router.push("/storyboard/crafting");
+    setCraftUi("idle");
+    setStatusLine(null);
+    router.replace("/storyboard");
   }
 
   function handleText(text: string) {
@@ -843,7 +860,6 @@ What should this experience be called? (short title, up to ~15 words)`;
       <AppShell>
         <CoachFloatingNav />
         <div className="pb-44">
-          {usage.isNearStoryboardLimit ? <StoryboardUpgradeBanner /> : null}
           <Card className="gap-0 py-0">
             <CardContent className="space-y-4 p-6">
               <h2 className="text-h4 text-text-primary">First, set a target role.</h2>
@@ -979,12 +995,12 @@ What should this experience be called? (short title, up to ~15 words)`;
     </div>
   );
 
-  function renderDiveCard(dive: StoryboardDive, isCurrent: boolean) {
+  function renderDiveCard(dive: StoryboardDive) {
     const divePillars = SUCCESS_DRIVER_ORDER.map((id) => ({
       id,
       score: dive.pillarScores?.[id] ?? 0,
     }));
-    const canAdd = divesLeft > 0 && (isCurrent || dive.diveNumber === 1);
+    const canAdd = divesLeft > 0 && !usage.isStoryboardAtLimit;
     const overallScore = dive.overallScore > 0 ? dive.overallScore : null;
 
     return (
@@ -1049,7 +1065,7 @@ What should this experience be called? (short title, up to ~15 words)`;
               <Button
                 type="button"
                 variant="ghost"
-                className="h-auto w-fit gap-2 rounded-md p-0 pl-0! text-[14px] font-medium leading-5 text-primary underline decoration-transparent underline-offset-2 hover:bg-transparent hover:text-primary hover:decoration-current"
+                className="h-auto gap-2 self-start rounded-md bg-transparent py-0 pl-2! pr-4! text-[14px] font-medium leading-5 text-[#095B73] shadow-none hover:bg-transparent hover:text-[#095B73] hover:underline [&_svg]:text-[#095B73]"
                 onClick={startAddCompetency}
               >
                 <Plus className="size-4" />
@@ -1121,7 +1137,6 @@ What should this experience be called? (short title, up to ~15 words)`;
             "flex min-h-[calc(100vh-3.5rem-10rem)] flex-col justify-center",
         )}
       >
-        {usage.isNearStoryboardLimit ? <StoryboardUpgradeBanner /> : null}
         {addCompetencyOpen ? (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -1162,22 +1177,36 @@ What should this experience be called? (short title, up to ~15 words)`;
                 <span className="rounded-sm bg-[#B9EFF4] px-1 text-[#095B73]">{role}</span>
               </p>
             </div>
-            {divesLeft <= 0 ? (
+            {showNearLimitBanner ? (
               <div
                 role="status"
                 className="flex w-full flex-col gap-3 rounded-lg border border-extended-light-cyan bg-extended-light-cyan/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <p className="min-w-0 flex-1 text-body-sm leading-6 text-extended-green-blue">
-                  You&apos;ve used all {MAX_DIVES_PER_ROLE} Dives for this role. Earlier Dives stay
-                  viewable and read-only.
+                  {freePlan
+                    ? "Keep refining your stories. Upgrade for more generations."
+                    : `You're close to your ${activeBundle?.name ?? "plan"} storyboard limit. Purchase add-ons anytime for more.`}
                 </p>
-                <Button asChild size="sm" className="shrink-0 self-start sm:self-center">
-                  <Link href="/profile/pricing">Upgrade Plan</Link>
-                </Button>
+                {freePlan ? (
+                  <Button asChild size="sm" className="shrink-0 self-start sm:self-center">
+                    <Link href="/profile/pricing">Upgrade Plan</Link>
+                  </Button>
+                ) : (
+                  <IconButton
+                    type="button"
+                    variant="ghost"
+                    size="md"
+                    className="shrink-0 self-start text-extended-green-blue sm:self-center"
+                    aria-label="Dismiss"
+                    onClick={() => setNearLimitBannerDismissedFor(usage.storyboardLimit)}
+                  >
+                    <X />
+                  </IconButton>
+                )}
               </div>
             ) : null}
             <div className="space-y-4">
-              {savedDives.map((dive, idx) => renderDiveCard(dive, idx === 0))}
+              {savedDives.map((dive) => renderDiveCard(dive))}
             </div>
           </div>
         ) : (
@@ -1253,7 +1282,7 @@ What should this experience be called? (short title, up to ~15 words)`;
             <DialogTitle>Start a new Dive?</DialogTitle>
             <DialogDescription>
               This will start a new Dive, a deeper version of your storyboard built on everything
-              you&apos;ve captured so far. You have {divesLeft} of {MAX_DIVES_PER_ROLE} remaining.
+              you&apos;ve captured so far. You have {divesLeft} of {maxDives} remaining.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

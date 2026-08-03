@@ -140,51 +140,51 @@ export function PartnerDashboardScreen() {
           </CardContent>
         </Card>
         <KpiCard label="Total Referrals" value={formatNumber(dataset.totalReferrals)} icon={Users} />
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Conversion Funnel</CardTitle>
-          <CardDescription>
-            User journey from referral code usage through paid conversion.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {funnel.every((s) => s.count === 0) ? (
-            <p className="py-10 text-center text-caption text-muted-foreground">
-              No analytics data available for selected filters.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {funnel.map((stage, index) => {
-                const widthPct = Math.max(8, Math.round((stage.count / maxFunnel) * 100));
-                return (
-                  <div key={stage.key} className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-body-sm text-foreground">
-                        <span className="mr-2 text-caption text-muted-foreground">{index + 1}.</span>
-                        {stage.label}
-                      </span>
-                      <span className="text-body-sm font-medium text-foreground">
-                        {formatNumber(stage.count)}
-                      </span>
+        <Card className="sm:col-span-2">
+          <CardHeader>
+            <CardTitle>Conversion Funnel</CardTitle>
+            <CardDescription>
+              User journey from referral code usage through paid conversion.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {funnel.every((s) => s.count === 0) ? (
+              <p className="py-10 text-center text-caption text-muted-foreground">
+                No analytics data available for selected filters.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {funnel.map((stage, index) => {
+                  const widthPct = Math.max(8, Math.round((stage.count / maxFunnel) * 100));
+                  return (
+                    <div key={stage.key} className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-body-sm text-foreground">
+                          <span className="mr-2 text-caption text-muted-foreground">{index + 1}.</span>
+                          {stage.label}
+                        </span>
+                        <span className="text-body-sm font-medium text-foreground">
+                          {formatNumber(stage.count)}
+                        </span>
+                      </div>
+                      <div className="h-3 w-full rounded-full bg-muted">
+                        <div
+                          className={cn(
+                            "h-3 rounded-full transition-all",
+                            index === funnel.length - 1 ? "bg-scoring-green" : "bg-primary",
+                          )}
+                          style={{ width: `${widthPct}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-3 w-full rounded-full bg-muted">
-                      <div
-                        className={cn(
-                          "h-3 rounded-full transition-all",
-                          index === funnel.length - 1 ? "bg-scoring-green" : "bg-primary",
-                        )}
-                        style={{ width: `${widthPct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -44,7 +44,6 @@ import {
   type CompetencyId,
   type PillarId,
   type StoryboardDive,
-  canStartNewDive,
   classifySecondaryCompetencies,
   commitSavedDive,
   diveById,
@@ -61,6 +60,7 @@ import {
   CAR_WORD_HARD_CAP,
   INTRO_WORD_HARD_CAP,
   LARGE_PASTE_CHAR_THRESHOLD,
+  MAX_DIVES_PER_ROLE,
   carTotalWords,
   clampToWordCap,
   isLargePaste,
@@ -109,6 +109,9 @@ const TA =
 
 const COMPETENCY_REGEN_LIMIT = 2;
 
+const addCompetencyBtnClass =
+  "h-auto gap-2 rounded-md bg-transparent py-0 pl-2! pr-4! text-[14px] font-medium leading-5 text-[#095B73] shadow-none hover:bg-transparent hover:text-[#095B73] hover:underline [&_svg]:text-[#095B73]";
+
 /** Quick-action presets for the inline Edit / regenerate bar (craft + read-only). */
 const STORYBOARD_IMPROVE_CHIPS = [
   {
@@ -142,9 +145,6 @@ const improveChipClassName =
   "h-7 pl-2.5 pr-2.5 text-[12px] font-medium leading-none";
 
 type StoryboardImproveChipId = (typeof STORYBOARD_IMPROVE_CHIPS)[number]["id"];
-
-const addCompetencyBtnClass =
-  "h-auto gap-2 rounded-md bg-transparent py-0 pl-2! pr-4! text-[14px] font-medium leading-5 text-[#095B73] shadow-none hover:bg-transparent hover:text-[#095B73] hover:underline [&_svg]:text-[#095B73]";
 
 function shortSentence(text: string) {
   return text.trim().replace(/\s+/g, " ").replace(/[.?!]+$/g, "");
@@ -252,17 +252,16 @@ export function CraftingScreen() {
     return editingDiveForRole(diveStore, role) ?? latestSavedDive(diveStore, role);
   }, [role, diveHydrated, diveParam, diveStore]);
 
-  const latestSaved = useMemo(
-    () => (role && diveHydrated ? latestSavedDive(diveStore, role) : null),
-    [role, diveHydrated, diveStore],
-  );
-
   const readOnly = Boolean(activeDive && activeDive.status === "saved");
-  const isLatestSaved =
-    Boolean(readOnly && activeDive && latestSaved && activeDive.id === latestSaved.id);
-  const divesLeft = role && diveHydrated ? remainingDives(diveStore, role) : 0;
-  const canDeepen =
-    isLatestSaved && role ? canStartNewDive(diveStore, role) && divesLeft > 0 : false;
+
+  const maxDives =
+    usage.storyboardLimit > 0 ? usage.storyboardLimit : MAX_DIVES_PER_ROLE;
+  const divesLeft = role && diveHydrated ? remainingDives(diveStore, role, maxDives) : 0;
+  const underStoryboardLimit = divesLeft > 0 && !usage.isStoryboardAtLimit;
+  const showAddOnDiveCard =
+    Boolean(activeDive) &&
+    underStoryboardLimit &&
+    (readOnly || activeDive?.diveNumber === 1);
 
   const updateDive = useCallback(
     (updater: (d: StoryboardDive) => StoryboardDive) => {
@@ -387,9 +386,9 @@ export function CraftingScreen() {
 
   /** From a saved Dive: open competency picker, then Dive confirm on storyboard. */
   const handleAddCompetencyFromReadOnly = useCallback(() => {
-    if (!canDeepen) return;
+    if (!showAddOnDiveCard || !readOnly) return;
     router.push("/storyboard?addCompetency=1");
-  }, [canDeepen, router]);
+  }, [showAddOnDiveCard, readOnly, router]);
 
   const handleDownload = useCallback(() => {
     if (!activeDive) return;
@@ -402,9 +401,6 @@ export function CraftingScreen() {
     id,
     score: activeDive?.pillarScores?.[id] ?? 0,
   }));
-  const showAddOnDiveCard =
-    Boolean(activeDive) &&
-    (readOnly ? canDeepen : activeDive?.diveNumber === 1);
 
   if (!role) {
     return (
@@ -499,17 +495,6 @@ export function CraftingScreen() {
             </div>
             {readOnly ? (
               <div className="flex flex-wrap items-center gap-2 print:hidden">
-                {canDeepen ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className={addCompetencyBtnClass}
-                    onClick={handleAddCompetencyFromReadOnly}
-                  >
-                    <Plus className="size-4" />
-                    Add Competency
-                  </Button>
-                ) : null}
                 <Button
                   type="button"
                   size="icon"
@@ -766,17 +751,6 @@ export function CraftingScreen() {
                   Edits auto-save. Finalize to lock this Dive as read-only.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {activeDive?.diveNumber === 1 ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className={addCompetencyBtnClass}
-                      onClick={handleAddCompetencyWhileEditing}
-                    >
-                      <Plus className="size-4" />
-                      Add Competency
-                    </Button>
-                  ) : null}
                   <Button type="button" onClick={handleSaveStoryboard}>
                     <Save />
                     Save storyboard

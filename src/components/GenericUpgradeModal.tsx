@@ -28,8 +28,8 @@ export function GenericUpgradeModal({ open, onOpenChange }: Props) {
         <DialogHeader>
           <DialogTitle>Upgrade your plan</DialogTitle>
           <DialogDescription>
-            You&apos;ve reached a Free plan limit or tried to access a feature that requires a paid
-            plan. Upgrade to unlock more access and continue your preparation without interruption.
+            Upgrading gives you more room to practice with the tools you already rely on, so you can
+            keep building momentum in your preparation.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -16,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
   BILLING_CYCLE_LABEL,
@@ -363,7 +365,7 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
           </>
         }
       >
-        <Card>
+        <Card className="mx-auto w-full max-w-[800px]">
           <CardHeader>
             <CardTitle>{bundle.name}</CardTitle>
             <CardDescription>
@@ -403,13 +405,13 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
         </>
       }
     >
-      <div className="flex flex-col gap-6">
+      <div className="mx-auto flex w-full max-w-[800px] flex-col gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Bundle Details</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-2">
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="bundle-name">Bundle Name</Label>
               <Input
                 id="bundle-name"
@@ -419,22 +421,14 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
               />
               {errors.name ? <p className="text-caption text-destructive">{errors.name}</p> : null}
             </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="bundle-desc">Description</Label>
-              <Textarea
-                id="bundle-desc"
-                value={bundle.description}
-                onChange={(e) => updateField("description", e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <Label>Type</Label>
               <Select
                 value={bundle.type}
                 disabled={typeLocked}
                 onValueChange={(v) => setType(v as ClientType)}
               >
-                <SelectTrigger aria-invalid={Boolean(errors.type)}>
+                <SelectTrigger className="w-full" aria-invalid={Boolean(errors.type)}>
                   <SelectValue placeholder="Select Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -447,6 +441,14 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
               ) : null}
               {errors.type ? <p className="text-caption text-destructive">{errors.type}</p> : null}
             </div>
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <Label htmlFor="bundle-desc">Description</Label>
+              <Textarea
+                id="bundle-desc"
+                value={bundle.description}
+                onChange={(e) => updateField("description", e.target.value)}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -455,219 +457,262 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
             <CardTitle>Included Items</CardTitle>
             <CardDescription>At least one item type is required.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {errors.items ? <p className="text-caption text-destructive">{errors.items}</p> : null}
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            {errors.items ? (
+              <p className="text-caption text-destructive sm:col-span-2">{errors.items}</p>
+            ) : null}
 
-            <ItemToggle
-              label="Mock Interview"
-              checked={bundle.mockInterview.included}
-              onCheckedChange={(v) => toggleItem("mockInterview", v)}
-              disabled={!hasConfiguredRate(globalRates, "mockInterview", bundle.type) && !bundle.mockInterview.included}
-            >
-              {bundle.mockInterview.included ? (
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Quantity</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={bundle.mockInterview.quantity}
-                      onChange={(e) =>
-                        setBundle((prev) => ({
-                          ...prev,
-                          mockInterview: {
-                            ...prev.mockInterview,
-                            quantity: Number(e.target.value) || 0,
-                          },
-                        }))
-                      }
-                    />
-                    {errors.mockQty ? (
-                      <p className="text-caption text-destructive">{errors.mockQty}</p>
-                    ) : null}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Unit Price</Label>
-                    <Input
-                      type="number"
-                      min={0.01}
-                      step={0.01}
-                      value={bundle.mockInterview.unitPrice}
-                      onChange={(e) =>
-                        setBundle((prev) => ({
-                          ...prev,
-                          mockInterview: {
-                            ...prev.mockInterview,
-                            unitPrice: Number(e.target.value) || 0,
-                            priceOverridden: true,
-                          },
-                        }))
-                      }
-                    />
-                    {errors.mockPrice ? (
-                      <p className="text-caption text-destructive">{errors.mockPrice}</p>
-                    ) : null}
-                  </div>
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <label className="flex items-center gap-2 text-caption">
+                <Checkbox
+                  checked={bundle.mockInterview.included}
+                  disabled={
+                    !hasConfiguredRate(globalRates, "mockInterview", bundle.type) &&
+                    !bundle.mockInterview.included
+                  }
+                  onCheckedChange={(c) => toggleItem("mockInterview", Boolean(c))}
+                />
+                Mock Interview
+                {!hasConfiguredRate(globalRates, "mockInterview", bundle.type) &&
+                !bundle.mockInterview.included ? (
+                  <span className="text-overline text-muted-foreground">(set Global Rate first)</span>
+                ) : null}
+              </label>
+            </div>
+            {bundle.mockInterview.included ? (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Quantity</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={bundle.mockInterview.quantity}
+                    onChange={(e) =>
+                      setBundle((prev) => ({
+                        ...prev,
+                        mockInterview: {
+                          ...prev.mockInterview,
+                          quantity: Number(e.target.value) || 0,
+                        },
+                      }))
+                    }
+                  />
+                  {errors.mockQty ? (
+                    <p className="text-caption text-destructive">{errors.mockQty}</p>
+                  ) : null}
                 </div>
-              ) : null}
-            </ItemToggle>
-
-            <ItemToggle
-              label="Storyboard"
-              checked={bundle.storyboard.included}
-              onCheckedChange={(v) => toggleItem("storyboard", v)}
-              disabled={!hasConfiguredRate(globalRates, "storyboard", bundle.type) && !bundle.storyboard.included}
-            >
-              {bundle.storyboard.included ? (
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Quantity</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={bundle.storyboard.quantity}
-                      onChange={(e) =>
-                        setBundle((prev) => ({
-                          ...prev,
-                          storyboard: {
-                            ...prev.storyboard,
-                            quantity: Number(e.target.value) || 0,
-                          },
-                        }))
-                      }
-                    />
-                    {errors.storyQty ? (
-                      <p className="text-caption text-destructive">{errors.storyQty}</p>
-                    ) : null}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Unit Price</Label>
-                    <Input
-                      type="number"
-                      min={0.01}
-                      step={0.01}
-                      value={bundle.storyboard.unitPrice}
-                      onChange={(e) =>
-                        setBundle((prev) => ({
-                          ...prev,
-                          storyboard: {
-                            ...prev.storyboard,
-                            unitPrice: Number(e.target.value) || 0,
-                            priceOverridden: true,
-                          },
-                        }))
-                      }
-                    />
-                    {errors.storyPrice ? (
-                      <p className="text-caption text-destructive">{errors.storyPrice}</p>
-                    ) : null}
-                  </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Unit Price</Label>
+                  <Input
+                    type="number"
+                    min={0.01}
+                    step={0.01}
+                    value={bundle.mockInterview.unitPrice}
+                    onChange={(e) =>
+                      setBundle((prev) => ({
+                        ...prev,
+                        mockInterview: {
+                          ...prev.mockInterview,
+                          unitPrice: Number(e.target.value) || 0,
+                          priceOverridden: true,
+                        },
+                      }))
+                    }
+                  />
+                  {errors.mockPrice ? (
+                    <p className="text-caption text-destructive">{errors.mockPrice}</p>
+                  ) : null}
                 </div>
-              ) : null}
-            </ItemToggle>
+              </>
+            ) : null}
 
-            <ItemToggle
-              label="Masterclass"
-              checked={bundle.masterclass.included}
-              onCheckedChange={(v) => toggleMasterclass(v)}
-              disabled={!hasConfiguredRate(globalRates, "masterclass", bundle.type) && !bundle.masterclass.included}
-            >
-              {bundle.masterclass.included ? (
-                <div className="mt-3 space-y-4">
-                  <div className="space-y-2">
-                    <Label>Add masterclass</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {publishedMasterclasses()
-                        .filter(
-                          (mc) =>
-                            !bundle.masterclass.selections.some((s) => s.masterclassId === mc.id),
-                        )
-                        .map((mc) => (
-                          <Button
-                            key={mc.id}
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => addMasterclass(mc.id)}
-                          >
-                            {mc.name}
-                          </Button>
-                        ))}
-                    </div>
-                    {errors.masterclass ? (
-                      <p className="text-caption text-destructive">{errors.masterclass}</p>
-                    ) : null}
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <label className="flex items-center gap-2 text-caption">
+                <Checkbox
+                  checked={bundle.storyboard.included}
+                  disabled={
+                    !hasConfiguredRate(globalRates, "storyboard", bundle.type) &&
+                    !bundle.storyboard.included
+                  }
+                  onCheckedChange={(c) => toggleItem("storyboard", Boolean(c))}
+                />
+                Storyboard
+                {!hasConfiguredRate(globalRates, "storyboard", bundle.type) &&
+                !bundle.storyboard.included ? (
+                  <span className="text-overline text-muted-foreground">(set Global Rate first)</span>
+                ) : null}
+              </label>
+            </div>
+            {bundle.storyboard.included ? (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Quantity</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={bundle.storyboard.quantity}
+                    onChange={(e) =>
+                      setBundle((prev) => ({
+                        ...prev,
+                        storyboard: {
+                          ...prev.storyboard,
+                          quantity: Number(e.target.value) || 0,
+                        },
+                      }))
+                    }
+                  />
+                  {errors.storyQty ? (
+                    <p className="text-caption text-destructive">{errors.storyQty}</p>
+                  ) : null}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Unit Price</Label>
+                  <Input
+                    type="number"
+                    min={0.01}
+                    step={0.01}
+                    value={bundle.storyboard.unitPrice}
+                    onChange={(e) =>
+                      setBundle((prev) => ({
+                        ...prev,
+                        storyboard: {
+                          ...prev.storyboard,
+                          unitPrice: Number(e.target.value) || 0,
+                          priceOverridden: true,
+                        },
+                      }))
+                    }
+                  />
+                  {errors.storyPrice ? (
+                    <p className="text-caption text-destructive">{errors.storyPrice}</p>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
+
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <label className="flex items-center gap-2 text-caption">
+                <Checkbox
+                  checked={bundle.masterclass.included}
+                  disabled={
+                    !hasConfiguredRate(globalRates, "masterclass", bundle.type) &&
+                    !bundle.masterclass.included
+                  }
+                  onCheckedChange={(c) => toggleMasterclass(Boolean(c))}
+                />
+                Masterclass
+                {!hasConfiguredRate(globalRates, "masterclass", bundle.type) &&
+                !bundle.masterclass.included ? (
+                  <span className="text-overline text-muted-foreground">(set Global Rate first)</span>
+                ) : null}
+              </label>
+            </div>
+            {bundle.masterclass.included ? (
+              <>
+                <div className="flex flex-col gap-1.5 sm:col-span-2">
+                  <Label>Add Master Class Module</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {publishedMasterclasses()
+                      .filter(
+                        (mc) =>
+                          !bundle.masterclass.selections.some((s) => s.masterclassId === mc.id),
+                      )
+                      .map((mc) => (
+                        <Button
+                          key={mc.id}
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => addMasterclass(mc.id)}
+                        >
+                          <Plus className="h-4 w-4" />
+                          {mc.name}
+                        </Button>
+                      ))}
                   </div>
-                  {bundle.masterclass.selections.map((sel) => {
-                    const mc = getMasterclassById(sel.masterclassId);
-                    if (!mc) return null;
-                    return (
-                      <div key={sel.masterclassId} className="rounded-xl border border-border p-4">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="font-medium">{mc.name}</div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => removeMasterclass(sel.masterclassId)}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                        <div className="mt-3 space-y-2">
-                          {mc.modules.map((mod) => (
-                            <label key={mod.id} className="flex items-center gap-2 text-caption">
-                              <Checkbox
-                                checked={sel.selectedModuleIds.includes(mod.id)}
-                                onCheckedChange={(c) =>
-                                  toggleModule(sel.masterclassId, mod.id, Boolean(c))
-                                }
-                              />
-                              {mod.name}
-                              <span className="text-muted-foreground">
-                                ({formatUsd(moduleShare(globalRates[rateKey("masterclass", bundle.type)] ?? 0, mc.modules.length))})
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="mt-3 space-y-2">
-                          <Label>Masterclass Price</Label>
-                          <Input
-                            type="number"
-                            min={0.01}
-                            step={0.01}
-                            value={sel.price}
-                            onChange={(e) =>
-                              setBundle((prev) => ({
-                                ...prev,
-                                masterclass: {
-                                  ...prev.masterclass,
-                                  selections: prev.masterclass.selections.map((s) =>
-                                    s.masterclassId === sel.masterclassId
-                                      ? {
-                                          ...s,
-                                          price: Number(e.target.value) || 0,
-                                          priceOverridden: true,
-                                        }
-                                      : s,
-                                  ),
-                                },
-                              }))
-                            }
-                          />
-                        </div>
+                  {errors.masterclass ? (
+                    <p className="text-caption text-destructive">{errors.masterclass}</p>
+                  ) : null}
+                </div>
+                {bundle.masterclass.selections.map((sel) => {
+                  const mc = getMasterclassById(sel.masterclassId);
+                  if (!mc) return null;
+                  return (
+                    <div key={sel.masterclassId} className="contents">
+                      <Separator className="sm:col-span-2" />
+                      <div className="flex items-center justify-between gap-2 sm:col-span-2">
+                        <span className="text-caption font-medium">{mc.name}</span>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          aria-label={`Remove ${mc.name}`}
+                          onClick={() => removeMasterclass(sel.masterclassId)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                    );
-                  })}
-                  {errors.modules ? (
-                    <p className="text-caption text-destructive">{errors.modules}</p>
-                  ) : null}
-                  {errors.mcPrice ? (
-                    <p className="text-caption text-destructive">{errors.mcPrice}</p>
-                  ) : null}
-                </div>
-              ) : null}
-            </ItemToggle>
+                      <div className="flex flex-col gap-2 sm:col-span-2">
+                        {mc.modules.map((mod) => (
+                          <label key={mod.id} className="flex items-center gap-2 text-caption">
+                            <Checkbox
+                              checked={sel.selectedModuleIds.includes(mod.id)}
+                              onCheckedChange={(c) =>
+                                toggleModule(sel.masterclassId, mod.id, Boolean(c))
+                              }
+                            />
+                            {mod.name}
+                            <span className="text-muted-foreground">
+                              (
+                              {formatUsd(
+                                moduleShare(
+                                  globalRates[rateKey("masterclass", bundle.type)] ?? 0,
+                                  mc.modules.length,
+                                ),
+                              )}
+                              )
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      <div className="flex flex-col gap-1.5 sm:col-span-2 sm:max-w-[calc(50%-0.5rem)]">
+                        <Label>Masterclass Price</Label>
+                        <Input
+                          type="number"
+                          min={0.01}
+                          step={0.01}
+                          value={sel.price}
+                          onChange={(e) =>
+                            setBundle((prev) => ({
+                              ...prev,
+                              masterclass: {
+                                ...prev.masterclass,
+                                selections: prev.masterclass.selections.map((s) =>
+                                  s.masterclassId === sel.masterclassId
+                                    ? {
+                                        ...s,
+                                        price: Number(e.target.value) || 0,
+                                        priceOverridden: true,
+                                      }
+                                    : s,
+                                ),
+                              },
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {errors.modules ? (
+                  <p className="text-caption text-destructive sm:col-span-2">{errors.modules}</p>
+                ) : null}
+                {errors.mcPrice ? (
+                  <p className="text-caption text-destructive sm:col-span-2">{errors.mcPrice}</p>
+                ) : null}
+              </>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -678,13 +723,15 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
               Calculated subtotal: {formatUsd(autoSubtotal)}. Override per cycle as needed.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {errors.cycles ? <p className="text-caption text-destructive">{errors.cycles}</p> : null}
+          <CardContent className="flex flex-col gap-4">
+            {errors.cycles ? (
+              <p className="text-caption text-destructive">{errors.cycles}</p>
+            ) : null}
             {BILLING_CYCLES.map((cycle) => {
               const checked = selectedCycles.includes(cycle);
               return (
-                <div key={cycle} className="flex flex-col gap-2 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <label className="flex items-center gap-2 text-caption font-medium">
+                <div key={cycle} className="grid gap-4 sm:grid-cols-2">
+                  <label className="flex min-h-9 items-center gap-2 text-caption">
                     <Checkbox
                       checked={checked}
                       onCheckedChange={(c) => toggleCycle(cycle, Boolean(c))}
@@ -692,10 +739,9 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
                     {BILLING_CYCLE_LABEL[cycle]}
                   </label>
                   {checked ? (
-                    <div className="flex items-center gap-2">
-                      <Label className="sr-only">Price</Label>
+                    <div className="flex flex-col gap-1.5">
+                      <Label className="sr-only">Price for {BILLING_CYCLE_LABEL[cycle]}</Label>
                       <Input
-                        className="w-32"
                         type="number"
                         min={0.01}
                         step={0.01}
@@ -709,7 +755,9 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
                         default {formatUsd(autoSubtotal)}
                       </span>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div className="hidden sm:block" />
+                  )}
                 </div>
               );
             })}
@@ -717,39 +765,6 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
         </Card>
       </div>
     </PaymentsShell>
-  );
-}
-
-function ItemToggle({
-  label,
-  checked,
-  onCheckedChange,
-  disabled,
-  children,
-}: {
-  label: string;
-  checked: boolean;
-  onCheckedChange: (v: boolean) => void;
-  disabled?: boolean;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-border p-4">
-      <label className="flex items-center gap-2 text-caption font-medium">
-        <Checkbox
-          checked={checked}
-          disabled={disabled}
-          onCheckedChange={(c) => onCheckedChange(Boolean(c))}
-        />
-        {label}
-        {disabled ? (
-          <span className="text-overline font-normal text-muted-foreground">
-            (set Global Rate first)
-          </span>
-        ) : null}
-      </label>
-      {children}
-    </div>
   );
 }
 
