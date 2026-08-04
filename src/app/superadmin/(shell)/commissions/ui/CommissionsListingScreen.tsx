@@ -10,6 +10,7 @@ import { KpiCard } from "@/components/dashboard/KpiCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageTitle } from "@/components/ui/page-title";
 import {
   Select,
   SelectContent,
@@ -94,7 +95,7 @@ export function CommissionsListingScreen() {
   return (
     <div className="flex flex-col gap-6 pt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-h4 text-foreground">Commissions &amp; Payouts</h1>
+        <PageTitle>Commissions &amp; Payouts</PageTitle>
         <Button variant="outline" onClick={handleExport} disabled={filteredRows.length === 0}>
           <Download className="h-4 w-4" />
           Export Listing

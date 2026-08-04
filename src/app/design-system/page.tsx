@@ -209,8 +209,8 @@ const TYPE_STYLES: TypeStyle[] = [
   },
   { key: "h2", className: "text-h2", label: "H2", size: "32px", weight: "500", tracking: "-2px" },
   { key: "h3", className: "text-h3", label: "H3", size: "24px", weight: "500", tracking: "-1.5px" },
-  { key: "h4", className: "text-h4", label: "H4", size: "20px", weight: "500", tracking: "-1.2px", note: "Super Admin tab page titles (Overview, Organizations, Competency Frameworks, etc.)." },
-  { key: "h5", className: "text-h5", label: "H5", size: "16px", weight: "500", tracking: "-0.8px" },
+  { key: "h4", className: "text-h4", label: "H4", size: "20px", weight: "500", tracking: "-1.2px" },
+  { key: "h5", className: "text-h5", label: "H5", size: "16px", weight: "500", tracking: "-0.8px", note: "Super Admin page titles via PageTitle (Overview, Organizations, breadcrumb current titles, etc.)." },
   { key: "h6", className: "text-h6", label: "H6", size: "14px", weight: "500", tracking: "-0.5px" },
   {
     key: "subheading",
@@ -1010,9 +1010,10 @@ export default function DesignSystemPage() {
                 <CardHeader>
                   <CardTitle>Selection chip</CardTitle>
                   <CardDescription>
-                    Default, hover (try it), selected. Text-only uses 16px
-                    horizontal padding. With a leading icon: 8px left / 16px right.
-                    With a trailing icon: 16px left / 8px right.
+                    Default, hover (try it), selected. Default stroke is solid
+                    #adddda (no gradient). Text-only uses 16px horizontal
+                    padding. With a leading icon: 8px left / 16px right. With a
+                    trailing icon: 16px left / 8px right.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
@@ -1048,9 +1049,10 @@ export default function DesignSystemPage() {
                 <CardHeader>
                   <CardTitle>Chatbox</CardTitle>
                   <CardDescription>
-                    Figma Chatbox (38:305) — Compact pill (60px) and Expanded
-                    rounded-20 shell. Upload · Ask · Mic · Send. Attachments and
-                    Ask force Expanded.
+                    Figma Chatbox (333:7350) — Compact pill and Expanded
+                    rounded-20 shell. Stroke, padding, shadow, and send size
+                    come from globals.css. Upload · Ask · Mic · Send.
+                    Attachments and Ask force Expanded.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">

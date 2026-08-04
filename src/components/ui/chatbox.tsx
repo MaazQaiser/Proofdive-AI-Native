@@ -60,8 +60,9 @@ type ChatboxProps = {
 };
 
 /**
- * AI reply textbox — Figma "Chatbox" (node 38:305).
+ * AI reply textbox — Figma "Chatbox" (node 333:7350).
  * Compact: pill, single-line row. Expanded: rounded-20 multi-line with footer actions.
+ * Shell stroke / padding / surface / shadow / send size: `globals.css` `[data-slot="chatbox"]`.
  */
 function Chatbox({
   className,
@@ -178,6 +179,7 @@ function Chatbox({
       onClick={onSend}
       disabled={!canSend}
       aria-label="Send reply"
+      data-slot="chatbox-send"
       className="disabled:bg-primary disabled:text-primary-foreground disabled:opacity-50"
     >
       <ArrowUp />
@@ -221,18 +223,17 @@ function Chatbox({
       data-slot="chatbox"
       data-variant={variant}
       className={cn(
-        "relative w-full max-w-[800px] p-px",
-        "bg-[linear-gradient(135deg,color-mix(in_srgb,var(--brand-500)_20%,transparent)_0%,var(--base)_41%,color-mix(in_srgb,var(--brand-500)_20%,transparent)_100%)]",
-        "shadow-[0_2px_30px_0_rgba(14,154,181,0.1)]",
+        "relative w-full max-w-[800px]",
         isCompact ? "rounded-full" : "rounded-[20px]",
         hasLeading && "flex min-h-0 flex-col",
         className,
       )}
     >
       <div
+        data-slot="chatbox-surface"
         className={cn(
-          "overflow-clip bg-white/90 backdrop-blur-[42px] outline-none ring-0 focus-within:outline-none focus-within:ring-0",
-          isCompact ? "rounded-full p-4" : "rounded-[20px] p-4",
+          "overflow-clip outline-none ring-0 focus-within:outline-none focus-within:ring-0",
+          isCompact ? "rounded-full" : "rounded-[20px]",
           hasLeading && "flex min-h-0 flex-1 flex-col",
         )}
       >
@@ -249,7 +250,7 @@ function Chatbox({
           {fileChips}
 
           {isCompact ? (
-            <div className="flex h-7 w-full items-center gap-2">
+            <div className="flex h-9 w-full items-center gap-2">
               <input
                 ref={textareaRef as React.Ref<HTMLInputElement>}
                 type="text"
@@ -283,7 +284,7 @@ function Chatbox({
               />
               <div className="flex flex-col gap-1">
                 {status ? <div className="min-h-0">{status}</div> : null}
-                <div className="flex h-7 w-full items-center justify-between gap-2">
+                <div className="flex h-9 w-full items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center">{expandedUpload}</div>
                   <div className="flex shrink-0 items-center gap-2">
                     {askControl}

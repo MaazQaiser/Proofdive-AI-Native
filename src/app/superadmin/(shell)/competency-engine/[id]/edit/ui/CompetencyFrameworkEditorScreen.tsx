@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
+import { PageHeader } from "@/components/ui/page-header";
 import { Textarea } from "@/components/ui/textarea";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { SUCCESS_DRIVER_SYMBOL_CLASS } from "@/components/ui/success-driver-card";
@@ -152,7 +153,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
 
   return (
     <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
-      <div className="sticky top-0 z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-6 py-6">
+      <PageHeader sticky>
         <PageBreadcrumb
           parentHref="/superadmin/competency-engine"
           parentLabel="Competency Engine"
@@ -172,7 +173,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
             Save changes
           </Button>
         </div>
-      </div>
+      </PageHeader>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">

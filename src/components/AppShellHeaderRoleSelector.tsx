@@ -58,7 +58,7 @@ export function AppShellHeaderRoleSelector() {
         id="appshell-target-role"
         size="sm"
         aria-label="Target role"
-        className="h-auto min-h-0 w-auto max-w-[min(100vw-2rem,20rem)] gap-1.5 rounded-full border-border bg-card px-4 py-2 text-caption font-medium text-text-primary shadow-none focus-visible:border-border focus-visible:ring-2 focus-visible:ring-ring/40 data-[size=sm]:h-auto [&_svg]:size-3 [&_svg]:opacity-40"
+        className="h-auto min-h-0 w-auto max-w-[min(100vw-2rem,20rem)] gap-1.5 rounded-none border-0 bg-transparent px-0 py-0 text-caption font-medium text-text-primary shadow-none hover:bg-transparent focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent dark:hover:bg-transparent data-[size=sm]:h-auto [&_svg]:size-3 [&_svg]:opacity-40"
       >
         <span className="shrink-0 font-normal text-text-secondary">Preparing for</span>
         <SelectValue placeholder="Pick a role" />

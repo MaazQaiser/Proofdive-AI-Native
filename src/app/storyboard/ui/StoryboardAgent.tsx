@@ -7,7 +7,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   Download,
-  Plus,
   X,
 } from "lucide-react";
 
@@ -30,7 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
-import { SuccessDriverMark } from "@/components/ui/success-driver-card";
+import { SuccessDriverCompetencyPill, SuccessDriverMark } from "@/components/ui/success-driver-card";
 import { buildEmptyCraftingDive } from "@/app/storyboard/crafting/mockCraftingDraft";
 import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
 import { CoreFourSelectionPanel } from "@/app/onboarding/ui/CoreFourSelectionPanel";
@@ -114,17 +113,6 @@ function diveScoreTextClass(score: number | null | undefined): string {
   if (band === "green") return "text-scoring-green";
   if (band === "yellow") return "text-scoring-yellow";
   return "text-scoring-red";
-}
-
-/** Asymmetric radii on the 2×2 pillar grid (Figma Dive Card). */
-function pillarCardRadiusClass(index: number): string {
-  if (index === 1) {
-    return "rounded-tl-[4px] rounded-tr-[12px] rounded-br-[4px] rounded-bl-[4px]";
-  }
-  if (index === 3) {
-    return "rounded-tl-[4px] rounded-tr-[4px] rounded-br-[12px] rounded-bl-[4px]";
-  }
-  return "rounded-[4px]";
 }
 
 const CAR_PROMPTS: Record<CarField, { prompt: string; helper: string; prefill: string }> = {
@@ -491,29 +479,6 @@ export function StoryboardAgent() {
     setDiveUnlock(unlock);
     setPendingFocusIds(focusIds ?? null);
     setDiveConfirmOpen(true);
-  }
-
-  function openAddCompetencyPicker() {
-    if (!role || divesLeft <= 0) return;
-    if (!canStartNewDive(diveStore, role, maxDives)) return;
-    setAddCompetencySelected(lockedCompetencyIds);
-    setAddCompetencyError(null);
-    setAddCompetencyOpen(true);
-  }
-
-  function startAddCompetency() {
-    if (postCraftHome) {
-      openAddCompetencyPicker();
-      return;
-    }
-    setSelectedId(null);
-    setStatusLine(null);
-    setCraftUi("idle");
-    setGreetAcknowledged(false);
-    setRoleProfile((prev) =>
-      prev?.aboutYouAnswer ? { ...prev, aboutYouAnswer: undefined } : prev,
-    );
-    router.push("/storyboard?new=1");
   }
 
   function toggleAddCompetency(id: CompetencyId) {
@@ -996,119 +961,117 @@ What should this experience be called? (short title, up to ~15 words)`;
   );
 
   function renderDiveCard(dive: StoryboardDive) {
-    const divePillars = SUCCESS_DRIVER_ORDER.map((id) => ({
-      id,
-      score: dive.pillarScores?.[id] ?? 0,
-    }));
-    const canAdd = divesLeft > 0 && !usage.isStoryboardAtLimit;
     const overallScore = dive.overallScore > 0 ? dive.overallScore : null;
+    const showBreakdown = latestDive?.id === dive.id;
+    const divePillars = showBreakdown
+      ? SUCCESS_DRIVER_ORDER.map((id) => ({
+          id,
+          score: dive.pillarScores?.[id] ?? 0,
+        }))
+      : [];
 
     return (
       <div key={dive.id} className="flex w-full flex-col gap-2">
-        <div className="flex w-full flex-wrap content-start items-start justify-between">
-          <h3 className="text-[24px] font-semibold leading-[30px] text-text-primary">
-            Dive {dive.diveNumber}
-          </h3>
-          <div className="flex shrink-0 flex-wrap content-center items-center justify-end gap-2">
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className="size-9 shrink-0 rounded-full bg-card text-text-primary hover:bg-card hover:text-text-primary"
-              aria-label={`Download Dive ${dive.diveNumber}`}
-              title="Download"
-              onClick={() =>
-                router.push(`/storyboard/crafting?dive=${encodeURIComponent(dive.id)}&print=1`)
-              }
-            >
-              <Download className="size-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-9 gap-2 rounded-md px-0 pr-0! text-[14px] font-medium leading-5 text-primary underline decoration-transparent underline-offset-2 hover:bg-transparent hover:text-primary hover:decoration-current"
-              onClick={() =>
-                router.push(`/storyboard/crafting?dive=${encodeURIComponent(dive.id)}`)
-              }
-            >
-              View Story
-              <ArrowUpRight className="size-4" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex w-full items-start gap-1">
-          <div className="flex h-[194px] min-w-0 flex-1 flex-col justify-between gap-[9px] rounded-tl-[12px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[12px] bg-card p-4">
-            <div className="flex w-full flex-col gap-4">
-              <div className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
-                Story Score
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-end gap-1 whitespace-nowrap">
-                  <span
-                    className={cn(
-                      "text-[48px] font-medium tracking-[-1.3px] tabular-nums leading-none",
-                      diveScoreTextClass(overallScore),
-                    )}
-                  >
-                    {overallScore != null ? overallScore.toFixed(1) : "—"}
-                  </span>
-                  <span className="text-[18px] leading-[1.2] tracking-[-1px] text-text-secondary">
-                    / 5
-                  </span>
-                </div>
-                {/* Reserve subtitle line height so score + card layout stay put */}
-                <div className="h-[14px]" aria-hidden />
-              </div>
-            </div>
-            {canAdd ? (
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-auto gap-2 self-start rounded-md bg-transparent py-0 pl-2! pr-4! text-[14px] font-medium leading-5 text-[#095B73] shadow-none hover:bg-transparent hover:text-[#095B73] hover:underline [&_svg]:text-[#095B73]"
-                onClick={startAddCompetency}
-              >
-                <Plus className="size-4" />
-                Add Competency
-              </Button>
-            ) : null}
-          </div>
-
-          <div className="grid h-[194px] min-w-0 flex-1 grid-cols-2 grid-rows-2 gap-1">
-            {divePillars.map(({ id, score }, index) => {
-              const displayScore = score > 0 ? score : null;
-              return (
-                <div
-                  key={id}
+        <div
+          className={cn(
+            "flex w-full flex-col gap-2.5 rounded-[20px] border-[0.5px] border-solid border-[#dde7e9]",
+            "p-4 backdrop-blur-[42px]",
+            "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+          )}
+        >
+          <div className="flex w-full items-center justify-between gap-4 py-4">
+            <div className="flex min-w-0 flex-1 items-end gap-4">
+              <div className="flex w-[148px] shrink-0 items-end gap-1 font-gilroy whitespace-nowrap">
+                <span
                   className={cn(
-                    "flex flex-col items-center justify-center gap-4 bg-card p-4",
-                    pillarCardRadiusClass(index),
+                    "text-[64px] font-normal leading-none tracking-[-3.2px] tabular-nums [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]",
+                    diveScoreTextClass(overallScore),
                   )}
                 >
-                  <div className="flex w-full items-center gap-2">
-                    <SuccessDriverIcon
-                      driver={id}
-                      className="size-4 text-text-primary"
-                    />
-                    <span className="truncate text-[16px] font-medium tracking-[-0.5px] text-text-primary">
-                      {SUCCESS_DRIVERS[id].shortLabel}
-                    </span>
-                  </div>
-                  <div className="flex w-full items-end gap-1 whitespace-nowrap tracking-[-1px]">
-                    <span
-                      className={cn(
-                        "text-[32px] font-medium tabular-nums leading-none",
-                        diveScoreTextClass(displayScore),
-                      )}
-                    >
-                      {displayScore != null ? displayScore.toFixed(1) : "—"}
-                    </span>
-                    <span className="text-[18px] leading-[27px] text-text-secondary">/ 5</span>
-                  </div>
-                </div>
-              );
-            })}
+                  {overallScore != null ? overallScore.toFixed(1) : "—"}
+                </span>
+                <span className="text-[48px] font-normal leading-none tracking-[-2.4px] text-[#abadb2] [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">
+                  /5
+                </span>
+              </div>
+              <div className="flex flex-col justify-between self-stretch">
+                <span className="text-[20px] font-medium tracking-[-0.5px] text-extended-blue">
+                  Dive {dive.diveNumber}
+                </span>
+                <span className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                  Overall story score
+                </span>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <IconButton
+                type="button"
+                variant="ghost"
+                size="md"
+                className="text-text-primary hover:bg-transparent hover:text-text-primary"
+                aria-label={`Download Dive ${dive.diveNumber}`}
+                title="Download"
+                onClick={() =>
+                  router.push(
+                    `/storyboard/crafting?dive=${encodeURIComponent(dive.id)}&print=1`,
+                  )
+                }
+              >
+                <Download />
+              </IconButton>
+              <IconButton
+                type="button"
+                variant="solid"
+                size="md"
+                className="bg-brand-400 text-white hover:bg-brand-300"
+                aria-label={`View Dive ${dive.diveNumber} story`}
+                title="View Story"
+                onClick={() =>
+                  router.push(`/storyboard/crafting?dive=${encodeURIComponent(dive.id)}`)
+                }
+              >
+                <ArrowUpRight />
+              </IconButton>
+            </div>
           </div>
+
+          {showBreakdown ? (
+            <div className="flex w-full flex-col">
+              {divePillars.map(({ id, score }) => {
+                const displayScore = score > 0 ? score : null;
+                return (
+                  <div
+                    key={id}
+                    className="flex w-full items-center gap-4 border-t border-extended-green py-[18px]"
+                  >
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <SuccessDriverIcon
+                        driver={id}
+                        className="size-4 text-text-primary"
+                      />
+                      <span className="truncate text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                        {SUCCESS_DRIVERS[id].shortLabel}
+                      </span>
+                    </div>
+                    <div className="flex w-[88px] shrink-0 items-end justify-end gap-1 font-gilroy whitespace-nowrap">
+                      <span
+                        className={cn(
+                          "w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]",
+                          diveScoreTextClass(displayScore),
+                        )}
+                      >
+                        {displayScore != null ? displayScore.toFixed(1) : "—"}
+                      </span>
+                      <span className="text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2] [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">
+                        /5
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
       </div>
     );
@@ -1213,17 +1176,16 @@ What should this experience be called? (short title, up to ~15 words)`;
           <>
             {showCaptureChrome ? (
               <div className="mb-6 flex flex-wrap items-center gap-3">
-                <div className="inline-flex items-center gap-2 rounded-full bg-extended-cyan-green/10 py-1.5 pl-1.5 pr-3">
-                  <SuccessDriverIcon
-                    driver={pillarForCompetency(activeCompetencyId)}
-                    className="size-4"
-                  />
-                  <span className="text-overline font-medium text-text-primary">
-                    {SUCCESS_DRIVERS[pillarForCompetency(activeCompetencyId)].shortLabel}
-                    {" · "}
-                    {competencySpec(activeCompetencyId).title}
-                  </span>
-                </div>
+                <SuccessDriverCompetencyPill
+                  driver={pillarForCompetency(activeCompetencyId)}
+                  label={
+                    <>
+                      {SUCCESS_DRIVERS[pillarForCompetency(activeCompetencyId)].shortLabel}
+                      {" · "}
+                      {competencySpec(activeCompetencyId).title}
+                    </>
+                  }
+                />
               </div>
             ) : null}
 
@@ -1232,11 +1194,11 @@ What should this experience be called? (short title, up to ~15 words)`;
               prompt={storyPrompt}
               ariaLabel="Storyboard prompt"
               headingClassName="text-agent-heading text-heading-teal"
-              subtextClassName="mt-4 text-agent-question text-text-primary"
+              subtextClassName="mt-3 text-agent-question text-text-primary"
             />
 
             {phase.kind === "greet" ? (
-              <p className="mt-8 text-agent-question text-text-primary">
+              <p className="mt-3 text-agent-question text-text-primary">
                 I&apos;ll guide you through real experiences that become clear,
                 evidence-backed stories.{" "}
                 <button
@@ -1251,7 +1213,7 @@ What should this experience be called? (short title, up to ~15 words)`;
             ) : null}
 
             {phase.kind === "closing" ? (
-              <p className="mt-8 text-agent-question text-text-primary">
+              <p className="mt-3 text-agent-question text-text-primary">
                 Your experiences are ready to shape into interview-ready proof.{" "}
                 <button
                   type="button"

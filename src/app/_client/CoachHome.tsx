@@ -105,17 +105,6 @@ function labelToScoringBand(label: string): ScoringBand {
   return "red";
 }
 
-/** Asymmetric radii on the 2×2 pillar grid (Figma Interview Readiness Card). */
-function pillarCardRadiusClass(index: number): string {
-  if (index === 1) {
-    return "rounded-tl-[4px] rounded-tr-[12px] rounded-br-[4px] rounded-bl-[4px]";
-  }
-  if (index === 3) {
-    return "rounded-tl-[4px] rounded-tr-[4px] rounded-br-[12px] rounded-bl-[4px]";
-  }
-  return "rounded-[4px]";
-}
-
 export function CoachHome() {
   const router = useRouter();
   const pathname = usePathname();
@@ -230,35 +219,37 @@ export function CoachHome() {
   const readinessCardEl = useMemo(() => {
     if (!showInterviewReadinessCard) return null;
     return (
-      <div className="mt-6 flex w-full flex-col gap-4 pb-4">
-        <div className="flex w-full items-start gap-1">
-          <div className="flex h-[194px] min-w-0 flex-1 flex-col justify-between rounded-tl-[12px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[12px] bg-card p-4">
-            <div className="flex w-full flex-col gap-4">
-              <div className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
-                Readiness Score
+      <div className="mt-6 w-full pb-4">
+        <div
+          className={cn(
+            "flex w-full flex-col gap-2.5 rounded-[20px] border-[0.5px] border-solid border-[#dde7e9]",
+            "px-6 py-4 backdrop-blur-[42px]",
+            "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+          )}
+        >
+          <div className="flex w-full items-center justify-between gap-4 py-4">
+            <div className="flex min-w-0 flex-1 items-end gap-4">
+              <div className="flex w-[148px] shrink-0 items-end gap-1 font-gilroy whitespace-nowrap">
+                <span
+                  className={cn(
+                    "text-[64px] font-normal leading-none tracking-[-3.2px] tabular-nums",
+                    readinessScoreTextClass(readinessCardModel.overall),
+                  )}
+                >
+                  {readinessCardModel.overallText}
+                </span>
+                <span className="text-[48px] font-normal leading-none tracking-[-2.4px] text-[#abadb2]">
+                  /{READINESS_MAX}
+                </span>
               </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-end gap-1 whitespace-nowrap">
-                  <span
-                    className={cn(
-                      "text-[48px] font-medium tracking-[-1.3px] tabular-nums leading-none",
-                      readinessScoreTextClass(readinessCardModel.overall),
-                    )}
-                  >
-                    {readinessCardModel.overallText}
-                  </span>
-                  <span className="text-[18px] leading-[1.2] tracking-[-1px] text-text-secondary">
-                    / {READINESS_MAX}
-                  </span>
-                </div>
-                <div className="text-[14px] font-normal leading-none text-text-secondary">
-                  Mocks, trainings, and pillar balance at a glance.
-                </div>
-              </div>
+              <span className="pb-1 text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                Interview readiness
+              </span>
             </div>
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0">
-              <span className="text-[12px] font-medium leading-[1.2] tracking-[-1px] text-text-primary">
-                You’re currently
+
+            <div className="flex shrink-0 flex-wrap items-center gap-x-2.5 gap-y-0">
+              <span className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                You are currently
               </span>
               <span
                 className={cn(
@@ -271,18 +262,15 @@ export function CoachHome() {
             </div>
           </div>
 
-          <div className="grid h-[194px] min-w-0 flex-1 grid-cols-2 grid-rows-2 gap-1">
-            {readinessCardModel.pillars.map(({ id, label, score }, index) => {
+          <div className="flex w-full flex-col">
+            {readinessCardModel.pillars.map(({ id, label, score }) => {
               const displayScore = score != null && score > 0 ? score : null;
               return (
                 <div
                   key={id}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-4 bg-card p-4",
-                    pillarCardRadiusClass(index),
-                  )}
+                  className="flex w-full items-center gap-4 border-t border-extended-green py-[18px]"
                 >
-                  <div className="flex w-full items-center gap-2">
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
                     <SuccessDriverIcon
                       driver={id}
                       className="size-4 text-text-primary"
@@ -291,17 +279,17 @@ export function CoachHome() {
                       {label}
                     </span>
                   </div>
-                  <div className="flex w-full items-end gap-1 whitespace-nowrap tracking-[-1px]">
+                  <div className="flex shrink-0 items-end gap-1 font-gilroy whitespace-nowrap">
                     <span
                       className={cn(
-                        "text-[32px] font-medium tabular-nums leading-none",
+                        "w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums",
                         readinessScoreTextClass(displayScore),
                       )}
                     >
                       {displayScore != null ? displayScore.toFixed(1) : "—"}
                     </span>
-                    <span className="text-[18px] leading-[27px] text-text-secondary">
-                      / {READINESS_MAX}
+                    <span className="text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2]">
+                      /{READINESS_MAX}
                     </span>
                   </div>
                 </div>
@@ -465,7 +453,7 @@ export function CoachHome() {
             {showWelcomeLanding ? (
               <>
                 <h2 className="text-agent-heading text-heading-teal">Welcome to Proofdive</h2>
-                <h4 className="mt-1 mb-[14px] text-agent-question text-text-primary">
+                <h4 className="mt-3 mb-[14px] text-agent-question text-text-primary">
                   Let&apos;s get interview ready
                 </h4>
                 <p className="mt-2 max-w-xl text-left text-body leading-7 text-text-secondary">
@@ -504,7 +492,7 @@ export function CoachHome() {
                     return "You're off to a strong start.";
                   })()}
                 </h2>
-                <h4 className="mt-1 mb-[14px] text-agent-question text-text-primary">
+                <h4 className="mt-3 mb-[14px] text-agent-question text-text-primary">
                   {(() => {
                     const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                     if (isRoadmapCoach) return "Follow the path, then go for your mock interview.";
@@ -541,14 +529,19 @@ export function CoachHome() {
                     </p>
                   ) : null}
 
-                  <div className={cn("flex w-full flex-col gap-1", isRoadmapCoach ? "mt-0" : "mt-4")}>
-                    {/* Step 1 */}
-                    <div className="flex w-full flex-col rounded-tl-[12px] rounded-tr-[12px] rounded-br-[4px] rounded-bl-[4px] bg-card pb-4 pt-4">
-                      <div className="flex w-full items-center justify-between px-4">
+                  <div className={cn("w-full", isRoadmapCoach ? "mt-0" : "mt-4")}>
+                    <div
+                      className={cn(
+                        "flex w-full flex-col rounded-xl border-[0.5px] border-solid border-[#dde7e9] p-4",
+                        "bg-[linear-gradient(121.89deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+                      )}
+                    >
+                      {/* Step 1 */}
+                      <div className="flex w-full items-center justify-between border-b border-extended-green pb-4">
                         <div className="flex min-w-0 flex-1 items-start gap-4">
                           <span
                             aria-hidden
-                            className="flex shrink-0 self-stretch items-center text-[52px] font-normal leading-[52px] tracking-[-1.04px] tabular-nums text-brand-800"
+                            className="flex shrink-0 self-stretch items-center font-gilroy text-[52px] font-normal leading-[52px] tracking-[-1.04px] tabular-nums text-brand-500"
                           >
                             1
                           </span>
@@ -576,7 +569,7 @@ export function CoachHome() {
                         <Button
                           asChild
                           variant="ghost"
-                          className="h-auto shrink-0 gap-2 rounded-md py-2 pl-4 pr-2! text-[14px] font-medium leading-5 text-primary underline decoration-transparent underline-offset-2 hover:bg-transparent hover:text-primary hover:decoration-current"
+                          className="h-auto shrink-0 gap-2 rounded-md py-2 pl-4 pr-2! text-[14px] font-medium leading-5 text-extended-dark-cyan hover:bg-transparent hover:text-extended-dark-cyan"
                         >
                           <Link href="/training">
                             {(() => {
@@ -592,15 +585,13 @@ export function CoachHome() {
                           </Link>
                         </Button>
                       </div>
-                    </div>
 
-                    {/* Step 2 */}
-                    <div className="flex w-full flex-col rounded-[4px] bg-card py-4">
-                      <div className="flex w-full items-center justify-between px-4">
+                      {/* Step 2 */}
+                      <div className="flex w-full items-center justify-between border-b border-extended-green py-4">
                         <div className="flex min-w-0 flex-1 items-start gap-4">
                           <span
                             aria-hidden
-                            className="flex shrink-0 self-stretch items-center text-[52px] font-normal leading-[52px] tracking-[-1.04px] tabular-nums text-brand-800"
+                            className="flex shrink-0 self-stretch items-center font-gilroy text-[52px] font-normal leading-[52px] tracking-[-1.04px] tabular-nums text-brand-500"
                           >
                             2
                           </span>
@@ -631,11 +622,11 @@ export function CoachHome() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex shrink-0 items-center gap-4">
+                        <div className="flex shrink-0 items-center gap-2">
                           <Button
                             asChild
                             variant="ghost"
-                            className="h-auto gap-2 rounded-md py-2 pl-0! pr-2 text-[14px] font-medium leading-5 text-text-secondary underline decoration-transparent underline-offset-2 hover:bg-transparent hover:text-text-secondary hover:decoration-current"
+                            className="h-auto gap-2 rounded-md py-2 pl-0! pr-2 text-[14px] font-medium leading-5 text-text-secondary hover:bg-transparent hover:text-text-secondary"
                           >
                             <Link href="/storyboard?new=1">
                               <Plus className="size-4" />
@@ -649,7 +640,7 @@ export function CoachHome() {
                           <Button
                             asChild
                             variant="ghost"
-                            className="h-auto gap-2 rounded-md py-2 pl-4 pr-2! text-[14px] font-medium leading-5 text-primary underline decoration-transparent underline-offset-2 hover:bg-transparent hover:text-primary hover:decoration-current"
+                            className="h-auto gap-2 rounded-md py-2 pl-4 pr-2! text-[14px] font-medium leading-5 text-extended-dark-cyan hover:bg-transparent hover:text-extended-dark-cyan"
                           >
                             <Link href="/storyboard">
                               Start crafting
@@ -658,20 +649,18 @@ export function CoachHome() {
                           </Button>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Step 3 */}
-                    <div className="flex w-full flex-col rounded-tl-[4px] rounded-tr-[4px] rounded-br-[12px] rounded-bl-[12px] bg-card py-4">
-                      <div className="flex w-full items-center justify-between px-4">
+                      {/* Step 3 */}
+                      <div className="flex w-full items-center justify-between pt-4">
                         <div className="flex min-w-0 flex-1 items-start gap-4">
                           <span
                             aria-hidden
-                            className="flex shrink-0 self-stretch items-center text-[52px] font-normal leading-[52px] tracking-[-1.04px] tabular-nums text-brand-800"
+                            className="flex shrink-0 self-stretch items-center font-gilroy text-[52px] font-normal leading-[52px] tracking-[-1.04px] tabular-nums text-brand-500"
                           >
                             3
                           </span>
-                          <div className="flex flex-col gap-1.5">
-                            <h3 className="whitespace-nowrap text-[18px] font-medium leading-[27px] tracking-[-1.3px] text-text-primary">
+                          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                            <h3 className="text-[18px] font-medium leading-[27px] tracking-[-1.3px] text-text-primary">
                               {(() => {
                                 const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                                 const isSecondInterview = isFinalCoach && !isFirstStart;
@@ -680,7 +669,7 @@ export function CoachHome() {
                                   : "Take a mock interview";
                               })()}
                             </h3>
-                            <p className="whitespace-nowrap text-[16px] font-normal leading-6 text-text-secondary">
+                            <p className="text-[16px] font-normal leading-6 text-text-secondary">
                               {(() => {
                                 const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
                                 const isSecondInterview = isFinalCoach && !isFirstStart;
@@ -701,7 +690,7 @@ export function CoachHome() {
                         <Button
                           asChild
                           variant="ghost"
-                          className="h-auto shrink-0 gap-2 rounded-md py-2 pl-4 pr-2! text-[14px] font-medium leading-5 text-primary underline decoration-transparent underline-offset-2 hover:bg-transparent hover:text-primary hover:decoration-current"
+                          className="h-auto shrink-0 gap-2 rounded-md py-2 pl-4 pr-2! text-[14px] font-medium leading-5 text-extended-dark-cyan hover:bg-transparent hover:text-extended-dark-cyan"
                         >
                           <Link href="/interview?welcomeBack=1">
                             Start interview

@@ -509,8 +509,8 @@ export function InterviewLiveScreen() {
   }, [isEnding, reportSteps.length, role, router, session.prefs.sessionKind, totalSeconds]);
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-6 pb-28">
+    <div className="candidate-app-bg min-h-screen w-full text-foreground">
+      <div className="relative z-[2] mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-6 pb-28">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <div className="truncate text-h5">

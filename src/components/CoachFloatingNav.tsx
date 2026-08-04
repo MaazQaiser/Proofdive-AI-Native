@@ -1,8 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { BookOpen, CircleUser, GraduationCap, Home, Plus, UserCheck } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  BookOpen,
+  CircleUser,
+  GraduationCap,
+  Home,
+  LogOut,
+  Plus,
+  UserCheck,
+} from "lucide-react";
 
 import { cn } from "@/components/cn";
 
@@ -22,6 +30,7 @@ function coachHomeHref(pathname: string | null) {
 
 export function CoachFloatingNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const homeHref = coachHomeHref(pathname);
   const items = [
     { href: homeHref, label: "Home", icon: Home, base: "/coach" },
@@ -52,7 +61,7 @@ export function CoachFloatingNav() {
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                 isActive
                   ? "bg-primary text-primary-foreground"
-                  : "bg-transparent text-primary hover:bg-primary/10",
+                  : "bg-transparent text-extended-dark-cyan hover:bg-primary/10",
               )}
             >
               <Icon className="h-5 w-5" aria-hidden />
@@ -71,6 +80,30 @@ export function CoachFloatingNav() {
           );
         })}
       </div>
+
+      <button
+        type="button"
+        aria-label="Sign out"
+        onClick={() => router.push("/login")}
+        className={cn(
+          "group pointer-events-auto absolute bottom-6 left-1/2 grid size-11 -translate-x-1/2 place-items-center rounded-full p-1",
+          "bg-transparent text-extended-dark-cyan transition-colors hover:bg-primary/10",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+        )}
+      >
+        <LogOut className="h-5 w-5" aria-hidden />
+        <span
+          className={cn(
+            "pointer-events-none absolute left-full top-1/2 z-10 ml-2 -translate-y-1/2",
+            "whitespace-nowrap rounded-full bg-foreground px-2.5 py-1 text-overline text-background",
+            "opacity-0 translate-x-1 transition",
+            "group-hover:opacity-100 group-hover:translate-x-0",
+          )}
+          role="tooltip"
+        >
+          Sign out
+        </span>
+      </button>
     </nav>
   );
 }

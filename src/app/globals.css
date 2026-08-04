@@ -372,6 +372,84 @@
   }
 }
 
+/* Chatbox / chat composer shell — Figma node 333:7350.
+   Stroke, padding, surface, shadow, and send size live here so every
+   ChatComposer/Chatbox instance picks them up without per-callsite classes. */
+:root {
+  /* Shared 1px gradient stroke — Chatbox, Card, SuccessDriverCard, CardButton. */
+  --app-stroke: linear-gradient(
+    93.54deg,
+    #dde7e9 0.3%,
+    rgba(110, 194, 211, 0.5) 99.76%
+  );
+  --chatbox-stroke: var(--app-stroke);
+  /* Drop shadow — Figma: X -4, Y -4, Blur 40, Spread 0, #000 @ 6% */
+  --chatbox-shadow: -4px -4px 40px 0px rgba(0, 0, 0, 0.06);
+  /* 12px vertical keeps compact shell ~60px with the 36px send (was 68px at 16). */
+  --chatbox-padding-y: 12px;
+  --chatbox-padding-left: 24px;
+  --chatbox-padding-right: 12px;
+  --chatbox-surface: #ffffff;
+  --chatbox-blur: 21px;
+  --chatbox-send-size: 36px;
+  --chatbox-send-icon: 20px;
+}
+
+[data-slot="chatbox"] {
+  padding: 1px;
+  background-image: var(--chatbox-stroke);
+  box-shadow: var(--chatbox-shadow);
+}
+
+/* Same gradient stroke as Chatbox — painted via masked ::before so each
+   card keeps its own fill (solid, glass, or translucent). */
+[data-slot="card"],
+[data-slot="success-driver-card"],
+[data-slot="card-button"] {
+  position: relative;
+  border-width: 0;
+}
+
+[data-slot="card"]::before,
+[data-slot="success-driver-card"]::before,
+[data-slot="card-button"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--app-stroke);
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+[data-slot="chatbox-surface"] {
+  background-color: var(--chatbox-surface);
+  backdrop-filter: blur(var(--chatbox-blur));
+  -webkit-backdrop-filter: blur(var(--chatbox-blur));
+  padding: var(--chatbox-padding-y) var(--chatbox-padding-right)
+    var(--chatbox-padding-y) var(--chatbox-padding-left);
+}
+
+[data-slot="chatbox-send"] {
+  width: var(--chatbox-send-size);
+  height: var(--chatbox-send-size);
+  padding: 4px;
+}
+
+[data-slot="chatbox-send"] svg {
+  width: var(--chatbox-send-icon);
+  height: var(--chatbox-send-icon);
+}
+
 /* Chat composer mic — thin waveform scrolls while SpeechRecognition listens. */
 @keyframes voice-wave-scroll {
   from {
@@ -558,6 +636,62 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, Segoe UI, Roboto,
     Helvetica, Arial, sans-serif;
+}
+
+/*
+  Candidate app canvas (onboarding, coach, interview, storyboard, training,
+  profile) — not used on auth shells (login / signup / invite).
+
+  Figma “Onboarding - Background Update” fills (bottom → top):
+  1. Solid #FFFFFF @ 100%
+  2. Linear gradient @ 20% layer opacity, bottom-left → top-right
+     - 0%:   #0E9AB5 @ 30%
+     - 100%: #FFFFFF @ 100%
+  3. Blur motif at x:0 y:191
+*/
+.candidate-app-bg {
+  --background: #ffffff;
+  --app-bg: #ffffff;
+  position: relative;
+  isolation: isolate;
+  background-color: #ffffff;
+}
+
+.candidate-app-bg::before,
+.candidate-app-bg::after {
+  content: "";
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Gradient fill layer — overall opacity 20% (Figma fill stack).
+   Absolute so it still paints under tall / overflow-hidden shells. */
+.candidate-app-bg::before {
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  background-image: linear-gradient(
+    to top right,
+    rgb(14 154 181 / 0.3) 0%,
+    rgb(255 255 255 / 1) 100%
+  );
+}
+
+/* Blur motif — fixed to the viewport so it stays put while content scrolls. */
+.candidate-app-bg::after {
+  position: fixed;
+  left: 0;
+  top: 191px;
+  width: min(1024px, 100%);
+  height: 894px;
+  background: url("/brand/candidate-bg-blur.png") left top / contain no-repeat;
+}
+
+@media print {
+  .candidate-app-bg::before,
+  .candidate-app-bg::after {
+    display: none !important;
+  }
 }
 
 ::selection {
