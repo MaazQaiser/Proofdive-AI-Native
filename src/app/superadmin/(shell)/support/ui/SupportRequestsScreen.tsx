@@ -21,6 +21,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageTitle } from "@/components/ui/page-title";
 import {
   Select,
   SelectContent,
@@ -116,13 +118,8 @@ export function SupportRequestsScreen() {
 
   return (
     <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
-        <div>
-          <h1 className="text-h4 text-foreground">Support Tickets</h1>
-          <p className="mt-0.5 text-caption text-muted-foreground">
-            Track and resolve support requests across the platform.
-          </p>
-        </div>
+      <PageHeader>
+        <PageTitle>Support Tickets</PageTitle>
         <Button
           variant="outline"
           disabled={openCount === 0}
@@ -131,7 +128,7 @@ export function SupportRequestsScreen() {
           <CheckCheck className="h-4 w-4" />
           Mark All as Resolved
         </Button>
-      </div>
+      </PageHeader>
 
       <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-6 py-3">
         <div className="relative w-full max-w-sm">

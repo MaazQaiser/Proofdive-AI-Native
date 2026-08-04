@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
+import { PageHeader } from "@/components/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { COUNTRY_OPTIONS, PHONE_COUNTRY_CODES } from "@/lib/superAdminOrganizationWizard";
 import {
@@ -170,8 +171,8 @@ export function AddPartnerScreen() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="sticky top-0 z-10 -mx-6 border-b border-border bg-background px-6 py-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <PageHeader sticky bleed>
+        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <PageBreadcrumb
             parentHref="/superadmin/partners"
             parentLabel="Partners"
@@ -186,7 +187,7 @@ export function AddPartnerScreen() {
             </Button>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
         <Card>

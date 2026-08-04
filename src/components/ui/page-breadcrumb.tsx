@@ -1,6 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
+import { PageTitle } from "@/components/ui/page-title";
 import { cn } from "@/lib/utils";
 
 /**
@@ -22,12 +23,12 @@ export function PageBreadcrumb({
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
       <Link
         href={parentHref}
-        className="text-h4 font-bold text-primary transition-colors hover:underline"
+        className="text-h5 font-medium text-primary transition-colors hover:underline"
       >
         {parentLabel}
       </Link>
       <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
-      <h1 className="text-h4 text-text-primary">{title}</h1>
+      <PageTitle>{title}</PageTitle>
     </div>
   );
 }

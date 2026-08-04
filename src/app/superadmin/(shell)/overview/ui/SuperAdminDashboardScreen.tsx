@@ -3,6 +3,7 @@
 import { Building2, DollarSign, FileText, Users, Video } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { PageTitle } from "@/components/ui/page-title";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { formatCompactCurrencyFromCents, formatNumber } from "@/components/dashboard/format";
 import { KpiCard } from "@/components/dashboard/KpiCard";
@@ -39,7 +40,7 @@ export function SuperAdminDashboardScreen() {
   return (
     <div className="space-y-6 pt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-h4 text-foreground">Overview</h1>
+        <PageTitle>Overview</PageTitle>
         <DateRangeFilter value={granularity} onChange={setGranularity} options={DATE_RANGE_OPTIONS} />
       </div>
 

@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageTitle } from "@/components/ui/page-title";
 
 import { PaymentsSubNav } from "./PaymentsSubNav";
 
@@ -32,8 +34,8 @@ export function PaymentsShell({
   if (isNestedChrome) {
     return (
       <div className="flex flex-col gap-8">
-        <div className="sticky top-0 z-10 -mx-6 border-b border-border bg-background px-6 py-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <PageHeader sticky bleed>
+          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <PageBreadcrumb
               parentHref={breadcrumbParent.href}
               parentLabel={breadcrumbParent.label}
@@ -43,7 +45,7 @@ export function PaymentsShell({
               <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
             ) : null}
           </div>
-        </div>
+        </PageHeader>
         {children}
       </div>
     );
@@ -51,12 +53,12 @@ export function PaymentsShell({
 
   return (
     <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
-      <div className="flex min-h-[68px] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
-        <h1 className="text-h4 text-foreground">{title}</h1>
+      <PageHeader>
+        <PageTitle>{title}</PageTitle>
         {actions ? (
           <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
         ) : null}
-      </div>
+      </PageHeader>
       <div className="shrink-0 px-6">
         <PaymentsSubNav />
       </div>
