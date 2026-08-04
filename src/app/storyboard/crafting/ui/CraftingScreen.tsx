@@ -36,7 +36,10 @@ import { IconButton } from "@/components/ui/icon-button";
 import { Logo } from "@/components/ui/logo";
 import { SelectionChip } from "@/components/ui/selection-chip";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
-import { SuccessDriverMark } from "@/components/ui/success-driver-card";
+import {
+  SuccessDriverCompetencyPill,
+  SuccessDriverMark,
+} from "@/components/ui/success-driver-card";
 import { computeCandidateUsage } from "@/lib/candidateUsage";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import {
@@ -53,7 +56,6 @@ import {
   latestSavedDive,
   normalizeDive,
   recomputeDiveScores,
-  remainingDives,
   strengthScore,
   upsertEditingDive,
 } from "@/lib/storyboardDraft";
@@ -61,7 +63,6 @@ import {
   CAR_WORD_HARD_CAP,
   INTRO_WORD_HARD_CAP,
   LARGE_PASTE_CHAR_THRESHOLD,
-  MAX_DIVES_PER_ROLE,
   carTotalWords,
   clampToWordCap,
   isLargePaste,
@@ -94,24 +95,10 @@ function diveScoreTextClass(score: number | null | undefined): string {
   return "text-scoring-red";
 }
 
-/** Asymmetric radii on the 2×2 pillar grid (Figma Dive Card). */
-function pillarCardRadiusClass(index: number): string {
-  if (index === 1) {
-    return "rounded-tl-[4px] rounded-tr-[12px] rounded-br-[4px] rounded-bl-[4px]";
-  }
-  if (index === 3) {
-    return "rounded-tl-[4px] rounded-tr-[4px] rounded-br-[12px] rounded-bl-[4px]";
-  }
-  return "rounded-[4px]";
-}
-
 const TA =
   "min-h-24 w-full rounded-md border border-border bg-card px-4 py-3 text-caption leading-6 text-text-primary outline-none ring-0 placeholder:text-placeholder disabled:cursor-not-allowed disabled:opacity-60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
 
 const COMPETENCY_REGEN_LIMIT = 2;
-
-const addCompetencyBtnClass =
-  "h-auto gap-2 rounded-md bg-transparent py-0 pl-2! pr-4! text-[14px] font-medium leading-5 text-[#095B73] shadow-none hover:bg-transparent hover:text-[#095B73] hover:underline [&_svg]:text-[#095B73]";
 
 /** Quick-action presets for the inline Edit / regenerate bar (craft + read-only). */
 const STORYBOARD_IMPROVE_CHIPS = [
@@ -270,15 +257,6 @@ export function CraftingScreen() {
 
   const readOnly = Boolean(activeDive && activeDive.status === "saved");
 
-  const maxDives =
-    usage.storyboardLimit > 0 ? usage.storyboardLimit : MAX_DIVES_PER_ROLE;
-  const divesLeft = role && diveHydrated ? remainingDives(diveStore, role, maxDives) : 0;
-  const underStoryboardLimit = divesLeft > 0 && !usage.isStoryboardAtLimit;
-  const showAddOnDiveCard =
-    Boolean(activeDive) &&
-    underStoryboardLimit &&
-    (readOnly || activeDive?.diveNumber === 1);
-
   const updateDive = useCallback(
     (updater: (d: StoryboardDive) => StoryboardDive) => {
       if (!role || !activeDive || activeDive.status === "saved") return;
@@ -407,25 +385,6 @@ export function CraftingScreen() {
     router.push("/storyboard");
   }, [role, activeDive, setDiveStore, router]);
 
-  /** Add evidence while Dive 1 is still editing — does not start a new Dive. */
-  const handleAddCompetencyWhileEditing = useCallback(() => {
-    if (!activeDive || activeDive.status === "saved" || activeDive.diveNumber !== 1) {
-      return;
-    }
-    try {
-      sessionStorage.setItem(StorageKeys.preferStoryboardIntake, "1");
-    } catch {
-      // ignore
-    }
-    router.push("/storyboard?new=1");
-  }, [activeDive, router]);
-
-  /** From a saved Dive: open competency picker, then Dive confirm on storyboard. */
-  const handleAddCompetencyFromReadOnly = useCallback(() => {
-    if (!showAddOnDiveCard || !readOnly) return;
-    router.push("/storyboard?addCompetency=1");
-  }, [showAddOnDiveCard, readOnly, router]);
-
   const handleDownload = useCallback(() => {
     if (!activeDive) return;
     hasTriggeredPrintRef.current = false;
@@ -540,27 +499,10 @@ export function CraftingScreen() {
             </span>
           </div>
 
-          <div className="flex flex-wrap items-start justify-between gap-3 print:hidden">
-            <div className="min-w-0">
-              <h1 className="text-h4 text-text-primary">
-                {readOnly ? "Your storyboard" : "Review Storyboard"}
-              </h1>
-            </div>
-            {readOnly ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  className="shrink-0 border-0 bg-card text-extended-cyan-green hover:bg-card hover:text-extended-cyan-green"
-                  aria-label="Download storyboard"
-                  title="Download"
-                  onClick={handleDownload}
-                >
-                  <Download />
-                </Button>
-              </div>
-            ) : null}
+          <div className="print:hidden">
+            <h1 className="text-h4 text-text-primary">
+              {readOnly ? "Your storyboard" : "Review Storyboard"}
+            </h1>
           </div>
 
           {/* Print-only report cover: logo + candidate metadata. */}
@@ -597,59 +539,78 @@ export function CraftingScreen() {
             <p className="text-caption text-destructive print:hidden">{pasteWarning}</p>
           ) : null}
 
-          {/* Screen dive cards */}
-          <div className="flex w-full items-start gap-1 print:hidden">
-            <div className="flex h-[194px] min-w-0 flex-1 flex-col justify-between gap-[9px] rounded-tl-[12px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[12px] bg-card p-4">
-              <div className="flex w-full flex-col gap-4">
-                <div className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
-                  Story Score
+          {/* Screen dive card */}
+          <div
+            className={cn(
+              "flex w-full flex-col gap-2.5 rounded-[20px] border-[0.5px] border-solid border-[#dde7e9]",
+              "p-4 backdrop-blur-[42px] print:hidden",
+              "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+            )}
+          >
+            <div className="flex w-full items-center justify-between gap-4 py-4">
+              <div className="flex min-w-0 flex-1 items-end gap-4">
+                <div className="flex w-[148px] shrink-0 items-end gap-1 font-gilroy whitespace-nowrap">
+                  <span
+                    className={cn(
+                      "text-[64px] font-normal leading-none tracking-[-3.2px] tabular-nums [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]",
+                      diveScoreTextClass(overallScore),
+                    )}
+                  >
+                    {overallScore != null ? overallScore.toFixed(1) : "—"}
+                  </span>
+                  <span className="text-[48px] font-normal leading-none tracking-[-2.4px] text-[#abadb2] [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">
+                    /5
+                  </span>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-end gap-1 whitespace-nowrap">
-                    <span
-                      className={cn(
-                        "text-[48px] font-medium tracking-[-1.3px] tabular-nums leading-none",
-                        diveScoreTextClass(overallScore),
-                      )}
-                    >
-                      {overallScore != null ? overallScore.toFixed(1) : "—"}
-                    </span>
-                    <span className="text-[18px] leading-[1.2] tracking-[-1px] text-text-secondary">
-                      / 5
-                    </span>
-                  </div>
-                  <div className="h-[14px]" aria-hidden />
+                <div className="flex flex-col justify-between self-stretch">
+                  <span className="text-[20px] font-medium tracking-[-0.5px] text-extended-blue">
+                    Dive {activeDive.diveNumber}
+                  </span>
+                  <span className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                    Overall story score
+                  </span>
                 </div>
               </div>
-              {showAddOnDiveCard ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className={cn(addCompetencyBtnClass, "self-start")}
-                  onClick={
-                    readOnly
-                      ? handleAddCompetencyFromReadOnly
-                      : handleAddCompetencyWhileEditing
-                  }
-                >
-                  <Plus className="size-4" />
-                  Add Competency
-                </Button>
+
+              {readOnly ? (
+                <div className="flex shrink-0 items-center gap-2">
+                  <IconButton
+                    type="button"
+                    variant="ghost"
+                    size="md"
+                    className="text-text-primary hover:bg-transparent hover:text-text-primary"
+                    aria-label="Download storyboard"
+                    title="Download"
+                    onClick={handleDownload}
+                  >
+                    <Download />
+                  </IconButton>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (usage.isStoryboardAtLimit) {
+                        setUpgradeModalOpen(true);
+                        return;
+                      }
+                      router.push("/storyboard?addCompetency=1");
+                    }}
+                  >
+                    <Plus />
+                    Add competency
+                  </Button>
+                </div>
               ) : null}
             </div>
 
-            <div className="grid h-[194px] min-w-0 flex-1 grid-cols-2 grid-rows-2 gap-1">
-              {divePillars.map(({ id, score }, index) => {
+            <div className="flex w-full flex-col">
+              {divePillars.map(({ id, score }) => {
                 const displayScore = score > 0 ? score : null;
                 return (
                   <div
                     key={id}
-                    className={cn(
-                      "flex flex-col items-center justify-center gap-4 bg-card p-4",
-                      pillarCardRadiusClass(index),
-                    )}
+                    className="flex w-full items-center gap-4 border-t border-extended-green py-[18px]"
                   >
-                    <div className="flex w-full items-center gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
                       <SuccessDriverIcon
                         driver={id}
                         className="size-4 text-text-primary"
@@ -658,17 +619,17 @@ export function CraftingScreen() {
                         {SUCCESS_DRIVERS[id].shortLabel}
                       </span>
                     </div>
-                    <div className="flex w-full items-end gap-1 whitespace-nowrap tracking-[-1px]">
+                    <div className="flex w-[88px] shrink-0 items-end justify-end gap-1 font-gilroy whitespace-nowrap">
                       <span
                         className={cn(
-                          "text-[32px] font-medium tabular-nums leading-none",
+                          "w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]",
                           diveScoreTextClass(displayScore),
                         )}
                       >
                         {displayScore != null ? displayScore.toFixed(1) : "—"}
                       </span>
-                      <span className="text-[18px] leading-[27px] text-text-secondary">
-                        / 5
+                      <span className="text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2] [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">
+                        /5
                       </span>
                     </div>
                   </div>
@@ -1024,17 +985,17 @@ function CompetencyClassificationDetails({
               const driver = pillarForCompetency(id);
               const spec = competencySpec(id);
               return (
-                <div
+                <SuccessDriverCompetencyPill
                   key={id}
-                  className="inline-flex items-center gap-2 rounded-full bg-extended-cyan-green/10 py-1.5 pl-1.5 pr-3"
-                >
-                  <SuccessDriverIcon driver={driver} className="size-4" />
-                  <span className="text-overline font-medium text-text-primary">
-                    {SUCCESS_DRIVERS[driver].shortLabel}
-                    {" · "}
-                    {spec.title}
-                  </span>
-                </div>
+                  driver={driver}
+                  label={
+                    <>
+                      {SUCCESS_DRIVERS[driver].shortLabel}
+                      {" · "}
+                      {spec.title}
+                    </>
+                  }
+                />
               );
             })}
           </div>

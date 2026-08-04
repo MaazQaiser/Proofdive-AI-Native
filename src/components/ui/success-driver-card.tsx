@@ -10,12 +10,12 @@ import { cn } from "@/lib/utils";
 /** Canonical Success Driver symbol fill — brand dark cyan, used app-wide. */
 export const SUCCESS_DRIVER_SYMBOL_CLASS = "text-extended-cyan-green";
 
-/** Card-background-only art from Competency Selection Cards Images (not heading icons). */
+/** Card-background-only glow art (not heading icons). */
 const CARD_BACKGROUND_SYMBOL: Record<SuccessDriverId, string> = {
-  thinking: "/brand/Competency Selection Cards Images/Power of Thinking.svg",
-  action: "/brand/Competency Selection Cards Images/Power of Action.svg",
-  people: "/brand/Competency Selection Cards Images/Power of People.svg",
-  mastery: "/brand/Competency Selection Cards Images/Power of Mastery.svg",
+  thinking: "/brand/Competency Selection Cards Images/Power of Thinking.png",
+  action: "/brand/Competency Selection Cards Images/Power of Action.png",
+  people: "/brand/Competency Selection Cards Images/Power of People.png",
+  mastery: "/brand/Competency Selection Cards Images/Power of Mastery.png",
 };
 
 type SuccessDriverMarkProps = {
@@ -60,8 +60,11 @@ type SuccessDriverCardProps = {
   badge?: ReactNode;
 };
 
-/** Success Driver surface — white fill with a large soft-blurred symbol
- * tucked into the bottom-right corner, plus film-grain noise. */
+/**
+ * Success Driver surface — Figma Competency Selection Cards (332:3921):
+ * translucent white diagonal fill, shared `--app-stroke` (Chatbox stroke),
+ * soft glow clipped into the bottom-right, plus film-grain noise.
+ */
 function SuccessDriverCard({
   driver,
   children,
@@ -73,24 +76,28 @@ function SuccessDriverCard({
       data-slot="success-driver-card"
       data-driver={driver}
       className={cn(
-        "relative overflow-hidden rounded-[16px] border-0 transition",
-        "bg-[#ffffff]",
+        "relative overflow-hidden rounded-[16px] transition",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]",
         className,
       )}
     >
+      {/* Fill sits under the glow so the decorative mark reads above the bg. */}
       <div
-        className="pointer-events-none absolute -right-6 -bottom-6 size-[14rem] select-none sm:-right-8 sm:-bottom-8 sm:size-[16rem]"
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[linear-gradient(127.57deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]"
+      />
+      <div
+        className="pointer-events-none absolute -right-[24px] -bottom-[24px] z-[1] size-[256px] select-none"
         aria-hidden
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- decorative brand SVG */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- decorative brand glow PNG */}
         <img
           src={CARD_BACKGROUND_SYMBOL[driver]}
           alt=""
-          className="size-full object-contain opacity-45 blur-[2.5px] sm:blur-[3px]"
+          className="size-full object-contain"
         />
       </div>
-      <div className="success-driver-noise absolute inset-0" aria-hidden />
+      <div className="success-driver-noise absolute inset-0 z-[1]" aria-hidden />
       <div className="relative z-10 flex flex-col gap-2.5 p-6 sm:p-8">
         {badge ? (
           <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/70 bg-white/90 px-2.5 py-1 text-overline font-medium text-text-primary shadow-sm backdrop-blur-sm">
@@ -107,4 +114,30 @@ function SuccessDriverCard({
   );
 }
 
-export { SuccessDriverCard, SuccessDriverMark };
+type SuccessDriverCompetencyPillProps = {
+  driver: SuccessDriverId;
+  /** e.g. "Thinking · Analytical Thinking" */
+  label: ReactNode;
+  className?: string;
+};
+
+/** Compact competency chip — Figma node 332:4299 (white fill, #b3effa stroke). */
+function SuccessDriverCompetencyPill({
+  driver,
+  label,
+  className,
+}: SuccessDriverCompetencyPillProps) {
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full border border-[#b3effa] bg-white py-1.5 pl-1.5 pr-3",
+        className,
+      )}
+    >
+      <SuccessDriverIcon driver={driver} className="size-4" />
+      <span className="text-overline leading-[18px] text-text-primary">{label}</span>
+    </div>
+  );
+}
+
+export { SuccessDriverCard, SuccessDriverMark, SuccessDriverCompetencyPill };

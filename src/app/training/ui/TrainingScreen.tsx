@@ -307,7 +307,7 @@ export function TrainingScreen() {
                   prompt={entryIntro(name)}
                   ariaLabel="Training prompt"
                   headingClassName="text-agent-heading text-heading-teal"
-                  subtextClassName="mt-8 text-agent-question text-text-primary"
+                  subtextClassName="mt-3 text-agent-question text-text-primary"
                   mode="word"
                 />
                 <div className="mx-auto mt-6 w-[800px] max-w-full space-y-6">

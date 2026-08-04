@@ -1010,9 +1010,10 @@ export default function DesignSystemPage() {
                 <CardHeader>
                   <CardTitle>Selection chip</CardTitle>
                   <CardDescription>
-                    Default, hover (try it), selected. Text-only uses 16px
-                    horizontal padding. With a leading icon: 8px left / 16px right.
-                    With a trailing icon: 16px left / 8px right.
+                    Default, hover (try it), selected. Default stroke is solid
+                    #adddda (no gradient). Text-only uses 16px horizontal
+                    padding. With a leading icon: 8px left / 16px right. With a
+                    trailing icon: 16px left / 8px right.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
@@ -1048,9 +1049,10 @@ export default function DesignSystemPage() {
                 <CardHeader>
                   <CardTitle>Chatbox</CardTitle>
                   <CardDescription>
-                    Figma Chatbox (38:305) — Compact pill (60px) and Expanded
-                    rounded-20 shell. Upload · Ask · Mic · Send. Attachments and
-                    Ask force Expanded.
+                    Figma Chatbox (333:7350) — Compact pill and Expanded
+                    rounded-20 shell. Stroke, padding, shadow, and send size
+                    come from globals.css. Upload · Ask · Mic · Send.
+                    Attachments and Ask force Expanded.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">

@@ -418,7 +418,7 @@ export function InterviewScreen() {
                 />
               </h1>
 
-              <p className="mt-1 w-full text-agent-question leading-relaxed text-text-primary">
+              <p className="mt-3 w-full text-agent-question leading-relaxed text-text-primary">
                 This is a first mock interview. You’ll be judged based on the Proofdive Competency
                 Engine.{" "}
                 <button

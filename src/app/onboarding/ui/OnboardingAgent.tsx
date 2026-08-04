@@ -706,8 +706,8 @@ function OnboardingAgentInner({
   }
 
   return (
-    <div className="relative flex h-dvh w-full flex-col overflow-hidden bg-background">
-      <header className="relative z-30 flex h-14 w-full shrink-0 items-center border-b border-border bg-background px-6">
+    <div className="candidate-app-bg relative flex h-dvh w-full flex-col overflow-hidden">
+      <header className="relative z-30 flex h-14 w-full shrink-0 items-center border-b border-border bg-background/75 px-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
         <Link
           href="/"
           className="flex h-full shrink-0 items-center border-r border-border pr-6"
@@ -717,7 +717,7 @@ function OnboardingAgentInner({
       </header>
       <div className="relative z-[2] mx-auto flex min-h-0 w-[800px] max-w-full flex-1 flex-col px-6">
         {step !== "done" ? (
-          <div className="shrink-0 bg-background pt-4">
+          <div className="shrink-0 bg-transparent pt-4">
             <OnboardingProgressHeader
               percent={STEP_PERCENT[step]}
               onBack={canGoBack ? goBack : undefined}
@@ -757,13 +757,13 @@ function OnboardingAgentInner({
               }
               ariaLabel="Onboarding prompt"
               headingClassName="text-agent-heading text-heading-teal"
-              subtextClassName="mt-8 text-agent-question text-text-primary"
+              subtextClassName="mt-3 text-agent-question text-text-primary"
               mode="word"
             />
             {step === "jobDescription" &&
             !generatedJdDraft &&
             !isGeneratingJd ? (
-              <p className="mt-8 text-agent-question text-text-primary">
+              <p className="mt-3 text-agent-question text-text-primary">
                 Type or upload the Job description you are targeting for your{" "}
                 {draft.targetRole.trim() || "role"} role. Or AI assistant can
                 help you{" "}
@@ -792,7 +792,7 @@ function OnboardingAgentInner({
               </p>
             ) : null}
             {step === "done" ? (
-              <p className="mt-8 text-agent-question text-text-primary">
+              <p className="mt-3 text-agent-question text-text-primary">
                 Choose how you&apos;d like to continue. Build your career
                 storyboard or practice a mock interview.
               </p>
