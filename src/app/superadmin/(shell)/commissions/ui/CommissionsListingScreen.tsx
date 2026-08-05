@@ -1,15 +1,15 @@
 "use client";
 
-import { Download, Handshake, Percent, Search, Wallet } from "lucide-react";
+import { Download, Handshake, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { formatNumber } from "@/components/dashboard/format";
-import { KpiCard } from "@/components/dashboard/KpiCard";
-import { Badge } from "@/components/ui/badge";
+import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
 import { PageTitle } from "@/components/ui/page-title";
 import {
   Select,
@@ -69,9 +69,6 @@ export function CommissionsListingScreen() {
   /** KPIs are platform-wide for the date range (before search/type filters), per story. */
   const kpis = useMemo(() => computeCommissionKpis(baseRows), [baseRows]);
 
-  const dateRangeLabel =
-    SUPER_ADMIN_COMMISSION_DATE_RANGE_OPTIONS.find((o) => o.value === dateRange)?.label ?? dateRange;
-
   function handleExport() {
     try {
       if (filteredRows.length === 0) {
@@ -93,103 +90,87 @@ export function CommissionsListingScreen() {
   }
 
   return (
-    <div className="flex flex-col gap-6 pt-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
+      <PageHeader>
         <PageTitle>Commissions &amp; Payouts</PageTitle>
         <Button variant="outline" onClick={handleExport} disabled={filteredRows.length === 0}>
           <Download className="h-4 w-4" />
           Export Listing
         </Button>
+      </PageHeader>
+
+      <div className="shrink-0 border-b border-border px-6 py-5">
+        <KpiRow>
+          <KpiCard label="Total Commissions Generated" value={formatCents(kpis.totalCents)} />
+          <KpiCard label="Tiered" value={formatCents(kpis.tieredCents)} />
+          <KpiCard label="Percentage-Based" value={formatCents(kpis.percentageCents)} />
+          <KpiCard label="Fixed" value={formatCents(kpis.fixedCents)} />
+        </KpiRow>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label="Total Commissions Generated"
-          value={formatCents(kpis.totalCents)}
-          icon={Wallet}
-        />
-        <KpiCard label="Tiered" value={formatCents(kpis.tieredCents)} icon={Handshake} />
-        <KpiCard label="Percentage-Based" value={formatCents(kpis.percentageCents)} icon={Percent} />
-        <KpiCard label="Fixed" value={formatCents(kpis.fixedCents)} icon={Wallet} />
-      </div>
-
-      <div className="flex flex-col gap-3 rounded-md border border-border p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative w-full max-w-sm">
-            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search partners by name, email, or code"
-              className="pl-9"
-            />
-          </div>
-          <Separator orientation="vertical" className="hidden h-6 sm:block" />
-          <Select
-            value={dateRange}
-            onValueChange={(v) => setDateRange(v as SuperAdminCommissionDateRange)}
-          >
-            <SelectTrigger size="sm" className="w-[200px]">
-              <SelectValue placeholder="Date Range" />
-            </SelectTrigger>
-            <SelectContent>
-              {SUPER_ADMIN_COMMISSION_DATE_RANGE_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={commissionFilter}
-            onValueChange={(v) => setCommissionFilter(v as CommissionType | "all")}
-          >
-            <SelectTrigger size="sm" className="w-[180px]">
-              <SelectValue placeholder="Commission Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Commission Types</SelectItem>
-              {(Object.entries(COMMISSION_TYPE_LABEL) as [CommissionType, string][]).map(
-                ([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ),
-              )}
-            </SelectContent>
-          </Select>
-          <Select
-            value={partnerTypeFilter}
-            onValueChange={(v) => setPartnerTypeFilter(v as PartnerType | "all")}
-          >
-            <SelectTrigger size="sm" className="w-[220px]">
-              <SelectValue placeholder="Partner Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Partner Types</SelectItem>
-              {(Object.entries(PARTNER_TYPE_LABEL) as [PartnerType, string][]).map(([value, label]) => (
+      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-6 py-3">
+        <div className="relative w-full max-w-sm">
+          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search partners by name, email, or code"
+            className="pl-9"
+          />
+        </div>
+        <Separator orientation="vertical" className="h-6" />
+        <Select
+          value={dateRange}
+          onValueChange={(v) => setDateRange(v as SuperAdminCommissionDateRange)}
+        >
+          <SelectTrigger size="sm" variant="filter" active={dateRange !== "all_time"}>
+            <SelectValue placeholder="Date Range" />
+          </SelectTrigger>
+          <SelectContent>
+            {SUPER_ADMIN_COMMISSION_DATE_RANGE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={commissionFilter}
+          onValueChange={(v) => setCommissionFilter(v as CommissionType | "all")}
+        >
+          <SelectTrigger size="sm" variant="filter" active={commissionFilter !== "all"}>
+            <SelectValue placeholder="Commission Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Commission Types</SelectItem>
+            {(Object.entries(COMMISSION_TYPE_LABEL) as [CommissionType, string][]).map(
+              ([value, label]) => (
                 <SelectItem key={value} value={value}>
                   {label}
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-caption text-muted-foreground">Applied filters:</span>
-          <Badge variant="secondary">{dateRangeLabel}</Badge>
-          <Badge variant="secondary">
-            {commissionFilter === "all" ? "All commission types" : COMMISSION_TYPE_LABEL[commissionFilter]}
-          </Badge>
-          <Badge variant="secondary">
-            {partnerTypeFilter === "all" ? "All partner types" : PARTNER_TYPE_LABEL[partnerTypeFilter]}
-          </Badge>
-          {search.trim() ? <Badge variant="secondary">Search: “{search.trim()}”</Badge> : null}
-        </div>
+              ),
+            )}
+          </SelectContent>
+        </Select>
+        <Select
+          value={partnerTypeFilter}
+          onValueChange={(v) => setPartnerTypeFilter(v as PartnerType | "all")}
+        >
+          <SelectTrigger size="sm" variant="filter" active={partnerTypeFilter !== "all"}>
+            <SelectValue placeholder="Partner Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Partner Types</SelectItem>
+            {(Object.entries(PARTNER_TYPE_LABEL) as [PartnerType, string][]).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="overflow-hidden rounded-md border border-border">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {filteredRows.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-6 py-20 text-center">
             <Handshake className="h-8 w-8 text-muted-foreground" />
@@ -203,23 +184,27 @@ export function CommissionsListingScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="border-b border-border bg-background">
+            <TableHeader className="sticky top-0 z-10 border-b border-border">
               <TableRow>
-                <TableHead className="text-overline pl-4 text-muted-foreground">Partner Name</TableHead>
+                <TableHead className="text-overline pl-6 text-muted-foreground">Partner Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Partner Type</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Commission Type</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Total Earned</TableHead>
-                <TableHead className="text-overline pr-4 text-right text-muted-foreground">Actions</TableHead>
+                <TableHead className="text-overline pr-6 text-right text-muted-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRows.map(({ partner, totalEarnedCents, invoiceCount }) => (
                 <TableRow key={partner.id}>
-                  <TableCell className="pl-4">
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-foreground">{partner.fullName}</span>
+                  <TableCell className="pl-6">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/superadmin/commissions/${partner.id}`)}
+                      className="flex flex-col text-left"
+                    >
+                      <span className="font-semibold text-text-primary hover:underline">{partner.fullName}</span>
                       <span className="text-caption text-muted-foreground">{partner.email}</span>
-                    </div>
+                    </button>
                   </TableCell>
                   <TableCell className="text-caption text-muted-foreground">
                     {PARTNER_TYPE_LABEL[partner.partnerType]}
@@ -237,10 +222,10 @@ export function CommissionsListingScreen() {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="pr-4 text-right">
+                  <TableCell className="pr-6 text-right">
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
                       onClick={() => router.push(`/superadmin/commissions/${partner.id}`)}
                     >
                       View Detail

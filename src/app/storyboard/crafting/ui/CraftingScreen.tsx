@@ -89,12 +89,13 @@ const PILLAR_ORDER = SUCCESS_DRIVER_ORDER;
 
 /** Bright scoring fills for large dive-card numerals (Figma color/scoring/*). */
 function diveScoreTextClass(score: number | null | undefined): string {
-  if (score == null || !Number.isFinite(score)) return "text-text-secondary";
+  const type = "font-gilroy";
+  if (score == null || !Number.isFinite(score)) return `${type} text-text-secondary`;
   const band = scoringBandForScore(score);
-  if (band === "cyan") return "text-scoring-cyan";
-  if (band === "green") return "text-scoring-green";
-  if (band === "yellow") return "text-scoring-yellow";
-  return "text-scoring-red";
+  if (band === "cyan") return `${type} text-scoring-cyan`;
+  if (band === "green") return `${type} text-scoring-green`;
+  if (band === "yellow") return `${type} text-scoring-yellow`;
+  return `${type} text-scoring-red`;
 }
 
 const TA =
@@ -508,9 +509,6 @@ export function CraftingScreen() {
                 Back to Storyboard
               </Link>
             )}
-            <span className="rounded-full bg-extended-light-cyan px-2.5 py-0.5 text-overline font-medium text-text-primary">
-              Dive {activeDive.diveNumber}
-            </span>
           </div>
 
           <div className="print:hidden">
@@ -680,7 +678,7 @@ export function CraftingScreen() {
                     >
                       {overallScore != null ? overallScore.toFixed(1) : "—"}
                     </span>
-                    <span className="cap-baseline text-[18px] leading-none tracking-[-1px] text-text-secondary">
+                    <span className="cap-baseline font-gilroy text-[18px] leading-none tracking-[-1px] text-text-secondary">
                       / 5
                     </span>
                   </div>
@@ -707,7 +705,7 @@ export function CraftingScreen() {
                         >
                           {displayScore != null ? displayScore.toFixed(1) : "—"}
                         </span>
-                        <span className="cap-baseline text-[18px] leading-none text-text-secondary">
+                        <span className="cap-baseline font-gilroy text-[18px] leading-none text-text-secondary">
                           / 5
                         </span>
                       </div>
@@ -738,7 +736,7 @@ export function CraftingScreen() {
                         >
                           {displayScore != null ? displayScore.toFixed(1) : "—"}
                         </span>
-                        <span className="cap-baseline text-[18px] leading-none text-text-secondary">
+                        <span className="cap-baseline font-gilroy text-[18px] leading-none text-text-secondary">
                           / 5
                         </span>
                       </div>
@@ -904,7 +902,7 @@ export function CraftingScreen() {
           <section className="mt-8 hidden space-y-5 print:block">
             <div>
               <h2 className="text-overline font-medium text-text-secondary">Overall Story Score</h2>
-              <p className="mt-1 text-[28px] font-medium tabular-nums leading-none text-text-primary">
+              <p className="mt-1 font-gilroy text-[28px] font-medium tabular-nums leading-none text-text-primary">
                 {formatReportScore(overallScore)}
                 <span className="ml-1 text-[16px] text-text-secondary">/ 5</span>
               </p>
@@ -924,7 +922,7 @@ export function CraftingScreen() {
                       </span>
                       {row.title}
                     </span>
-                    <span className="shrink-0 tabular-nums font-medium text-text-primary">
+                    <span className="shrink-0 font-gilroy tabular-nums font-medium text-text-primary">
                       {formatReportScore(row.score)} / 5
                     </span>
                   </li>
@@ -1133,7 +1131,10 @@ function DraftSectionCard({
 
   return (
     <Card className="gap-0 overflow-hidden py-0 print:break-inside-avoid print:rounded-none print:bg-white print:shadow-none">
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-surface px-4 py-3 print:border-b print:border-border print:bg-white">
+      <div
+        data-slot="storyboard-section-header"
+        className="relative z-10 flex flex-wrap items-center justify-between gap-2 bg-[linear-gradient(189.44deg,rgba(255,255,255,0.2)_50.11%,rgba(14,154,181,0.1)_110.8%),linear-gradient(#fff,#fff)] px-4 py-3 print:border-b print:border-border print:bg-white print:[&>[data-slot=section-header-stroke]]:hidden"
+      >
         <div className="min-w-0">
           {driver ? (
             <SuccessDriverMark
@@ -1146,6 +1147,11 @@ function DraftSectionCard({
           )}
           <h3 className="text-h6 text-text-primary">{displayTitle}</h3>
         </div>
+        <span
+          data-slot="section-header-stroke"
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-px bg-[linear-gradient(to_right,#F5F5F3,#6EC2D3)]"
+        />
         <div className="flex flex-wrap items-center gap-2">
           <Badge
             variant="secondary"
@@ -1155,7 +1161,7 @@ function DraftSectionCard({
               score > 0 ? scoringFillClass(score) : "bg-muted text-text-secondary",
             )}
           >
-            Strength {score} / 5
+            Strength <span className="font-gilroy tabular-nums">{score}</span> / 5
           </Badge>
           <div className="flex flex-wrap items-center gap-2 print:hidden">
             {showDeepenEdit ? (
@@ -1163,6 +1169,7 @@ function DraftSectionCard({
                 type="button"
                 variant="ghost"
                 size="sm"
+                className="text-extended-dark-cyan hover:text-extended-dark-cyan"
                 onClick={onDeepenEdit}
                 title="Edit this section in a new Dive"
               >
@@ -1186,8 +1193,9 @@ function DraftSectionCard({
                 ) : null}
                 <Button
                   type="button"
-                  variant={isEditing ? "ghost" : "default"}
+                  variant="ghost"
                   size="sm"
+                  className="text-extended-dark-cyan hover:text-extended-dark-cyan"
                   onClick={() => {
                     if (isEditing) {
                       resetEditBar();

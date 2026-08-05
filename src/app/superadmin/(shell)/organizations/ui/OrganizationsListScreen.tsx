@@ -175,7 +175,7 @@ export function OrganizationsListScreen() {
             resetToFirstPage();
           }}
         >
-          <SelectTrigger size="sm" className="w-[168px]">
+          <SelectTrigger size="sm" variant="filter" active={typeFilter !== "all"}>
             <SelectValue placeholder="Organization Type" />
           </SelectTrigger>
           <SelectContent>
@@ -194,7 +194,7 @@ export function OrganizationsListScreen() {
             resetToFirstPage();
           }}
         >
-          <SelectTrigger size="sm" className="w-[168px]">
+          <SelectTrigger size="sm" variant="filter" active={countryFilter !== "all"}>
             <SelectValue placeholder="Country" />
           </SelectTrigger>
           <SelectContent>
@@ -213,7 +213,7 @@ export function OrganizationsListScreen() {
             resetToFirstPage();
           }}
         >
-          <SelectTrigger size="sm" className="w-[172px]">
+          <SelectTrigger size="sm" variant="filter" active={subscriptionStatusFilter !== "all"}>
             <SelectValue placeholder="Subscription Status" />
           </SelectTrigger>
           <SelectContent>
@@ -232,7 +232,7 @@ export function OrganizationsListScreen() {
             resetToFirstPage();
           }}
         >
-          <SelectTrigger size="sm" className="w-[150px]">
+          <SelectTrigger size="sm" variant="filter" active={statusFilter !== "all"}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -256,7 +256,7 @@ export function OrganizationsListScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border bg-background">
+            <TableHeader className="sticky top-0 z-10 border-b border-border">
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Organization</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Type</TableHead>
@@ -317,7 +317,7 @@ export function OrganizationsListScreen() {
         )}
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border bg-background px-6 py-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
         <div className="text-caption flex items-center gap-2 text-muted-foreground">
           <span>Rows per page</span>
           <Select

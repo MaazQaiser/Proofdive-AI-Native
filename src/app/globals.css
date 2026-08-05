@@ -452,8 +452,10 @@
     var(--chatbox-padding-y) var(--chatbox-padding-left);
 }
 
-/* AI Assistant header bottom stroke — LTR #F5F5F3 → #6EC2D3 */
-[data-slot="chatbox-thread-header"]::after {
+/* Shared header bottom stroke — LTR #F5F5F3 → #6EC2D3
+   (AI Assistant + candidate dialogs). */
+[data-slot="chatbox-thread-header"]::after,
+[data-slot="app-dialog-header"]::after {
   content: "";
   position: absolute;
   right: 0;
@@ -672,8 +674,15 @@ body {
 }
 
 /*
-  Candidate app canvas (onboarding, coach, interview, storyboard, training,
-  profile) — not used on auth shells (login / signup / invite).
+  Product canvas — white fill + teal wash (+ optional blur motif).
+
+  Used at full strength on candidate chrome (onboarding, coach, interview,
+  storyboard, training, profile). Superadmin / org / partner shells use the
+  wash everywhere; overview hubs also add `.app-canvas--motif-soft`. Auth
+  shells stay plain.
+
+  `.candidate-app-bg` is a backward-compatible alias for the full canvas
+  (wash + motif).
 
   Figma “Onboarding - Background Update” fills (bottom → top):
   1. Solid #FFFFFF @ 100%
@@ -682,6 +691,7 @@ body {
      - 100%: #FFFFFF @ 100%
   3. Blur motif at x:0 y:191
 */
+.app-canvas,
 .candidate-app-bg {
   --background: #ffffff;
   --app-bg: #ffffff;
@@ -690,6 +700,9 @@ body {
   background-color: #ffffff;
 }
 
+.app-canvas::before,
+.app-canvas--motif::after,
+.app-canvas--motif-soft::after,
 .candidate-app-bg::before,
 .candidate-app-bg::after {
   content: "";
@@ -699,6 +712,7 @@ body {
 
 /* Gradient fill layer — overall opacity 20% (Figma fill stack).
    Absolute so it still paints under tall / overflow-hidden shells. */
+.app-canvas::before,
 .candidate-app-bg::before {
   position: absolute;
   inset: 0;
@@ -711,6 +725,8 @@ body {
 }
 
 /* Blur motif — fixed to the viewport so it stays put while content scrolls. */
+.app-canvas--motif::after,
+.app-canvas--motif-soft::after,
 .candidate-app-bg::after {
   position: fixed;
   left: 0;
@@ -720,7 +736,14 @@ body {
   background: url("/brand/candidate-bg-blur.png") left top / contain no-repeat;
 }
 
+.app-canvas--motif-soft::after {
+  opacity: 0.45;
+}
+
 @media print {
+  .app-canvas::before,
+  .app-canvas--motif::after,
+  .app-canvas--motif-soft::after,
   .candidate-app-bg::before,
   .candidate-app-bg::after {
     display: none !important;

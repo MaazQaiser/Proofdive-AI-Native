@@ -4,8 +4,8 @@ export type SuperAdminProfile = {
 };
 
 export const SUPER_ADMIN_DEMO_PROFILE: SuperAdminProfile = {
-  fullName: "Atiya Abid",
-  email: "atiya@proofdive.com",
+  fullName: "Alex Morgan",
+  email: "alex.morgan@proofdive.com",
 };
 
 export type SuperAdminAuditActivityType =

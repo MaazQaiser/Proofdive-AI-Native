@@ -464,7 +464,7 @@ export function ChatComposer({
               aria-label={threadHeaderTitle ?? "Full screen assistant"}
               className="fixed inset-0 z-[60] flex h-dvh w-screen flex-col overflow-hidden bg-white"
             >
-              <div className="candidate-app-bg pointer-events-none absolute inset-0" aria-hidden />
+              <div className="app-canvas app-canvas--motif pointer-events-none absolute inset-0" aria-hidden />
 
               <IconButton
                 variant="ghost"

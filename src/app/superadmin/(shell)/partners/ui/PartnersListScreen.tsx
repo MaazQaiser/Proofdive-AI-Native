@@ -155,7 +155,7 @@ export function PartnersListScreen() {
             resetToFirstPage();
           }}
         >
-          <SelectTrigger size="sm" className="w-[200px]">
+          <SelectTrigger size="sm" variant="filter" active={typeFilter !== "all"}>
             <SelectValue placeholder="Partner Type" />
           </SelectTrigger>
           <SelectContent>
@@ -174,7 +174,7 @@ export function PartnersListScreen() {
             resetToFirstPage();
           }}
         >
-          <SelectTrigger size="sm" className="w-[180px]">
+          <SelectTrigger size="sm" variant="filter" active={commissionFilter !== "all"}>
             <SelectValue placeholder="Commission Type" />
           </SelectTrigger>
           <SelectContent>
@@ -193,7 +193,7 @@ export function PartnersListScreen() {
             resetToFirstPage();
           }}
         >
-          <SelectTrigger size="sm" className="w-[150px]">
+          <SelectTrigger size="sm" variant="filter" active={statusFilter !== "all"}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -217,7 +217,7 @@ export function PartnersListScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border bg-background">
+            <TableHeader className="sticky top-0 z-10 border-b border-border">
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Full Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Email</TableHead>
@@ -278,7 +278,7 @@ export function PartnersListScreen() {
         )}
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border bg-background px-6 py-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
         <div className="text-caption flex items-center gap-2 text-muted-foreground">
           <span>Rows per page</span>
           <Select

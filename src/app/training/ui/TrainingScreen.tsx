@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { COACH_HUB_CONTENT_TOP_CLASS } from "@/components/coachNavLayout";
 import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import {
   GlassBlurSymbol,
   glassCardSurfaceClasses,
 } from "@/components/ui/glass-blur-symbol";
-import { MediaListItem } from "@/components/ui/media-list-item";
 import { PixelMedia } from "@/components/ui/pixel-media";
 import {
   SUCCESS_DRIVER_SYMBOL_CLASS,
@@ -269,7 +269,7 @@ export function TrainingScreen() {
 
   if (!role) {
     return (
-      <AppShell>
+      <AppShell contentTopClassName={COACH_HUB_CONTENT_TOP_CLASS}>
         <CoachFloatingNav />
         <div className="pb-44">
           <Card>
@@ -295,7 +295,7 @@ export function TrainingScreen() {
   }
 
   return (
-    <AppShell>
+    <AppShell contentTopClassName={COACH_HUB_CONTENT_TOP_CLASS}>
       <CoachFloatingNav />
       <div className="space-y-6 pb-44">
         <div className="mx-auto w-[800px] max-w-full">
@@ -436,7 +436,7 @@ export function TrainingScreen() {
                           type="button"
                           onClick={() => setSelectedCourseId(pill.courseId)}
                           className={cn(
-                            "group relative flex w-full overflow-hidden rounded-2xl bg-white p-3 text-left backdrop-blur-xl transition",
+                            "group relative flex w-full overflow-hidden rounded-2xl bg-white p-4 text-left backdrop-blur-xl transition",
                             "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
                             "hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
                             "duration-200 ease-out active:scale-[0.985]",
@@ -450,19 +450,19 @@ export function TrainingScreen() {
                             className="-right-14 bottom-0 top-auto size-[7.5rem] translate-y-0 sm:-right-16 sm:size-[8.5rem]"
                           />
 
-                          <div className="relative z-10 flex w-full items-center gap-3">
+                          <div className="relative z-10 flex w-full items-center gap-4">
                             <PixelMedia
                               src={pill.imageUrl}
                               className="h-14 w-[4.5rem] shrink-0 rounded-md"
                             />
-                            <div className="flex h-14 min-w-0 flex-1 flex-col justify-center gap-0.5">
-                              <div className="flex min-w-0 items-center gap-2">
+                            <div className="flex min-h-14 min-w-0 flex-1 flex-col justify-center gap-1.5">
+                              <div className="flex min-w-0 items-center gap-2.5">
                                 <div className="min-w-0 truncate text-[15px] font-semibold leading-tight tracking-tight text-text-primary">
                                   {pill.title}
                                 </div>
                                 <span
                                   className={cn(
-                                    "inline-flex shrink-0 items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 text-overline font-medium",
+                                    "inline-flex shrink-0 items-center gap-1 rounded-full border border-[#9FDFDA] bg-white/70 px-2 py-0.5 text-overline font-medium",
                                     SUCCESS_DRIVER_SYMBOL_CLASS,
                                   )}
                                 >
@@ -528,10 +528,10 @@ export function TrainingScreen() {
                     </svg>
                     Back
                   </Button>
-                  <h2 className="text-h4 mt-4 text-left">
+                  <h2 className="mt-4 text-left text-agent-heading text-heading-teal">
                     {COURSE_ENTRY_HEADING}
                   </h2>
-                  <div className="text-h5 mt-4">
+                  <div className="mt-3 text-agent-question text-text-primary">
                     {selectedCourse.title}
                   </div>
                   <p className="mt-2 text-caption leading-6 text-text-secondary">{selectedCourse.subtitle}</p>
@@ -549,21 +549,19 @@ export function TrainingScreen() {
 
                   {(() => {
                     const pct = journeyProgress?.percentComplete ?? 0;
+                    const status =
+                      pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started";
                     return (
-                      <div className="mt-5 max-w-md rounded-[20px] border border-brand-800 bg-brand-1000/80 p-4">
-                        <div className="flex items-end justify-between gap-3">
-                          <div className="text-overline text-text-secondary">
-                            {pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started"}
-                          </div>
-                          <div className="text-[32px] leading-none font-semibold text-heading-teal">
-                            {pct}%
-                          </div>
-                        </div>
+                      <div className="mt-5 flex max-w-md items-center gap-3">
                         <ProgressBar
                           value={pct}
-                          className="mt-3"
+                          className="min-w-0 flex-1"
                           aria-label="Course progress"
                         />
+                        <p className="shrink-0 whitespace-nowrap text-overline leading-none">
+                          <span className="font-semibold text-heading-teal">{pct}%</span>
+                          <span className="ml-1.5 text-text-secondary">{status}</span>
+                        </p>
                       </div>
                     );
                   })()}
@@ -576,19 +574,32 @@ export function TrainingScreen() {
                       {selectedCourse.chapters.map((ch, idx) => (
                         <div
                           key={`${selectedCourse.id}-ch-${idx}`}
+                          data-slot="card"
                           className={cn(
-                            "w-full overflow-hidden rounded-[20px] border px-4 py-4",
-                            idx % 2 === 0
-                              ? "border-brand-800 bg-[linear-gradient(90deg,var(--brand-1000),#fff_48%)]"
-                              : "border-border bg-white",
+                            "group relative flex w-full overflow-hidden rounded-2xl bg-white p-4 text-left backdrop-blur-xl transition",
+                            "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
+                            "hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
+                            "duration-200 ease-out",
+                            "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
                           )}
                         >
-                          <MediaListItem
-                            imageUrl={ch.imageUrl}
-                            title={`${idx + 1}. ${ch.title}`}
-                            summary={ch.summary}
-                            duration={ch.duration}
-                          />
+                          <div className="relative z-10 flex w-full items-center gap-4">
+                            <PixelMedia
+                              src={ch.imageUrl}
+                              className="h-14 w-[4.5rem] shrink-0 rounded-md"
+                            />
+                            <div className="flex min-h-14 min-w-0 flex-1 flex-col justify-center gap-1.5">
+                              <div className="min-w-0 truncate text-[15px] font-semibold leading-tight tracking-tight text-text-primary">
+                                {idx + 1}. {ch.title}
+                              </div>
+                              <p className="line-clamp-2 text-[12px] leading-tight text-text-secondary">
+                                {ch.summary}
+                              </p>
+                            </div>
+                            <span className="flex h-14 shrink-0 items-center text-caption text-text-secondary tabular-nums">
+                              {ch.duration}
+                            </span>
+                          </div>
                         </div>
                       ))}
                     </div>

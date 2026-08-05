@@ -50,7 +50,13 @@ export function CoachFloatingNav() {
       <div className="pointer-events-auto flex flex-col gap-2">
         {items.map((it) => {
           const Icon = it.icon;
-          const isActive = pathname === it.base || Boolean(pathname?.startsWith(`${it.base}/`));
+          const isActive =
+            it.base === "/interview"
+              ? pathname === "/interview" ||
+                Boolean(pathname?.startsWith("/interview/")) ||
+                pathname === "/report" ||
+                Boolean(pathname?.startsWith("/report/"))
+              : pathname === it.base || Boolean(pathname?.startsWith(`${it.base}/`));
           return (
             <Link
               key={it.href}

@@ -705,7 +705,7 @@ function OnboardingAgentInner({
   }
 
   return (
-    <div className="candidate-app-bg relative flex h-dvh w-full flex-col overflow-hidden">
+    <div className="app-canvas app-canvas--motif relative flex h-dvh w-full flex-col overflow-hidden">
       <header className="relative z-30 flex h-14 w-full shrink-0 items-center border-b border-border bg-background/75 px-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
         <Link
           href="/"

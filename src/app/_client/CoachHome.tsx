@@ -7,30 +7,26 @@ import { ArrowUpRight, BookOpen, Map, Plus, X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { COACH_HUB_CONTENT_TOP_CLASS } from "@/components/coachNavLayout";
 import { cn } from "@/components/cn";
 import { CoachConversationalDock } from "@/components/coach/CoachConversationalDock";
 import { TypingText } from "@/components/TypingText";
 import { Button } from "@/components/ui/button";
 import { CardButton } from "@/components/ui/card-button";
-import { SuccessDriverInfoTip } from "@/components/ui/success-driver-card";
-import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
+import {
+  InterviewReadinessCard,
+  readinessPillarsFromReport,
+} from "@/components/interview/InterviewReadinessCard";
 import {
   SUCCESS_DRIVER_ORDER,
   SUCCESS_DRIVERS,
-  type SuccessDriverId,
 } from "@/lib/successDrivers";
 import { getReportById, useLatestInterviewReport } from "@/lib/interviewReports";
 import { reportCountForRole } from "@/lib/proofdiveLogic";
-import {
-  scoringBandForScore,
-  scoringLabelForScore,
-  type ScoringBand,
-} from "@/lib/scoringPalette";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { readJson } from "@/lib/storage";
 import { pickMostRecentForRole } from "@/lib/trainingJourneyProgress";
 import type {
-  InterviewReport,
   RoleProfile,
   TrainingJourneyProgress,
 } from "@/lib/proofdiveTypes";
@@ -49,63 +45,7 @@ const COACH_ROADMAP_ENTRY_SESSION_KEY = "proofdive.session.coachRoadmapEntry.v1"
 /** Session-only dismiss for the readiness empty-state banner. */
 const COACH_READINESS_BANNER_DISMISS_KEY = "proofdive.session.coachReadinessBannerDismissed.v1";
 
-const READINESS_MAX = 5;
-
 const DRIVER_ORDER = SUCCESS_DRIVER_ORDER;
-
-function readinessSnapshotFromReport(r: InterviewReport) {
-  const pillars = [...r.drivers]
-    .sort(
-      (a, b) =>
-        DRIVER_ORDER.indexOf(a.id as (typeof DRIVER_ORDER)[number]) -
-        DRIVER_ORDER.indexOf(b.id as (typeof DRIVER_ORDER)[number]),
-    )
-    .map((d) => ({ id: d.id, label: d.fullTitle, score: d.score }));
-  return {
-    overall: r.overallScore,
-    band: r.overallStatus,
-    pillars,
-  };
-}
-
-/** Bright scoring fills for large readiness numerals (Figma color/scoring/*). */
-function readinessScoreTextClass(score: number | null | undefined): string {
-  if (score == null || !Number.isFinite(score)) return "text-text-secondary";
-  const band = scoringBandForScore(score);
-  if (band === "cyan") return "text-scoring-cyan";
-  if (band === "green") return "text-scoring-green";
-  if (band === "yellow") return "text-scoring-yellow";
-  return "text-scoring-red";
-}
-
-/** Status pill matching Figma Interview Readiness (solid border + 25% fill). */
-function readinessStatusPillClass(scoreOrLabel: number | string | null): string {
-  if (scoreOrLabel == null) {
-    return "border-border bg-muted text-muted-foreground";
-  }
-  const band: ScoringBand =
-    typeof scoreOrLabel === "number"
-      ? scoringBandForScore(scoreOrLabel)
-      : labelToScoringBand(scoreOrLabel);
-  if (band === "cyan") {
-    return "border-scoring-cyan bg-scoring-cyan/25 text-scoring-cyan-fg";
-  }
-  if (band === "green") {
-    return "border-scoring-green bg-scoring-green/25 text-scoring-green";
-  }
-  if (band === "yellow") {
-    return "border-scoring-yellow bg-scoring-yellow/25 text-scoring-yellow-fg";
-  }
-  return "border-scoring-red bg-scoring-red/25 text-scoring-red";
-}
-
-function labelToScoringBand(label: string): ScoringBand {
-  const n = label.trim().toLowerCase();
-  if (n === "star") return "cyan";
-  if (n === "pass" || n === "ready") return "green";
-  if (n === "borderline") return "yellow";
-  return "red";
-}
 
 /** Same astroid mark as onboarding “Generate a Job Description”. */
 function AstroidIcon({ className }: { className?: string }) {
@@ -367,11 +307,6 @@ export function CoachHome() {
     return latestInterviewReport;
   }, [coachJourneyView, coachFinalReportId, latestInterviewReport, pathname]);
 
-  const journeyReadinessSnapshot = useMemo(() => {
-    if (!readinessSourceReport) return null;
-    return readinessSnapshotFromReport(readinessSourceReport);
-  }, [readinessSourceReport]);
-
   const stayOnWelcomeForRoadmapReveal = roadmapPhase !== "idle";
   const showWelcomeLanding =
     coachJourneyView === "welcome" ||
@@ -395,135 +330,38 @@ export function CoachHome() {
     coachJourneyView === "welcome" || stayOnWelcomeForRoadmapReveal;
 
   const readinessCardModel = useMemo(() => {
-    type PillarRow = {
-      id: (typeof DRIVER_ORDER)[number];
-      label: string;
-      score: number | null;
-    };
+    const emptyPillars = DRIVER_ORDER.map((id) => ({
+      id,
+      label: SUCCESS_DRIVERS[id].shortLabel,
+      score: null,
+    }));
 
-    const pillars: PillarRow[] = interviewReadinessEmpty
-      ? DRIVER_ORDER.map((id) => ({
-          id,
-          label: SUCCESS_DRIVERS[id].shortLabel,
-          score: null,
-        }))
-      : journeyReadinessSnapshot?.pillars
-        ? journeyReadinessSnapshot.pillars.map((p) => ({
-            id: p.id as (typeof DRIVER_ORDER)[number],
-            label: SUCCESS_DRIVERS[p.id as SuccessDriverId]?.shortLabel ?? p.label,
-            score: p.score,
-          }))
-        : DRIVER_ORDER.map((id) => ({
-            id,
-            label: SUCCESS_DRIVERS[id].shortLabel,
-            score: null,
-          }));
+    const pillars =
+      interviewReadinessEmpty || !readinessSourceReport
+        ? emptyPillars
+        : readinessPillarsFromReport(readinessSourceReport);
 
-    const overall = interviewReadinessEmpty ? null : (journeyReadinessSnapshot?.overall ?? null);
-    const overallText = overall == null ? "—" : overall.toFixed(1);
-    const band = interviewReadinessEmpty ? null : (journeyReadinessSnapshot?.band ?? null);
-    const bandText =
-      overall != null
-        ? scoringLabelForScore(overall)
-        : (band ?? "—");
-    const bandClass =
-      overall != null
-        ? readinessStatusPillClass(overall)
-        : band == null
-          ? readinessStatusPillClass(null)
-          : readinessStatusPillClass(journeyReadinessSnapshot?.band ?? "Not ready");
+    const overall = interviewReadinessEmpty
+      ? null
+      : (readinessSourceReport?.overallScore ?? null);
 
     const noteText = interviewReadinessEmpty
       ? "Take your first mock interview to get your interview readiness score."
-      : journeyReadinessSnapshot
+      : readinessSourceReport
         ? null
         : "Complete a mock interview to see your readiness snapshot here.";
 
-    return { pillars, overall, overallText, bandText, bandClass, noteText };
-  }, [interviewReadinessEmpty, journeyReadinessSnapshot]);
+    return { pillars, overall, noteText };
+  }, [interviewReadinessEmpty, readinessSourceReport]);
 
   const readinessCardEl = useMemo(() => {
     if (!showInterviewReadinessCard) return null;
     return (
       <div className="mt-6 w-full pb-4">
-        <div
-          className={cn(
-            "flex w-full flex-col gap-2.5 rounded-[20px] border-[0.5px] border-solid border-[#dde7e9]",
-            "px-6 py-4 backdrop-blur-[42px]",
-            "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
-          )}
-        >
-          <div className="flex w-full items-center justify-between gap-4 py-4">
-            <div className="flex min-w-0 flex-1 items-baseline gap-4">
-              <div className="flex w-[148px] shrink-0 items-baseline gap-1 font-gilroy whitespace-nowrap">
-                <span
-                  className={cn(
-                    "cap-baseline text-[64px] font-normal leading-none tracking-[-3.2px] tabular-nums",
-                    readinessScoreTextClass(readinessCardModel.overall),
-                  )}
-                >
-                  {readinessCardModel.overallText}
-                </span>
-                <span className="cap-baseline text-[48px] font-normal leading-none tracking-[-2.4px] text-[#abadb2]">
-                  /{READINESS_MAX}
-                </span>
-              </div>
-              <span className="cap-baseline text-[16px] font-medium tracking-[-0.5px] text-text-primary">
-                Interview readiness
-              </span>
-            </div>
-
-            <div className="flex shrink-0 flex-wrap items-center gap-x-2.5 gap-y-0">
-              <span className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
-                You are currently
-              </span>
-              <span
-                className={cn(
-                  "inline-flex items-center justify-center overflow-hidden rounded-full border border-solid px-[9px] py-[3px] text-[12px] font-medium leading-[1.2]",
-                  readinessCardModel.bandClass,
-                )}
-              >
-                {readinessCardModel.bandText}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex w-full flex-col">
-            {readinessCardModel.pillars.map(({ id, label, score }) => {
-              const displayScore = score != null && score > 0 ? score : null;
-              return (
-                <div
-                  key={id}
-                  className="flex w-full items-center gap-4 border-t border-extended-green py-[18px]"
-                >
-                  <div className="flex min-w-0 flex-1 items-center gap-2">
-                    <SuccessDriverIcon
-                      driver={id}
-                      className="size-4 shrink-0 text-text-primary"
-                    />
-                    <span className="truncate text-[16px] font-medium tracking-[-0.5px] text-text-primary">
-                      {label}
-                    </span>
-                    <SuccessDriverInfoTip driver={id} />
-                  </div>
-                  <div className="flex shrink-0 items-baseline gap-1 font-gilroy whitespace-nowrap">
-                    <span
-                      className={cn(
-                        "cap-baseline w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums",
-                        readinessScoreTextClass(displayScore),
-                      )}
-                    >
-                      {displayScore != null ? displayScore.toFixed(1) : "—"}
-                    </span>
-                    <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2]">
-                      /{READINESS_MAX}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <InterviewReadinessCard
+          overall={readinessCardModel.overall}
+          pillars={readinessCardModel.pillars}
+        />
       </div>
     );
   }, [readinessCardModel, showInterviewReadinessCard]);
@@ -703,7 +541,7 @@ export function CoachHome() {
   }, [roadmapCardVisible]);
 
   return (
-    <AppShell>
+    <AppShell contentTopClassName={COACH_HUB_CONTENT_TOP_CLASS}>
       <CoachFloatingNav />
       <div className="flex min-h-[70vh] flex-col items-start justify-start pb-44">
         <div className="mx-auto mt-0 flex w-full max-w-[840px] flex-row items-center justify-center gap-6 px-6">

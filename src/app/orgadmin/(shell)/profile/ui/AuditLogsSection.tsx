@@ -85,7 +85,7 @@ export function AuditLogsSection() {
           </div>
           <Separator orientation="vertical" className="h-6" />
           <Select value={activityFilter} onValueChange={(v) => setActivityFilter(v as AuditLogActivityType | "all")}>
-            <SelectTrigger size="sm" className="w-[172px]">
+            <SelectTrigger size="sm" variant="filter" active={activityFilter !== "all"}>
               <SelectValue placeholder="Activity Type" />
             </SelectTrigger>
             <SelectContent>

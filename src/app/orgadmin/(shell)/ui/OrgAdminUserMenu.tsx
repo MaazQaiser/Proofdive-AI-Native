@@ -58,11 +58,11 @@ export function OrgAdminUserMenu() {
         <div className="flex justify-end p-1">
           <DropdownMenuItem
             variant="destructive"
-            className="w-auto gap-2 py-2.5 font-medium"
+            aria-label="Logout"
+            className="size-9 justify-center p-0"
             onClick={() => router.push("/login")}
           >
             <LogOut className="h-4 w-4" />
-            Logout
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>

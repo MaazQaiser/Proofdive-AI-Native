@@ -3,9 +3,12 @@
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { Briefcase, Check, ClipboardCheck, ListChecks, Video } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { IconButton } from "@/components/ui/icon-button";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { cn } from "@/components/cn";
 import {
   AFTER_CASE,
@@ -160,10 +163,10 @@ export function TrainingChapterOneJourney({
 
   const timelineSteps = useMemo(() => {
     const steps = [
-      { id: "v" as const, label: "Video" },
-      { id: "q" as const, label: "Quiz" },
-      { id: "c" as const, label: "Case" },
-      { id: "a" as const, label: "Final assessment" },
+      { id: "v" as const, label: "Video", icon: Video },
+      { id: "q" as const, label: "Quiz", icon: ListChecks },
+      { id: "c" as const, label: "Case", icon: Briefcase },
+      { id: "a" as const, label: "Final assessment", icon: ClipboardCheck },
     ];
     const atVideo = phase === "video_intro" || phase === "video" || phase === "post_video";
     const atQuiz = phase === "quiz" || phase === "after_quiz";
@@ -234,34 +237,31 @@ export function TrainingChapterOneJourney({
         <div className="mt-8 flex flex-col gap-6">
           <div className="min-w-0 w-full space-y-6">
             {showTimeline ? (
-              <Card className="gap-0 py-0">
+              <Card className="gap-0 overflow-hidden rounded-[16px] border-[#dde7e9] py-0">
                 <CardContent className="p-4">
                   <div className="mb-4">
-                    <div className="flex items-end justify-between gap-3">
-                      <span className="text-overline text-text-secondary">Module progress</span>
-                      <div className="text-[32px] leading-none font-semibold text-heading-teal">
-                        {percentForTrainingPhase(phase)}%
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                          <ListChecks className="size-4" aria-hidden />
+                        </span>
+                        <span className="text-overline text-extended-cyan-green">Module progress</span>
                       </div>
+                      <span className="text-overline font-semibold leading-none text-heading-teal">
+                        {percentForTrainingPhase(phase)}%
+                      </span>
                     </div>
-                    <div
-                      className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-border"
-                      role="progressbar"
-                      aria-valuenow={percentForTrainingPhase(phase)}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
+                    <ProgressBar
+                      value={percentForTrainingPhase(phase)}
+                      className="mt-3"
                       aria-label="Module progress"
-                    >
-                      <div
-                        className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out"
-                        style={{ width: `${percentForTrainingPhase(phase)}%` }}
-                      />
-                    </div>
+                    />
                   </div>
                   <div
                     className="flex w-full flex-wrap items-start justify-center gap-y-3 sm:flex-nowrap"
                     aria-label="Chapter progress"
                   >
-                    {timelineSteps.map(({ id, label, idx, active, done }) => (
+                    {timelineSteps.map(({ id, label, idx, active, done, icon: StepIcon }) => (
                       <Fragment key={id}>
                         {idx > 0 ? (
                           <div
@@ -270,7 +270,7 @@ export function TrainingChapterOneJourney({
                               "mx-0.5 mt-[18px] hidden h-0.5 min-w-[10px] flex-1 rounded-full sm:block",
                               segmentCompleteBetween(idx - 1, phase)
                                 ? "bg-primary"
-                                : "bg-border",
+                                : "bg-[#dde7e9]",
                             )}
                           />
                         ) : null}
@@ -280,20 +280,24 @@ export function TrainingChapterOneJourney({
                         >
                           <div
                             className={cn(
-                              "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-caption font-semibold transition",
+                              "grid size-9 shrink-0 place-items-center rounded-full border transition",
                               done
                                 ? "border-primary bg-primary text-primary-foreground"
                                 : active
                                   ? "border-primary bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-card"
-                                  : "border-border bg-white text-text-secondary",
+                                  : "border-[#dde7e9] bg-extended-light-cyan text-extended-cyan-green",
                             )}
                           >
-                            {idx + 1}
+                            {done ? (
+                              <Check className="size-4" aria-hidden />
+                            ) : (
+                              <StepIcon className="size-4" aria-hidden />
+                            )}
                           </div>
                           <p
                             className={cn(
                               "mt-2 w-full px-0.5 text-center text-overline leading-snug",
-                              active || done ? "text-text-primary" : "text-text-secondary",
+                              active || done ? "text-extended-cyan-green" : "text-text-secondary",
                             )}
                           >
                             {label}
@@ -388,18 +392,33 @@ export function TrainingChapterOneJourney({
                 ) : null}
 
                 {phase === "quiz" ? (
-                  <Card className="gap-0 py-0">
+                  <Card className="gap-0 overflow-hidden rounded-[16px] border-[#dde7e9] py-0">
                     <CardContent className="p-5 sm:p-6">
-                    <h3 className="text-h6">Quick quiz (3 questions)</h3>
-                    <div className="mt-5 space-y-6">
+                    <div className="flex items-center gap-2">
+                      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                        <ListChecks className="size-4" aria-hidden />
+                      </span>
+                      <h3 className="text-body-sm font-semibold text-extended-cyan-green">
+                        Quick quiz · 3 questions
+                      </h3>
+                    </div>
+                    <div className="mt-5 space-y-4">
                       {QUIZ.map((item, qi) => (
                         <fieldset
                           key={qi}
-                          className="rounded-lg border border-border bg-surface p-4"
+                          className="rounded-lg border border-[#dde7e9] bg-white p-4"
                         >
-                          <legend className="text-body-sm font-semibold text-text-primary">
-                            {qi + 1}. {item.q}
+                          <legend className="sr-only">
+                            Question {qi + 1}
                           </legend>
+                          <div className="flex items-center gap-3">
+                            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-extended-light-cyan text-overline font-semibold text-extended-cyan-green">
+                              {qi + 1}
+                            </span>
+                            <p className="text-body-sm font-semibold text-extended-cyan-green">
+                              {item.q}
+                            </p>
+                          </div>
                           <div className="mt-3 space-y-2">
                             {item.options.map((opt, oi) => {
                               const selected = quizAnswers[qi] === oi;
@@ -407,15 +426,16 @@ export function TrainingChapterOneJourney({
                                 <label
                                   key={opt}
                                   className={cn(
-                                    "flex cursor-pointer items-start gap-2 rounded-2xl border px-3 py-2 text-caption transition",
+                                    "flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-caption transition-colors",
+                                    "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40",
                                     selected
-                                      ? "border-foreground bg-card"
-                                      : "border-transparent bg-white/60 hover:bg-white",
+                                      ? "border-[#b3effa] bg-extended-light-cyan/40"
+                                      : "border-[#dde7e9] bg-white hover:bg-extended-light-cyan/30",
                                   )}
                                 >
                                   <input
                                     type="radio"
-                                    className="mt-1"
+                                    className="sr-only"
                                     name={`quiz-q-${qi}`}
                                     checked={selected}
                                     onChange={() =>
@@ -425,7 +445,25 @@ export function TrainingChapterOneJourney({
                                       }))
                                     }
                                   />
-                                  <span>{opt}</span>
+                                  <span
+                                    className={cn(
+                                      "grid size-4 shrink-0 place-items-center rounded-full border",
+                                      selected
+                                        ? "border-primary bg-primary"
+                                        : "border-[#dde7e9] bg-white",
+                                    )}
+                                    aria-hidden
+                                  >
+                                    {selected ? (
+                                      <span className="size-1.5 rounded-full bg-white" />
+                                    ) : null}
+                                  </span>
+                                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#f5f5f3] text-overline font-semibold text-extended-cyan">
+                                    {String.fromCharCode(65 + oi)}
+                                  </span>
+                                  <span className="min-w-0 leading-snug text-text-primary">
+                                    {opt}
+                                  </span>
                                 </label>
                               );
                             })}

@@ -27,6 +27,7 @@ type SuccessDriverMarkProps = {
   iconClassName?: string;
   /** 16px Lucide info control with hover/focus tooltip (driver description). */
   showInfoTooltip?: boolean;
+  infoClassName?: string;
 };
 
 type SuccessDriverInfoTipProps = {
@@ -47,7 +48,7 @@ function SuccessDriverInfoTip({ driver, className }: SuccessDriverInfoTipProps) 
       )}
       aria-label={`About ${meta.label}`}
     >
-      <Info className="size-4" strokeWidth={2} aria-hidden />
+      <Info className="size-full" strokeWidth={2} aria-hidden />
       <span
         role="tooltip"
         className="pointer-events-none absolute top-full left-1/2 z-20 mt-2 w-max max-w-[240px] -translate-x-1/2 rounded-xl bg-foreground px-3 py-2 text-left text-caption leading-4 font-normal text-background opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
@@ -65,6 +66,7 @@ function SuccessDriverMark({
   className,
   iconClassName,
   showInfoTooltip = false,
+  infoClassName,
 }: SuccessDriverMarkProps) {
   const meta = SUCCESS_DRIVERS[driver];
   const text =
@@ -81,7 +83,9 @@ function SuccessDriverMark({
           {text}
         </span>
       ) : null}
-      {showInfoTooltip ? <SuccessDriverInfoTip driver={driver} /> : null}
+      {showInfoTooltip ? (
+        <SuccessDriverInfoTip driver={driver} className={infoClassName} />
+      ) : null}
     </span>
   );
 }
@@ -162,7 +166,7 @@ function SuccessDriverCompetencyPill({
   className,
 }: SuccessDriverCompetencyPillProps) {
   return (
-    <div
+    <span
       className={cn(
         "inline-flex items-center gap-2 rounded-full border border-[#b3effa] bg-white py-1.5 pl-1.5 pr-3",
         className,
@@ -170,7 +174,7 @@ function SuccessDriverCompetencyPill({
     >
       <SuccessDriverIcon driver={driver} className="size-4" />
       <span className="text-overline leading-[18px] text-text-primary">{label}</span>
-    </div>
+    </span>
   );
 }
 

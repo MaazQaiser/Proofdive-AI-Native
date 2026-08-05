@@ -1,11 +1,12 @@
 "use client";
 
-import { Ban, CheckCircle2, Pencil, Upload, X } from "lucide-react";
+import { Ban, CheckCircle2, Pencil, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DetailField, DetailGrid, DetailSection } from "@/components/ui/detail-field";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
@@ -71,15 +72,6 @@ function buildPaymentForm(org: Organization): PaymentFormState {
     expiryDate: org.subscriptionExpiryDate,
     discountPercent: org.discountPercent ? String(org.discountPercent) : "",
   };
-}
-
-function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-caption text-muted-foreground">{label}</span>
-      <span className="text-body-sm text-foreground">{value || "—"}</span>
-    </div>
-  );
 }
 
 function StatTile({ label, value, tone }: { label: string; value: number; tone?: "green" | "muted" }) {
@@ -290,50 +282,60 @@ export function OrganizationDetailDrawer({
         </SheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border px-6 py-6">
             {!isDetailsEditing ? (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-8">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-h6 text-foreground">{organization.name}</h2>
-                    <p className="text-body-sm text-muted-foreground">{ORGANIZATION_TYPE_LABEL[organization.type]}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex flex-col gap-2">
+                    <p className="text-overline text-muted-foreground">
+                      {ORGANIZATION_TYPE_LABEL[organization.type]}
+                    </p>
+                    <h2 className="text-h5 text-text-primary">{organization.name}</h2>
                     <OrganizationStatusPill status={organization.status} />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setIsDetailsEditing(true)}
-                      aria-label="Edit organization details"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsDetailsEditing(true)}
+                    aria-label="Edit organization details"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                 </div>
 
-                <Separator />
+                <DetailSection title="Organization">
+                  <DetailGrid>
+                    <DetailField label="Industry / Domain" value={organization.industry} />
+                    <DetailField label="Domain" value={organization.domain} />
+                    <DetailField
+                      label="Logo"
+                      value={organization.logoFileName || "Not uploaded"}
+                      muted={!organization.logoFileName}
+                    />
+                  </DetailGrid>
+                </DetailSection>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <DetailRow label="Industry / Domain" value={organization.industry} />
-                  <DetailRow label="Country" value={organization.country} />
-                  <DetailRow label="City" value={organization.city} />
-                  <DetailRow label="Region" value={organization.region} />
-                  <DetailRow label="Domain Details" value={organization.domain} />
-                  <DetailRow label="Organization Logo" value={organization.logoFileName || "Not uploaded"} />
-                </div>
+                <DetailSection title="Location">
+                  <DetailGrid>
+                    <DetailField label="Country" value={organization.country} />
+                    <DetailField label="City" value={organization.city} />
+                    <DetailField label="Region" value={organization.region} />
+                  </DetailGrid>
+                </DetailSection>
 
-                <Separator />
-
-                <h3 className="text-overline text-muted-foreground">Point of Contact</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <DetailRow label="Primary Contact Name" value={organization.contactName} />
-                  <DetailRow label="Email Address" value={organization.contactEmail} />
-                  <DetailRow
-                    label="Phone Number"
-                    value={`${organization.contactCountryCode} ${organization.contactPhone}`}
-                  />
-                  <DetailRow label="Designation" value={organization.contactDesignation} />
-                </div>
+                <DetailSection title="Point of Contact">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-body-sm font-medium text-text-primary">{organization.contactName}</p>
+                    <p className="text-caption text-muted-foreground">{organization.contactDesignation}</p>
+                  </div>
+                  <DetailGrid>
+                    <DetailField label="Email" value={organization.contactEmail} />
+                    <DetailField
+                      label="Phone"
+                      value={`${organization.contactCountryCode} ${organization.contactPhone}`}
+                    />
+                  </DetailGrid>
+                </DetailSection>
 
                 <Button
                   variant="outline"
@@ -468,7 +470,7 @@ export function OrganizationDetailDrawer({
 
                 <Separator />
 
-                <h3 className="text-overline text-muted-foreground">Point of Contact</h3>
+                <h3 className="text-body-sm font-medium text-text-primary">Point of Contact</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="edit-contact-name">Primary Contact Name</Label>
@@ -663,16 +665,17 @@ export function OrganizationDetailDrawer({
                       <h3 className="text-body-sm font-semibold text-foreground">Subscription Configuration</h3>
                       <ManageButton onClick={() => setIsPaymentEditing(true)}>Manage Payment</ManageButton>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <DetailRow label="Assigned Plan" value={organization.subscriptionPlan} />
-                      <DetailRow label="Number of Users" value={organization.numberOfUsers} />
-                      <DetailRow label="Subscription Start Date" value={organization.subscriptionStartDate} />
-                      <DetailRow label="Subscription Expiry Date" value={organization.subscriptionExpiryDate} />
-                      <DetailRow
+                    <DetailGrid>
+                      <DetailField label="Assigned Plan" value={organization.subscriptionPlan} />
+                      <DetailField label="Number of Users" value={organization.numberOfUsers} />
+                      <DetailField label="Subscription Start Date" value={organization.subscriptionStartDate} />
+                      <DetailField label="Subscription Expiry Date" value={organization.subscriptionExpiryDate} />
+                      <DetailField
                         label="Applied Discount"
                         value={organization.discountPercent ? `${organization.discountPercent}%` : "None"}
+                        muted={!organization.discountPercent}
                       />
-                    </div>
+                    </DetailGrid>
                   </>
                 ) : (
                   <>

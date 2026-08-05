@@ -90,12 +90,13 @@ export function scoringLabelForScore(score: number): ScoringLabel {
 
 /** Contrast-safe text color for score numbers on light/dark app surfaces. */
 export function scoringTextClass(score: number | null | undefined): string {
-  if (score == null || !Number.isFinite(score)) return "text-extended-dark-cyan/35";
+  const type = "font-gilroy tabular-nums";
+  if (score == null || !Number.isFinite(score)) return `${type} text-extended-dark-cyan/35`;
   const band = scoringBandForScore(score);
-  if (band === "cyan") return "text-scoring-cyan-fg";
-  if (band === "green") return "text-scoring-green-fg";
-  if (band === "yellow") return "text-scoring-yellow-fg";
-  return "text-scoring-red-fg";
+  if (band === "cyan") return `${type} text-scoring-cyan-fg`;
+  if (band === "green") return `${type} text-scoring-green-fg`;
+  if (band === "yellow") return `${type} text-scoring-yellow-fg`;
+  return `${type} text-scoring-red-fg`;
 }
 
 /** Bright fill for bars / dots — keep brand chroma, not used for small text. */

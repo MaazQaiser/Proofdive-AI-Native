@@ -17,6 +17,8 @@ type Props = {
   rightPanel?: ReactNode;
   /** Width of `rightPanel`. Defaults to 400; may shrink to 42vw on narrow viewports. */
   rightPanelMaxWidth?: number;
+  /** Top padding on the content row. Defaults to `pt-3`. Hub screens use `pt-32`. */
+  contentTopClassName?: string;
 };
 
 /** Candidate chrome — header matches the admin shells: bottom rule across the
@@ -25,11 +27,12 @@ export function AppShell({
   children,
   rightPanel,
   rightPanelMaxWidth = 400,
+  contentTopClassName = "pt-3",
 }: Props) {
   const hasRightPanel = Boolean(rightPanel);
 
   return (
-    <div className="candidate-app-bg min-h-screen w-full text-foreground print:bg-white">
+    <div className="app-canvas app-canvas--motif min-h-screen w-full text-foreground print:bg-white">
       <header className="sticky top-0 z-20 flex h-14 w-full shrink-0 items-center gap-6 border-b border-[#dfe7e9] bg-background/75 px-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 print:hidden">
         <Link
           href="/"
@@ -41,14 +44,14 @@ export function AppShell({
           <AppShellHeaderRoleSelector />
         </div>
       </header>
-      {/* z-[2] keeps scrolling page content above the fixed candidate-app-bg
+      {/* z-[2] keeps scrolling page content above the fixed app-canvas
           wash layers (z-0) and any ambient glow; pb-32 clears the fixed
           ChatComposer so the last blocks aren't trapped under the footer.
           Left inset clears CoachFloatingNav. */}
       {hasRightPanel ? (
         <div className="relative z-[2] flex h-[calc(100vh-3.5rem)] w-full flex-row items-stretch overflow-hidden print:h-auto print:min-h-0 print:overflow-visible">
           <div
-            className={`min-h-0 min-w-0 flex-1 overflow-y-auto pt-3 pr-4 pb-32 sm:pr-6 print:overflow-visible print:p-0 print:pl-0 ${COACH_NAV_CONTENT_INSET_CLASS}`}
+            className={`min-h-0 min-w-0 flex-1 overflow-y-auto pr-4 pb-32 sm:pr-6 print:overflow-visible print:p-0 print:pl-0 ${contentTopClassName} ${COACH_NAV_CONTENT_INSET_CLASS}`}
           >
             <main className="min-w-0 w-full">{children}</main>
           </div>
@@ -66,7 +69,7 @@ export function AppShell({
         </div>
       ) : (
         <div
-          className={`relative z-[2] mx-auto flex w-full max-w-6xl gap-10 pt-3 pr-6 pb-32 print:max-w-none print:gap-0 print:p-0 print:pl-0 ${COACH_NAV_CONTENT_INSET_CLASS}`}
+          className={`relative z-[2] mx-auto flex w-full max-w-6xl gap-10 pr-6 pb-32 print:max-w-none print:gap-0 print:p-0 print:pl-0 ${contentTopClassName} ${COACH_NAV_CONTENT_INSET_CLASS}`}
         >
           <main className="min-w-0 flex-1">{children}</main>
         </div>

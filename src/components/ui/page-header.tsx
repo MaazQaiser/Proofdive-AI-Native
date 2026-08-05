@@ -22,7 +22,7 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex min-h-[84px] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-background p-6",
+        "flex min-h-[84px] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border p-6",
         sticky && "sticky top-0 z-10",
         bleed && "-mx-6",
         className,

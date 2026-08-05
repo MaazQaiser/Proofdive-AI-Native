@@ -7,7 +7,6 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -130,126 +130,130 @@ export function DiscountListingScreen() {
         </Button>
       }
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 py-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="pl-9"
-              placeholder="Search codes…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as DiscountType | "all")}>
-            <SelectTrigger className="w-full sm:w-44">
-              <SelectValue placeholder="Discount Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="percentage">Percentage</SelectItem>
-              <SelectItem value="fixed">Fixed Amount</SelectItem>
-              <SelectItem value="free">Free Access</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={statusFilter}
-            onValueChange={(v) => setStatusFilter(v as DiscountStatus | "all")}
-          >
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
-              <SelectItem value="expired">Expired</SelectItem>
-              <SelectItem value="deactivated">Deactivated</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-6 py-3">
+        <div className="relative w-full max-w-sm">
+          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder="Search codes…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
+        <Separator orientation="vertical" className="h-6" />
+        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as DiscountType | "all")}>
+          <SelectTrigger size="sm" variant="filter" active={typeFilter !== "all"}>
+            <SelectValue placeholder="Discount Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="percentage">Percentage</SelectItem>
+            <SelectItem value="fixed">Fixed Amount</SelectItem>
+            <SelectItem value="free">Free Access</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v as DiscountStatus | "all")}
+        >
+          <SelectTrigger size="sm" variant="filter" active={statusFilter !== "all"}>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="scheduled">Scheduled</SelectItem>
+            <SelectItem value="expired">Expired</SelectItem>
+            <SelectItem value="deactivated">Deactivated</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {!hydrated ? (
-          <p className="text-caption text-muted-foreground">Loading…</p>
+          <p className="px-6 py-10 text-caption text-muted-foreground">Loading…</p>
         ) : filtered.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-caption text-muted-foreground">
-              {emptyMessage}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="overflow-x-auto rounded-xl border border-border">
-            <table className="w-full min-w-[720px] text-left">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Discount Type</TableHead>
-                  <TableHead>Value</TableHead>
-                  <TableHead>Applies To</TableHead>
-                  <TableHead>Validity</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-12" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((code) => (
-                  <TableRow key={code.id}>
-                    <TableCell>
-                      <Link
-                        href={`/superadmin/payments/discounts/${code.id}`}
-                        className="font-medium text-primary hover:underline"
-                      >
-                        {code.code}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{DISCOUNT_TYPE_LABEL[code.discountType]}</TableCell>
-                    <TableCell>{formatValue(code.discountType, code.value)}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {code.appliesTo.map((t) => (
-                          <Badge key={t} variant="secondary">
-                            {t}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-caption text-muted-foreground">
-                      {code.startDate} → {code.expiryDate}
-                    </TableCell>
-                    <TableCell>
-                      <StatusPill status={code.status} />
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button type="button" size="icon" variant="ghost" aria-label="Actions">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/superadmin/payments/discounts/${code.id}`}>View</Link>
-                          </DropdownMenuItem>
-                          {code.status === "active" || code.status === "scheduled" ? (
-                            <DropdownMenuItem onClick={() => setConfirmDeactivateId(code.id)}>
-                              Deactivate
-                            </DropdownMenuItem>
-                          ) : code.deactivated ? (
-                            <DropdownMenuItem onClick={() => handleReactivate(code.id)}>
-                              Reactivate
-                            </DropdownMenuItem>
-                          ) : null}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </table>
+          <div className="flex flex-col items-center justify-center gap-2 px-6 py-20 text-center">
+            <p className="text-body-sm font-medium text-foreground">{emptyMessage}</p>
           </div>
+        ) : (
+          <table className="w-full caption-bottom text-sm">
+            <TableHeader className="sticky top-0 z-10 border-b border-border">
+              <TableRow>
+                <TableHead className="text-overline pl-6 text-muted-foreground">Code</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Discount Type</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Value</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Applies To</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Validity</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Status</TableHead>
+                <TableHead className="text-overline pr-6 text-right text-muted-foreground">
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((code) => (
+                <TableRow key={code.id}>
+                  <TableCell className="pl-6">
+                    <Link
+                      href={`/superadmin/payments/discounts/${code.id}`}
+                      className="font-semibold text-text-primary hover:underline"
+                    >
+                      {code.code}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-caption text-muted-foreground">
+                    {DISCOUNT_TYPE_LABEL[code.discountType]}
+                  </TableCell>
+                  <TableCell className="text-caption text-muted-foreground">
+                    {formatValue(code.discountType, code.value)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {code.appliesTo.map((t) => (
+                        <Badge key={t} variant="secondary">
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-caption text-muted-foreground">
+                    {code.startDate} → {code.expiryDate}
+                  </TableCell>
+                  <TableCell>
+                    <StatusPill status={code.status} />
+                  </TableCell>
+                  <TableCell className="pr-6 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button type="button" size="icon" variant="ghost" aria-label={`Actions for ${code.code}`}>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                          <Link href={`/superadmin/payments/discounts/${code.id}`}>View</Link>
+                        </DropdownMenuItem>
+                        {code.status === "active" || code.status === "scheduled" ? (
+                          <DropdownMenuItem onClick={() => setConfirmDeactivateId(code.id)}>
+                            Deactivate
+                          </DropdownMenuItem>
+                        ) : code.deactivated ? (
+                          <DropdownMenuItem onClick={() => handleReactivate(code.id)}>
+                            Reactivate
+                          </DropdownMenuItem>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </table>
         )}
+      </div>
 
-        <Dialog
+      <Dialog
           open={Boolean(confirmDeactivateId)}
           onOpenChange={(o) => !o && setConfirmDeactivateId(null)}
         >
@@ -279,7 +283,6 @@ export function DiscountListingScreen() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
     </PaymentsShell>
   );
 }
