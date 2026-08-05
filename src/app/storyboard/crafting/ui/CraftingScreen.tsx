@@ -12,6 +12,7 @@ import {
 } from "react";
 import {
   ArrowLeft,
+  ArrowRight,
   ArrowUp,
   CircleDashed,
   Download,
@@ -38,6 +39,7 @@ import { SelectionChip } from "@/components/ui/selection-chip";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import {
   SuccessDriverCompetencyPill,
+  SuccessDriverInfoTip,
   SuccessDriverMark,
 } from "@/components/ui/success-driver-card";
 import { computeCandidateUsage } from "@/lib/candidateUsage";
@@ -246,6 +248,7 @@ export function CraftingScreen() {
 
   const role = roleProfile?.targetRole?.trim() ?? "";
   const diveParam = (searchParams.get("dive") ?? "").trim();
+  const fromPreviousDive = searchParams.get("from") === "previous";
 
   const activeDive = useMemo(() => {
     if (!role || !diveHydrated) return null;
@@ -256,6 +259,10 @@ export function CraftingScreen() {
   }, [role, diveHydrated, diveParam, diveStore]);
 
   const readOnly = Boolean(activeDive && activeDive.status === "saved");
+  const inProgressDive = Boolean(
+    role && diveHydrated && editingDiveForRole(diveStore, role),
+  );
+  const addCompetencyDisabled = fromPreviousDive || inProgressDive;
 
   const updateDive = useCallback(
     (updater: (d: StoryboardDive) => StoryboardDive) => {
@@ -487,13 +494,20 @@ export function CraftingScreen() {
       <div className="pb-44 print:pb-0">
         <div className="mx-auto w-[800px] max-w-full space-y-6 print:w-full print:space-y-0">
           <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
-            <Link
-              href="/storyboard"
-              className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-secondary transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              <ArrowLeft className="size-4 shrink-0" />
-              Back to Storyboard
-            </Link>
+            {fromPreviousDive ? (
+              <SelectionChip onClick={() => router.push("/storyboard")}>
+                Continue Storyboarding
+                <ArrowRight className="size-4" />
+              </SelectionChip>
+            ) : (
+              <Link
+                href="/storyboard"
+                className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-secondary transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                <ArrowLeft className="size-4 shrink-0" />
+                Back to Storyboard
+              </Link>
+            )}
             <span className="rounded-full bg-extended-light-cyan px-2.5 py-0.5 text-overline font-medium text-text-primary">
               Dive {activeDive.diveNumber}
             </span>
@@ -549,24 +563,24 @@ export function CraftingScreen() {
           >
             <div className="flex w-full items-center justify-between gap-4 py-4">
               <div className="flex min-w-0 flex-1 items-end gap-4">
-                <div className="flex w-[148px] shrink-0 items-end gap-1 font-gilroy whitespace-nowrap">
+                <div className="flex w-[148px] shrink-0 items-baseline gap-1 font-gilroy whitespace-nowrap">
                   <span
                     className={cn(
-                      "text-[64px] font-normal leading-none tracking-[-3.2px] tabular-nums [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]",
+                      "cap-baseline text-[64px] font-normal leading-none tracking-[-3.2px] tabular-nums",
                       diveScoreTextClass(overallScore),
                     )}
                   >
                     {overallScore != null ? overallScore.toFixed(1) : "—"}
                   </span>
-                  <span className="text-[48px] font-normal leading-none tracking-[-2.4px] text-[#abadb2] [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">
+                  <span className="cap-baseline text-[48px] font-normal leading-none tracking-[-2.4px] text-[#abadb2]">
                     /5
                   </span>
                 </div>
                 <div className="flex flex-col justify-between self-stretch">
-                  <span className="text-[20px] font-medium tracking-[-0.5px] text-extended-blue">
+                  <span className="cap-baseline text-[20px] font-medium tracking-[-0.5px] text-extended-blue">
                     Dive {activeDive.diveNumber}
                   </span>
-                  <span className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                  <span className="cap-baseline text-[16px] font-medium tracking-[-0.5px] text-text-primary">
                     Overall story score
                   </span>
                 </div>
@@ -587,7 +601,14 @@ export function CraftingScreen() {
                   </IconButton>
                   <Button
                     type="button"
+                    disabled={addCompetencyDisabled}
+                    title={
+                      addCompetencyDisabled
+                        ? "Finish the current Dive before adding competencies."
+                        : undefined
+                    }
                     onClick={() => {
+                      if (addCompetencyDisabled) return;
                       if (usage.isStoryboardAtLimit) {
                         setUpgradeModalOpen(true);
                         return;
@@ -613,22 +634,23 @@ export function CraftingScreen() {
                     <div className="flex min-w-0 flex-1 items-center gap-2">
                       <SuccessDriverIcon
                         driver={id}
-                        className="size-4 text-text-primary"
+                        className="size-4 shrink-0 text-text-primary"
                       />
                       <span className="truncate text-[16px] font-medium tracking-[-0.5px] text-text-primary">
                         {SUCCESS_DRIVERS[id].shortLabel}
                       </span>
+                      <SuccessDriverInfoTip driver={id} />
                     </div>
-                    <div className="flex w-[88px] shrink-0 items-end justify-end gap-1 font-gilroy whitespace-nowrap">
+                    <div className="flex w-[88px] shrink-0 items-baseline justify-end gap-1 font-gilroy whitespace-nowrap">
                       <span
                         className={cn(
-                          "w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]",
+                          "cap-baseline w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums",
                           diveScoreTextClass(displayScore),
                         )}
                       >
                         {displayScore != null ? displayScore.toFixed(1) : "—"}
                       </span>
-                      <span className="text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2] [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">
+                      <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2]">
                         /5
                       </span>
                     </div>
@@ -649,16 +671,16 @@ export function CraftingScreen() {
                   <div className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
                     Story Score
                   </div>
-                  <div className="mt-4 flex items-end gap-1 whitespace-nowrap">
+                  <div className="mt-4 flex items-baseline gap-1 whitespace-nowrap">
                     <span
                       className={cn(
-                        "text-[48px] font-medium tracking-[-1.3px] tabular-nums leading-none",
+                        "cap-baseline text-[48px] font-medium tracking-[-1.3px] tabular-nums leading-none",
                         diveScoreTextClass(overallScore),
                       )}
                     >
                       {overallScore != null ? overallScore.toFixed(1) : "—"}
                     </span>
-                    <span className="text-[18px] leading-[1.2] tracking-[-1px] text-text-secondary">
+                    <span className="cap-baseline text-[18px] leading-none tracking-[-1px] text-text-secondary">
                       / 5
                     </span>
                   </div>
@@ -676,16 +698,16 @@ export function CraftingScreen() {
                           {SUCCESS_DRIVERS[id].shortLabel}
                         </span>
                       </div>
-                      <div className="mt-4 flex w-full items-end gap-1 whitespace-nowrap tracking-[-1px]">
+                      <div className="mt-4 flex w-full items-baseline gap-1 whitespace-nowrap tracking-[-1px]">
                         <span
                           className={cn(
-                            "text-[32px] font-medium tabular-nums leading-none",
+                            "cap-baseline text-[32px] font-medium tabular-nums leading-none",
                             diveScoreTextClass(displayScore),
                           )}
                         >
                           {displayScore != null ? displayScore.toFixed(1) : "—"}
                         </span>
-                        <span className="text-[18px] leading-[27px] text-text-secondary">
+                        <span className="cap-baseline text-[18px] leading-none text-text-secondary">
                           / 5
                         </span>
                       </div>
@@ -707,16 +729,16 @@ export function CraftingScreen() {
                           {SUCCESS_DRIVERS[id].shortLabel}
                         </span>
                       </div>
-                      <div className="mt-4 flex w-full items-end gap-1 whitespace-nowrap tracking-[-1px]">
+                      <div className="mt-4 flex w-full items-baseline gap-1 whitespace-nowrap tracking-[-1px]">
                         <span
                           className={cn(
-                            "text-[32px] font-medium tabular-nums leading-none",
+                            "cap-baseline text-[32px] font-medium tabular-nums leading-none",
                             diveScoreTextClass(displayScore),
                           )}
                         >
                           {displayScore != null ? displayScore.toFixed(1) : "—"}
                         </span>
-                        <span className="text-[18px] leading-[27px] text-text-secondary">
+                        <span className="cap-baseline text-[18px] leading-none text-text-secondary">
                           / 5
                         </span>
                       </div>

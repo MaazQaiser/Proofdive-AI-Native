@@ -27,7 +27,6 @@ export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
     label: "Tenants",
     items: [
       { href: "/superadmin/organizations", label: "Organizations" },
-      { href: "/superadmin/employers", label: "Employers" },
       { href: "/superadmin/partners", label: "Partners" },
       { href: "/superadmin/candidates", label: "Candidates" },
     ],
@@ -40,14 +39,7 @@ export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
       { href: "/superadmin/commissions", label: "Commissions" },
     ],
   },
-  {
-    type: "group",
-    label: "Platform",
-    items: [
-      { href: "/superadmin/content", label: "Content" },
-      { href: "/superadmin/competency-engine", label: "Competency Engine" },
-    ],
-  },
+  { type: "link", href: "/superadmin/competency-engine", label: "Competency Engine" },
   { type: "link", href: "/superadmin/support", label: "Support" },
 ];
 

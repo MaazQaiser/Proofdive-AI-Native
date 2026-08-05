@@ -88,18 +88,22 @@ export function CoreFourSelectionPanel({
           const reasoningOpen = openReasoningPillar === pillar;
 
           return (
-            <SuccessDriverCard key={pillar} driver={pillar}>
-              <div className="flex flex-wrap items-center gap-2 pr-8">
+            <SuccessDriverCard
+              key={pillar}
+              driver={pillar}
+              className="min-h-[216px]"
+            >
+              <div className="flex h-6 flex-wrap items-center gap-2 pr-8">
                 <SuccessDriverMark
                   driver={pillar}
-                  className="text-body-sm"
+                  className="text-body-sm leading-6"
                   iconClassName="size-5"
                 />
               </div>
-              <p className="pr-8 text-caption leading-snug text-text-secondary">
+              <p className="pr-8 text-caption leading-[19.25px] text-text-secondary">
                 {meta.description}
               </p>
-              <div className="flex flex-col gap-1 pr-8 pb-6">
+              <div className="flex flex-col gap-1 pr-8">
                 {COMPETENCY_SPECS.filter((spec) => spec.pillar === pillar).map(
                   (spec) => {
                     const isLocked = lockedSet.has(spec.id);
@@ -109,7 +113,7 @@ export function CoreFourSelectionPanel({
                       <label
                         key={spec.id}
                         className={cn(
-                          "flex items-center gap-2.5 rounded-md px-1 py-1 text-body-sm transition",
+                          "flex h-8 items-center gap-2.5 rounded-md px-1 py-1 text-body-sm leading-6 transition",
                           isLocked
                             ? "cursor-not-allowed opacity-70"
                             : "cursor-pointer hover:bg-white/40",
@@ -122,13 +126,13 @@ export function CoreFourSelectionPanel({
                           <span
                             aria-hidden
                             className={cn(
-                              "grid size-[18px] shrink-0 place-items-center rounded-full border-2 border-[#56b8cb] bg-white",
+                              "grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] border-[#56b8cb] bg-white",
                               isOn && "border-primary",
                             )}
                           >
                             <span
                               className={cn(
-                                "size-2.5 rounded-full bg-primary transition",
+                                "size-[9px] rounded-full bg-primary transition",
                                 isOn ? "opacity-100" : "opacity-0",
                               )}
                             />
@@ -140,7 +144,7 @@ export function CoreFourSelectionPanel({
                             onCheckedChange={() => {
                               if (!isLocked) onToggle(spec.id);
                             }}
-                            className="size-[18px] border-2 border-[#56b8cb] bg-white shadow-none data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                            className="size-4 border-[1.5px] border-[#56b8cb] bg-white shadow-none data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                           />
                         )}
                         <span className="min-w-0">
@@ -159,7 +163,7 @@ export function CoreFourSelectionPanel({
 
               {reasoning ? (
                 <div
-                  className="absolute top-3 right-3 z-20 sm:top-4 sm:right-4"
+                  className="absolute top-4 right-4 z-20"
                   onBlur={(e) => {
                     if (!e.currentTarget.contains(e.relatedTarget)) {
                       setOpenReasoningPillar((current) =>

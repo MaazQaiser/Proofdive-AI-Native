@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Info } from "lucide-react";
 
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import {
@@ -24,7 +25,38 @@ type SuccessDriverMarkProps = {
   label?: "full" | "short" | "none";
   className?: string;
   iconClassName?: string;
+  /** 16px Lucide info control with hover/focus tooltip (driver description). */
+  showInfoTooltip?: boolean;
 };
+
+type SuccessDriverInfoTipProps = {
+  driver: SuccessDriverId;
+  className?: string;
+};
+
+/** Lucide `Info` — 16px, #6B7280, tooltip on hover/focus. */
+function SuccessDriverInfoTip({ driver, className }: SuccessDriverInfoTipProps) {
+  const meta = SUCCESS_DRIVERS[driver];
+
+  return (
+    <button
+      type="button"
+      className={cn(
+        "group relative inline-flex size-4 shrink-0 items-center justify-center text-[#6B7280] transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+        className,
+      )}
+      aria-label={`About ${meta.label}`}
+    >
+      <Info className="size-4" strokeWidth={2} aria-hidden />
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute top-full left-1/2 z-20 mt-2 w-max max-w-[240px] -translate-x-1/2 rounded-xl bg-foreground px-3 py-2 text-left text-caption leading-4 font-normal text-background opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
+      >
+        {meta.description}
+      </span>
+    </button>
+  );
+}
 
 /** Icon + label row — the canonical inline Success Driver heading treatment. */
 function SuccessDriverMark({
@@ -32,6 +64,7 @@ function SuccessDriverMark({
   label = "full",
   className,
   iconClassName,
+  showInfoTooltip = false,
 }: SuccessDriverMarkProps) {
   const meta = SUCCESS_DRIVERS[driver];
   const text =
@@ -48,6 +81,7 @@ function SuccessDriverMark({
           {text}
         </span>
       ) : null}
+      {showInfoTooltip ? <SuccessDriverInfoTip driver={driver} /> : null}
     </span>
   );
 }
@@ -76,7 +110,7 @@ function SuccessDriverCard({
       data-slot="success-driver-card"
       data-driver={driver}
       className={cn(
-        "relative overflow-hidden rounded-[16px] transition",
+        "relative flex flex-col overflow-hidden rounded-[16px] transition",
         "shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]",
         className,
       )}
@@ -98,7 +132,7 @@ function SuccessDriverCard({
         />
       </div>
       <div className="success-driver-noise absolute inset-0 z-[1]" aria-hidden />
-      <div className="relative z-10 flex flex-col gap-2.5 p-6 sm:p-8">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col gap-2.5 p-6">
         {badge ? (
           <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/70 bg-white/90 px-2.5 py-1 text-overline font-medium text-text-primary shadow-sm backdrop-blur-sm">
             <span
@@ -140,4 +174,9 @@ function SuccessDriverCompetencyPill({
   );
 }
 
-export { SuccessDriverCard, SuccessDriverMark, SuccessDriverCompetencyPill };
+export {
+  SuccessDriverCard,
+  SuccessDriverMark,
+  SuccessDriverCompetencyPill,
+  SuccessDriverInfoTip,
+};

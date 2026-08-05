@@ -2,9 +2,7 @@
 
 import {
   Bell,
-  Briefcase,
   Building2,
-  BookOpen,
   CreditCard,
   Handshake,
   LayoutDashboard,
@@ -29,10 +27,8 @@ export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/superadmin/overview", label: "Overview", icon: LayoutDashboard },
   { href: "/superadmin/organizations", label: "Organizations", icon: Building2 },
   { href: "/superadmin/payments", label: "Payments", icon: CreditCard },
-  { href: "/superadmin/content", label: "Content", icon: BookOpen },
   { href: "/superadmin/partners", label: "Partners", icon: Handshake },
   { href: "/superadmin/commissions", label: "Commissions", icon: Wallet },
-  { href: "/superadmin/employers", label: "Employers", icon: Briefcase },
   { href: "/superadmin/candidates", label: "Candidates", icon: Users },
   { href: "/superadmin/competency-engine", label: "Competency Engine", icon: Target },
   { href: "/superadmin/support", label: "Support Requests", icon: LifeBuoy },

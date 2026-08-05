@@ -222,6 +222,7 @@ function Chatbox({
     <div
       data-slot="chatbox"
       data-variant={variant}
+      data-thread={hasLeading ? "true" : undefined}
       className={cn(
         "relative w-full max-w-[800px]",
         isCompact ? "rounded-full" : "rounded-[20px]",
@@ -234,7 +235,7 @@ function Chatbox({
         className={cn(
           "overflow-clip outline-none ring-0 focus-within:outline-none focus-within:ring-0",
           isCompact ? "rounded-full" : "rounded-[20px]",
-          hasLeading && "flex min-h-0 flex-1 flex-col",
+          hasLeading && "!p-0 flex min-h-0 flex-1 flex-col",
         )}
       >
         {hasLeading ? (
@@ -242,9 +243,10 @@ function Chatbox({
         ) : null}
 
         <div
+          data-slot="chatbox-composer"
           className={cn(
             "flex w-full flex-col",
-            hasLeading ? "shrink-0 gap-2.5 pt-3" : isCompact ? null : "gap-2.5",
+            hasLeading ? "shrink-0 gap-2.5 py-3 pr-3 pl-6" : isCompact ? null : "gap-2.5",
           )}
         >
           {fileChips}

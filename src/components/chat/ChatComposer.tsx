@@ -255,14 +255,13 @@ export function ChatComposer({
   }
 
   const threadLeading = thread ? (
-    <div
-      className={cn(
-        "flex w-full min-h-0 flex-1 flex-col border-b border-border",
-        "max-h-[min(380px,42dvh)]",
-      )}
-    >
+    <>
       <div
-        className="flex min-h-12 shrink-0 items-center justify-between gap-3 px-1 pb-3"
+        data-slot="chatbox-thread-header"
+        className={cn(
+          "relative flex w-full shrink-0 items-center justify-between gap-3 p-3",
+          "bg-[linear-gradient(189.44deg,rgba(255,255,255,0.2)_50.11%,rgba(14,154,181,0.1)_110.8%),linear-gradient(#fff,#fff)]",
+        )}
         role="group"
         aria-label={`${threadHeaderTitle} header`}
       >
@@ -270,7 +269,7 @@ export function ChatComposer({
           <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
             <MessageCircleQuestion className="size-4" aria-hidden />
           </span>
-          <span className="truncate text-body-sm font-medium text-extended-cyan-green">
+          <span className="truncate font-gilroy text-[20px] font-medium leading-[1.2] text-extended-cyan-green">
             {threadHeaderTitle}
           </span>
         </div>
@@ -298,14 +297,19 @@ export function ChatComposer({
         </div>
       </div>
       <div
-        className="w-full min-h-0 flex-1 overflow-y-auto scroll-smooth px-1 py-1"
-        tabIndex={0}
-        role="log"
-        aria-relevant="additions"
+        data-slot="chatbox-thread-log"
+        className="flex min-h-0 w-full max-h-[min(380px,42dvh)] flex-1 flex-col border-b border-[#d4d4d2]"
       >
-        {thread}
+        <div
+          className="min-h-0 w-full flex-1 overflow-y-auto scroll-smooth py-0 pr-3 pl-6"
+          tabIndex={0}
+          role="log"
+          aria-relevant="additions"
+        >
+          {thread}
+        </div>
       </div>
-    </div>
+    </>
   ) : null;
 
   const voiceStatus = voiceError ? (
@@ -458,15 +462,9 @@ export function ChatComposer({
               role="dialog"
               aria-modal="true"
               aria-label={threadHeaderTitle ?? "Full screen assistant"}
-              className="fixed inset-0 z-50 flex h-dvh w-screen flex-col bg-background"
+              className="fixed inset-0 z-[60] flex h-dvh w-screen flex-col overflow-hidden bg-white"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/brand/onboarding-gradient.png"
-                alt=""
-                aria-hidden
-                className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-auto w-full select-none"
-              />
+              <div className="candidate-app-bg pointer-events-none absolute inset-0" aria-hidden />
 
               <IconButton
                 variant="ghost"
@@ -478,7 +476,7 @@ export function ChatComposer({
                 <X strokeWidth={2} />
               </IconButton>
 
-              <div className="relative z-10 mx-auto flex h-full w-full max-w-[800px] flex-col px-6 pt-14 pb-6">
+              <div className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-[800px] flex-col px-6 pt-14 pb-6">
                 <div className="min-h-0 flex-1 overflow-y-auto scroll-smooth">
                   <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 py-6">
                     {threadHeaderTitle ? (

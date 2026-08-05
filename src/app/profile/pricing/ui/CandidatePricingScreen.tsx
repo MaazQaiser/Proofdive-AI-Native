@@ -1,7 +1,6 @@
 "use client";
 
 import { Check } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -229,35 +228,7 @@ export function CandidatePricingScreen() {
 
   return (
     <AppShell>
-      <div className="relative isolate -mx-2 overflow-hidden rounded-[24px] sm:-mx-4">
-        {/* Ambient gradient blobs */}
-        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
-          <Image
-            src="/brand/pricing/blob-2.png"
-            alt=""
-            width={720}
-            height={720}
-            className="absolute -top-32 -left-28 w-[min(520px,70vw)] motion-safe:animate-pricing-blob opacity-55 mix-blend-screen"
-            priority
-          />
-          <Image
-            src="/brand/pricing/blob-3.png"
-            alt=""
-            width={640}
-            height={640}
-            className="absolute -top-24 -right-20 w-[min(460px,60vw)] motion-safe:animate-pricing-blob-alt opacity-50 mix-blend-screen"
-            priority
-          />
-          <Image
-            src="/brand/pricing/blob-1.png"
-            alt=""
-            width={560}
-            height={560}
-            className="absolute top-[42%] left-1/2 w-[min(420px,55vw)] -translate-x-1/2 opacity-40 mix-blend-screen"
-          />
-        </div>
-
-        <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-12 px-2 py-6 pb-16 sm:px-4 sm:py-10">
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col gap-12 px-2 py-6 pb-16 sm:px-4 sm:py-10">
           <div className="flex justify-end">
             <Button type="button" variant="ghost" size="sm" className="text-muted-foreground" asChild>
               <Link href="/profile/billing">Back to billing</Link>
@@ -522,7 +493,6 @@ export function CandidatePricingScreen() {
               ))}
             </div>
           </section>
-        </div>
       </div>
 
       <BundleCheckoutDialog
