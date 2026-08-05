@@ -148,7 +148,7 @@ export function OrgAdminUserDetailDrawer({
                 {errors.name && <p className="text-caption text-destructive">{errors.name}</p>}
               </div>
 
-              <DetailRow label="Email" value={user.email} />
+              <DetailField label="Email" value={user.email} />
 
               <Button onClick={handleSave} className="w-fit">
                 Save Changes
