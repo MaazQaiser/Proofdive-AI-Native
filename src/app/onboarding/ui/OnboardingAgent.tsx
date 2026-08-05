@@ -134,12 +134,12 @@ function computeInitialOnboardingState(
 
   let firstContent: string;
   if (step === "role") {
-    firstContent = `Hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. I’m your onboarding agent.\n\nFirst up: what’s the role you’re preparing for?`;
+    firstContent = `Hey, welcome to ProofDive${namePart ? `, ${namePart}` : ""}. I’m your onboarding agent.\n\nFirst up: what’s the role you’re preparing for?`;
   } else if (step === "done") {
-    firstContent = `Hey, welcome to proofdive${namePart ? `, ${namePart}` : ""}. I’m your onboarding agent.`;
+    firstContent = `Hey, welcome to ProofDive${namePart ? `, ${namePart}` : ""}. I’m your onboarding agent.`;
   } else {
     firstContent =
-      "Hey, welcome to proofdive. I’m your onboarding agent.\n\nWhat should I call you?";
+      "Hey, welcome to ProofDive. I’m your onboarding agent.\n\nWhat should I call you?";
   }
 
   const messages: ChatMessage[] = [
@@ -515,7 +515,7 @@ function OnboardingAgentInner({
       setDraft(next);
       push(
         "assistant",
-        `Hey ${name}, welcome to proofdive. Let’s start.\n\nFirst up: what’s the role you’re preparing for?`,
+        `Hey ${name}, welcome to ProofDive. Let’s start.\n\nFirst up: what’s the role you’re preparing for?`,
       );
       setStep("role");
       return;

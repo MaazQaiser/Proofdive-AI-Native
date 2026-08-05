@@ -27,8 +27,8 @@ export default function Home() {
             <span className="block text-[#0E9AB5]">interview-ready proof.</span>
           </h1>
           <p className="mt-5 max-w-[28rem] text-body-lg leading-7 text-text-secondary">
-            Practice with AI, improve your answers, and see exactly what to work
-            on next.
+            Build evidence-backed stories from real experience, then practice
+            against a fixed competency standard.
           </p>
           <div className="mt-9 motion-safe:animate-landing-cta">
             <Button
@@ -36,7 +36,7 @@ export default function Home() {
               size="lg"
                 className="h-12 rounded-md px-7 text-base font-medium"
             >
-              <Link href="/login">Let&apos;s get started</Link>
+              <Link href="/login">Start with your story</Link>
             </Button>
           </div>
         </div>

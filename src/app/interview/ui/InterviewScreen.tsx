@@ -419,7 +419,7 @@ export function InterviewScreen() {
               </h1>
 
               <p className="mt-3 w-full text-agent-question leading-relaxed text-text-primary">
-                This is a first mock interview. You’ll be judged based on the Proofdive Competency
+                This is a first mock interview. You’ll be judged based on the ProofDive Competency
                 Engine.{" "}
                 <button
                   type="button"
@@ -796,7 +796,7 @@ export function InterviewScreen() {
                 id="interview-intro-video-title"
                 className="min-w-0 flex-1 truncate text-caption font-semibold text-text-primary"
               >
-                Learn about Proofdive
+                Learn about ProofDive
               </span>
               <button
                 type="button"

@@ -715,7 +715,7 @@ export function CoachHome() {
           >
             {showWelcomeLanding ? (
               <>
-                <h2 className="text-agent-heading text-heading-teal">Welcome to Proofdive</h2>
+                <h2 className="text-agent-heading text-heading-teal">Welcome to ProofDive</h2>
                 <h4 className="mt-3 mb-[14px] text-agent-question text-text-primary">
                   {roadmapPhase === "preparing" ? (
                     <span className="inline-flex items-center gap-1" aria-live="polite">
