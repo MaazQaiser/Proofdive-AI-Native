@@ -196,6 +196,19 @@ export function CandidatePricingScreen() {
     setForceFail(false);
   }
 
+  function cancelActivePlan() {
+    if (subscription.status !== "active" || !subscription.nextBillingDate) {
+      toast.error("Unable to cancel right now. Open billing to try again.");
+      return;
+    }
+    setSubscription((prev) => ({
+      ...prev,
+      status: "pending_cancel",
+      accessEndsAt: prev.nextBillingDate,
+    }));
+    toast.success("Cancellation scheduled. Reverting to Free in a few seconds for this demo.");
+  }
+
   function completeCheckout() {
     if (!checkoutBundle || !checkoutCycle) return;
     if (forceFail) {
@@ -224,7 +237,7 @@ export function CandidatePricingScreen() {
 
   const isFree = subscription.status === "free";
   const ctaLabel =
-    isFree || subscription.status === "pending_cancel" ? "Get started" : "Switch to this Bundle";
+    isFree || subscription.status === "pending_cancel" ? "Add this Bundle" : "Switch to this Bundle";
 
   return (
     <AppShell>
@@ -237,7 +250,7 @@ export function CandidatePricingScreen() {
 
           <header className="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center motion-safe:animate-pricing-rise">
             <h1 className="text-[clamp(2rem,4vw,2.75rem)] font-semibold leading-[1.15] tracking-[-0.04em] text-heading-teal">
-              Choose your right plan!
+              Choose the plan that matches how you prep.
             </h1>
             <p className="max-w-lg text-[15px] leading-relaxed text-muted-foreground sm:text-body-sm">
               Pick the Free baseline or a paid plan that matches how you prep. Subscribe or switch
@@ -313,9 +326,24 @@ export function CandidatePricingScreen() {
                       `Storyboards × ${FREE_STORYBOARD_ALLOCATION}`,
                     ]}
                   />
-                  <Button type="button" variant="outline" className="mt-auto w-full rounded-full" disabled={isFree}>
-                    {isFree ? "Current plan" : "Included at signup"}
-                  </Button>
+                  {isFree ? (
+                    <Button type="button" variant="outline" className="mt-auto w-full rounded-full" disabled>
+                      Current plan
+                    </Button>
+                  ) : subscription.status === "active" ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="mt-auto h-auto w-full px-0 text-caption font-medium text-muted-foreground hover:bg-transparent hover:text-destructive"
+                      onClick={cancelActivePlan}
+                    >
+                      Cancel plan
+                    </Button>
+                  ) : (
+                    <Button type="button" variant="outline" className="mt-auto w-full rounded-full" disabled>
+                      {subscription.status === "pending_cancel" ? "Canceling" : "Included at signup"}
+                    </Button>
+                  )}
                 </div>
               </article>
 
@@ -388,44 +416,14 @@ export function CandidatePricingScreen() {
                       )}
 
                       {isCurrent ? (
-                        <div className="mt-auto flex w-full flex-col items-center gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full rounded-full"
-                            disabled
-                          >
-                            {subscription.status === "pending_cancel" ? "Canceling" : "Current plan"}
-                          </Button>
-                          {subscription.status === "active" ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              className="h-auto px-0 text-caption font-medium text-muted-foreground hover:bg-transparent hover:text-destructive"
-                              onClick={() => {
-                                if (
-                                  subscription.status !== "active" ||
-                                  !subscription.nextBillingDate
-                                ) {
-                                  toast.error(
-                                    "Unable to cancel right now. Open billing to try again.",
-                                  );
-                                  return;
-                                }
-                                setSubscription((prev) => ({
-                                  ...prev,
-                                  status: "pending_cancel",
-                                  accessEndsAt: prev.nextBillingDate,
-                                }));
-                                toast.success(
-                                  "Cancellation scheduled. Reverting to Free in a few seconds for this demo.",
-                                );
-                              }}
-                            >
-                              Cancel plan
-                            </Button>
-                          ) : null}
-                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="mt-auto w-full rounded-full"
+                          disabled
+                        >
+                          {subscription.status === "pending_cancel" ? "Canceling" : "Current plan"}
+                        </Button>
                       ) : (
                         <Button
                           type="button"

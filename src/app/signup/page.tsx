@@ -37,7 +37,7 @@ export default function SignupPage() {
     <AuthShell>
       <div className="flex w-full max-w-[400px] flex-col items-stretch gap-5">
         <div className="flex flex-col items-center gap-1.5 text-center">
-          <h1 className="text-h4 font-medium text-extended-dark-cyan">Signup</h1>
+          <h1 className="text-h4 font-medium text-extended-dark-cyan">Sign up</h1>
           <p className="text-body-sm text-muted-foreground">Enter your email to get started</p>
         </div>
 

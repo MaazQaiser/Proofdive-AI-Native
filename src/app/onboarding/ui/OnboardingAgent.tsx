@@ -374,7 +374,7 @@ function OnboardingAgentInner({
     setGeneratedJdDraft(null);
     push(
       "assistant",
-      "Got it. If you also have a resume, drop it here. It's totally optional, but it helps me prep you way better for this role.",
+      "Got it. A resume helps us identify useful experiences and tailor the questions. It's recommended, not required.",
     );
     setStep("resume");
   }
@@ -515,7 +515,7 @@ function OnboardingAgentInner({
       setDraft(next);
       push(
         "assistant",
-        `Hey ${name}, welcome to ProofDive. Let’s start.\n\nFirst up: what’s the role you’re preparing for?`,
+        `Hey ${name}!\n\nFirst up: what’s the role you’re preparing for?`,
       );
       setStep("role");
       return;
@@ -642,10 +642,9 @@ function OnboardingAgentInner({
     if (step === "industryVertical") {
       const next = { ...draft, industryVertical: isSkip ? "" : cleaned };
       setDraft(next);
-      const role = next.targetRole.trim() || "your role";
       push(
         "assistant",
-        `Your job description.\n\nType or upload the Job description you are targeting for your ${role} role. Or AI assistant can help you Generate a Job Description`,
+        `Your job description.\n\nPaste or upload the job description you are targeting. It shapes the questions and how the evidence is assessed.`,
       );
       setStep("jobDescription");
       return;
@@ -668,7 +667,7 @@ function OnboardingAgentInner({
       setGeneratedJdDraft(null);
       push(
         "assistant",
-        "Got it. If you also have a resume, drop it here. It's totally optional, but it helps me prep you way better for this role.",
+        "Got it. A resume helps us identify useful experiences and tailor the questions. It's recommended, not required.",
       );
       setStep("resume");
       return;
@@ -685,7 +684,7 @@ function OnboardingAgentInner({
       setCoreFourError(null);
       push(
         "assistant",
-        "I've suggested a Core Four competencies based on your job description.\n\nAdjust if you'd like, then proceed.",
+        "We recommend four competencies to keep the first Storyboard focused and manageable.\n\nThese were selected from your role requirements and job description. You can replace them or add more.",
       );
       setStep("coreFourSelection");
       return;
@@ -747,7 +746,7 @@ function OnboardingAgentInner({
               prompt={
                 step === "jobDescription"
                   ? generatedJdDraft
-                    ? "Here's your job description."
+                    ? "Here's a draft job description."
                     : isGeneratingJd
                       ? "Crafting your job description."
                       : "Your job description."
@@ -764,9 +763,9 @@ function OnboardingAgentInner({
             !generatedJdDraft &&
             !isGeneratingJd ? (
               <p className="mt-3 text-agent-question text-text-primary">
-                Type or upload the Job description you are targeting for your{" "}
-                {draft.targetRole.trim() || "role"} role. Or AI assistant can
-                help you{" "}
+                Paste or upload the job description you are targeting. It shapes
+                the questions and how the evidence is assessed. Or AI assistant
+                can help you{" "}
                 <button
                   type="button"
                   onClick={handleGenerateJd}

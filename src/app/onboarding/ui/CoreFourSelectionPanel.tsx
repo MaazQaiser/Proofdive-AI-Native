@@ -49,7 +49,7 @@ export function CoreFourSelectionPanel({
   lockedIds = [],
   hideSuggestionReasoning = false,
   confirmLabel = "Confirm selection",
-  helperText = "When you're happy with your selection, proceed to confirm.",
+  helperText = "Confirm when your selection matches the work you are targeting.",
   selectionMode = "singlePerPillar",
   onCancel,
   cancelLabel = "Cancel",

@@ -27,7 +27,7 @@ export function OnboardingProgressHeader({
   onBack,
 }: OnboardingProgressHeaderProps) {
   return (
-    <div className="flex w-full flex-col gap-3 bg-background py-2">
+    <div className="flex w-full flex-col gap-3 py-2">
       <div className="flex w-full items-start justify-between">
         <Button
           type="button"
