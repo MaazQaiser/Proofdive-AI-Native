@@ -29,7 +29,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
-import { SuccessDriverCompetencyPill, SuccessDriverMark } from "@/components/ui/success-driver-card";
+import {
+  SuccessDriverCompetencyPill,
+  SuccessDriverInfoTip,
+  SuccessDriverMark,
+} from "@/components/ui/success-driver-card";
 import { buildEmptyCraftingDive } from "@/app/storyboard/crafting/mockCraftingDraft";
 import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
 import { CoreFourSelectionPanel } from "@/app/onboarding/ui/CoreFourSelectionPanel";
@@ -914,6 +918,7 @@ What should this experience be called? (short title, up to ~15 words)`;
               <SuccessDriverMark
                 driver={id}
                 label="short"
+                showInfoTooltip
                 className="text-caption"
                 iconClassName="size-3.5"
               />
@@ -957,6 +962,72 @@ What should this experience be called? (short title, up to ~15 words)`;
           </div>
         </CardContent>
       </Card>
+
+      {savedDives.length > 0 ? (
+        <>
+          <div className="pt-2 text-overline text-text-primary">Previous dives</div>
+          <div className="space-y-2">
+            {[...savedDives]
+              .sort((a, b) => a.diveNumber - b.diveNumber)
+              .map((dive) => {
+                const score = dive.overallScore > 0 ? dive.overallScore : null;
+                return (
+                  <button
+                    key={dive.id}
+                    type="button"
+                    className="block w-full text-left"
+                    onClick={() =>
+                      router.push(
+                        `/storyboard/crafting?dive=${encodeURIComponent(dive.id)}&from=previous`,
+                      )
+                    }
+                    aria-label={`View Dive ${dive.diveNumber} story`}
+                  >
+                    <div
+                      data-slot="previous-dive-card"
+                      className={cn(
+                        "flex w-full items-center justify-between gap-3 rounded-[16px] border-[0.5px] border-solid border-[#dde7e9] p-4",
+                        "backdrop-blur-[42px]",
+                        "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+                        "transition hover:ring-2 hover:ring-primary/10",
+                      )}
+                    >
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <div className="flex shrink-0 items-baseline gap-0.5 font-gilroy whitespace-nowrap">
+                          <span
+                            className={cn(
+                              "cap-baseline text-[32px] font-normal leading-none tracking-[-1.6px] tabular-nums",
+                              diveScoreTextClass(score),
+                            )}
+                          >
+                            {score != null ? score.toFixed(1) : "—"}
+                          </span>
+                          <span className="cap-baseline text-[20px] font-normal leading-none tracking-[-1px] text-[#abadb2]">
+                            /5
+                          </span>
+                        </div>
+                        <div className="flex min-w-0 flex-col gap-0.5">
+                          <span className="text-[16px] font-medium tracking-[-0.5px] text-extended-blue">
+                            Dive {dive.diveNumber}
+                          </span>
+                          <span className="text-[12px] font-medium tracking-[-0.5px] text-text-primary">
+                            Overall story score
+                          </span>
+                        </div>
+                      </div>
+                      <span
+                        className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-400 text-white [&_svg]:size-4"
+                        aria-hidden
+                      >
+                        <ArrowUpRight />
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </>
+      ) : null}
     </div>
   );
 
@@ -981,24 +1052,24 @@ What should this experience be called? (short title, up to ~15 words)`;
         >
           <div className="flex w-full items-center justify-between gap-4 py-4">
             <div className="flex min-w-0 flex-1 items-end gap-4">
-              <div className="flex w-[148px] shrink-0 items-end gap-1 font-gilroy whitespace-nowrap">
+              <div className="flex w-[148px] shrink-0 items-baseline gap-1 font-gilroy whitespace-nowrap">
                 <span
                   className={cn(
-                    "text-[64px] font-normal leading-none tracking-[-3.2px] tabular-nums [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]",
+                    "cap-baseline text-[64px] font-normal leading-none tracking-[-3.2px] tabular-nums",
                     diveScoreTextClass(overallScore),
                   )}
                 >
                   {overallScore != null ? overallScore.toFixed(1) : "—"}
                 </span>
-                <span className="text-[48px] font-normal leading-none tracking-[-2.4px] text-[#abadb2] [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">
+                <span className="cap-baseline text-[48px] font-normal leading-none tracking-[-2.4px] text-[#abadb2]">
                   /5
                 </span>
               </div>
               <div className="flex flex-col justify-between self-stretch">
-                <span className="text-[20px] font-medium tracking-[-0.5px] text-extended-blue">
+                <span className="cap-baseline text-[20px] font-medium tracking-[-0.5px] text-extended-blue">
                   Dive {dive.diveNumber}
                 </span>
-                <span className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+                <span className="cap-baseline text-[16px] font-medium tracking-[-0.5px] text-text-primary">
                   Overall story score
                 </span>
               </div>
@@ -1048,22 +1119,23 @@ What should this experience be called? (short title, up to ~15 words)`;
                     <div className="flex min-w-0 flex-1 items-center gap-2">
                       <SuccessDriverIcon
                         driver={id}
-                        className="size-4 text-text-primary"
+                        className="size-4 shrink-0 text-text-primary"
                       />
                       <span className="truncate text-[16px] font-medium tracking-[-0.5px] text-text-primary">
                         {SUCCESS_DRIVERS[id].shortLabel}
                       </span>
+                      <SuccessDriverInfoTip driver={id} />
                     </div>
-                    <div className="flex w-[88px] shrink-0 items-end justify-end gap-1 font-gilroy whitespace-nowrap">
+                    <div className="flex w-[88px] shrink-0 items-baseline justify-end gap-1 font-gilroy whitespace-nowrap">
                       <span
                         className={cn(
-                          "w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]",
+                          "cap-baseline w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums",
                           diveScoreTextClass(displayScore),
                         )}
                       >
                         {displayScore != null ? displayScore.toFixed(1) : "—"}
                       </span>
-                      <span className="text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2] [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">
+                      <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2]">
                         /5
                       </span>
                     </div>

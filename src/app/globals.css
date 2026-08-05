@@ -431,12 +431,37 @@
   mask-composite: exclude;
 }
 
+/* Storyboard (and any future) AppShell right rail — no card gradient stroke. */
+[data-slot="app-shell-right-panel"] [data-slot="card"]::before,
+[data-slot="app-shell-right-panel"] [data-slot="success-driver-card"]::before,
+[data-slot="app-shell-right-panel"] [data-slot="card-button"]::before {
+  content: none;
+  display: none;
+}
+
+[data-slot="app-shell-right-panel"] [data-slot="card"],
+[data-slot="app-shell-right-panel"] [data-slot="previous-dive-card"] {
+  box-shadow: -4px -4px 17px 0 rgba(0, 0, 0, 0.08);
+}
+
 [data-slot="chatbox-surface"] {
   background-color: var(--chatbox-surface);
   backdrop-filter: blur(var(--chatbox-blur));
   -webkit-backdrop-filter: blur(var(--chatbox-blur));
   padding: var(--chatbox-padding-y) var(--chatbox-padding-right)
     var(--chatbox-padding-y) var(--chatbox-padding-left);
+}
+
+/* AI Assistant header bottom stroke — LTR #F5F5F3 → #6EC2D3 */
+[data-slot="chatbox-thread-header"]::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(to right, #f5f5f3, #6ec2d3);
 }
 
 [data-slot="chatbox-send"] {
@@ -602,6 +627,14 @@
   font-weight: var(--text-agent-question-weight);
   letter-spacing: var(--text-agent-question-tracking);
   line-height: 1.3;
+}
+
+/* Tight display metrics — box runs cap height → alphabetic baseline.
+   Named without a `text-` prefix so tailwind-merge does not treat it as a
+   font-size/color utility and drop it next to `text-[64px]` / `text-scoring-*`. */
+@utility cap-baseline {
+  text-box-trim: trim-both;
+  text-box-edge: cap alphabetic;
 }
 
 /* Icon size scale — use instead of arbitrary size-N utilities so icon sizing

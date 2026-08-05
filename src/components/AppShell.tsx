@@ -53,6 +53,7 @@ export function AppShell({
             <main className="min-w-0 w-full">{children}</main>
           </div>
           <aside
+            data-slot="app-shell-right-panel"
             className="flex h-full min-h-0 w-[min(var(--app-shell-right-panel),42vw)] max-w-[var(--app-shell-right-panel)] shrink-0 flex-col border-l border-[#dfe7e9] bg-transparent print:hidden"
             style={
               {

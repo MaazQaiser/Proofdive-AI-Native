@@ -89,14 +89,14 @@ export function CoachBottomChatBar({
   return (
     <div
       data-slot="coach-bottom-chat"
-      className="fixed bottom-0 left-0 right-0 z-40 w-full print:hidden"
+      className="pointer-events-none fixed bottom-0 left-0 right-0 z-40 w-full print:hidden"
     >
       {/* Mirrors AppShell's frame so this fixed bar's centering axis matches
           the main content column. When a flush right panel is present, reserve
           its width from the viewport edge instead of capping at max-w-6xl. */}
       {rightPanelMaxWidth ? (
         <div className={cn("flex w-full", COACH_NAV_CONTENT_INSET_CLASS)}>
-          <div className="min-w-0 flex-1 pr-4 sm:pr-6">
+          <div className="pointer-events-auto min-w-0 flex-1 pr-4 sm:pr-6">
             <div className="mx-auto w-[800px] max-w-full pb-4">{composer}</div>
           </div>
           <div
@@ -112,7 +112,7 @@ export function CoachBottomChatBar({
       ) : (
         <div
           className={cn(
-            "mx-auto max-w-6xl pr-6",
+            "pointer-events-auto mx-auto max-w-6xl pr-6",
             COACH_NAV_CONTENT_INSET_CLASS,
           )}
         >
