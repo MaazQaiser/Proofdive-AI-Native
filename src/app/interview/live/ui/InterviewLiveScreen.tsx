@@ -516,7 +516,7 @@ export function InterviewLiveScreen() {
             <div className="truncate text-h5">
               {role} • Live interview
             </div>
-            <div className="mt-1 text-body-sm text-text-secondary">Proofdive interview room</div>
+            <div className="mt-1 text-body-sm text-text-secondary">ProofDive interview room</div>
             {session.prefs.sessionKind === "selective_pillar" &&
             session.prefs.selectivePillars &&
             session.prefs.selectivePillars.length > 0 ? (
