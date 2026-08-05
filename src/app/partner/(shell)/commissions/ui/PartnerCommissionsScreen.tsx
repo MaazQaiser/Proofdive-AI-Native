@@ -5,9 +5,8 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { formatNumber } from "@/components/dashboard/format";
-import { KpiCard } from "@/components/dashboard/KpiCard";
+import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageTitle } from "@/components/ui/page-title";
 import {
   Select,
   SelectContent,
@@ -123,10 +124,10 @@ export function PartnerCommissionsScreen() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="-m-6 flex h-full flex-col overflow-hidden">
+      <PageHeader>
         <div>
-          <h1 className="text-h5 text-foreground">Commissions &amp; Payouts</h1>
+          <PageTitle>Commissions &amp; Payouts</PageTitle>
           <p className="mt-0.5 text-caption text-muted-foreground">
             Track earnings, download invoices, and withdraw available balance.
           </p>
@@ -135,121 +136,113 @@ export function PartnerCommissionsScreen() {
           <Wallet className="h-4 w-4" />
           Withdraw Funds
         </Button>
+      </PageHeader>
+
+      <div className="shrink-0 border-b border-border px-6 py-5">
+        <KpiRow>
+          <KpiCard label="Total Earnings" value={formatCents(totalEarnings)} />
+          <KpiCard label="Available Balance" value={formatCents(availableBalance)} />
+          <KpiCard label="Total Withdrawn" value={formatCents(totalWithdrawnCents)} />
+          <KpiCard label="Last Withdrawal Date" value={lastWithdrawalDate ?? "Not available"} />
+        </KpiRow>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Total Earnings" value={formatCents(totalEarnings)} icon={Wallet} />
-        <KpiCard label="Available Balance" value={formatCents(availableBalance)} icon={Wallet} />
-        <KpiCard label="Total Withdrawn" value={formatCents(totalWithdrawnCents)} icon={Wallet} />
-        <KpiCard
-          label="Last Withdrawal Date"
-          value={lastWithdrawalDate ?? "Not available"}
-          icon={Wallet}
-        />
-      </div>
-
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <CardTitle>Monthly Invoices</CardTitle>
-              <CardDescription>Commission invoices by billing period.</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
-                <SelectTrigger size="sm" className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="all_time">All Time</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={filteredInvoices.length === 0}
-                onClick={() => simulateDownload("Bulk invoices")}
-              >
-                <Download className="h-4 w-4" />
-                Bulk Download
-              </Button>
-            </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
+          <div>
+            <h2 className="text-body-sm font-medium text-foreground">Monthly Invoices</h2>
+            <p className="text-caption text-muted-foreground">Commission invoices by billing period.</p>
           </div>
-        </CardHeader>
-        <CardContent>
-          {filteredInvoices.length === 0 ? (
-            <p className="py-10 text-center text-caption text-muted-foreground">
-              {invoices.length === 0
-                ? "No commission or invoice history found."
-                : "No matching periods found for the selected filters."}
-            </p>
-          ) : (
-            <table className="w-full caption-bottom text-sm">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-overline text-muted-foreground">Invoice #</TableHead>
-                  <TableHead className="text-overline text-muted-foreground">Date</TableHead>
-                  <TableHead className="text-overline text-muted-foreground">Amount</TableHead>
-                  <TableHead className="text-overline text-muted-foreground">Month/Period</TableHead>
-                  <TableHead className="text-overline text-right text-muted-foreground">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredInvoices.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-medium text-foreground">{inv.invoiceNumber}</TableCell>
-                    <TableCell className="text-caption text-muted-foreground">{inv.date}</TableCell>
-                    <TableCell className="text-body-sm text-foreground">{formatCents(inv.amountCents)}</TableCell>
-                    <TableCell className="text-caption text-muted-foreground">{inv.period}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => simulateDownload(inv.invoiceNumber)}
-                      >
-                        <Download className="h-4 w-4" />
-                        Download
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-2">
+            <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
+              <SelectTrigger size="sm" variant="filter" active={dateFilter !== "all_time"}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="all_time">All Time</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={filteredInvoices.length === 0}
+              onClick={() => simulateDownload("Bulk invoices")}
+            >
+              <Download className="h-4 w-4" />
+              Bulk Download
+            </Button>
+          </div>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Withdrawal History</CardTitle>
-          <CardDescription>Completed withdrawals submitted from this account.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {withdrawals.length === 0 ? (
-            <p className="py-10 text-center text-caption text-muted-foreground">No withdrawals found.</p>
-          ) : (
-            <table className="w-full caption-bottom text-sm">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-overline text-muted-foreground">Request Date</TableHead>
-                  <TableHead className="text-overline text-muted-foreground">Amount</TableHead>
-                  <TableHead className="text-overline text-muted-foreground">Payment Method</TableHead>
+        {filteredInvoices.length === 0 ? (
+          <p className="px-6 py-10 text-center text-caption text-muted-foreground">
+            {invoices.length === 0
+              ? "No commission or invoice history found."
+              : "No matching periods found for the selected filters."}
+          </p>
+        ) : (
+          <table className="w-full caption-bottom text-sm">
+            <TableHeader className="sticky top-0 z-10 border-b border-border">
+              <TableRow>
+                <TableHead className="text-overline pl-6 text-muted-foreground">Invoice #</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Date</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Amount</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Month/Period</TableHead>
+                <TableHead className="text-overline pr-6 text-right text-muted-foreground">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredInvoices.map((inv) => (
+                <TableRow key={inv.id}>
+                  <TableCell className="pl-6 font-medium text-foreground">{inv.invoiceNumber}</TableCell>
+                  <TableCell className="text-caption text-muted-foreground">{inv.date}</TableCell>
+                  <TableCell className="text-body-sm text-foreground">{formatCents(inv.amountCents)}</TableCell>
+                  <TableCell className="text-caption text-muted-foreground">{inv.period}</TableCell>
+                  <TableCell className="pr-6 text-right">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => simulateDownload(inv.invoiceNumber)}
+                    >
+                      <Download className="h-4 w-4" />
+                      Download
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {withdrawals.map((w) => (
-                  <TableRow key={w.id}>
-                    <TableCell className="text-caption text-muted-foreground">{w.requestDate}</TableCell>
-                    <TableCell className="text-body-sm text-foreground">{formatCents(w.amountCents)}</TableCell>
-                    <TableCell className="text-caption text-muted-foreground">{w.paymentMethodLabel}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
+              ))}
+            </TableBody>
+          </table>
+        )}
+
+        <div className="flex shrink-0 flex-col gap-0.5 border-y border-border px-6 py-3">
+          <h2 className="text-body-sm font-medium text-foreground">Withdrawal History</h2>
+          <p className="text-caption text-muted-foreground">Completed withdrawals submitted from this account.</p>
+        </div>
+
+        {withdrawals.length === 0 ? (
+          <p className="px-6 py-10 text-center text-caption text-muted-foreground">No withdrawals found.</p>
+        ) : (
+          <table className="w-full caption-bottom text-sm">
+            <TableHeader className="sticky top-0 z-10 border-b border-border">
+              <TableRow>
+                <TableHead className="text-overline pl-6 text-muted-foreground">Request Date</TableHead>
+                <TableHead className="text-overline text-muted-foreground">Amount</TableHead>
+                <TableHead className="text-overline pr-6 text-muted-foreground">Payment Method</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {withdrawals.map((w) => (
+                <TableRow key={w.id}>
+                  <TableCell className="pl-6 text-caption text-muted-foreground">{w.requestDate}</TableCell>
+                  <TableCell className="text-body-sm text-foreground">{formatCents(w.amountCents)}</TableCell>
+                  <TableCell className="pr-6 text-caption text-muted-foreground">{w.paymentMethodLabel}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </table>
+        )}
+      </div>
 
       <Dialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
         <DialogContent className="sm:max-w-lg">

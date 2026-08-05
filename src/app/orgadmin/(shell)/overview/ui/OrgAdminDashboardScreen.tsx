@@ -1,10 +1,8 @@
 "use client";
 
-import { Star, UserPlus, Users, Video } from "lucide-react";
-
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { formatNumber } from "@/components/dashboard/format";
-import { KpiCard } from "@/components/dashboard/KpiCard";
+import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { applyAddOnDeltas, type BillingAddOnDeltas } from "@/lib/orgAdminBillingData";
 import { DATE_RANGE_OPTIONS, ORG_ADMIN_MOCK_DATA } from "@/lib/orgAdminMockData";
@@ -51,32 +49,24 @@ export function OrgAdminDashboardScreen() {
         <DateRangeFilter value={granularity} onChange={setGranularity} options={DATE_RANGE_OPTIONS} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <KpiRow>
         <KpiCard
           label="Total Invited Users"
           value={formatNumber(kpis.totalInvitedUsers)}
-          icon={UserPlus}
           trend={kpis.trends.totalInvitedUsers}
         />
-        <KpiCard
-          label="Active Users"
-          value={formatNumber(kpis.activeUsers)}
-          icon={Users}
-          trend={kpis.trends.activeUsers}
-        />
+        <KpiCard label="Active Users" value={formatNumber(kpis.activeUsers)} trend={kpis.trends.activeUsers} />
         <KpiCard
           label="Mock Interviews Conducted"
           value={formatNumber(kpis.totalMockInterviews)}
-          icon={Video}
           trend={kpis.trends.totalMockInterviews}
         />
         <KpiCard
           label="Average Interview Score"
           value={`${kpis.avgInterviewScore.toFixed(1)} / 5`}
-          icon={Star}
           trend={kpis.trends.avgInterviewScore}
         />
-      </div>
+      </KpiRow>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <InvitedUsersTrendChart data={dataset.invitedUsersTrend} />

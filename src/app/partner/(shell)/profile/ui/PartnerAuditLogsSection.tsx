@@ -79,7 +79,7 @@ export function PartnerAuditLogsSection() {
             value={activityFilter}
             onValueChange={(v) => setActivityFilter(v as PartnerAuditLogEntry["activityType"] | "all")}
           >
-            <SelectTrigger size="sm" className="w-[160px]">
+            <SelectTrigger size="sm" variant="filter" active={activityFilter !== "all"}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

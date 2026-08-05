@@ -1,12 +1,12 @@
 "use client";
 
 import { Pencil } from "lucide-react";
-import type { ReactNode } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DetailField, DetailGrid, DetailSection } from "@/components/ui/detail-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -25,15 +25,6 @@ import { useLocalStorageState } from "@/lib/useLocalStorageState";
 import { usePartners } from "@/lib/usePartners";
 
 type EditableFields = Pick<Partner, "fullName" | "phoneCountryCode" | "phone">;
-
-function DetailRow({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-caption text-muted-foreground">{label}</span>
-      <span className="text-body-sm text-foreground">{value || "—"}</span>
-    </div>
-  );
-}
 
 export function PartnerProfileDetailsSection() {
   const { partners } = usePartners();
@@ -105,7 +96,7 @@ export function PartnerProfileDetailsSection() {
           ) : null}
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-5">
+      <CardContent className="flex flex-col gap-8">
         {isEditing ? (
           <div className="flex max-w-md flex-col gap-3">
             <div className="flex flex-col gap-1.5">
@@ -144,44 +135,50 @@ export function PartnerProfileDetailsSection() {
           </div>
         ) : (
           <>
-            <section className="grid gap-3 sm:grid-cols-2">
-              <DetailRow label="Full Name" value={partner.fullName} />
-              <DetailRow label="Email Address" value={partner.email} />
-              <DetailRow
-                label="Phone Number"
-                value={`${partner.phoneCountryCode} ${partner.phone}`}
-              />
-              <DetailRow label="Country / Region" value={partner.country} />
-            </section>
+            <DetailSection title="Basic Details">
+              <DetailGrid>
+                <DetailField label="Full Name" value={partner.fullName} />
+                <DetailField label="Email Address" value={partner.email} />
+                <DetailField
+                  label="Phone Number"
+                  value={`${partner.phoneCountryCode} ${partner.phone}`}
+                />
+                <DetailField label="Country / Region" value={partner.country} />
+              </DetailGrid>
+            </DetailSection>
             <Separator />
-            <section className="grid gap-3 sm:grid-cols-2">
-              <DetailRow label="Entity Type" value={ENTITY_TYPE_LABEL[partner.entityType]} />
-              <DetailRow label="Audience Type" value={AUDIENCE_TYPE_LABEL[partner.audienceType]} />
-              {partner.entityType === "company" ? (
-                <>
-                  <DetailRow label="Company Name" value={partner.companyName} />
-                  <DetailRow label="Website" value={partner.website || "—"} />
-                </>
-              ) : null}
-              <DetailRow label="Partner Type" value={PARTNER_TYPE_LABEL[partner.partnerType]} />
-            </section>
+            <DetailSection title="Entity Details">
+              <DetailGrid>
+                <DetailField label="Entity Type" value={ENTITY_TYPE_LABEL[partner.entityType]} />
+                <DetailField label="Audience Type" value={AUDIENCE_TYPE_LABEL[partner.audienceType]} />
+                {partner.entityType === "company" ? (
+                  <>
+                    <DetailField label="Company Name" value={partner.companyName} />
+                    <DetailField label="Website" value={partner.website} />
+                  </>
+                ) : null}
+                <DetailField label="Partner Type" value={PARTNER_TYPE_LABEL[partner.partnerType]} />
+              </DetailGrid>
+            </DetailSection>
             <Separator />
-            <section className="grid gap-3 sm:grid-cols-2">
-              <DetailRow
-                label="Commission Structure"
-                value={COMMISSION_TYPE_LABEL[partner.commissionType]}
-              />
-              <DetailRow label="Commission Settings" value={formatCommissionSummary(partner)} />
-              <DetailRow
-                label="Payout Frequency"
-                value={PAYOUT_FREQUENCY_LABEL[partner.payoutFrequency]}
-              />
-              <DetailRow label="Payment Method" value="Stripe" />
-              <DetailRow
-                label="Referral Code"
-                value={<span className="font-mono">{partner.referralCode}</span>}
-              />
-            </section>
+            <DetailSection title="Commission">
+              <DetailGrid>
+                <DetailField
+                  label="Commission Structure"
+                  value={COMMISSION_TYPE_LABEL[partner.commissionType]}
+                />
+                <DetailField label="Commission Settings" value={formatCommissionSummary(partner)} />
+                <DetailField
+                  label="Payout Frequency"
+                  value={PAYOUT_FREQUENCY_LABEL[partner.payoutFrequency]}
+                />
+                <DetailField label="Payment Method" value="Stripe" />
+                <DetailField
+                  label="Referral Code"
+                  value={<span className="font-mono">{partner.referralCode}</span>}
+                />
+              </DetailGrid>
+            </DetailSection>
           </>
         )}
       </CardContent>

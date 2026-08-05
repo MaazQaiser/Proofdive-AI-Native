@@ -145,7 +145,7 @@ export function SupportRequestsScreen() {
           value={typeFilter}
           onValueChange={(v) => setTypeFilter(v as SupportRequestType | "all")}
         >
-          <SelectTrigger size="sm" className="w-[240px]">
+          <SelectTrigger size="sm" variant="filter" active={typeFilter !== "all"}>
             <SelectValue placeholder="Request Type" />
           </SelectTrigger>
           <SelectContent>
@@ -163,7 +163,7 @@ export function SupportRequestsScreen() {
           value={statusFilter}
           onValueChange={(v) => setStatusFilter(v as SupportRequestStatus | "all")}
         >
-          <SelectTrigger size="sm" className="w-[140px]">
+          <SelectTrigger size="sm" variant="filter" active={statusFilter !== "all"}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -173,7 +173,7 @@ export function SupportRequestsScreen() {
           </SelectContent>
         </Select>
         <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as SortOrder)}>
-          <SelectTrigger size="sm" className="w-[160px]">
+          <SelectTrigger size="sm" variant="filter">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -193,7 +193,7 @@ export function SupportRequestsScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border bg-background">
+            <TableHeader className="sticky top-0 z-10 border-b border-border">
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Request</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Requested By</TableHead>

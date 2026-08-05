@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { DetailField, DetailGrid } from "@/components/ui/detail-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { OrgAdminUser } from "@/lib/orgAdminUsers";
 
@@ -21,15 +21,6 @@ type FormState = {
 
 function buildForm(user: OrgAdminUser): FormState {
   return { name: user.name };
-}
-
-function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-caption text-muted-foreground">{label}</span>
-      <span className="text-body-sm text-foreground">{value || "—"}</span>
-    </div>
-  );
 }
 
 type OrgAdminUserDetailDrawerProps = {
@@ -100,31 +91,28 @@ export function OrgAdminUserDetailDrawer({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {!isEditing ? (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-8">
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-h6 text-foreground">{user.name}</h2>
-                  <p className="text-body-sm text-muted-foreground">{user.email}</p>
-                </div>
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 flex-col gap-2">
+                  <p className="text-overline text-muted-foreground">User</p>
+                  <h2 className="text-h5 text-text-primary">{user.name}</h2>
+                  <p className="text-caption text-muted-foreground">{user.email}</p>
                   <OrgAdminUserStatusPill status={user.status} />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setIsEditing(true)}
-                    aria-label="Edit user details"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
                 </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsEditing(true)}
+                  aria-label="Edit user details"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
               </div>
 
-              <Separator />
-
-              <div className="grid grid-cols-2 gap-4">
-                <DetailRow label="Invited Date" value={user.invitedDate} />
-                <DetailRow label="Joined Date" value={user.joinedDate ?? "—"} />
-              </div>
+              <DetailGrid>
+                <DetailField label="Invited Date" value={user.invitedDate} />
+                <DetailField label="Joined Date" value={user.joinedDate} />
+              </DetailGrid>
 
               <Button variant="outline" size="sm" className="w-fit" onClick={() => onRequestStatusChange(user)}>
                 {user.status === "active" ? (
@@ -160,7 +148,7 @@ export function OrgAdminUserDetailDrawer({
                 {errors.name && <p className="text-caption text-destructive">{errors.name}</p>}
               </div>
 
-              <DetailRow label="Email" value={user.email} />
+              <DetailField label="Email" value={user.email} />
 
               <Button onClick={handleSave} className="w-fit">
                 Save Changes

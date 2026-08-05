@@ -1,12 +1,10 @@
 "use client";
 
-import { Building2, DollarSign, FileText, Users, Video } from "lucide-react";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/page-title";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { formatCompactCurrencyFromCents, formatNumber } from "@/components/dashboard/format";
-import { KpiCard } from "@/components/dashboard/KpiCard";
+import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { DATE_RANGE_OPTIONS, SUPER_ADMIN_MOCK_DATA } from "@/lib/superAdminMockData";
 import type { DateRangeGranularity } from "@/lib/superAdminMockData";
@@ -44,21 +42,13 @@ export function SuperAdminDashboardScreen() {
         <DateRangeFilter value={granularity} onChange={setGranularity} options={DATE_RANGE_OPTIONS} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <KpiCard
-          label="Total Organizations"
-          value={formatNumber(kpis.totalOrganizations)}
-          icon={Building2}
-        />
-        <KpiCard label="Total Active Users" value={formatNumber(kpis.totalActiveUsers)} icon={Users} />
-        <KpiCard label="Mock Interviews" value={formatNumber(kpis.totalMockInterviews)} icon={Video} />
-        <KpiCard label="Storyboards Generated" value={formatNumber(kpis.totalStoryboards)} icon={FileText} />
-        <KpiCard
-          label="Monthly Recurring Revenue"
-          value={formatCompactCurrencyFromCents(kpis.mrrCents)}
-          icon={DollarSign}
-        />
-      </div>
+      <KpiRow>
+        <KpiCard label="Total Organizations" value={formatNumber(kpis.totalOrganizations)} />
+        <KpiCard label="Total Active Users" value={formatNumber(kpis.totalActiveUsers)} />
+        <KpiCard label="Mock Interviews" value={formatNumber(kpis.totalMockInterviews)} />
+        <KpiCard label="Storyboards Generated" value={formatNumber(kpis.totalStoryboards)} />
+        <KpiCard label="Monthly Recurring Revenue" value={formatCompactCurrencyFromCents(kpis.mrrCents)} />
+      </KpiRow>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <TenantGrowthChart data={dataset.tenantGrowth} />

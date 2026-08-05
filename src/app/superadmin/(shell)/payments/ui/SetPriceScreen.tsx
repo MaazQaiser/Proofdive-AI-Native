@@ -228,8 +228,7 @@ export function SetPriceScreen() {
         </>
       }
     >
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
-        <div className="overflow-x-auto rounded-xl border border-border">
+      <div className="min-h-0 flex-1 overflow-y-auto">
           <table className="w-full min-w-[800px] table-fixed caption-bottom text-sm">
             <colgroup>
               <col className="w-[180px]" />
@@ -239,13 +238,15 @@ export function SetPriceScreen() {
               <col />
               <col className="w-[96px]" />
             </colgroup>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-10 border-b border-border">
               <TableRow>
-                <TableHead className="pl-4">Item</TableHead>
+                <TableHead className="text-overline pl-6 text-muted-foreground">Item</TableHead>
                 {PRICE_CELLS.map((cell) => (
-                  <TableHead key={`${cell.section}-${cell.clientType}`}>{cell.label}</TableHead>
+                  <TableHead key={`${cell.section}-${cell.clientType}`} className="text-overline text-muted-foreground">
+                    {cell.label}
+                  </TableHead>
                 ))}
-                <TableHead className="pr-4 text-right">Edit</TableHead>
+                <TableHead className="text-overline pr-6 text-right text-muted-foreground">Edit</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -253,7 +254,7 @@ export function SetPriceScreen() {
                 const editing = editingKind === kind;
                 return (
                   <TableRow key={kind}>
-                    <TableCell className="pl-4 font-medium text-foreground">
+                    <TableCell className="pl-6 font-medium text-foreground">
                       {ITEM_KIND_LABEL[kind]}
                     </TableCell>
                     {PRICE_CELLS.map((cell) => {
@@ -310,7 +311,7 @@ export function SetPriceScreen() {
                         </TableCell>
                       );
                     })}
-                    <TableCell className="pr-4 text-right align-middle">
+                    <TableCell className="pr-6 text-right align-middle">
                       <div className="ml-auto flex h-9 w-[76px] items-center justify-end gap-1">
                         {editing ? (
                           <>
@@ -350,7 +351,6 @@ export function SetPriceScreen() {
               })}
             </TableBody>
           </table>
-        </div>
 
         <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <DialogContent>

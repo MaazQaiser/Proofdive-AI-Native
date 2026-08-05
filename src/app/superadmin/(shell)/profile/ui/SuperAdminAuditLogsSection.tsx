@@ -99,7 +99,7 @@ export function SuperAdminAuditLogsSection() {
             value={activityFilter}
             onValueChange={(v) => setActivityFilter(v as SuperAdminAuditActivityType | "all")}
           >
-            <SelectTrigger size="sm" className="w-[180px]">
+            <SelectTrigger size="sm" variant="filter" active={activityFilter !== "all"}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

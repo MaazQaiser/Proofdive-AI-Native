@@ -15,7 +15,7 @@ export function PaymentsSubNav() {
   const pathname = usePathname() ?? "";
 
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-border pb-0">
+    <div className="flex w-full shrink-0 flex-wrap items-center gap-1 border-b border-border px-6 pb-0">
       {TABS.map((tab) => {
         const active = tab.match(pathname);
         return (

@@ -1,14 +1,14 @@
 "use client";
 
 import { Ban, CheckCircle2, Pencil } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { DetailField, DetailGrid, DetailSection } from "@/components/ui/detail-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCents } from "@/lib/partnerMockData";
@@ -67,15 +67,6 @@ function buildForm(partner: Partner): EditFormState {
     commissionPercent: String(partner.commissionPercent),
     commissionFixedDollars: String(partner.commissionFixedCents / 100),
   };
-}
-
-function DetailRow({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-caption text-muted-foreground">{label}</span>
-      <span className="text-body-sm text-foreground">{value || "—"}</span>
-    </div>
-  );
 }
 
 function StatTile({ label, value }: { label: string; value: string }) {
@@ -195,7 +186,7 @@ export function PartnerDetailDrawer({
         <SheetHeader className="flex shrink-0 flex-col items-stretch gap-3 space-y-0 border-b border-border px-6 py-4">
           <div className="flex items-start justify-between gap-3 pr-8">
             <div className="flex min-w-0 flex-col gap-1">
-              <SheetTitle className="truncate text-h6">{partner.fullName}</SheetTitle>
+              <SheetTitle className="truncate text-h5">{partner.fullName}</SheetTitle>
               <p className="truncate text-caption text-muted-foreground">{partner.email}</p>
             </div>
             <PartnerStatusPill status={partner.status} />
@@ -460,64 +451,58 @@ export function PartnerDetailDrawer({
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-5">
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-overline text-muted-foreground">Basic Details</h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <DetailRow label="Full Name" value={partner.fullName} />
-                    <DetailRow label="Email Address" value={partner.email} />
-                    <DetailRow
+              <div className="flex flex-col gap-8">
+                <DetailSection title="Basic Details">
+                  <DetailGrid>
+                    <DetailField label="Full Name" value={partner.fullName} />
+                    <DetailField label="Email Address" value={partner.email} />
+                    <DetailField
                       label="Phone Number"
                       value={`${partner.phoneCountryCode} ${partner.phone}`}
                     />
-                    <DetailRow label="Country / Region" value={partner.country} />
-                  </div>
-                </section>
-                <Separator />
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-overline text-muted-foreground">Entity Details</h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <DetailRow label="Entity Type" value={ENTITY_TYPE_LABEL[partner.entityType]} />
-                    <DetailRow label="Audience Type" value={AUDIENCE_TYPE_LABEL[partner.audienceType]} />
+                    <DetailField label="Country / Region" value={partner.country} />
+                  </DetailGrid>
+                </DetailSection>
+                <DetailSection title="Entity Details">
+                  <DetailGrid>
+                    <DetailField label="Entity Type" value={ENTITY_TYPE_LABEL[partner.entityType]} />
+                    <DetailField label="Audience Type" value={AUDIENCE_TYPE_LABEL[partner.audienceType]} />
                     {partner.entityType === "company" ? (
                       <>
-                        <DetailRow label="Company Name" value={partner.companyName} />
-                        <DetailRow label="Website" value={partner.website || "—"} />
+                        <DetailField label="Company Name" value={partner.companyName} />
+                        <DetailField label="Website" value={partner.website} />
                       </>
                     ) : null}
-                  </div>
-                </section>
-                <Separator />
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-overline text-muted-foreground">Partner Configuration</h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <DetailRow label="Partner Type" value={PARTNER_TYPE_LABEL[partner.partnerType]} />
-                    <DetailRow
+                  </DetailGrid>
+                </DetailSection>
+                <DetailSection title="Partner Configuration">
+                  <DetailGrid>
+                    <DetailField label="Partner Type" value={PARTNER_TYPE_LABEL[partner.partnerType]} />
+                    <DetailField
                       label="Referral Code"
                       value={<span className="font-mono">{partner.referralCode}</span>}
                     />
-                    <DetailRow
+                    <DetailField
                       label="Applied Discount"
                       value={partner.discountPercent ? `${partner.discountPercent}%` : "None"}
+                      muted={!partner.discountPercent}
                     />
-                  </div>
-                </section>
-                <Separator />
-                <section className="flex flex-col gap-3">
-                  <h3 className="text-overline text-muted-foreground">Commission Configuration</h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <DetailRow
+                  </DetailGrid>
+                </DetailSection>
+                <DetailSection title="Commission Configuration">
+                  <DetailGrid>
+                    <DetailField
                       label="Commission Type"
                       value={COMMISSION_TYPE_LABEL[partner.commissionType]}
                     />
-                    <DetailRow label="Settings" value={formatCommissionSummary(partner)} />
-                    <DetailRow
+                    <DetailField label="Settings" value={formatCommissionSummary(partner)} />
+                    <DetailField
                       label="Payout Frequency"
                       value={PAYOUT_FREQUENCY_LABEL[partner.payoutFrequency]}
                     />
-                    <DetailRow label="Payment Method" value="Stripe" />
-                  </div>
-                </section>
+                    <DetailField label="Payment Method" value="Stripe" />
+                  </DetailGrid>
+                </DetailSection>
               </div>
             )}
           </TabsContent>

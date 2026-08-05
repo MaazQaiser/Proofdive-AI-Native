@@ -25,24 +25,36 @@ function SelectValue({
 function SelectTrigger({
   className,
   size = "default",
+  variant = "default",
+  active = false,
   children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default";
+  variant?: "default" | "filter";
+  /** Filter chrome: highlight when a non-default value is applied. */
+  active?: boolean;
 }) {
+  const isFilter = variant === "filter";
+
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
+      data-variant={variant}
+      data-active={active || undefined}
       className={cn(
-        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "flex w-fit appearance-none items-center whitespace-nowrap outline-none transition-[color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        isFilter
+          ? "h-auto justify-start gap-0.5 rounded-md border-0 bg-transparent px-2 py-1 text-overline font-medium text-extended-green-blue/70 shadow-none hover:bg-brand-1000 focus-visible:ring-2 focus-visible:ring-extended-green-blue/20 data-[placeholder]:text-extended-green-blue/70 data-[state=open]:bg-brand-1000 data-[active=true]:bg-brand-1000 data-[active=true]:text-extended-green-blue dark:bg-transparent dark:hover:bg-brand-1000 [&_svg:not([class*='size-'])]:size-3.5 [&_svg:not([class*='text-'])]:text-extended-green-blue/70 data-[active=true]:[&_svg:not([class*='text-'])]:text-extended-green-blue"
+          : "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 aria-invalid:border-destructive justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm shadow-none hover:bg-transparent focus-visible:ring-[3px] data-[size=default]:h-9 data-[size=sm]:h-8 dark:bg-transparent dark:hover:bg-transparent",
         className,
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="icon-sm opacity-50" />
+        <ChevronDownIcon className={cn(isFilter ? "size-3.5 opacity-100" : "icon-sm opacity-50")} />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );

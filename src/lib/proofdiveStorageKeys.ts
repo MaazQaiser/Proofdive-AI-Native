@@ -111,7 +111,7 @@ export const StorageKeys = {
   /** Super Admin in-app notifications. */
   superAdminNotifications: "proofdive.superAdmin.notifications.v1",
   /** Super Admin profile overrides (full name). */
-  superAdminProfileOverrides: "proofdive.superAdmin.profileOverrides.v1",
+  superAdminProfileOverrides: "proofdive.superAdmin.profileOverrides.v2",
   /** Super Admin audit log entries. */
   superAdminAuditLogEntries: "proofdive.superAdmin.auditLogEntries.v1",
 } as const;

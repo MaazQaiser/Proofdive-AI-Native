@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -17,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -106,47 +106,6 @@ function formatCyclesInline(bundle: PaymentBundle): string {
 function formatPricesInline(bundle: PaymentBundle): string {
   if (bundle.cycles.length === 0) return "—";
   return bundle.cycles.map((c) => formatUsd(c.price)).join(", ");
-}
-
-function SummaryChip({
-  title,
-  value,
-  expandable,
-  children,
-}: {
-  title: string;
-  value: string;
-  expandable?: boolean;
-  children?: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <button
-      type="button"
-      disabled={!expandable}
-      onClick={expandable ? () => setOpen((v) => !v) : undefined}
-      className={cn(
-        "rounded-xl border border-border bg-background px-4 py-3 text-left",
-        expandable && "transition hover:bg-muted/30",
-        !expandable && "cursor-default",
-      )}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-overline text-muted-foreground">{title}</span>
-        {expandable ? (
-          open ? (
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-          )
-        ) : null}
-      </div>
-      <div className="mt-1 text-h5 text-foreground">{value}</div>
-      {expandable && open && children ? (
-        <div className="mt-2 text-overline text-muted-foreground">{children}</div>
-      ) : null}
-    </button>
-  );
 }
 
 export function BundleListingScreen() {
@@ -239,31 +198,13 @@ export function BundleListingScreen() {
         </Button>
       }
     >
-      <div className="grid shrink-0 gap-3 border-b border-border px-6 py-4 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryChip title="Total Active Bundles" value={String(stats.totalActiveBundles)} />
-        <SummaryChip title="Earnings" value={formatUsd(stats.earnings)} expandable>
-          <ul className="space-y-0.5">
-            <li>B2C: {formatUsd(stats.earningsByClientType.B2C)}</li>
-            <li>B2B: {formatUsd(stats.earningsByClientType.B2B)}</li>
-            <li>Add-ons: {formatUsd(stats.earningsAddOns)}</li>
-          </ul>
-        </SummaryChip>
-        <SummaryChip title="Total Subscribers" value={String(stats.totalSubscribers)} expandable>
-          <ul className="space-y-0.5">
-            <li>B2C: {stats.subscribersByClientType.B2C}</li>
-            <li>B2B: {stats.subscribersByClientType.B2B}</li>
-          </ul>
-        </SummaryChip>
-        <SummaryChip
-          title="New Subscribers This Month"
-          value={String(stats.newSubscribersThisMonth)}
-          expandable
-        >
-          <ul className="space-y-0.5">
-            <li>B2C: {stats.newSubscribersByClientType.B2C}</li>
-            <li>B2B: {stats.newSubscribersByClientType.B2B}</li>
-          </ul>
-        </SummaryChip>
+      <div className="shrink-0 border-b border-border px-6 py-5">
+        <KpiRow>
+          <KpiCard label="Total Active Bundles" value={String(stats.totalActiveBundles)} />
+          <KpiCard label="Earnings" value={formatUsd(stats.earnings)} />
+          <KpiCard label="Total Subscribers" value={String(stats.totalSubscribers)} />
+          <KpiCard label="New Subscribers This Month" value={String(stats.newSubscribersThisMonth)} />
+        </KpiRow>
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-6 py-3">
@@ -287,7 +228,7 @@ export function BundleListingScreen() {
             resetToFirstPage();
           }}
         >
-          <SelectTrigger size="sm" className="w-[140px]">
+          <SelectTrigger size="sm" variant="filter" active={typeFilter !== "all"}>
             <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
@@ -303,7 +244,7 @@ export function BundleListingScreen() {
             resetToFirstPage();
           }}
         >
-          <SelectTrigger size="sm" className="w-[150px]">
+          <SelectTrigger size="sm" variant="filter" active={statusFilter !== "all"}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -320,7 +261,7 @@ export function BundleListingScreen() {
             resetToFirstPage();
           }}
         >
-          <SelectTrigger size="sm" className="w-[160px]">
+          <SelectTrigger size="sm" variant="filter" active={cycleFilter !== "all"}>
             <SelectValue placeholder="Billing Cycle" />
           </SelectTrigger>
           <SelectContent>
@@ -342,7 +283,7 @@ export function BundleListingScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border bg-background">
+            <TableHeader className="sticky top-0 z-10 border-b border-border">
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Bundle Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Type</TableHead>
@@ -425,7 +366,7 @@ export function BundleListingScreen() {
         )}
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border bg-background px-6 py-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
         <div className="text-caption flex items-center gap-2 text-muted-foreground">
           <span>Rows per page</span>
           <Select

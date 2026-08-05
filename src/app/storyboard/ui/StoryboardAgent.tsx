@@ -7,6 +7,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   Download,
+  Plus,
   X,
 } from "lucide-react";
 
@@ -14,6 +15,7 @@ import { AppShell } from "@/components/AppShell";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
+import { COACH_HUB_CONTENT_TOP_CLASS } from "@/components/coachNavLayout";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import {
@@ -111,12 +113,13 @@ const CAR_FIELDS: CarField[] = ["context", "action", "result"];
 
 /** Bright scoring fills for large dive-card numerals (Figma color/scoring/*). */
 function diveScoreTextClass(score: number | null | undefined): string {
-  if (score == null || !Number.isFinite(score)) return "text-text-secondary";
+  const type = "font-gilroy";
+  if (score == null || !Number.isFinite(score)) return `${type} text-text-secondary`;
   const band = scoringBandForScore(score);
-  if (band === "cyan") return "text-scoring-cyan";
-  if (band === "green") return "text-scoring-green";
-  if (band === "yellow") return "text-scoring-yellow";
-  return "text-scoring-red";
+  if (band === "cyan") return `${type} text-scoring-cyan`;
+  if (band === "green") return `${type} text-scoring-green`;
+  if (band === "yellow") return `${type} text-scoring-yellow`;
+  return `${type} text-scoring-red`;
 }
 
 const CAR_PROMPTS: Record<CarField, { prompt: string; helper: string; prefill: string }> = {
@@ -826,7 +829,7 @@ What should this experience be called? (short title, up to ~15 words)`;
 
   if (!role) {
     return (
-      <AppShell>
+      <AppShell contentTopClassName={COACH_HUB_CONTENT_TOP_CLASS}>
         <CoachFloatingNav />
         <div className="pb-44">
           <Card className="gap-0 py-0">
@@ -921,8 +924,9 @@ What should this experience be called? (short title, up to ~15 words)`;
                 showInfoTooltip
                 className="text-caption"
                 iconClassName="size-3.5"
+                infoClassName="size-3"
               />
-              <span className="shrink-0 text-caption tabular-nums text-text-secondary">
+              <span className="shrink-0 font-gilroy text-caption tabular-nums text-text-secondary">
                 {score > 0 ? score.toFixed(1) : "—"}
               </span>
             </div>
@@ -1161,6 +1165,7 @@ What should this experience be called? (short title, up to ~15 words)`;
     <AppShell
       rightPanel={showDiveHome || addCompetencyOpen ? undefined : storyboardRightPanel}
       rightPanelMaxWidth={400}
+      contentTopClassName={showDiveHome ? COACH_HUB_CONTENT_TOP_CLASS : "pt-3"}
     >
       <CoachFloatingNav />
       <div
@@ -1175,8 +1180,8 @@ What should this experience be called? (short title, up to ~15 words)`;
         {addCompetencyOpen ? (
           <div className="space-y-4">
             <div className="space-y-2">
-              <h2 className="text-h4 text-left text-text-primary">Add competencies</h2>
-              <p className="text-body leading-6 text-text-secondary">
+              <h2 className="text-agent-heading text-left text-heading-teal">Add competencies</h2>
+              <p className="text-left text-agent-question text-text-primary">
                 Choose additional competencies to deepen this Dive. Competencies you&apos;ve
                 already captured stay selected and can&apos;t be removed.
               </p>
@@ -1204,12 +1209,13 @@ What should this experience be called? (short title, up to ~15 words)`;
             <div className="space-y-3">
               <h2 className="text-agent-heading text-left text-heading-teal">
                 {savedDives.length > 1
-                  ? `Hey ${firstName}, we’ve enriched the story.`
-                  : `Hey ${firstName}, we’ve crafted a story.`}
+                  ? `Hey ${firstName}, this Dive adds more evidence to your Storyboard.`
+                  : `Hey ${firstName}, your Storyboard is ready.`}
               </h2>
               <p className="text-left text-agent-question text-text-primary">
-                For the role of{" "}
+                Structured from the evidence you provided for{" "}
                 <span className="rounded-sm bg-[#B9EFF4] px-1 text-[#095B73]">{role}</span>
+                .
               </p>
             </div>
             {showNearLimitBanner ? (
@@ -1242,6 +1248,31 @@ What should this experience be called? (short title, up to ~15 words)`;
             ) : null}
             <div className="space-y-4">
               {savedDives.map((dive) => renderDiveCard(dive))}
+              {divesLeft > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (usage.isStoryboardAtLimit) {
+                      setUpgradeModalOpen(true);
+                      return;
+                    }
+                    setAddCompetencySelected(lockedCompetencyIds);
+                    setAddCompetencyError(null);
+                    setAddCompetencyOpen(true);
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-center gap-2 rounded-[20px] border border-dashed border-[#9FDFDA] px-4 py-5 text-left",
+                    "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)] backdrop-blur-[42px]",
+                    "text-[16px] font-medium tracking-[-0.5px] text-extended-dark-cyan",
+                    "transition hover:-translate-y-0.5 hover:bg-white/90",
+                    "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                    "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
+                  )}
+                >
+                  <Plus className="size-4 shrink-0" aria-hidden />
+                  Take another dive to enrich your story
+                </button>
+              ) : null}
             </div>
           </div>
         ) : (

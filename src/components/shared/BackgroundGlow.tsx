@@ -10,8 +10,8 @@ export type BackgroundGlowIntensity = "full" | "soft";
 /**
  * Legacy bottom teal wash behind the chat composer.
  *
- * Candidate pages now paint their canvas via `.candidate-app-bg` in
- * `globals.css` (white fill + diagonal wash + blur motif). This portal is
+ * Candidate pages now paint their canvas via `.app-canvas.app-canvas--motif`
+ * in `globals.css` (white fill + diagonal wash + blur motif). This portal is
  * kept as a no-op so existing `ChatComposer` call sites stay stable; pass
  * `enabled` only if a surface still needs the old wash.
  */

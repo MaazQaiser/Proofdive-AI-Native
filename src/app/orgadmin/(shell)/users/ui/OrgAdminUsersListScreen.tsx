@@ -187,7 +187,7 @@ export function OrgAdminUsersListScreen() {
             resetToFirstPage();
           }}
         >
-          <SelectTrigger size="sm" className="w-[150px]">
+          <SelectTrigger size="sm" variant="filter" active={statusFilter !== "all"}>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -211,7 +211,7 @@ export function OrgAdminUsersListScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border bg-background">
+            <TableHeader className="sticky top-0 z-10 border-b border-border">
               <TableRow>
                 <TableHead className="text-overline pl-12 text-muted-foreground">Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Email</TableHead>

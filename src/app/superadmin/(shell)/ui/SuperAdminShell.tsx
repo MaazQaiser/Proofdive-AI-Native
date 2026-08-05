@@ -2,8 +2,15 @@
 
 import { Bell, CircleHelp, Settings } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
+import {
+  isRoleHubPath,
+  ROLE_HUB_MOTIF_CLASS,
+  ROLE_SHELL_HEADER_SURFACE_CLASS,
+  ROLE_SHELL_ROOT_CANVAS_CLASS,
+} from "@/components/shell/roleShellCanvas";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/ui/logo";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -12,6 +19,7 @@ import {
   type SuperAdminProfile,
 } from "@/lib/superAdminProfileData";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import { cn } from "@/lib/utils";
 
 import { SuperAdminTopNav } from "./SuperAdminTopNav";
 import { SuperAdminUserMenu } from "./SuperAdminUserMenu";
@@ -19,6 +27,8 @@ import { SuperAdminUserMenu } from "./SuperAdminUserMenu";
 type Props = { children: ReactNode };
 
 export function SuperAdminShell({ children }: Props) {
+  const pathname = usePathname();
+  const isHub = isRoleHubPath(pathname, "/superadmin/overview");
   const [overrides] = useLocalStorageState<Partial<SuperAdminProfile>>(
     StorageKeys.superAdminProfileOverrides,
     {},
@@ -26,8 +36,14 @@ export function SuperAdminShell({ children }: Props) {
   const displayName = overrides.fullName ?? SUPER_ADMIN_DEMO_PROFILE.fullName;
 
   return (
-    <div className="flex h-screen w-full min-w-[1200px] flex-col overflow-x-auto bg-background">
-      <header className="flex h-14 shrink-0 items-stretch gap-6 border-b border-border bg-background px-6 print:hidden">
+    <div
+      className={cn(
+        "flex h-screen w-full min-w-[1200px] flex-col overflow-x-auto",
+        ROLE_SHELL_ROOT_CANVAS_CLASS,
+        isHub && ROLE_HUB_MOTIF_CLASS,
+      )}
+    >
+      <header className={cn("flex h-14 shrink-0 items-stretch gap-6 px-6 print:hidden", ROLE_SHELL_HEADER_SURFACE_CLASS)}>
         <Link
           href="/superadmin/overview"
           className="flex shrink-0 items-center border-r border-border pr-6"
@@ -56,7 +72,7 @@ export function SuperAdminShell({ children }: Props) {
         </div>
       </header>
 
-      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 pb-6">{children}</main>
+      <main className="relative z-[2] min-h-0 min-w-0 flex-1 overflow-y-auto px-6 pb-6">{children}</main>
     </div>
   );
 }

@@ -2,12 +2,12 @@
 
 import { Pencil, Upload } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DetailField, DetailGrid, DetailSection } from "@/components/ui/detail-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -30,15 +30,6 @@ function buildForm(org: Organization): FormState {
     contactDesignation: org.contactDesignation,
     logoFileName: org.logoFileName,
   };
-}
-
-function DetailRow({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-caption text-muted-foreground">{label}</span>
-      <span className="text-body-sm text-foreground">{value || "—"}</span>
-    </div>
-  );
 }
 
 export function ProfileDetailsSection() {
@@ -125,10 +116,9 @@ export function ProfileDetailsSection() {
           )}
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-6">
-        <div>
-          <h3 className="mb-3 text-overline text-muted-foreground">Organization Details</h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <CardContent className="flex flex-col gap-8">
+        <DetailSection title="Organization Details">
+          <DetailGrid className="sm:grid-cols-2">
             {isEditing ? (
               <div className="flex flex-col gap-2 sm:col-span-2">
                 <Label htmlFor="profile-org-name">Organization Name</Label>
@@ -141,21 +131,26 @@ export function ProfileDetailsSection() {
                 {errors.name && <p className="text-caption text-destructive">{errors.name}</p>}
               </div>
             ) : (
-              <DetailRow label="Organization Name" value={org.name} />
+              <DetailField label="Organization Name" value={org.name} />
             )}
-            <DetailRow label="Organization Type" value={ORGANIZATION_TYPE_LABEL[org.type]} />
-            <DetailRow label="Industry" value={org.industry} />
-            <DetailRow label="Country" value={org.country} />
-            <DetailRow label="City" value={org.city} />
-            <DetailRow label="Region" value={org.region} />
-          </div>
-        </div>
+            <DetailField label="Organization Type" value={ORGANIZATION_TYPE_LABEL[org.type]} />
+            <DetailField label="Industry" value={org.industry} />
+            <DetailField label="Country" value={org.country} />
+            <DetailField label="City" value={org.city} />
+            <DetailField label="Region" value={org.region} />
+          </DetailGrid>
+        </DetailSection>
 
         <Separator />
 
-        <div>
-          <h3 className="mb-3 text-overline text-muted-foreground">Point of Contact Details</h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <DetailSection title="Point of Contact">
+          {!isEditing ? (
+            <div className="flex flex-col gap-1">
+              <p className="text-body-sm font-medium text-text-primary">{org.contactName}</p>
+              <p className="text-caption text-muted-foreground">{org.contactDesignation}</p>
+            </div>
+          ) : null}
+          <DetailGrid className="sm:grid-cols-2">
             {isEditing ? (
               <div className="flex flex-col gap-2">
                 <Label htmlFor="profile-contact-name">Primary Contact Name</Label>
@@ -167,10 +162,8 @@ export function ProfileDetailsSection() {
                 />
                 {errors.contactName && <p className="text-caption text-destructive">{errors.contactName}</p>}
               </div>
-            ) : (
-              <DetailRow label="Primary Contact Name" value={org.contactName} />
-            )}
-            <DetailRow label="Email Address" value={org.contactEmail} />
+            ) : null}
+            <DetailField label="Email" value={org.contactEmail} />
             {isEditing ? (
               <div className="flex flex-col gap-2">
                 <Label htmlFor="profile-contact-phone">Phone Number</Label>
@@ -193,7 +186,7 @@ export function ProfileDetailsSection() {
                 {errors.contactPhone && <p className="text-caption text-destructive">{errors.contactPhone}</p>}
               </div>
             ) : (
-              <DetailRow label="Phone Number" value={`${org.contactCountryCode} ${org.contactPhone}`} />
+              <DetailField label="Phone" value={`${org.contactCountryCode} ${org.contactPhone}`} />
             )}
             {isEditing ? (
               <div className="flex flex-col gap-2">
@@ -208,16 +201,13 @@ export function ProfileDetailsSection() {
                   <p className="text-caption text-destructive">{errors.contactDesignation}</p>
                 )}
               </div>
-            ) : (
-              <DetailRow label="Designation" value={org.contactDesignation} />
-            )}
-          </div>
-        </div>
+            ) : null}
+          </DetailGrid>
+        </DetailSection>
 
         <Separator />
 
-        <div>
-          <h3 className="mb-3 text-overline text-muted-foreground">Branding Details</h3>
+        <DetailSection title="Branding">
           {isEditing ? (
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" asChild>
@@ -251,22 +241,27 @@ export function ProfileDetailsSection() {
               )}
             </div>
           ) : (
-            <DetailRow label="Organization Logo" value={org.logoFileName || "Not uploaded"} />
+            <DetailGrid>
+              <DetailField
+                label="Logo"
+                value={org.logoFileName || "Not uploaded"}
+                muted={!org.logoFileName}
+              />
+            </DetailGrid>
           )}
           {errors.logo && <p className="mt-1 text-caption text-destructive">{errors.logo}</p>}
-        </div>
+        </DetailSection>
 
         <Separator />
 
-        <div>
-          <h3 className="mb-3 text-overline text-muted-foreground">Account Details</h3>
-          <div className="flex items-center justify-between gap-3">
-            <DetailRow label="Password" value="••••••••" />
+        <DetailSection title="Account">
+          <div className="flex items-end justify-between gap-3">
+            <DetailField label="Password" value="••••••••" />
             <Button variant="outline" size="sm" asChild>
               <Link href="/orgadmin/profile/password">Change Password</Link>
             </Button>
           </div>
-        </div>
+        </DetailSection>
       </CardContent>
     </Card>
   );

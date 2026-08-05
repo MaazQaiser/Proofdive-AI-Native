@@ -1,11 +1,11 @@
 "use client";
 
-import { Copy, DollarSign, Link2, UserPlus, Users } from "lucide-react";
+import { Copy, Link2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { formatNumber } from "@/components/dashboard/format";
-import { KpiCard } from "@/components/dashboard/KpiCard";
+import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -90,7 +90,7 @@ export function PartnerDashboardScreen() {
             value={granularity}
             onValueChange={(v) => setGranularity(v as PartnerDateRangeGranularity)}
           >
-            <SelectTrigger size="sm" className="w-[140px]">
+            <SelectTrigger size="sm" variant="filter">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -105,7 +105,7 @@ export function PartnerDashboardScreen() {
             value={conversionFilter}
             onValueChange={(v) => setConversionFilter(v as ConversionStatusFilter)}
           >
-            <SelectTrigger size="sm" className="w-[180px]">
+            <SelectTrigger size="sm" variant="filter" active={conversionFilter !== "all"}>
               <SelectValue placeholder="Conversion status" />
             </SelectTrigger>
             <SelectContent>
@@ -117,31 +117,27 @@ export function PartnerDashboardScreen() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Total Signups" value={formatNumber(dataset.totalSignups)} icon={UserPlus} />
-        <KpiCard
-          label="Total Earnings"
-          value={formatCents(dataset.totalEarningsCents)}
-          icon={DollarSign}
-        />
-        <Card className="gap-0 py-0">
-          <CardContent className="flex flex-col gap-2 p-4">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-caption text-muted-foreground">Referral Code</span>
-              <Link2 className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-h6 font-semibold text-foreground">{referralCode}</span>
-              <Button size="sm" variant="outline" onClick={handleCopyReferralCode}>
-                <Copy className="h-3.5 w-3.5" />
-                Copy
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        <KpiCard label="Total Referrals" value={formatNumber(dataset.totalReferrals)} icon={Users} />
+      <KpiRow>
+        <KpiCard label="Total Signups" value={formatNumber(dataset.totalSignups)} />
+        <KpiCard label="Total Earnings" value={formatCents(dataset.totalEarningsCents)} />
+        <KpiCard label="Total Referrals" value={formatNumber(dataset.totalReferrals)} />
+      </KpiRow>
 
-        <Card className="sm:col-span-2">
+      <Card className="gap-0 py-0">
+        <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-caption text-muted-foreground">Referral Code</span>
+            <span className="font-mono text-h6 font-semibold text-foreground">{referralCode}</span>
+          </div>
+          <Button size="sm" variant="outline" onClick={handleCopyReferralCode}>
+            <Copy className="h-3.5 w-3.5" />
+            Copy
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
           <CardHeader>
             <CardTitle>Conversion Funnel</CardTitle>
             <CardDescription>
@@ -184,7 +180,6 @@ export function PartnerDashboardScreen() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }
