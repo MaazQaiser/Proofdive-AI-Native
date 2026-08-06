@@ -104,6 +104,7 @@ export function PartnerProfileDetailsSection() {
               <Input
                 value={form.fullName}
                 onChange={(e) => setForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                placeholder="Jane Doe"
                 aria-invalid={!!errors.fullName}
               />
               {errors.fullName ? <p className="text-caption text-destructive">{errors.fullName}</p> : null}
@@ -115,12 +116,14 @@ export function PartnerProfileDetailsSection() {
                   className="w-24"
                   value={form.phoneCountryCode}
                   onChange={(e) => setForm((prev) => ({ ...prev, phoneCountryCode: e.target.value }))}
+                  placeholder="+1"
                 />
                 <Input
                   value={form.phone}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, phone: e.target.value.replace(/\D/g, "") }))
                   }
+                  placeholder="5551234567"
                   aria-invalid={!!errors.phone}
                 />
               </div>

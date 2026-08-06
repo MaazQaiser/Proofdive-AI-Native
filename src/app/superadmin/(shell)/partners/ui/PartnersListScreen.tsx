@@ -159,7 +159,7 @@ export function PartnersListScreen() {
             <SelectValue placeholder="Partner Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="all">Types</SelectItem>
             {(Object.entries(PARTNER_TYPE_LABEL) as [PartnerType, string][]).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -178,7 +178,7 @@ export function PartnersListScreen() {
             <SelectValue placeholder="Commission Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Commission Types</SelectItem>
+            <SelectItem value="all">Commission Types</SelectItem>
             {(Object.entries(COMMISSION_TYPE_LABEL) as [CommissionType, string][]).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -197,7 +197,7 @@ export function PartnersListScreen() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">Statuses</SelectItem>
             {(Object.entries(PARTNER_STATUS_LABEL) as [PartnerStatus, string][]).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -217,7 +217,7 @@ export function PartnersListScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Full Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Email</TableHead>

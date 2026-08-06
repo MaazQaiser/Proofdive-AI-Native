@@ -10,6 +10,7 @@ import {
   Plus,
   Search,
 } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -57,19 +58,16 @@ import {
   type OrganizationType,
   type SubscriptionStatus,
 } from "@/lib/superAdminOrganizations";
-import { DEFAULT_FRAMEWORK_ID } from "@/lib/superAdminCompetencyFrameworks";
 import { useCompetencyFrameworks } from "@/lib/useCompetencyFrameworks";
 import { useOrganizations } from "@/lib/useOrganizations";
 
-import { AddOrganizationDialog } from "./AddOrganizationDialog";
 import { OrganizationDetailDrawer } from "./OrganizationDetailDrawer";
 import { OrganizationStatusPill, SubscriptionStatusPill } from "./StatusPills";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
 
 export function OrganizationsListScreen() {
-  const { organizations, addOrganization, updateOrganization, existingNames } =
-    useOrganizations();
+  const { organizations, updateOrganization, existingNames } = useOrganizations();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<OrganizationType | "all">("all");
   const [countryFilter, setCountryFilter] = useState<string>("all");
@@ -78,9 +76,8 @@ export function OrganizationsListScreen() {
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(ROWS_PER_PAGE_OPTIONS[0]);
   const [confirmTarget, setConfirmTarget] = useState<{ org: Organization; nextStatus: OrganizationStatus } | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const { summaries: frameworks, createCopy } = useCompetencyFrameworks();
+  const { summaries: frameworks } = useCompetencyFrameworks();
 
   const selectedOrganization = organizations.find((o) => o.id === selectedOrgId) ?? null;
 
@@ -111,19 +108,6 @@ export function OrganizationsListScreen() {
     setPage(1);
   }
 
-  function handleAddOrganization() {
-    setIsAddDialogOpen(true);
-  }
-
-  function handleCreateOrganization(org: Organization) {
-    addOrganization(org);
-    setIsAddDialogOpen(false);
-    resetToFirstPage();
-    toast.success(
-      `"${org.name}" was created and an invitation was sent to the Organization Admin.`,
-    );
-  }
-
   function handleViewDetails(org: Organization) {
     setSelectedOrgId(org.id);
   }
@@ -148,9 +132,11 @@ export function OrganizationsListScreen() {
     <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
       <PageHeader>
         <PageTitle>Organizations</PageTitle>
-        <Button onClick={handleAddOrganization}>
-          <Plus className="h-4 w-4" />
-          Add Organization
+        <Button asChild>
+          <Link href="/superadmin/organizations/new">
+            <Plus className="h-4 w-4" />
+            Add Organization
+          </Link>
         </Button>
       </PageHeader>
 
@@ -179,7 +165,7 @@ export function OrganizationsListScreen() {
             <SelectValue placeholder="Organization Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="all">Types</SelectItem>
             {(Object.entries(ORGANIZATION_TYPE_LABEL) as [OrganizationType, string][]).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -198,7 +184,7 @@ export function OrganizationsListScreen() {
             <SelectValue placeholder="Country" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Countries</SelectItem>
+            <SelectItem value="all">Countries</SelectItem>
             {countries.map((country) => (
               <SelectItem key={country} value={country}>
                 {country}
@@ -217,7 +203,7 @@ export function OrganizationsListScreen() {
             <SelectValue placeholder="Subscription Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Subscription Statuses</SelectItem>
+            <SelectItem value="all">Subscription Statuses</SelectItem>
             {(Object.entries(SUBSCRIPTION_STATUS_LABEL) as [SubscriptionStatus, string][]).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -236,7 +222,7 @@ export function OrganizationsListScreen() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">Statuses</SelectItem>
             {(Object.entries(ORGANIZATION_STATUS_LABEL) as [OrganizationStatus, string][]).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -256,7 +242,7 @@ export function OrganizationsListScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Organization</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Type</TableHead>
@@ -417,33 +403,12 @@ export function OrganizationsListScreen() {
         </DialogContent>
       </Dialog>
 
-      <AddOrganizationDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        existingOrganizationNames={existingNames}
-        frameworks={frameworks.length > 0 ? frameworks : COMPETENCY_FRAMEWORKS}
-        onCreateFramework={(name) => {
-          const created = createCopy(DEFAULT_FRAMEWORK_ID, name);
-          if (!created) {
-            toast.error("Could not create competency framework copy.");
-            return null;
-          }
-          toast.success(`Draft framework "${created.name}" created.`);
-          return {
-            id: created.id,
-            name: created.name,
-            isDefault: created.isDefault,
-          };
-        }}
-        onCreate={handleCreateOrganization}
-      />
-
       <OrganizationDetailDrawer
         organization={selectedOrganization}
         onOpenChange={(open) => {
           if (!open) setSelectedOrgId(null);
         }}
-        existingOrganizationNames={organizations.map((o) => o.name)}
+        existingOrganizationNames={existingNames}
         frameworks={frameworks.length > 0 ? frameworks : COMPETENCY_FRAMEWORKS}
         onUpdate={handleUpdateOrganization}
         onRequestStatusChange={handleRequestStatusChange}

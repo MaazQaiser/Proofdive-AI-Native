@@ -1,9 +1,22 @@
+import { ChartLegend } from "@/components/dashboard/charts/ChartLegend";
 import { GroupedBarChartPrimitive } from "@/components/dashboard/charts/GroupedBarChartPrimitive";
 import { formatCompactNumber } from "@/components/dashboard/format";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { PlatformUsagePoint } from "@/lib/superAdminMockData";
 
 type Props = { data: PlatformUsagePoint[] };
+
+const SERIES = [
+  { key: "mockInterviews", label: "Mock Interviews", color: "var(--primary)" },
+  { key: "storyboards", label: "Storyboards", color: "var(--extended-blue)" },
+] as const;
 
 export function PlatformUsageChart({ data }: Props) {
   return (
@@ -11,6 +24,9 @@ export function PlatformUsageChart({ data }: Props) {
       <CardHeader>
         <CardTitle>Platform Usage Trends</CardTitle>
         <CardDescription>Usage trends for core platform activities</CardDescription>
+        <CardAction>
+          <ChartLegend items={[...SERIES]} />
+        </CardAction>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
@@ -22,18 +38,8 @@ export function PlatformUsageChart({ data }: Props) {
             labels={data.map((d) => d.label)}
             yFormatter={formatCompactNumber}
             series={[
-              {
-                key: "mockInterviews",
-                label: "Mock Interviews",
-                color: "var(--primary)",
-                values: data.map((d) => d.mockInterviews),
-              },
-              {
-                key: "storyboards",
-                label: "Storyboards",
-                color: "var(--extended-blue)",
-                values: data.map((d) => d.storyboards),
-              },
+              { ...SERIES[0], values: data.map((d) => d.mockInterviews) },
+              { ...SERIES[1], values: data.map((d) => d.storyboards) },
             ]}
           />
         )}

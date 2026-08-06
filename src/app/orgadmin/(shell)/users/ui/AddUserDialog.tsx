@@ -175,11 +175,11 @@ export function AddUserDialog({ open, onOpenChange, existingEmails, onCreate }: 
         </DialogHeader>
 
         <Tabs value={mode} onValueChange={(v) => setMode(v as "manual" | "bulk")}>
-          <TabsList className="w-full">
-            <TabsTrigger value="manual" className="flex-1">
+          <TabsList variant="underline" className="w-full">
+            <TabsTrigger variant="underline" value="manual" className="flex-1">
               Add by Email
             </TabsTrigger>
-            <TabsTrigger value="bulk" className="flex-1">
+            <TabsTrigger variant="underline" value="bulk" className="flex-1">
               Bulk Invite via CSV
             </TabsTrigger>
           </TabsList>

@@ -201,6 +201,7 @@ export function AddPartnerScreen() {
                 id="partner-full-name"
                 value={form.fullName}
                 onChange={(e) => updateField("fullName", e.target.value)}
+                placeholder="Jane Doe"
                 aria-invalid={!!errors.fullName}
               />
               {errors.fullName ? (
@@ -214,6 +215,7 @@ export function AddPartnerScreen() {
                 type="email"
                 value={form.email}
                 onChange={(e) => updateField("email", e.target.value)}
+                placeholder="you@company.com"
                 aria-invalid={!!errors.email}
               />
               {errors.email ? <p className="text-caption text-destructive">{errors.email}</p> : null}
@@ -352,6 +354,7 @@ export function AddPartnerScreen() {
                     id="partner-company"
                     value={form.companyName}
                     onChange={(e) => updateField("companyName", e.target.value)}
+                    placeholder="Acme Partners"
                     aria-invalid={!!errors.companyName}
                   />
                   {errors.companyName ? (
@@ -410,6 +413,7 @@ export function AddPartnerScreen() {
                   max={100}
                   value={form.commissionPercent}
                   onChange={(e) => updateField("commissionPercent", e.target.value)}
+                  placeholder="15"
                   aria-invalid={!!errors.commissionPercent}
                 />
                 {errors.commissionPercent ? (
@@ -427,6 +431,7 @@ export function AddPartnerScreen() {
                   step="0.01"
                   value={form.commissionFixedDollars}
                   onChange={(e) => updateField("commissionFixedDollars", e.target.value)}
+                  placeholder="50"
                   aria-invalid={!!errors.commissionFixedDollars}
                 />
                 {errors.commissionFixedDollars ? (
@@ -457,6 +462,7 @@ export function AddPartnerScreen() {
                 max={100}
                 value={form.discountPercent}
                 onChange={(e) => updateField("discountPercent", e.target.value)}
+                placeholder="10"
                 className="pr-8"
                 aria-invalid={!!errors.discountPercent}
               />

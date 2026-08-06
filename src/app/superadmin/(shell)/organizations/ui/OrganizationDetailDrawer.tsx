@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, CheckCircle2, Pencil, Upload } from "lucide-react";
+import { Ban, CheckCircle2, Pencil, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -10,13 +10,14 @@ import { DetailField, DetailGrid, DetailSection } from "@/components/ui/detail-f
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { AVAILABLE_COURSES, COUNTRY_OPTIONS, INDUSTRY_OPTIONS, PHONE_COUNTRY_CODES, PRICING_PLANS, type CompetencyFramework } from "@/lib/superAdminOrganizationWizard";
 import { ORGANIZATION_TYPE_LABEL, type Organization } from "@/lib/superAdminOrganizations";
 import { SUCCESS_DRIVER_ORDER, SUCCESS_DRIVERS } from "@/lib/successDrivers";
+import { SuccessDriverCompetencyPill } from "@/components/ui/success-driver-card";
 
 import { OrganizationStatusPill } from "./StatusPills";
 
@@ -276,33 +277,76 @@ export function OrganizationDetailDrawer({
 
   return (
     <Sheet open={!!organization} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-1/2 max-w-[50vw] flex-col gap-0 p-0 sm:max-w-[50vw]">
-        <SheetHeader>
-          <SheetTitle>Organization Details</SheetTitle>
+      <SheetContent
+        showCloseButton={false}
+        className="flex flex-col gap-0 overflow-hidden p-0"
+      >
+        <SheetHeader className="flex min-h-14 shrink-0 flex-row items-center justify-end gap-2 space-y-0 border-b border-border py-4 pl-6 pr-4">
+          <SheetTitle className="sr-only">{organization.name}</SheetTitle>
+          <Button
+            size="sm"
+            variant={organization.status === "active" ? "destructive" : "default"}
+            onClick={() => onRequestStatusChange(organization)}
+          >
+            {organization.status === "active" ? (
+              <>
+                <Ban className="h-3.5 w-3.5" />
+                Deactivate
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Activate
+              </>
+            )}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setIsDetailsEditing(true)}
+            disabled={isDetailsEditing}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit Details
+          </Button>
+          <SheetClose asChild>
+            <Button size="sm" variant="ghost" className="size-8 shrink-0 p-0!" aria-label="Close">
+              <X className="h-4 w-4" />
+            </Button>
+          </SheetClose>
         </SheetHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="border-b border-border px-6 py-6">
+        <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col gap-0">
+          <TabsList variant="underline" className="shrink-0 px-6">
+            <TabsTrigger variant="underline" value="overview">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger variant="underline" value="competencies">
+              Competencies
+            </TabsTrigger>
+            <TabsTrigger variant="underline" value="courses">
+              Courses
+            </TabsTrigger>
+            <TabsTrigger variant="underline" value="payment">
+              Payment
+            </TabsTrigger>
+            <TabsTrigger variant="underline" value="users">
+              Users
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="mb-8 flex min-w-0 flex-col gap-1">
+              <p className="text-overline text-muted-foreground">
+                {ORGANIZATION_TYPE_LABEL[organization.type]}
+              </p>
+              <div className="flex min-w-0 items-center gap-2">
+                <p className="truncate text-h4 text-foreground">{organization.name}</p>
+                <OrganizationStatusPill status={organization.status} />
+              </div>
+            </div>
             {!isDetailsEditing ? (
               <div className="flex flex-col gap-8">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex flex-col gap-2">
-                    <p className="text-overline text-muted-foreground">
-                      {ORGANIZATION_TYPE_LABEL[organization.type]}
-                    </p>
-                    <h2 className="text-h5 text-text-primary">{organization.name}</h2>
-                    <OrganizationStatusPill status={organization.status} />
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setIsDetailsEditing(true)}
-                    aria-label="Edit organization details"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </div>
-
                 <DetailSection title="Organization">
                   <DetailGrid>
                     <DetailField label="Industry / Domain" value={organization.industry} />
@@ -315,6 +359,8 @@ export function OrganizationDetailDrawer({
                   </DetailGrid>
                 </DetailSection>
 
+                <Separator />
+
                 <DetailSection title="Location">
                   <DetailGrid>
                     <DetailField label="Country" value={organization.country} />
@@ -322,6 +368,8 @@ export function OrganizationDetailDrawer({
                     <DetailField label="Region" value={organization.region} />
                   </DetailGrid>
                 </DetailSection>
+
+                <Separator />
 
                 <DetailSection title="Point of Contact">
                   <div className="flex flex-col gap-1">
@@ -336,33 +384,19 @@ export function OrganizationDetailDrawer({
                     />
                   </DetailGrid>
                 </DetailSection>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-fit"
-                  onClick={() => onRequestStatusChange(organization)}
-                >
-                  {organization.status === "active" ? (
-                    <>
-                      <Ban className="h-4 w-4" />
-                      Deactivate Organization
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
-                      Activate Organization
-                    </>
-                  )}
-                </Button>
               </div>
             ) : (
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-body-sm font-semibold text-foreground">Edit Organization Details</h3>
-                  <Button variant="ghost" size="sm" onClick={() => setIsDetailsEditing(false)}>
-                    Cancel
-                  </Button>
+                  <h3 className="text-body font-semibold tracking-tight text-foreground">Edit Organization Details</h3>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setIsDetailsEditing(false)}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleSaveDetails}>
+                      Save Changes
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -372,6 +406,7 @@ export function OrganizationDetailDrawer({
                       id="edit-org-name"
                       value={detailsForm.name}
                       onChange={(e) => updateDetailsField("name", e.target.value)}
+                      placeholder="e.g. Acme University"
                       aria-invalid={!!detailsErrors.name}
                     />
                     {detailsErrors.name && <p className="text-caption text-destructive">{detailsErrors.name}</p>}
@@ -421,6 +456,7 @@ export function OrganizationDetailDrawer({
                       id="edit-org-city"
                       value={detailsForm.city}
                       onChange={(e) => updateDetailsField("city", e.target.value)}
+                      placeholder="San Francisco"
                       aria-invalid={!!detailsErrors.city}
                     />
                     {detailsErrors.city && <p className="text-caption text-destructive">{detailsErrors.city}</p>}
@@ -431,6 +467,7 @@ export function OrganizationDetailDrawer({
                       id="edit-org-region"
                       value={detailsForm.region}
                       onChange={(e) => updateDetailsField("region", e.target.value)}
+                      placeholder="California"
                       aria-invalid={!!detailsErrors.region}
                     />
                     {detailsErrors.region && <p className="text-caption text-destructive">{detailsErrors.region}</p>}
@@ -441,6 +478,7 @@ export function OrganizationDetailDrawer({
                       id="edit-org-domain"
                       value={detailsForm.domain}
                       onChange={(e) => updateDetailsField("domain", e.target.value)}
+                      placeholder="e.g. acme.proofdive.com"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -470,7 +508,7 @@ export function OrganizationDetailDrawer({
 
                 <Separator />
 
-                <h3 className="text-body-sm font-medium text-text-primary">Point of Contact</h3>
+                <h3 className="text-body font-semibold tracking-tight text-foreground">Point of Contact</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="edit-contact-name">Primary Contact Name</Label>
@@ -478,6 +516,7 @@ export function OrganizationDetailDrawer({
                       id="edit-contact-name"
                       value={detailsForm.contactName}
                       onChange={(e) => updateDetailsField("contactName", e.target.value)}
+                      placeholder="Jane Doe"
                       aria-invalid={!!detailsErrors.contactName}
                     />
                     {detailsErrors.contactName && (
@@ -491,6 +530,7 @@ export function OrganizationDetailDrawer({
                       type="email"
                       value={detailsForm.contactEmail}
                       onChange={(e) => updateDetailsField("contactEmail", e.target.value)}
+                      placeholder="you@company.com"
                       aria-invalid={!!detailsErrors.contactEmail}
                     />
                     {detailsErrors.contactEmail && (
@@ -519,6 +559,7 @@ export function OrganizationDetailDrawer({
                         id="edit-contact-phone"
                         value={detailsForm.contactPhone}
                         onChange={(e) => updateDetailsField("contactPhone", e.target.value)}
+                        placeholder="5551234567"
                         aria-invalid={!!detailsErrors.contactPhone}
                         className="flex-1"
                       />
@@ -533,6 +574,7 @@ export function OrganizationDetailDrawer({
                       id="edit-contact-designation"
                       value={detailsForm.contactDesignation}
                       onChange={(e) => updateDetailsField("contactDesignation", e.target.value)}
+                      placeholder="Head of Talent"
                       aria-invalid={!!detailsErrors.contactDesignation}
                     />
                     {detailsErrors.contactDesignation && (
@@ -541,253 +583,254 @@ export function OrganizationDetailDrawer({
                   </div>
                 </div>
 
-                <Button onClick={handleSaveDetails} className="w-fit">
-                  Save Changes
-                </Button>
               </div>
             )}
-          </div>
+          </TabsContent>
 
-          <Tabs defaultValue="competencies" className="gap-0">
-            <TabsList className="mx-6 mt-4 w-fit">
-              <TabsTrigger value="competencies">Competencies</TabsTrigger>
-              <TabsTrigger value="courses">Courses</TabsTrigger>
-              <TabsTrigger value="payment">Payment</TabsTrigger>
-              <TabsTrigger value="users">Users</TabsTrigger>
-            </TabsList>
-
-            <div className="px-6 py-5">
-              <TabsContent value="competencies" className="flex flex-col gap-4">
-                {!isCompetencyEditing ? (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-body-sm font-semibold text-foreground">Assigned Competency Framework</h3>
-                      <ManageButton onClick={() => setIsCompetencyEditing(true)}>Manage Competencies</ManageButton>
+          <TabsContent value="competencies" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="flex flex-col gap-4">
+              {!isCompetencyEditing ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-body font-semibold tracking-tight text-foreground">Assigned Competency Framework</h3>
+                    <ManageButton onClick={() => setIsCompetencyEditing(true)}>Manage Competencies</ManageButton>
+                  </div>
+                  <div className="flex flex-col gap-3 rounded-md border border-border p-4">
+                    <span className="text-body-sm font-medium text-foreground">
+                      {assignedFramework?.name ?? "Not assigned"}
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {SUCCESS_DRIVER_ORDER.map((driverId) => (
+                        <SuccessDriverCompetencyPill
+                          key={driverId}
+                          driver={driverId}
+                          label={SUCCESS_DRIVERS[driverId].label}
+                        />
+                      ))}
                     </div>
-                    <div className="flex flex-col gap-3 rounded-md border border-border p-4">
-                      <span className="text-body-sm font-medium text-foreground">
-                        {assignedFramework?.name ?? "Not assigned"}
-                      </span>
-                      <div className="flex flex-wrap gap-2">
-                        {SUCCESS_DRIVER_ORDER.map((driverId) => (
-                          <span
-                            key={driverId}
-                            className="text-caption rounded-full border border-border bg-muted px-3 py-1 text-muted-foreground"
-                          >
-                            {SUCCESS_DRIVERS[driverId].label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-body-sm font-semibold text-foreground">Change Competency Framework</h3>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-body font-semibold tracking-tight text-foreground">Change Competency Framework</h3>
+                    <div className="flex items-center gap-2">
                       <Button variant="ghost" size="sm" onClick={() => setIsCompetencyEditing(false)}>
                         Cancel
                       </Button>
+                      <Button size="sm" onClick={handleSaveCompetency}>
+                        Save Changes
+                      </Button>
                     </div>
-                    <Select value={competencyDraftId} onValueChange={setCompetencyDraftId}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {frameworks.map((framework) => (
-                          <SelectItem key={framework.id} value={framework.id}>
-                            {framework.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={handleSaveCompetency} className="w-fit">
-                      Save Changes
-                    </Button>
-                  </>
-                )}
-              </TabsContent>
+                  </div>
+                  <Select value={competencyDraftId} onValueChange={setCompetencyDraftId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {frameworks.map((framework) => (
+                        <SelectItem key={framework.id} value={framework.id}>
+                          {framework.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              )}
+            </div>
+          </TabsContent>
 
-              <TabsContent value="courses" className="flex flex-col gap-4">
-                {!isCoursesEditing ? (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-body-sm font-semibold text-foreground">Assigned Courses</h3>
-                      <ManageButton onClick={() => setIsCoursesEditing(true)}>Manage Courses</ManageButton>
+          <TabsContent value="courses" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="flex flex-col gap-4">
+              {!isCoursesEditing ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-body font-semibold tracking-tight text-foreground">Assigned Courses</h3>
+                    <ManageButton onClick={() => setIsCoursesEditing(true)}>Manage Courses</ManageButton>
+                  </div>
+                  {assignedCourses.length === 0 ? (
+                    <p className="text-body-sm text-muted-foreground">No courses assigned.</p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {assignedCourses.map((course) => (
+                        <div key={course.id} className="flex items-center gap-2 rounded-md border border-border p-3">
+                          <CheckCircle2 className="h-4 w-4 shrink-0 text-scoring-green" />
+                          <span className="text-body-sm text-foreground">{course.name}</span>
+                        </div>
+                      ))}
                     </div>
-                    {assignedCourses.length === 0 ? (
-                      <p className="text-body-sm text-muted-foreground">No courses assigned.</p>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        {assignedCourses.map((course) => (
-                          <div key={course.id} className="flex items-center gap-2 rounded-md border border-border p-3">
-                            <CheckCircle2 className="h-4 w-4 shrink-0 text-scoring-green" />
-                            <span className="text-body-sm text-foreground">{course.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-body-sm font-semibold text-foreground">Update Assigned Courses</h3>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-body font-semibold tracking-tight text-foreground">Update Assigned Courses</h3>
+                    <div className="flex items-center gap-2">
                       <Button variant="ghost" size="sm" onClick={() => setIsCoursesEditing(false)}>
                         Cancel
                       </Button>
+                      <Button size="sm" onClick={handleSaveCourses}>
+                        Save Changes
+                      </Button>
                     </div>
-                    {AVAILABLE_COURSES.map((course) => (
-                      <label
-                        key={course.id}
-                        className="flex items-start gap-3 rounded-md border border-border p-4 hover:bg-muted/50"
-                      >
-                        <Checkbox
-                          checked={courseDraftIds.includes(course.id)}
-                          onCheckedChange={() => toggleDraftCourse(course.id)}
-                          className="mt-0.5"
-                        />
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-body-sm font-medium text-foreground">{course.name}</span>
-                          <span className="text-caption text-muted-foreground">{course.description}</span>
-                        </div>
-                      </label>
-                    ))}
-                    <Button onClick={handleSaveCourses} className="w-fit">
-                      Save Changes
-                    </Button>
-                  </>
-                )}
-              </TabsContent>
-
-              <TabsContent value="payment" className="flex flex-col gap-4">
-                {!isPaymentEditing ? (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-body-sm font-semibold text-foreground">Subscription Configuration</h3>
-                      <ManageButton onClick={() => setIsPaymentEditing(true)}>Manage Payment</ManageButton>
-                    </div>
-                    <DetailGrid>
-                      <DetailField label="Assigned Plan" value={organization.subscriptionPlan} />
-                      <DetailField label="Number of Users" value={organization.numberOfUsers} />
-                      <DetailField label="Subscription Start Date" value={organization.subscriptionStartDate} />
-                      <DetailField label="Subscription Expiry Date" value={organization.subscriptionExpiryDate} />
-                      <DetailField
-                        label="Applied Discount"
-                        value={organization.discountPercent ? `${organization.discountPercent}%` : "None"}
-                        muted={!organization.discountPercent}
+                  </div>
+                  {AVAILABLE_COURSES.map((course) => (
+                    <label
+                      key={course.id}
+                      className="flex items-start gap-3 rounded-md border border-border p-4 hover:bg-muted/50"
+                    >
+                      <Checkbox
+                        checked={courseDraftIds.includes(course.id)}
+                        onCheckedChange={() => toggleDraftCourse(course.id)}
+                        className="mt-0.5"
                       />
-                    </DetailGrid>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-body-sm font-semibold text-foreground">Update Subscription</h3>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-body-sm font-medium text-foreground">{course.name}</span>
+                        <span className="text-caption text-muted-foreground">{course.description}</span>
+                      </div>
+                    </label>
+                  ))}
+                </>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="payment" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="flex flex-col gap-4">
+              {!isPaymentEditing ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-body font-semibold tracking-tight text-foreground">Subscription Configuration</h3>
+                    <ManageButton onClick={() => setIsPaymentEditing(true)}>Manage Payment</ManageButton>
+                  </div>
+                  <DetailGrid>
+                    <DetailField label="Assigned Plan" value={organization.subscriptionPlan} />
+                    <DetailField label="Number of Users" value={organization.numberOfUsers} />
+                    <DetailField label="Subscription Start Date" value={organization.subscriptionStartDate} />
+                    <DetailField label="Subscription Expiry Date" value={organization.subscriptionExpiryDate} />
+                    <DetailField
+                      label="Applied Discount"
+                      value={organization.discountPercent ? `${organization.discountPercent}%` : "None"}
+                      muted={!organization.discountPercent}
+                    />
+                  </DetailGrid>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-body font-semibold tracking-tight text-foreground">Update Subscription</h3>
+                    <div className="flex items-center gap-2">
                       <Button variant="ghost" size="sm" onClick={() => setIsPaymentEditing(false)}>
                         Cancel
                       </Button>
+                      <Button size="sm" onClick={handleSavePayment}>
+                        Save Changes
+                      </Button>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <Label htmlFor="edit-pricing-plan">Pricing Plan Template</Label>
-                        <Select
-                          value={paymentForm.pricingPlanName}
-                          onValueChange={(v) => updatePaymentField("pricingPlanName", v)}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="edit-pricing-plan">Pricing Plan Template</Label>
+                      <Select
+                        value={paymentForm.pricingPlanName}
+                        onValueChange={(v) => updatePaymentField("pricingPlanName", v)}
+                      >
+                        <SelectTrigger
+                          id="edit-pricing-plan"
+                          className="w-full"
+                          aria-invalid={!!paymentErrors.pricingPlanName}
                         >
-                          <SelectTrigger
-                            id="edit-pricing-plan"
-                            className="w-full"
-                            aria-invalid={!!paymentErrors.pricingPlanName}
-                          >
-                            <SelectValue placeholder="Select Pricing Plan" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {PRICING_PLANS.map((plan) => (
-                              <SelectItem key={plan.id} value={plan.name}>
-                                {plan.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {paymentErrors.pricingPlanName && (
-                          <p className="text-caption text-destructive">{paymentErrors.pricingPlanName}</p>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Label htmlFor="edit-discount">Discount (Optional)</Label>
-                        <div className="relative">
-                          <Input
-                            id="edit-discount"
-                            type="number"
-                            min={0}
-                            max={100}
-                            value={paymentForm.discountPercent}
-                            onChange={(e) => updatePaymentField("discountPercent", e.target.value)}
-                            className="pr-8"
-                          />
-                          <span className="absolute top-1/2 right-3 -translate-y-1/2 text-caption text-muted-foreground">
-                            %
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Label htmlFor="edit-number-of-users">Number of Users</Label>
+                          <SelectValue placeholder="Select Pricing Plan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PRICING_PLANS.map((plan) => (
+                            <SelectItem key={plan.id} value={plan.name}>
+                              {plan.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {paymentErrors.pricingPlanName && (
+                        <p className="text-caption text-destructive">{paymentErrors.pricingPlanName}</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="edit-discount">Discount (Optional)</Label>
+                      <div className="relative">
                         <Input
-                          id="edit-number-of-users"
+                          id="edit-discount"
                           type="number"
-                          min={1}
-                          value={paymentForm.numberOfUsers}
-                          onChange={(e) => updatePaymentField("numberOfUsers", e.target.value)}
-                          aria-invalid={!!paymentErrors.numberOfUsers}
+                          min={0}
+                          max={100}
+                          value={paymentForm.discountPercent}
+                          onChange={(e) => updatePaymentField("discountPercent", e.target.value)}
+                          placeholder="10"
+                          className="pr-8"
                         />
-                        {paymentErrors.numberOfUsers && (
-                          <p className="text-caption text-destructive">{paymentErrors.numberOfUsers}</p>
-                        )}
-                      </div>
-                      <div />
-                      <div className="flex flex-col gap-2">
-                        <Label htmlFor="edit-start-date">Subscription Start Date</Label>
-                        <Input
-                          id="edit-start-date"
-                          type="date"
-                          value={paymentForm.startDate}
-                          onChange={(e) => updatePaymentField("startDate", e.target.value)}
-                          aria-invalid={!!paymentErrors.startDate}
-                        />
-                        {paymentErrors.startDate && (
-                          <p className="text-caption text-destructive">{paymentErrors.startDate}</p>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <Label htmlFor="edit-expiry-date">Subscription Expiry Date</Label>
-                        <Input
-                          id="edit-expiry-date"
-                          type="date"
-                          value={paymentForm.expiryDate}
-                          onChange={(e) => updatePaymentField("expiryDate", e.target.value)}
-                          aria-invalid={!!paymentErrors.expiryDate}
-                        />
-                        {paymentErrors.expiryDate && (
-                          <p className="text-caption text-destructive">{paymentErrors.expiryDate}</p>
-                        )}
+                        <span className="absolute top-1/2 right-3 -translate-y-1/2 text-caption text-muted-foreground">
+                          %
+                        </span>
                       </div>
                     </div>
-                    <Button onClick={handleSavePayment} className="w-fit">
-                      Save Changes
-                    </Button>
-                  </>
-                )}
-              </TabsContent>
-
-              <TabsContent value="users" className="flex flex-col gap-4">
-                <h3 className="text-body-sm font-semibold text-foreground">User Summary</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  <StatTile label="Total Users" value={organization.totalUsers} />
-                  <StatTile label="Active Users" value={organization.activeUsers} tone="green" />
-                  <StatTile label="Inactive Users" value={organization.inactiveUsers} tone="muted" />
-                </div>
-              </TabsContent>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="edit-number-of-users">Number of Users</Label>
+                      <Input
+                        id="edit-number-of-users"
+                        type="number"
+                        min={1}
+                        value={paymentForm.numberOfUsers}
+                        onChange={(e) => updatePaymentField("numberOfUsers", e.target.value)}
+                        placeholder="25"
+                        aria-invalid={!!paymentErrors.numberOfUsers}
+                      />
+                      {paymentErrors.numberOfUsers && (
+                        <p className="text-caption text-destructive">{paymentErrors.numberOfUsers}</p>
+                      )}
+                    </div>
+                    <div />
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="edit-start-date">Subscription Start Date</Label>
+                      <Input
+                        id="edit-start-date"
+                        type="date"
+                        value={paymentForm.startDate}
+                        onChange={(e) => updatePaymentField("startDate", e.target.value)}
+                        aria-invalid={!!paymentErrors.startDate}
+                      />
+                      {paymentErrors.startDate && (
+                        <p className="text-caption text-destructive">{paymentErrors.startDate}</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="edit-expiry-date">Subscription Expiry Date</Label>
+                      <Input
+                        id="edit-expiry-date"
+                        type="date"
+                        value={paymentForm.expiryDate}
+                        onChange={(e) => updatePaymentField("expiryDate", e.target.value)}
+                        aria-invalid={!!paymentErrors.expiryDate}
+                      />
+                      {paymentErrors.expiryDate && (
+                        <p className="text-caption text-destructive">{paymentErrors.expiryDate}</p>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          </Tabs>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="users" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <div className="flex flex-col gap-4">
+              <h3 className="text-body font-semibold tracking-tight text-foreground">User Summary</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <StatTile label="Total Users" value={organization.totalUsers} />
+                <StatTile label="Active Users" value={organization.activeUsers} tone="green" />
+                <StatTile label="Inactive Users" value={organization.inactiveUsers} tone="muted" />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </SheetContent>
     </Sheet>
   );

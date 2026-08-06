@@ -432,6 +432,7 @@ function CandidateAddOnsDialog({
                             ? setMockQty(e.target.value)
                             : setStoryQty(e.target.value)
                         }
+                        placeholder="1"
                       />
                       {(kind === "mockInterview" ? errors.mockQty : errors.storyQty) ? (
                         <p className="text-caption text-destructive">

@@ -85,8 +85,8 @@
   --accent-foreground: #062C35;
   --destructive: #CB3A31;
   --destructive-foreground: #F5F5F3;
-  --border: #D4D4D2;
-  --input: #D4D4D2;
+  --border: #DFE7E9;
+  --input: #DFE7E9;
   --ring: #0E9AB5;
   /* Field placeholder text — distinct from --muted-foreground per the Figma
      auth-page spec. */
@@ -445,7 +445,7 @@
 
 [data-slot="app-shell-right-panel"] [data-slot="card"],
 [data-slot="app-shell-right-panel"] [data-slot="previous-dive-card"] {
-  box-shadow: -4px -4px 17px 0 rgba(0, 0, 0, 0.08);
+  box-shadow: -4px -4px 10px 0 rgba(0, 0, 0, 0.04);
 }
 
 [data-slot="chatbox-surface"] {
@@ -802,7 +802,8 @@ body {
   Used at full strength on candidate chrome (onboarding, coach, interview,
   storyboard, training, profile). Superadmin / org / partner shells use the
   wash everywhere; overview hubs also add `.app-canvas--motif-soft`. Auth
-  shells stay plain.
+  shells stay plain. Sheets/drawers use `.app-canvas-wash` (same gradient,
+  no `position: relative`).
 
   `.candidate-app-bg` is a backward-compatible alias for the full canvas
   (wash + motif).
@@ -847,6 +848,32 @@ body {
   );
 }
 
+/*
+  Gradient wash only — for fixed/absolute surfaces (sheets, overlays) where
+  `.app-canvas`’s `position: relative` would break layout. Same teal fill as
+  `.app-canvas::before`; z-index -1 keeps content above without wrappers.
+*/
+.app-canvas-wash {
+  --background: #ffffff;
+  --app-bg: #ffffff;
+  isolation: isolate;
+  background-color: #ffffff;
+}
+
+.app-canvas-wash::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.2;
+  background-image: linear-gradient(
+    to top right,
+    rgb(14 154 181 / 0.3) 0%,
+    rgb(255 255 255 / 1) 100%
+  );
+}
+
 /* Blur motif — fixed to the viewport so it stays put while content scrolls. */
 .app-canvas--motif::after,
 .app-canvas--motif-soft::after,
@@ -867,6 +894,7 @@ body {
   .app-canvas::before,
   .app-canvas--motif::after,
   .app-canvas--motif-soft::after,
+  .app-canvas-wash::before,
   .candidate-app-bg::before,
   .candidate-app-bg::after {
     display: none !important;

@@ -47,14 +47,14 @@ export function useCompetencyFrameworks() {
     [frameworks],
   );
 
-  const createCopy = useCallback(
+  const createClone = useCallback(
     (sourceId: string, name: string): CompetencyFrameworkVersion | null => {
       const source = frameworks.find((f) => f.id === sourceId);
       if (!source) return null;
       if (isFrameworkNameTaken(frameworks, name)) return null;
-      const copy = deepCloneFramework(source, name);
-      setFrameworks((prev) => [copy, ...prev]);
-      return copy;
+      const clone = deepCloneFramework(source, name);
+      setFrameworks((prev) => [clone, ...prev]);
+      return clone;
     },
     [frameworks, setFrameworks],
   );
@@ -110,7 +110,7 @@ export function useCompetencyFrameworks() {
     summaries,
     hydrated,
     getById,
-    createCopy,
+    createClone,
     updateFramework,
     saveFrameworkContent,
     deleteFramework,

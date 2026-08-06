@@ -1,6 +1,12 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Option<G extends string> = { value: G; label: string };
 
@@ -13,30 +19,22 @@ type Props<G extends string> = {
 /** Generic over the granularity union so both Super Admin and Org Admin dashboards can share it. */
 export function DateRangeFilter<G extends string>({ value, onChange, options }: Props<G>) {
   return (
-    <div
-      className="inline-flex items-center gap-1 rounded-full bg-muted p-1"
-      role="group"
-      aria-label="Date range"
-    >
-      {options.map((option) => {
-        const active = option.value === value;
-        return (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onChange(option.value)}
-            aria-pressed={active}
-            className={cn(
-              "rounded-full border px-4 py-1.5 text-caption transition",
-              active
-                ? "border-border bg-card text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
+    <Select value={value} onValueChange={(v) => onChange(v as G)}>
+      <SelectTrigger
+        size="sm"
+        variant="filter"
+        aria-label="Date range"
+        className="border border-extended-green-blue/25 px-2.5 py-1.5 text-caption [&_svg]:!size-4"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent align="end">
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
             {option.label}
-          </button>
-        );
-      })}
-    </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

@@ -14,6 +14,8 @@ export function ResetFlowCta() {
     removeKey(StorageKeys.storyboardFromCraft);
     removeKey(StorageKeys.storyboardCraftEditing);
     removeKey(StorageKeys.storyboardDives);
+    removeKey(StorageKeys.orgAdminAccountActivated);
+    removeKey(StorageKeys.partnerAccountActivated);
 
     // Hard reload guarantees a full remount so onboarding state re-reads the
     // now-cleared storage — a client-side push to the same route wouldn't.

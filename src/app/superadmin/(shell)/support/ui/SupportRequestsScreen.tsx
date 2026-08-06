@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import {
   SEED_SUPPORT_REQUESTS,
@@ -42,7 +43,6 @@ import {
   type SupportRequestType,
 } from "@/lib/superAdminSupportData";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
-import { cn } from "@/lib/utils";
 
 const timestampFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
@@ -51,20 +51,9 @@ const timestampFormatter = new Intl.DateTimeFormat("en-US", {
 
 type SortOrder = "newest" | "oldest";
 
-function StatusPill({ status }: { status: SupportRequestStatus }) {
-  const open = status === "open";
-  return (
-    <span
-      className={cn(
-        "text-overline inline-flex h-6 w-fit items-center rounded-full border px-2 whitespace-nowrap",
-        open
-          ? "border-scoring-yellow/30 bg-scoring-yellow/20 text-scoring-yellow-fg"
-          : "border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg",
-      )}
-    >
-      {SUPPORT_REQUEST_STATUS_LABEL[status]}
-    </span>
-  );
+function SupportStatusPill({ status }: { status: SupportRequestStatus }) {
+  const tone: StatusTone = status === "open" ? "warning" : "success";
+  return <StatusPill tone={tone}>{SUPPORT_REQUEST_STATUS_LABEL[status]}</StatusPill>;
 }
 
 export function SupportRequestsScreen() {
@@ -149,7 +138,7 @@ export function SupportRequestsScreen() {
             <SelectValue placeholder="Request Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Request Types</SelectItem>
+            <SelectItem value="all">Request Types</SelectItem>
             {(Object.entries(SUPPORT_REQUEST_TYPE_LABEL) as [SupportRequestType, string][]).map(
               ([value, label]) => (
                 <SelectItem key={value} value={value}>
@@ -167,7 +156,7 @@ export function SupportRequestsScreen() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">Statuses</SelectItem>
             <SelectItem value="open">Open</SelectItem>
             <SelectItem value="resolved">Resolved</SelectItem>
           </SelectContent>
@@ -193,7 +182,7 @@ export function SupportRequestsScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Request</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Requested By</TableHead>
@@ -222,7 +211,7 @@ export function SupportRequestsScreen() {
                     {timestampFormatter.format(new Date(req.requestedAt))}
                   </TableCell>
                   <TableCell>
-                    <StatusPill status={req.status} />
+                    <SupportStatusPill status={req.status} />
                   </TableCell>
                   <TableCell className="pr-6 text-right">
                     <DropdownMenu>
@@ -265,7 +254,7 @@ export function SupportRequestsScreen() {
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="secondary">{SUPPORT_REQUEST_TYPE_LABEL[selected.type]}</Badge>
-                <StatusPill status={selected.status} />
+                <SupportStatusPill status={selected.status} />
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="flex flex-col gap-0.5">

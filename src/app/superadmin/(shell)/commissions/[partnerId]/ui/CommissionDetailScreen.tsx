@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DetailField, DetailGrid, DetailSection } from "@/components/ui/detail-field";
+import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Select,
   SelectContent,
@@ -76,13 +78,14 @@ export function CommissionDetailScreen({ partnerId }: Props) {
 
   if (!partner) {
     return (
-      <div className="flex flex-col gap-4 pt-6">
-        <Button variant="ghost" className="w-fit" asChild>
-          <Link href="/superadmin/commissions">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Commissions
-          </Link>
-        </Button>
+      <div className="flex flex-col gap-8">
+        <PageHeader sticky bleed>
+          <PageBreadcrumb
+            parentHref="/superadmin/commissions"
+            parentLabel="Commissions"
+            title="Partner not found"
+          />
+        </PageHeader>
         <Card>
           <CardContent className="py-16 text-center text-caption text-muted-foreground">
             Unable to load partner commission details at the moment.
@@ -93,34 +96,35 @@ export function CommissionDetailScreen({ partnerId }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-6 pt-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-2">
-          <Button variant="ghost" className="w-fit px-0" asChild>
-            <Link href="/superadmin/commissions">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Commissions
-            </Link>
-          </Button>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-h5 text-foreground">{partner.fullName}</h1>
+    <div className="flex flex-col gap-8">
+      <PageHeader sticky bleed>
+        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
+            <PageBreadcrumb
+              parentHref="/superadmin/commissions"
+              parentLabel="Commissions"
+              title={partner.fullName}
+            />
             <PartnerStatusPill status={partner.status} />
           </div>
-          <p className="text-caption text-muted-foreground">
-            Commission detail is read-only. Edit commission structure from Partners.
-          </p>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/superadmin/partners">Open in Partner Management</Link>
+            </Button>
+          </div>
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/superadmin/partners">Open in Partner Management</Link>
-        </Button>
-      </div>
+      </PageHeader>
+
+      <p className="text-caption text-muted-foreground">
+        Commission detail is read-only. Edit commission structure from Partners.
+      </p>
 
       <PartnerProfileRecap partner={partner} />
 
       <div className="-mx-6 border-t border-border">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
           <div>
-            <h2 className="text-body-sm font-medium text-foreground">Monthly Invoices</h2>
+            <h2 className="text-body font-semibold tracking-tight text-foreground">Monthly Invoices</h2>
             <p className="text-caption text-muted-foreground">
               Commission invoices for this partner by billing period.
             </p>
@@ -160,7 +164,7 @@ export function CommissionDetailScreen({ partnerId }: Props) {
           </p>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Invoice #</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Date</TableHead>

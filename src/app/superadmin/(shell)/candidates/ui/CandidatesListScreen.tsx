@@ -167,7 +167,7 @@ export function CandidatesListScreen() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">Statuses</SelectItem>
             {(Object.entries(ORG_ADMIN_USER_STATUS_LABEL) as [OrgAdminUserStatus, string][]).map(
               ([value, label]) => (
                 <SelectItem key={value} value={value}>
@@ -189,7 +189,7 @@ export function CandidatesListScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Email</TableHead>

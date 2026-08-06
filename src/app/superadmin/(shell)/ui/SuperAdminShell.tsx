@@ -1,6 +1,5 @@
 "use client";
 
-import { Bell, CircleHelp, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -11,14 +10,8 @@ import {
   ROLE_SHELL_HEADER_SURFACE_CLASS,
   ROLE_SHELL_ROOT_CANVAS_CLASS,
 } from "@/components/shell/roleShellCanvas";
-import { Separator } from "@/components/ui/separator";
+import { RoleShellUtilityActions } from "@/components/shell/RoleShellUtilityActions";
 import { Logo } from "@/components/ui/logo";
-import { StorageKeys } from "@/lib/proofdiveStorageKeys";
-import {
-  SUPER_ADMIN_DEMO_PROFILE,
-  type SuperAdminProfile,
-} from "@/lib/superAdminProfileData";
-import { useLocalStorageState } from "@/lib/useLocalStorageState";
 import { cn } from "@/lib/utils";
 
 import { SuperAdminTopNav } from "./SuperAdminTopNav";
@@ -29,11 +22,6 @@ type Props = { children: ReactNode };
 export function SuperAdminShell({ children }: Props) {
   const pathname = usePathname();
   const isHub = isRoleHubPath(pathname, "/superadmin/overview");
-  const [overrides] = useLocalStorageState<Partial<SuperAdminProfile>>(
-    StorageKeys.superAdminProfileOverrides,
-    {},
-  );
-  const displayName = overrides.fullName ?? SUPER_ADMIN_DEMO_PROFILE.fullName;
 
   return (
     <div
@@ -51,23 +39,11 @@ export function SuperAdminShell({ children }: Props) {
           <Logo size="xxs" />
         </Link>
         <SuperAdminTopNav />
-        <div className="ml-auto flex h-full shrink-0 items-center gap-4">
-          <div className="text-caption flex items-center gap-1 whitespace-nowrap">
-            <span className="text-muted-foreground">Welcome</span>
-            <span className="font-medium text-foreground">{displayName}</span>
-          </div>
-          <Separator orientation="vertical" />
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <button type="button" aria-label="Help" className="hover:text-foreground">
-              <CircleHelp className="h-4 w-4" />
-            </button>
-            <Link href="/superadmin/profile" aria-label="Settings" className="hover:text-foreground">
-              <Settings className="h-4 w-4" />
-            </Link>
-            <Link href="/superadmin/notifications" aria-label="Notifications" className="hover:text-foreground">
-              <Bell className="h-4 w-4" />
-            </Link>
-          </div>
+        <div className="ml-auto flex h-full shrink-0 items-center gap-4 border-l border-border pl-6">
+          <RoleShellUtilityActions
+            settingsHref="/superadmin/profile"
+            notificationsHref="/superadmin/notifications"
+          />
           <SuperAdminUserMenu />
         </div>
       </header>

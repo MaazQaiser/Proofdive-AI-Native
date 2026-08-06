@@ -14,11 +14,23 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   );
 }
 
-function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
+function TableHeader({
+  className,
+  sticky = false,
+  ...props
+}: React.ComponentProps<"thead"> & {
+  /** Pins the header while rows scroll; frosted so content doesn’t show through. */
+  sticky?: boolean;
+}) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b [&_tr]:border-border", className)}
+      className={cn(
+        "[&_tr]:border-b [&_tr]:border-border",
+        sticky &&
+          "sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 [&_th]:bg-background/80 supports-[backdrop-filter]:[&_th]:bg-background/60",
+        className,
+      )}
       {...props}
     />
   );

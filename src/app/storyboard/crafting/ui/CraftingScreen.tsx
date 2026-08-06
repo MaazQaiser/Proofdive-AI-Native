@@ -781,6 +781,7 @@ export function CraftingScreen() {
                       className={TA}
                       rows={8}
                       value={activeDive.intro.text}
+                      placeholder="Who you are, where you’re headed, and why this role…"
                       onChange={(e) => {
                         const raw = e.target.value;
                         if (isLargePaste(raw)) {
@@ -1334,6 +1335,7 @@ function CarTextAreas({
           rows={4}
           value={value.context}
           disabled={disabled}
+          placeholder="Situation, constraints, and stakes…"
           onChange={(e) => patch("context", e.target.value)}
         />
       </label>
@@ -1347,6 +1349,7 @@ function CarTextAreas({
           rows={3}
           value={value.action}
           disabled={disabled}
+          placeholder="What you personally did…"
           onChange={(e) => patch("action", e.target.value)}
         />
       </label>
@@ -1360,6 +1363,7 @@ function CarTextAreas({
           rows={3}
           value={value.result}
           disabled={disabled}
+          placeholder="Outcomes and impact…"
           onChange={(e) => patch("result", e.target.value)}
         />
       </label>

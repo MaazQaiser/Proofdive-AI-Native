@@ -71,6 +71,7 @@ export function SuperAdminProfileDetailsSection() {
                   setFullName(e.target.value);
                   setError(null);
                 }}
+                placeholder="Jane Doe"
                 aria-invalid={!!error}
               />
               {error ? <p className="text-caption text-destructive">{error}</p> : null}

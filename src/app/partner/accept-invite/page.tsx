@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { PARTNER_DEMO } from "@/lib/partnerDemo";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
-import { writeJson } from "@/lib/storage";
+import { readJson, writeJson } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
 const EMPTY_PASSWORD_ERROR = "Please enter a password.";
@@ -23,10 +23,19 @@ const fieldClassName =
 
 export default function PartnerAcceptInvitePage() {
   const router = useRouter();
+  const [ready, setReady] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string; agreed?: string }>({});
+
+  useEffect(() => {
+    if (readJson<boolean>(StorageKeys.partnerAccountActivated) === true) {
+      router.replace("/partner/overview");
+      return;
+    }
+    setReady(true);
+  }, [router]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -40,7 +49,12 @@ export default function PartnerAcceptInvitePage() {
     if (Object.keys(nextErrors).length > 0) return;
 
     writeJson(StorageKeys.termsConsent, true);
+    writeJson(StorageKeys.partnerAccountActivated, true);
     router.push("/partner/overview");
+  }
+
+  if (!ready) {
+    return null;
   }
 
   return (

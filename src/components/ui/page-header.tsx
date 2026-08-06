@@ -11,7 +11,8 @@ type PageHeaderProps = ComponentProps<"div"> & {
 
 /**
  * Shared page chrome bar for listing and form screens.
- * Equal `p-6` padding on all sides; change styles here to keep headers consistent.
+ * Padding: 12px top/bottom, 24px sides (`px-6 py-3`).
+ * Sticky headers use a frosted translucent surface so scroll content doesn’t read through.
  */
 export function PageHeader({
   className,
@@ -22,8 +23,9 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex min-h-[84px] shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border p-6",
-        sticky && "sticky top-0 z-10",
+        "flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3",
+        sticky &&
+          "sticky top-0 z-10 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60",
         bleed && "-mx-6",
         className,
       )}

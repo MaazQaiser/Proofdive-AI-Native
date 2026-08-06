@@ -103,7 +103,7 @@ export function SuperAdminAuditLogsSection() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All activities</SelectItem>
+              <SelectItem value="all">Activities</SelectItem>
               {(
                 Object.entries(SUPER_ADMIN_AUDIT_ACTIVITY_LABEL) as [SuperAdminAuditActivityType, string][]
               ).map(([value, label]) => (

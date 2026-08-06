@@ -83,7 +83,7 @@ export function PartnerAuditLogsSection() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All activities</SelectItem>
+              <SelectItem value="all">Activities</SelectItem>
               {(Object.entries(PARTNER_AUDIT_ACTIVITY_LABEL) as [PartnerAuditLogEntry["activityType"], string][]).map(
                 ([value, label]) => (
                   <SelectItem key={value} value={value}>

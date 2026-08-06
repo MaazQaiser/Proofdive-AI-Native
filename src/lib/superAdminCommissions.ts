@@ -11,7 +11,7 @@ export const SUPER_ADMIN_COMMISSION_DATE_RANGE_OPTIONS: {
   { value: "monthly", label: "Monthly (Jul 2026)" },
   { value: "quarterly", label: "Quarterly (Q2 2026)" },
   { value: "ytd", label: "Year to Date 2026" },
-  { value: "all_time", label: "All Time" },
+  { value: "all_time", label: "Lifetime" },
 ];
 
 export type PartnerCommissionRecord = PartnerCommissionInvoice & {

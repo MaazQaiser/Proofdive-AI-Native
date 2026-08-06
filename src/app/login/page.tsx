@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { StorageKeys } from "@/lib/proofdiveStorageKeys";
+import { readJson } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
 const fieldClassName =
@@ -18,6 +20,22 @@ const socialClassName =
 
 export default function LoginPage() {
   const router = useRouter();
+
+  function goOrgAdminDemo() {
+    if (readJson<boolean>(StorageKeys.orgAdminAccountActivated) === true) {
+      router.push("/orgadmin/overview");
+      return;
+    }
+    router.push("/orgadmin/accept-invite");
+  }
+
+  function goPartnerDemo() {
+    if (readJson<boolean>(StorageKeys.partnerAccountActivated) === true) {
+      router.push("/partner/overview");
+      return;
+    }
+    router.push("/partner/accept-invite");
+  }
 
   return (
     <AuthShell>
@@ -109,14 +127,14 @@ export default function LoginPage() {
           </button>
           <button
             type="button"
-            onClick={() => router.push("/orgadmin/accept-invite")}
+            onClick={goOrgAdminDemo}
             className="text-caption text-muted-foreground/70 hover:text-foreground hover:underline"
           >
             Organization Admin login →
           </button>
           <button
             type="button"
-            onClick={() => router.push("/partner/accept-invite")}
+            onClick={goPartnerDemo}
             className="text-caption text-muted-foreground/70 hover:text-foreground hover:underline"
           >
             Partner login →

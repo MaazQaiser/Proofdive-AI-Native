@@ -51,15 +51,6 @@ export function DonutChartPrimitive({ modules, size = 320, valueFormatter }: Pro
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-caption">
-        {modules.map((m) => (
-          <span key={m.key} className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ backgroundColor: m.color }} />
-            {m.label}
-          </span>
-        ))}
-      </div>
-
       <div className="relative mx-auto" style={{ width: size, height: size }}>
         <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} role="img" aria-label="Subscription usage donut">
           {arcs.map(({ module: m, start, end }) => (

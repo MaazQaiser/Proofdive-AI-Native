@@ -900,7 +900,7 @@ export default function DesignSystemPage() {
                   </Tabs>
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarFallback>PD</AvatarFallback>
+                      <AvatarFallback>P</AvatarFallback>
                     </Avatar>
                     <span className="text-body-sm">ProofDive User</span>
                   </div>

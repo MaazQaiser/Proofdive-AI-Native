@@ -45,6 +45,8 @@ export const StorageKeys = {
   orgAdminAuditLogEntries: "proofdive.orgAdmin.auditLogEntries.v1",
   /** IDs of policy-update notices the Org Admin has acknowledged. */
   orgAdminPolicyAcknowledgements: "proofdive.orgAdmin.policyAcknowledgements.v1",
+  /** Org Admin in-app notifications list. */
+  orgAdminNotifications: "proofdive.orgAdmin.notifications.v1",
   /** Saved mock payment methods (Billing & Subscription section). */
   orgAdminPaymentMethods: "proofdive.orgAdmin.paymentMethods.v1",
   /** Mock invoice/payment history (Billing & Subscription section). */
@@ -82,7 +84,7 @@ export const StorageKeys = {
     "proofdive.candidate.storyboardNearLimitBannerDismissed.v1",
   /** Super Admin partner / affiliate directory. */
   superAdminPartners: "proofdive.superAdmin.partners.v2",
-  /** Selected Weekly/Monthly/All Time granularity on the Partner dashboard. */
+  /** Selected Weekly/Monthly/Lifetime granularity on the Partner dashboard. */
   partnerDashboardDateRange: "proofdive.partner.dashboardDateRange.v1",
   /** Partial<Partner> patch overlaid on the demo partner by the Profile Details section. */
   partnerProfileOverrides: "proofdive.partner.profileOverrides.v1",
@@ -104,6 +106,10 @@ export const StorageKeys = {
   partnerTotalWithdrawnCents: "proofdive.partner.totalWithdrawnCents.v1",
   /** Partner in-app notifications list. */
   partnerNotifications: "proofdive.partner.notifications.v1",
+  /** Whether the Org Admin demo account has completed invite activation (set password). */
+  orgAdminAccountActivated: "proofdive.orgAdmin.accountActivated.v1",
+  /** Whether the Partner demo account has completed invite activation (set password). */
+  partnerAccountActivated: "proofdive.partner.accountActivated.v1",
   /** Selected date range on Super Admin Commissions listing. */
   superAdminCommissionsDateRange: "proofdive.superAdmin.commissionsDateRange.v1",
   /** Super Admin support request inbox. */

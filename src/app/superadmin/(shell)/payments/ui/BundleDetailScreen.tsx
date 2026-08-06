@@ -18,12 +18,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import {
   BILLING_CYCLE_LABEL,
   BUNDLE_STATUS_LABEL,
   formatUsd,
   getMasterclassById,
   ITEM_KIND_LABEL,
+  type BundleStatus,
 } from "@/lib/superAdminPaymentsData";
 import { usePaymentBundles } from "@/lib/usePaymentBundles";
 import { useGlobalRates } from "@/lib/usePaymentRates";
@@ -31,13 +33,25 @@ import { useGlobalRates } from "@/lib/usePaymentRates";
 import { BundleFormScreen } from "./BundleFormScreen";
 import { PaymentsShell } from "./PaymentsShell";
 
-export function BundleDetailScreen({ bundleId }: { bundleId: string }) {
+function BundleStatusPill({ status }: { status: BundleStatus }) {
+  const tone: StatusTone =
+    status === "active" ? "success" : status === "draft" ? "warning" : "neutral";
+  return <StatusPill tone={tone}>{BUNDLE_STATUS_LABEL[status]}</StatusPill>;
+}
+
+export function BundleDetailScreen({
+  bundleId,
+  initialEditing = false,
+}: {
+  bundleId: string;
+  initialEditing?: boolean;
+}) {
   const router = useRouter();
   const { getById, deactivate, reactivate, hydrated } = usePaymentBundles();
   const { rates: globalRates } = useGlobalRates();
   const bundle = getById(bundleId);
 
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(initialEditing);
   const [subscriberSearch, setSubscriberSearch] = useState("");
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [reactivateErrors, setReactivateErrors] = useState<string[] | null>(null);
@@ -97,7 +111,7 @@ export function BundleDetailScreen({ bundleId }: { bundleId: string }) {
             Back
           </Button>
           {bundle.status === "active" ? (
-            <Button type="button" variant="outline" onClick={() => setConfirmDeactivate(true)}>
+            <Button type="button" variant="destructive" onClick={() => setConfirmDeactivate(true)}>
               Deactivate
             </Button>
           ) : null}
@@ -118,7 +132,7 @@ export function BundleDetailScreen({ bundleId }: { bundleId: string }) {
             <CardTitle>Configuration</CardTitle>
             <CardDescription>
               <Badge variant="secondary">{bundle.type}</Badge>{" "}
-              <Badge variant="outline">{BUNDLE_STATUS_LABEL[bundle.status]}</Badge>
+              <BundleStatusPill status={bundle.status} />
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-caption">

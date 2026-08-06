@@ -23,6 +23,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageTitle } from "@/components/ui/page-title";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -156,17 +158,15 @@ export function OrgAdminUsersListScreen() {
 
   return (
     <div className="-m-6 flex h-full flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-12 py-4">
-        <h1 className="text-h6 text-foreground">User Management</h1>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => setIsAddDialogOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Add User
-          </Button>
-        </div>
-      </div>
+      <PageHeader>
+        <PageTitle>User Management</PageTitle>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Add User
+        </Button>
+      </PageHeader>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-12 py-3">
+      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-6 py-3">
         <div className="relative w-full max-w-sm">
           <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -191,7 +191,7 @@ export function OrgAdminUsersListScreen() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">Statuses</SelectItem>
             {(Object.entries(ORG_ADMIN_USER_STATUS_LABEL) as [OrgAdminUserStatus, string][]).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -211,19 +211,19 @@ export function OrgAdminUsersListScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
-                <TableHead className="text-overline pl-12 text-muted-foreground">Name</TableHead>
+                <TableHead className="text-overline pl-6 text-muted-foreground">Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Email</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Status</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Invited Date</TableHead>
-                <TableHead className="text-overline pr-12 text-right text-muted-foreground">Actions</TableHead>
+                <TableHead className="text-overline pr-6 text-right text-muted-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pageRows.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="pl-12">
+                  <TableCell className="pl-6">
                     <button
                       type="button"
                       onClick={() => handleViewDetails(user)}
@@ -237,7 +237,7 @@ export function OrgAdminUsersListScreen() {
                     <OrgAdminUserStatusPill status={user.status} />
                   </TableCell>
                   <TableCell className="text-caption text-muted-foreground">{user.invitedDate}</TableCell>
-                  <TableCell className="pr-12 text-right">
+                  <TableCell className="pr-6 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" aria-label={`Actions for ${user.name}`}>
@@ -276,7 +276,7 @@ export function OrgAdminUsersListScreen() {
         )}
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border bg-background px-12 py-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
         <div className="text-caption flex items-center gap-2 text-muted-foreground">
           <span>Rows per page</span>
           <Select

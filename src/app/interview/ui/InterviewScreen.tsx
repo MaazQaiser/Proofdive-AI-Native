@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { CheckCircle2, ClipboardCheck, Clock3, Eye, FileText, ListChecks, MicOff, RotateCcw, SkipForward, Video, VideoOff, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, ClipboardCheck, Clock3, Eye, FileText, ListChecks, MicOff, RotateCcw, SkipForward, Video, VideoOff } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { cn } from "@/components/cn";
@@ -15,7 +15,6 @@ import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
 import { TypingText } from "@/components/TypingText";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { IconButton } from "@/components/ui/icon-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CardButton } from "@/components/ui/card-button";
 import {
@@ -26,6 +25,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   InterviewReadinessCard,
   readinessPillarsFromReport,
@@ -518,153 +525,90 @@ export function InterviewScreen() {
                 </p>
               )}
 
-              <Card className="mt-4 gap-0 overflow-hidden rounded-[16px] border-[#dde7e9] py-0">
-                <CardContent className="space-y-3 p-4">
-                  <input
-                    ref={jobDescriptionInputRef}
-                    type="file"
-                    className="hidden"
-                    accept=".pdf,.doc,.docx,.txt"
-                    onChange={(e) => {
-                      const file = e.currentTarget.files?.[0];
-                      setJobDescriptionName(file?.name ?? "");
-                    }}
-                  />
+              <div className="mt-4 overflow-hidden rounded-[16px] border border-[#dde7e9] bg-card">
+                <input
+                  ref={jobDescriptionInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.txt"
+                  onChange={(e) => {
+                    const file = e.currentTarget.files?.[0];
+                    setJobDescriptionName(file?.name ?? "");
+                  }}
+                />
 
-                  {roleProfile?.jobDescription ? (
-                    <div className="flex items-start gap-3 rounded-lg border border-[#b3effa] bg-white p-3">
-                      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-scoring-green/15 text-scoring-green-fg">
-                        <CheckCircle2 className="size-4" aria-hidden />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-body-sm font-semibold text-extended-cyan-green">
-                          Job description ready
-                        </p>
-                        <p className="mt-0.5 text-caption leading-snug text-text-secondary">
-                          Using the job description from your profile to tailor this interview.
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-3 rounded-lg border border-[#dde7e9] bg-white p-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="flex min-w-0 items-start gap-3">
-                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-extended-light-cyan text-extended-cyan-green">
-                          <FileText className="size-4" aria-hidden />
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-body-sm font-semibold text-extended-cyan-green">
-                            Add a job description
-                          </p>
-                          <p className="mt-0.5 text-caption leading-snug text-text-secondary">
-                            Optional — helps tailor the interview.
-                          </p>
-                          {jobDescriptionName ? (
-                            <p className="mt-1.5 text-overline text-text-secondary">
-                              {jobDescriptionName}
-                            </p>
-                          ) : null}
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0"
-                        onClick={() => jobDescriptionInputRef.current?.click()}
-                      >
-                        Upload JD
-                      </Button>
-                    </div>
-                  )}
-
-                  <div>
-                    <p className="text-overline text-extended-cyan-green">Session length</p>
-                    <div
-                      role="radiogroup"
-                      aria-label="Session length"
-                      className="mt-2 grid gap-2 sm:grid-cols-2"
-                    >
-                      {(
-                        [
-                          {
-                            id: "short" as const,
-                            title: "Short · 10 min",
-                            detail: "Focused first mock across core competencies.",
-                          },
-                          {
-                            id: "full" as const,
-                            title: "Full · 30 min",
-                            detail: "All competency pillars in a complete session.",
-                          },
-                        ]
-                      ).map((option) => {
-                        const selected = sessionLength === option.id;
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            role="radio"
-                            aria-checked={selected}
-                            onClick={() => setSessionLength(option.id)}
-                            className={cn(
-                              "flex items-start gap-3 rounded-lg border p-3 text-left transition-colors",
-                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
-                              selected
-                                ? "border-[#b3effa] bg-white"
-                                : "border-[#dde7e9] bg-white hover:bg-muted/70",
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "grid size-8 shrink-0 place-items-center rounded-full",
-                                selected
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-extended-light-cyan text-extended-cyan-green",
-                              )}
-                              aria-hidden
-                            >
-                              <Clock3 className="size-4" />
-                            </span>
-                            <span className="min-w-0">
-                              <span className="block text-body-sm font-semibold text-extended-cyan-green">
-                                {option.title}
-                              </span>
-                              <span className="mt-0.5 block text-caption leading-snug text-text-secondary">
-                                {option.detail}
-                              </span>
-                            </span>
-                          </button>
-                        );
-                      })}
+                {roleProfile?.jobDescription ? (
+                  <div className="flex items-start gap-3 px-5 py-4">
+                    <CheckCircle2
+                      className="mt-0.5 size-5 shrink-0 text-scoring-green-fg"
+                      aria-hidden
+                    />
+                    <div className="min-w-0">
+                      <p className="text-body-sm font-semibold text-extended-cyan-green">
+                        Job description ready
+                      </p>
+                      <p className="mt-0.5 text-caption leading-snug text-text-secondary">
+                        Using the job description from your profile to tailor this interview.
+                      </p>
                     </div>
                   </div>
+                ) : (
+                  <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <FileText
+                        className="mt-0.5 size-5 shrink-0 text-extended-cyan-green"
+                        aria-hidden
+                      />
+                      <div className="min-w-0">
+                        <p className="text-body-sm font-semibold text-extended-cyan-green">
+                          Add a job description
+                        </p>
+                        <p className="mt-0.5 text-caption leading-snug text-text-secondary">
+                          Optional — helps tailor the interview.
+                        </p>
+                        {jobDescriptionName ? (
+                          <p className="mt-1.5 text-overline text-text-secondary">
+                            {jobDescriptionName}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => jobDescriptionInputRef.current?.click()}
+                    >
+                      Upload JD
+                    </Button>
+                  </div>
+                )}
 
-                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#dde7e9] bg-white p-3 transition-colors hover:bg-extended-light-cyan/30 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40">
-                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-extended-light-cyan text-extended-cyan-green">
-                      <Video className="size-4" aria-hidden />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex flex-wrap items-center gap-2">
-                        <span className="text-body-sm font-semibold text-extended-cyan-green">
-                          Enable camera
-                        </span>
-                        <span className="rounded-full bg-[#f5f5f3] px-2 py-0.5 text-caption font-medium text-extended-cyan">
-                          Optional
-                        </span>
+                <label className="flex cursor-pointer items-start gap-3 border-t border-[#dfe7e9] px-5 py-4 transition-colors duration-200 hover:bg-[#edf5f7]/40 has-[:focus-visible]:bg-[#edf5f7]/40">
+                  <Video
+                    className="mt-0.5 size-5 shrink-0 text-extended-cyan-green"
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-body-sm font-semibold text-extended-cyan-green">
+                        Enable camera
                       </span>
-                      <span className="mt-0.5 block text-caption leading-snug text-text-secondary">
-                        Captures video for gesture and presence analytics.
-                      </span>
+                      <span className="text-overline text-text-secondary">Optional</span>
                     </span>
-                    <Switch
-                      checked={cameraEnabled}
-                      onCheckedChange={setCameraEnabled}
-                      className="mt-0.5"
-                      aria-label="Enable camera"
-                    />
-                  </label>
-                </CardContent>
-              </Card>
+                    <span className="mt-0.5 block text-caption leading-snug text-text-secondary">
+                      Captures video for gesture and presence analytics.
+                    </span>
+                  </span>
+                  <Switch
+                    checked={cameraEnabled}
+                    onCheckedChange={setCameraEnabled}
+                    className="mt-0.5"
+                    aria-label="Enable camera"
+                  />
+                </label>
+              </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-2.5">
                 <Button
@@ -678,14 +622,53 @@ export function InterviewScreen() {
                     Skip interview
                   </Link>
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    openConsent(sessionLength === "full" ? "full_competency" : "first_time");
-                  }}
-                >
-                  Start mock interview
-                </Button>
+                <div className="inline-flex overflow-hidden rounded-md">
+                  <Button
+                    size="sm"
+                    className="rounded-none"
+                    onClick={() => {
+                      openConsent(sessionLength === "full" ? "full_competency" : "first_time");
+                    }}
+                  >
+                    Start mock interview · {sessionLength === "full" ? "30 min" : "10 min"}
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        size="sm"
+                        aria-label="Choose session length"
+                        className="rounded-none border-l border-primary-foreground/25 px-2!"
+                      >
+                        <ChevronDown className="size-4" aria-hidden />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[14rem]">
+                      <DropdownMenuLabel className="text-overline font-normal text-muted-foreground">
+                        Session length
+                      </DropdownMenuLabel>
+                      <DropdownMenuRadioGroup
+                        value={sessionLength}
+                        onValueChange={(value) => {
+                          if (value === "short" || value === "full") setSessionLength(value);
+                        }}
+                      >
+                        <DropdownMenuRadioItem value="short" className="flex flex-col items-start gap-0.5 py-2.5">
+                          <span className="font-medium">Short · 10 min</span>
+                          <span className="text-caption text-muted-foreground">
+                            Focused first mock across core competencies.
+                          </span>
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="full" className="flex flex-col items-start gap-0.5 py-2.5">
+                          <span className="font-medium">Full · 30 min</span>
+                          <span className="text-caption text-muted-foreground">
+                            All competency pillars in a complete session.
+                          </span>
+                        </DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
 
               {latestReportSummaryEl}
@@ -790,13 +773,13 @@ export function InterviewScreen() {
         <DialogContent
           showCloseButton={false}
           onPointerDownOutside={(e) => e.preventDefault()}
-          className="flex max-h-[min(92dvh,40rem)] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[20px] border-[#dde7e9] bg-white p-0 shadow-[-4px_-4px_40px_0_rgba(0,0,0,0.06)] sm:max-w-md"
+          className="flex max-h-[min(92dvh,40rem)] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[20px] border-[#dde7e9] bg-white p-0 shadow-[-4px_-4px_40px_0_rgba(0,0,0,0.06)] sm:max-w-[640px]"
         >
           <DialogHeader className="gap-0 p-0 text-left sm:text-left">
             <div
               data-slot="app-dialog-header"
               className={cn(
-                "relative flex items-start justify-between gap-3 px-5 py-4",
+                "relative flex items-start gap-3 px-5 py-4",
                 "bg-[linear-gradient(189.44deg,rgba(255,255,255,0.2)_50.11%,rgba(14,154,181,0.1)_110.8%),linear-gradient(#fff,#fff)]",
               )}
             >
@@ -816,19 +799,6 @@ export function InterviewScreen() {
                   </DialogDescription>
                 </div>
               </div>
-              <IconButton
-                variant="ghost"
-                size="md"
-                aria-label="Close"
-                className="shrink-0 text-text-secondary hover:text-text-primary active:bg-muted"
-                onClick={() => {
-                  setConsentOpen(false);
-                  setSessionKind(null);
-                  setPendingSelectivePillars(null);
-                }}
-              >
-                <X />
-              </IconButton>
             </div>
           </DialogHeader>
 

@@ -7,26 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { INVOICE_STATUS_LABEL, SEED_INVOICES, type Invoice, type InvoiceStatus } from "@/lib/orgAdminBillingData";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
-import { cn } from "@/lib/utils";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 function InvoiceStatusPill({ status }: { status: InvoiceStatus }) {
-  const tone =
-    status === "paid"
-      ? "border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg"
-      : status === "pending"
-        ? "border-scoring-yellow/30 bg-scoring-yellow/20 text-scoring-yellow-fg"
-        : "border-scoring-red/25 bg-scoring-red/15 text-scoring-red-fg";
-  return (
-    <span className={cn("text-overline inline-flex h-6 w-fit items-center rounded-full border px-2 whitespace-nowrap", tone)}>
-      {INVOICE_STATUS_LABEL[status]}
-    </span>
-  );
+  const tone: StatusTone =
+    status === "paid" ? "success" : status === "pending" ? "warning" : "danger";
+  return <StatusPill tone={tone}>{INVOICE_STATUS_LABEL[status]}</StatusPill>;
 }
 
 function downloadInvoiceReceipt(invoice: Invoice) {

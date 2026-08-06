@@ -26,49 +26,61 @@ export function Disclosure({
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div
+      data-slot={tone === "competency" ? "card" : undefined}
       className={cn(
-        "overflow-hidden rounded-lg border border-border",
-        tone === "driver" && "bg-muted/40",
-        tone === "competency" && "bg-card",
-        tone === "level" && "bg-background",
+        "overflow-hidden",
+        tone === "driver" && "rounded-lg border border-border bg-muted/40",
+        tone === "competency" && "rounded-[16px] bg-card text-card-foreground",
+        tone === "level" && "border-b border-border bg-transparent last:border-b-0",
         className,
       )}
     >
-      <button
-        type="button"
+      <div
         className={cn(
-          "flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition hover:bg-muted/50",
-          tone === "driver" && "py-3.5",
+          "flex w-full cursor-pointer items-center justify-between gap-3 text-left transition",
+          tone === "driver" && "px-4 py-3.5 hover:bg-muted/50",
+          tone === "competency" &&
+            "bg-[linear-gradient(270deg,rgba(255,255,255,0.2)_50.11%,rgba(14,154,181,0.1)_110.8%),linear-gradient(#fff,#fff)] px-4 py-3 hover:brightness-[0.99]",
+          tone === "level" && "px-0 py-3",
         )}
-        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1">
           {tone === "driver" ? (
-            <span className="block text-body font-semibold tracking-tight text-foreground">
+            <div className="text-body font-semibold tracking-tight text-foreground">
               {title}
-            </span>
+            </div>
           ) : tone === "competency" ? (
-            <span className="block text-body-sm font-semibold text-foreground">{title}</span>
+            <div className="text-body-sm font-semibold text-foreground">{title}</div>
           ) : (
-            <span className="block text-body-sm font-medium text-foreground">{title}</span>
+            <div className="text-body-sm font-medium text-foreground">{title}</div>
           )}
           {subtitle ? (
-            <span className="mt-0.5 block text-caption text-muted-foreground">{subtitle}</span>
+            <div className="mt-0.5 text-caption text-muted-foreground">{subtitle}</div>
           ) : null}
-        </span>
-        <ChevronDown
-          className={cn(
-            "mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition",
-            open && "rotate-180",
-          )}
-        />
-      </button>
+        </div>
+        <button
+          type="button"
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          aria-expanded={open}
+          aria-label={open ? "Collapse" : "Expand"}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((v) => !v);
+          }}
+        >
+          <ChevronDown
+            className={cn("h-4 w-4 transition", open && "rotate-180")}
+            aria-hidden
+          />
+        </button>
+      </div>
       {open ? (
         <div
           className={cn(
-            "border-t border-border px-4 py-4",
-            tone === "driver" && "bg-background/80",
+            tone === "driver" && "border-t border-border bg-background/80 px-4 py-4",
+            tone === "competency" && "border-t border-border px-4 py-4",
+            tone === "level" && "pb-4 pt-1",
           )}
         >
           {children}

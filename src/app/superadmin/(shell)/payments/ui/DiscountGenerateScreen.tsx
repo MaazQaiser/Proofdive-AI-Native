@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,8 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DISCOUNT_TYPE_LABEL,
-  formatUsd,
   generateDiscountCodeString,
   isValidPrice,
   type ClientType,
@@ -35,7 +33,7 @@ export function DiscountGenerateScreen() {
   const { upsert, codeTaken } = useDiscountCodes();
 
   const [code, setCode] = useState(() => generateDiscountCodeString());
-  const [discountType, setDiscountType] = useState<DiscountType | undefined>(undefined);
+  const [discountType, setDiscountType] = useState<DiscountType | undefined>("percentage");
   const [percentage, setPercentage] = useState("");
   const [fixedAmount, setFixedAmount] = useState("");
   const [appliesTo, setAppliesTo] = useState<ClientType[]>([]);
@@ -47,7 +45,6 @@ export function DiscountGenerateScreen() {
     d.setMonth(d.getMonth() + 3);
     return d.toISOString().slice(0, 10);
   });
-  const [step, setStep] = useState<"form" | "preview">("form");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   function toggleApplies(type: ClientType, checked: boolean) {
@@ -85,15 +82,11 @@ export function DiscountGenerateScreen() {
     return Object.keys(next).length === 0;
   }
 
-  function goPreview() {
+  function generate() {
     if (!validate()) {
       toast.error("Please fix the highlighted fields.");
       return;
     }
-    setStep("preview");
-  }
-
-  function generate() {
     if (!discountType) return;
     const record: DiscountCode = {
       id: `dc_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -119,53 +112,6 @@ export function DiscountGenerateScreen() {
     router.push(`/superadmin/payments/discounts/${record.id}`);
   }
 
-  if (step === "preview") {
-    return (
-      <PaymentsShell
-        title="Preview discount code"
-        actions={
-          <Button type="button" variant="outline" onClick={() => setStep("form")}>
-            Back
-          </Button>
-        }
-      >
-        <Card className="mx-auto w-full max-w-[800px]">
-          <CardHeader>
-            <CardTitle>{code.toUpperCase()}</CardTitle>
-            <CardDescription>
-              {discountType ? DISCOUNT_TYPE_LABEL[discountType] : ""} · Applies to{" "}
-              {appliesTo.join(", ")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-caption text-muted-foreground">
-            <p>
-              Value:{" "}
-              {discountType === "free"
-                ? "Free Access (one cycle)"
-                : discountType === "percentage"
-                  ? `${percentage}%`
-                  : formatUsd(Number(fixedAmount))}
-            </p>
-            <p>
-              Usage:{" "}
-              {usageLimit === "unlimited"
-                ? "Unlimited"
-                : usageLimit === "one_time"
-                  ? "One-time use"
-                  : `Max ${maxRedemptions} redemptions`}
-            </p>
-            <p>
-              Validity: {startDate} → {expiryDate}
-            </p>
-            <Button className="mt-4" type="button" onClick={generate}>
-              Generate Code
-            </Button>
-          </CardContent>
-        </Card>
-      </PaymentsShell>
-    );
-  }
-
   return (
     <PaymentsShell
       title="Generate Discount Code"
@@ -178,8 +124,8 @@ export function DiscountGenerateScreen() {
           >
             Cancel
           </Button>
-          <Button type="button" onClick={goPreview}>
-            Continue to preview
+          <Button type="button" onClick={generate}>
+            Generate Code
           </Button>
         </>
       }
@@ -193,6 +139,7 @@ export function DiscountGenerateScreen() {
                 id="dc-code"
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="e.g. SPRING25"
                 aria-invalid={Boolean(errors.code)}
               />
               <Button
@@ -200,7 +147,7 @@ export function DiscountGenerateScreen() {
                 variant="outline"
                 onClick={() => setCode(generateDiscountCodeString())}
               >
-                Regenerate
+                Randomize
               </Button>
             </div>
             {errors.code ? <p className="text-caption text-destructive">{errors.code}</p> : null}
@@ -235,6 +182,7 @@ export function DiscountGenerateScreen() {
                 max={100}
                 value={percentage}
                 onChange={(e) => setPercentage(e.target.value)}
+                placeholder="15"
               />
               {errors.percentage ? (
                 <p className="text-caption text-destructive">{errors.percentage}</p>
@@ -251,6 +199,7 @@ export function DiscountGenerateScreen() {
                 step={0.01}
                 value={fixedAmount}
                 onChange={(e) => setFixedAmount(e.target.value)}
+                placeholder="25.00"
               />
               {errors.fixed ? <p className="text-caption text-destructive">{errors.fixed}</p> : null}
             </div>
@@ -301,6 +250,7 @@ export function DiscountGenerateScreen() {
                 min={1}
                 value={maxRedemptions}
                 onChange={(e) => setMaxRedemptions(e.target.value)}
+                placeholder="100"
                 className="sm:max-w-[calc(50%-0.5rem)]"
               />
               {errors.max ? <p className="text-caption text-destructive">{errors.max}</p> : null}

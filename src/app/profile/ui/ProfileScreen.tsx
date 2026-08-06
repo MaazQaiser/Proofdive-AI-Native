@@ -39,13 +39,8 @@ import {
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 function initials(name?: string, role?: string): string {
-  const source = name ?? role ?? "?";
-  return source
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join("");
+  const source = (name ?? role ?? "?").trim();
+  return (source[0] ?? "?").toUpperCase();
 }
 
 function labelBackgroundType(v: RoleProfile["backgroundType"]): string {
@@ -397,6 +392,7 @@ export function ProfileScreen() {
                             onChange={(e) =>
                               setPersonalInfoDraft((d) => ({ ...d, name: e.target.value }))
                             }
+                            placeholder="Jane Doe"
                           />
                         </div>
                         <div className="flex flex-col gap-1.5">
@@ -408,6 +404,7 @@ export function ProfileScreen() {
                             onChange={(e) =>
                               setPersonalInfoDraft((d) => ({ ...d, email: e.target.value }))
                             }
+                            placeholder="you@company.com"
                           />
                         </div>
                         <DetailRow

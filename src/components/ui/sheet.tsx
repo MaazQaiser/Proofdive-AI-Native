@@ -51,9 +51,9 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "bg-background fixed z-50 flex flex-col gap-0 transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+          "app-canvas-wash bg-background fixed z-50 flex flex-col gap-0 transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
           side === "right" &&
-            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-full border-l border-border sm:max-w-xl",
+            "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-[65vw] max-w-[65vw] border-l border-border",
           side === "left" &&
             "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-full border-r border-border sm:max-w-xl",
           side === "top" &&
@@ -83,7 +83,10 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-header"
-      className={cn("flex shrink-0 items-center border-b border-border px-6 py-4", className)}
+      className={cn(
+        "flex min-h-14 shrink-0 items-center border-b border-border px-6 py-4",
+        className,
+      )}
       {...props}
     />
   );
