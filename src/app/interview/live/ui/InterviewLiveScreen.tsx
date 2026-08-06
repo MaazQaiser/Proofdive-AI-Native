@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
+import { ReportGeneratingOverlay } from "@/components/interview/ReportGeneratingOverlay";
 import { cn } from "@/components/cn";
-import { Logo } from "@/components/ui/logo";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { PILLAR_LABEL, type PillarId } from "@/lib/storyboardDraft";
 import type {
@@ -450,17 +450,8 @@ export function InterviewLiveScreen() {
     "Generating next actions",
     "Finalizing report",
   ] as const;
-
-  const competencies = [
-    "Structured thinking",
-    "Communication",
-    "Ownership",
-    "Problem solving",
-    "Stakeholder management",
-    "Execution",
-    "Impact",
-    "Collaboration",
-  ] as const;
+  /** Demo pacing — full progress sequence lasts at least 15s. */
+  const REPORT_STEP_MS = 3_000;
 
   useEffect(() => {
     if (!isEnding) return;
@@ -472,7 +463,7 @@ export function InterviewLiveScreen() {
       timers.push(
         window.setTimeout(() => {
           setReportStepIdx(i);
-        }, i * 900),
+        }, i * REPORT_STEP_MS),
       );
     }
 
@@ -500,7 +491,7 @@ export function InterviewLiveScreen() {
         });
         persistReport(report);
         router.push(`/report/${reportId}`);
-      }, reportSteps.length * 900 + 900),
+      }, reportSteps.length * REPORT_STEP_MS),
     );
 
     return () => {
@@ -665,91 +656,7 @@ export function InterviewLiveScreen() {
       </div>
 
       {isEnding ? (
-        <div className="fixed inset-0 z-[60] bg-background text-foreground">
-          <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-6 py-10">
-            <div className="flex items-center gap-2">
-              <Logo size="xxs" />
-              <span className="text-overline text-text-secondary">
-                REPORT
-              </span>
-            </div>
-
-            <div className="mt-8">
-              <div className="text-h4">
-                Generating your report…
-              </div>
-              <div className="mt-3 max-w-2xl text-caption leading-6 text-text-secondary">
-                Mapping each answer to competencies and extracting the strongest proof points.
-              </div>
-            </div>
-
-            <div className="mt-10 grid gap-4 lg:grid-cols-2">
-              <div className="rounded-lg border border-border bg-card p-5">
-                <div className="text-overline text-text-secondary">
-                  PROGRESS
-                </div>
-                <div className="mt-4 space-y-3">
-                  {reportSteps.map((label, idx) => {
-                    const done = reportStepIdx > idx;
-                    const active = reportStepIdx === idx;
-                    return (
-                      <div key={label} className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div
-                            className={cn(
-                              "truncate text-caption font-semibold",
-                              done || active ? "text-text-primary" : "text-text-secondary",
-                            )}
-                          >
-                            {label}
-                          </div>
-                        </div>
-                        <div
-                          className={cn(
-                            "h-2 w-2 rounded-full",
-                            done
-                              ? "bg-scoring-green"
-                              : active
-                                ? "bg-primary animate-pulse"
-                                : "bg-border",
-                          )}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-border bg-card p-5">
-                <div className="text-overline text-text-secondary">
-                  COMPETENCY MAPPING
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {competencies.map((c, idx) => {
-                    const filled = idx < Math.max(0, reportStepIdx - 1);
-                    return (
-                      <div
-                        key={c}
-                        className={cn(
-                          "rounded-2xl border px-3 py-3 text-overline transition",
-                          filled
-                            ? "border-scoring-green/30 bg-scoring-green/10 text-text-primary"
-                            : "border-border bg-surface text-text-secondary",
-                        )}
-                      >
-                        {c}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-auto pt-10 text-overline text-text-secondary">
-              You’ll be redirected to home automatically.
-            </div>
-          </div>
-        </div>
+        <ReportGeneratingOverlay stepIdx={reportStepIdx} steps={reportSteps} />
       ) : null}
     </div>
   );

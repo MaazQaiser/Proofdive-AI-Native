@@ -361,6 +361,10 @@
   --animate-pricing-rise: pricing-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-pricing-blob: pricing-blob 18s ease-in-out infinite;
   --animate-pricing-blob-alt: pricing-blob 22s ease-in-out infinite reverse;
+  --animate-report-blob: report-blob 16s ease-in-out infinite;
+  --animate-report-blob-alt: report-blob-alt 20s ease-in-out infinite;
+  --animate-report-blob-slow: report-blob-slow 24s ease-in-out infinite;
+  --animate-report-status-rise: report-status-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes shimmer-sweep {
@@ -553,6 +557,112 @@
   }
   50% {
     transform: translate(12px, -18px) scale(1.04);
+  }
+}
+
+@keyframes report-blob {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(80px, -100px, 0) scale(1.12);
+  }
+}
+
+@keyframes report-blob-alt {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.05);
+  }
+  50% {
+    transform: translate3d(-110px, 70px, 0) scale(1.18);
+  }
+}
+
+@keyframes report-blob-slow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(60px, 50px, 0) scale(1.1);
+  }
+  66% {
+    transform: translate3d(-70px, -40px, 0) scale(0.94);
+  }
+}
+
+@keyframes report-status-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Report-loading overlay — explicit classes so motion isn't lost to
+   utility/cascade conflicts (`.app-canvas` forces `position: relative`). */
+.report-loading-overlay {
+  background-color: #ffffff;
+}
+
+.report-loading-blob {
+  position: absolute;
+  max-width: none;
+  width: min(78vw, 720px);
+  height: min(78vw, 720px);
+  object-fit: contain;
+  user-select: none;
+  opacity: 0.75;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.report-loading-blob--a {
+  animation: report-blob 9s ease-in-out infinite;
+}
+
+.report-loading-blob--b {
+  width: min(88vw, 820px);
+  height: min(88vw, 820px);
+  opacity: 0.7;
+  animation: report-blob-alt 11s ease-in-out infinite;
+}
+
+.report-loading-blob--c {
+  width: min(64vw, 580px);
+  height: min(64vw, 580px);
+  opacity: 0.55;
+  animation: report-blob-slow 13s ease-in-out infinite;
+}
+
+.report-loading-status {
+  animation: report-status-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.report-loading-heading {
+  animation: report-status-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.report-loading-subtext {
+  animation: report-status-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-loading-blob--a,
+  .report-loading-blob--b,
+  .report-loading-blob--c {
+    animation: none;
+  }
+
+  .report-loading-status,
+  .report-loading-heading,
+  .report-loading-subtext {
+    animation: none;
   }
 }
 

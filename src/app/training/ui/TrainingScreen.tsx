@@ -316,6 +316,8 @@ export function TrainingScreen() {
                       const progress = progressForCourse(course.id);
                       const pct = progress?.percentComplete ?? 0;
                       const isPrimary = courseIdx === 0;
+                      const isImageBg = course.id === "competency-pillars";
+                      const useLightType = isPrimary;
                       const variant = isPrimary ? "primary" : "gray";
                       const illustrationSrc = isPrimary
                         ? "/brand/illustration-1.svg"
@@ -331,22 +333,44 @@ export function TrainingScreen() {
                             "duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.985]",
                             "motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100",
                             "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                            glassCardSurfaceClasses(variant),
+                            isImageBg
+                              ? [
+                                  "bg-white",
+                                  "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
+                                  "hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
+                                ]
+                              : glassCardSurfaceClasses(variant),
                           )}
                         >
-                          <GlassBlurSymbol src={illustrationSrc} variant={variant} />
+                          {isImageBg ? (
+                            <>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src="/brand/competency-pillars-card-bg.png"
+                                alt=""
+                                className="pointer-events-none absolute inset-0 z-0 size-full scale-110 object-cover object-[center_55%] -translate-y-1"
+                                aria-hidden
+                              />
+                              <div
+                                className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-[72%] bg-[linear-gradient(90deg,rgba(255,255,255,0.92)_0%,rgba(255,255,255,0.55)_55%,transparent_100%)]"
+                                aria-hidden
+                              />
+                            </>
+                          ) : (
+                            <GlassBlurSymbol src={illustrationSrc} variant={variant} />
+                          )}
 
                           <div className="relative z-10 flex items-start justify-between gap-3">
                             <div
                               className={cn(
                                 "min-w-0 pr-2",
-                                isPrimary && "[text-shadow:0_1px_2px_rgba(7,62,76,0.28)]",
+                                useLightType && "[text-shadow:0_1px_2px_rgba(7,62,76,0.28)]",
                               )}
                             >
                               <div
                                 className={cn(
                                   "text-[20px] leading-tight font-semibold tracking-tight",
-                                  isPrimary
+                                  useLightType
                                     ? "text-primary-foreground"
                                     : "text-text-primary",
                                 )}
@@ -356,7 +380,7 @@ export function TrainingScreen() {
                               <p
                                 className={cn(
                                   "mt-1.5 max-w-[28ch] text-[13px] leading-snug",
-                                  isPrimary
+                                  useLightType
                                     ? "text-primary-foreground/90"
                                     : "text-text-secondary",
                                 )}
@@ -367,7 +391,7 @@ export function TrainingScreen() {
                             <span
                               className={cn(
                                 "grid size-8 shrink-0 place-items-center rounded-full backdrop-blur-sm",
-                                isPrimary
+                                useLightType
                                   ? "bg-white/20 text-primary-foreground"
                                   : "bg-white/70 text-primary shadow-sm",
                               )}
@@ -385,7 +409,7 @@ export function TrainingScreen() {
                               <div
                                 className={cn(
                                   "text-[28px] leading-none font-semibold tracking-tight",
-                                  isPrimary
+                                  useLightType
                                     ? "text-primary-foreground [text-shadow:0_1px_2px_rgba(7,62,76,0.28)]"
                                     : "text-heading-teal",
                                 )}
@@ -395,7 +419,7 @@ export function TrainingScreen() {
                               <div
                                 className={cn(
                                   "text-overline",
-                                  isPrimary
+                                  useLightType
                                     ? "text-primary-foreground/90"
                                     : "text-text-secondary",
                                 )}
@@ -407,10 +431,10 @@ export function TrainingScreen() {
                               value={pct}
                               className={cn(
                                 "mt-2.5",
-                                isPrimary && "bg-white/25",
+                                useLightType && "bg-white/25",
                               )}
                               indicatorClassName={
-                                isPrimary
+                                useLightType
                                   ? "border-white/40 bg-primary-foreground"
                                   : undefined
                               }
