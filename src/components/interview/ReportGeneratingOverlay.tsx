@@ -49,37 +49,10 @@ function LogoFillProgress({ progress }: { progress: number }) {
       aria-label="Report generation progress"
     >
       {/* Empty / filled mark via luminance mask (assets are teal-on-black). */}
+      <div className="report-loading-logo-mask absolute inset-0 bg-[#d7ebf0]" aria-hidden />
       <div
-        className="absolute inset-0 bg-[#d7ebf0]"
-        style={{
-          WebkitMaskImage: "url(/brand/report-loading/logo-filled.png)",
-          maskImage: "url(/brand/report-loading/logo-filled.png)",
-          WebkitMaskSize: "contain",
-          maskSize: "contain",
-          WebkitMaskRepeat: "no-repeat",
-          maskRepeat: "no-repeat",
-          WebkitMaskPosition: "center",
-          maskPosition: "center",
-          maskMode: "luminance",
-          WebkitMaskMode: "luminance",
-        }}
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0 bg-[#0e9ab5] transition-[clip-path] duration-[2800ms] ease-linear motion-reduce:transition-none"
-        style={{
-          clipPath: `inset(${insetTop} 0 0 0)`,
-          WebkitMaskImage: "url(/brand/report-loading/logo-filled.png)",
-          maskImage: "url(/brand/report-loading/logo-filled.png)",
-          WebkitMaskSize: "contain",
-          maskSize: "contain",
-          WebkitMaskRepeat: "no-repeat",
-          maskRepeat: "no-repeat",
-          WebkitMaskPosition: "center",
-          maskPosition: "center",
-          maskMode: "luminance",
-          WebkitMaskMode: "luminance",
-        }}
+        className="report-loading-logo-mask absolute inset-0 bg-[#0e9ab5] transition-[clip-path] duration-[2800ms] ease-linear motion-reduce:transition-none"
+        style={{ clipPath: `inset(${insetTop} 0 0 0)` }}
         aria-hidden
       />
     </div>
