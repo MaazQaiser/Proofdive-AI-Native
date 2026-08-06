@@ -310,8 +310,8 @@ export function SetPriceScreen() {
                         </TableCell>
                       );
                     })}
-                    <TableCell className="pr-6 text-right align-middle">
-                      <div className="ml-auto flex h-9 w-[76px] items-center justify-end gap-1">
+                    <TableCell className="pr-6 align-middle">
+                      <div className="flex w-full items-center justify-end gap-1">
                         {editing ? (
                           <>
                             <Button

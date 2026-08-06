@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { PageTitle } from "@/components/ui/page-title";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { formatCompactCurrencyFromCents, formatNumber } from "@/components/dashboard/format";
@@ -36,19 +37,24 @@ export function SuperAdminDashboardScreen() {
   const { kpis } = dataset;
 
   return (
-    <div className="space-y-6 pt-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <PageTitle>Overview</PageTitle>
-        <DateRangeFilter value={granularity} onChange={setGranularity} options={DATE_RANGE_OPTIONS} />
+    <div className="space-y-6">
+      <div className="-mx-6">
+        <PageHeader>
+          <PageTitle>Overview</PageTitle>
+          <DateRangeFilter
+            value={granularity}
+            onChange={setGranularity}
+            options={DATE_RANGE_OPTIONS}
+          />
+        </PageHeader>
+        <KpiRow banded className="mx-0 border-t-0">
+          <KpiCard label="Total Organizations" value={formatNumber(kpis.totalOrganizations)} />
+          <KpiCard label="Total Active Users" value={formatNumber(kpis.totalActiveUsers)} />
+          <KpiCard label="Mock Interviews" value={formatNumber(kpis.totalMockInterviews)} />
+          <KpiCard label="Storyboards Generated" value={formatNumber(kpis.totalStoryboards)} />
+          <KpiCard label="Monthly Recurring Revenue" value={formatCompactCurrencyFromCents(kpis.mrrCents)} />
+        </KpiRow>
       </div>
-
-      <KpiRow banded>
-        <KpiCard label="Total Organizations" value={formatNumber(kpis.totalOrganizations)} />
-        <KpiCard label="Total Active Users" value={formatNumber(kpis.totalActiveUsers)} />
-        <KpiCard label="Mock Interviews" value={formatNumber(kpis.totalMockInterviews)} />
-        <KpiCard label="Storyboards Generated" value={formatNumber(kpis.totalStoryboards)} />
-        <KpiCard label="Monthly Recurring Revenue" value={formatCompactCurrencyFromCents(kpis.mrrCents)} />
-      </KpiRow>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <TenantGrowthChart data={dataset.tenantGrowth} />

@@ -185,7 +185,7 @@ export function PartnerDetailDrawer({
     <Sheet open={!!partner} onOpenChange={onOpenChange}>
       <SheetContent
         showCloseButton={false}
-        className="flex w-1/2 max-w-[50vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[50vw]"
+        className="flex flex-col gap-0 overflow-hidden p-0"
       >
         <SheetHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-end gap-2 space-y-0 border-b border-border py-4 pl-6 pr-4">
           <SheetTitle className="sr-only">{partner.fullName}</SheetTitle>

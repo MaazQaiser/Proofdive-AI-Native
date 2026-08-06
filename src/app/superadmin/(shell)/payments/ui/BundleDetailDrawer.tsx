@@ -1,7 +1,6 @@
 "use client";
 
 import { Ban, CheckCircle2, Pencil, Search, X } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,8 @@ import {
   type PaymentBundle,
 } from "@/lib/superAdminPaymentsData";
 
+import { BundleFormScreen } from "./BundleFormScreen";
+
 function BundleStatusPill({ status }: { status: BundleStatus }) {
   const tone: StatusTone =
     status === "active" ? "success" : status === "draft" ? "warning" : "neutral";
@@ -32,6 +33,8 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   onRequestDeactivate: (bundle: PaymentBundle) => void;
   onRequestReactivate: (bundle: PaymentBundle) => void;
+  /** Open the drawer already in edit mode (e.g. from list “Edit Bundle”). */
+  initialEditing?: boolean;
 };
 
 export function BundleDetailDrawer({
@@ -39,13 +42,15 @@ export function BundleDetailDrawer({
   onOpenChange,
   onRequestDeactivate,
   onRequestReactivate,
+  initialEditing = false,
 }: Props) {
-  const router = useRouter();
   const [subscriberSearch, setSubscriberSearch] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     setSubscriberSearch("");
-  }, [bundle?.id]);
+    setIsEditing(initialEditing);
+  }, [bundle?.id, initialEditing]);
 
   const filteredSubscribers = useMemo(() => {
     if (!bundle) return [];
@@ -65,10 +70,16 @@ export function BundleDetailDrawer({
   }
 
   return (
-    <Sheet open={!!bundle} onOpenChange={onOpenChange}>
+    <Sheet
+      open={!!bundle}
+      onOpenChange={(open) => {
+        if (!open) setIsEditing(false);
+        onOpenChange(open);
+      }}
+    >
       <SheetContent
         showCloseButton={false}
-        className="flex w-1/2 max-w-[50vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[50vw]"
+        className="flex flex-col gap-0 overflow-hidden p-0"
       >
         <SheetHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-end gap-2 space-y-0 border-b border-border py-4 pl-6 pr-4">
           <SheetTitle className="sr-only">{bundle.name}</SheetTitle>
@@ -87,10 +98,8 @@ export function BundleDetailDrawer({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => {
-              onOpenChange(false);
-              router.push(`/superadmin/payments/bundles/${bundle.id}?edit=1`);
-            }}
+            onClick={() => setIsEditing(true)}
+            disabled={isEditing}
           >
             <Pencil className="h-3.5 w-3.5" />
             Edit Bundle
@@ -119,87 +128,98 @@ export function BundleDetailDrawer({
                 <p className="truncate text-h4 text-foreground">{bundle.name}</p>
                 <BundleStatusPill status={bundle.status} />
               </div>
-              {bundle.description ? (
+              {!isEditing && bundle.description ? (
                 <p className="mt-1 text-body-sm text-muted-foreground">{bundle.description}</p>
               ) : null}
             </div>
 
-            <div className="flex flex-col gap-8">
-              <DetailSection title="Bundle">
-                <DetailGrid>
-                  <DetailField label="Type" value={bundle.type} />
-                  <DetailField label="Status" value={BUNDLE_STATUS_LABEL[bundle.status]} />
-                  <DetailField
-                    label="Created"
-                    value={new Date(bundle.createdAt).toLocaleDateString()}
-                  />
-                  <DetailField
-                    label="Last updated"
-                    value={new Date(bundle.updatedAt).toLocaleDateString()}
-                  />
-                </DetailGrid>
-              </DetailSection>
+            {isEditing ? (
+              <BundleFormScreen
+                key={`edit-${bundle.id}`}
+                mode="edit"
+                bundleId={bundle.id}
+                presentation="embedded"
+                onCancel={() => setIsEditing(false)}
+                onSaved={() => setIsEditing(false)}
+              />
+            ) : (
+              <div className="flex flex-col gap-8">
+                <DetailSection title="Bundle">
+                  <DetailGrid>
+                    <DetailField label="Type" value={bundle.type} />
+                    <DetailField label="Status" value={BUNDLE_STATUS_LABEL[bundle.status]} />
+                    <DetailField
+                      label="Created"
+                      value={new Date(bundle.createdAt).toLocaleDateString()}
+                    />
+                    <DetailField
+                      label="Last updated"
+                      value={new Date(bundle.updatedAt).toLocaleDateString()}
+                    />
+                  </DetailGrid>
+                </DetailSection>
 
-              <Separator />
+                <Separator />
 
-              <DetailSection title="Included items">
-                <ul className="flex flex-col gap-3 text-body-sm text-foreground">
-                  {bundle.mockInterview.included ? (
-                    <li>
-                      Mock Interview × {bundle.mockInterview.quantity} @{" "}
-                      {formatUsd(bundle.mockInterview.unitPrice)}
-                    </li>
-                  ) : null}
-                  {bundle.storyboard.included ? (
-                    <li>
-                      Storyboard × {bundle.storyboard.quantity} @{" "}
-                      {formatUsd(bundle.storyboard.unitPrice)}
-                    </li>
-                  ) : null}
-                  {bundle.masterclass.included
-                    ? bundle.masterclass.selections.map((sel) => {
-                        const mc = getMasterclassById(sel.masterclassId);
-                        return (
-                          <li key={sel.masterclassId} className="flex flex-col gap-1">
-                            <span>
-                              {mc?.name}: {formatUsd(sel.price)}
-                            </span>
-                            <ul className="list-disc pl-5 text-caption text-muted-foreground">
-                              {sel.selectedModuleIds.map((id) => {
-                                const mod = mc?.modules.find((m) => m.id === id);
-                                return <li key={id}>{mod?.name ?? id}</li>;
-                              })}
-                            </ul>
-                          </li>
-                        );
-                      })
-                    : null}
-                  {!bundle.mockInterview.included &&
-                  !bundle.storyboard.included &&
-                  !bundle.masterclass.included ? (
-                    <li className="text-muted-foreground">No items included.</li>
-                  ) : null}
-                </ul>
-              </DetailSection>
+                <DetailSection title="Included items">
+                  <ul className="flex flex-col gap-3 text-body-sm text-foreground">
+                    {bundle.mockInterview.included ? (
+                      <li>
+                        Mock Interview × {bundle.mockInterview.quantity} @{" "}
+                        {formatUsd(bundle.mockInterview.unitPrice)}
+                      </li>
+                    ) : null}
+                    {bundle.storyboard.included ? (
+                      <li>
+                        Storyboard × {bundle.storyboard.quantity} @{" "}
+                        {formatUsd(bundle.storyboard.unitPrice)}
+                      </li>
+                    ) : null}
+                    {bundle.masterclass.included
+                      ? bundle.masterclass.selections.map((sel) => {
+                          const mc = getMasterclassById(sel.masterclassId);
+                          return (
+                            <li key={sel.masterclassId} className="flex flex-col gap-1">
+                              <span>
+                                {mc?.name}: {formatUsd(sel.price)}
+                              </span>
+                              <ul className="list-disc pl-5 text-caption text-muted-foreground">
+                                {sel.selectedModuleIds.map((id) => {
+                                  const mod = mc?.modules.find((m) => m.id === id);
+                                  return <li key={id}>{mod?.name ?? id}</li>;
+                                })}
+                              </ul>
+                            </li>
+                          );
+                        })
+                      : null}
+                    {!bundle.mockInterview.included &&
+                    !bundle.storyboard.included &&
+                    !bundle.masterclass.included ? (
+                      <li className="text-muted-foreground">No items included.</li>
+                    ) : null}
+                  </ul>
+                </DetailSection>
 
-              <Separator />
+                <Separator />
 
-              <DetailSection title="Billing cycles">
-                <DetailGrid>
-                  {bundle.cycles.length === 0 ? (
-                    <DetailField label="Cycles" value="None" muted />
-                  ) : (
-                    bundle.cycles.map((c) => (
-                      <DetailField
-                        key={c.cycle}
-                        label={BILLING_CYCLE_LABEL[c.cycle]}
-                        value={formatUsd(c.price)}
-                      />
-                    ))
-                  )}
-                </DetailGrid>
-              </DetailSection>
-            </div>
+                <DetailSection title="Billing cycles">
+                  <DetailGrid>
+                    {bundle.cycles.length === 0 ? (
+                      <DetailField label="Cycles" value="None" muted />
+                    ) : (
+                      bundle.cycles.map((c) => (
+                        <DetailField
+                          key={c.cycle}
+                          label={BILLING_CYCLE_LABEL[c.cycle]}
+                          value={formatUsd(c.price)}
+                        />
+                      ))
+                    )}
+                  </DetailGrid>
+                </DetailSection>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="subscribers" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 py-5">

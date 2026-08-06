@@ -8,6 +8,8 @@ import { formatNumber } from "@/components/dashboard/format";
 import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageTitle } from "@/components/ui/page-title";
 import {
   Select,
   SelectContent,
@@ -76,9 +78,10 @@ export function PartnerDashboardScreen() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-h5 text-foreground">Dashboard &amp; Analytics</h1>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="-mx-6">
+        <PageHeader>
+          <PageTitle>Dashboard &amp; Analytics</PageTitle>
+          <div className="flex flex-wrap items-center gap-2">
           <Select
             value={granularity}
             onValueChange={(v) => setGranularity(v as PartnerDateRangeGranularity)}
@@ -112,14 +115,14 @@ export function PartnerDashboardScreen() {
               <SelectItem value="not_converted">Not converted</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+          </div>
+        </PageHeader>
+        <KpiRow banded className="mx-0 border-t-0">
+          <KpiCard label="Total Signups" value={formatNumber(dataset.totalSignups)} />
+          <KpiCard label="Total Earnings" value={formatCents(dataset.totalEarningsCents)} />
+          <KpiCard label="Total Referrals" value={formatNumber(dataset.totalReferrals)} />
+        </KpiRow>
       </div>
-
-      <KpiRow banded>
-        <KpiCard label="Total Signups" value={formatNumber(dataset.totalSignups)} />
-        <KpiCard label="Total Earnings" value={formatCents(dataset.totalEarningsCents)} />
-        <KpiCard label="Total Referrals" value={formatNumber(dataset.totalReferrals)} />
-      </KpiRow>
 
       <Card className="gap-0 py-0">
         <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">

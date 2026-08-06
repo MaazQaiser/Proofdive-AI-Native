@@ -11,7 +11,6 @@ import {
   Search,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -96,7 +95,6 @@ function formatPricesInline(bundle: PaymentBundle): string {
 }
 
 export function BundleListingScreen() {
-  const router = useRouter();
   const { bundles, deactivate, reactivate, duplicate, hydrated } = usePaymentBundles();
   const { rates: globalRates } = useGlobalRates();
 
@@ -109,6 +107,7 @@ export function BundleListingScreen() {
   const [confirmDeactivate, setConfirmDeactivate] = useState<PaymentBundle | null>(null);
   const [reactivateErrors, setReactivateErrors] = useState<string[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [drawerEditing, setDrawerEditing] = useState(false);
 
   const selectedBundle = bundles.find((b) => b.id === selectedId) ?? null;
   const stats = useMemo(() => computeBundleSummary(bundles), [bundles]);
@@ -149,7 +148,8 @@ export function BundleListingScreen() {
       return;
     }
     toast.success(`Draft "${copy.name}" created.`);
-    router.push(`/superadmin/payments/bundles/${copy.id}`);
+    setDrawerEditing(true);
+    setSelectedId(copy.id);
   }
 
   function handleReactivate(bundle: PaymentBundle) {
@@ -292,7 +292,10 @@ export function BundleListingScreen() {
                     <button
                       type="button"
                       className="text-left font-semibold text-text-primary hover:underline"
-                      onClick={() => setSelectedId(bundle.id)}
+                      onClick={() => {
+                        setDrawerEditing(false);
+                        setSelectedId(bundle.id);
+                      }}
                     >
                       {bundle.name}
                     </button>
@@ -322,13 +325,19 @@ export function BundleListingScreen() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setSelectedId(bundle.id)}>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setDrawerEditing(false);
+                            setSelectedId(bundle.id);
+                          }}
+                        >
                           View details
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() =>
-                            router.push(`/superadmin/payments/bundles/${bundle.id}?edit=1`)
-                          }
+                          onClick={() => {
+                            setDrawerEditing(true);
+                            setSelectedId(bundle.id);
+                          }}
                         >
                           Edit Bundle
                         </DropdownMenuItem>
@@ -431,8 +440,12 @@ export function BundleListingScreen() {
 
       <BundleDetailDrawer
         bundle={selectedBundle}
+        initialEditing={drawerEditing}
         onOpenChange={(open) => {
-          if (!open) setSelectedId(null);
+          if (!open) {
+            setSelectedId(null);
+            setDrawerEditing(false);
+          }
         }}
         onRequestDeactivate={(b) => setConfirmDeactivate(b)}
         onRequestReactivate={(b) => handleReactivate(b)}

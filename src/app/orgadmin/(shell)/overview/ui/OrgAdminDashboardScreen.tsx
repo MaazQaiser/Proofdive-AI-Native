@@ -4,6 +4,8 @@ import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { formatNumber } from "@/components/dashboard/format";
 import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { PageTitle } from "@/components/ui/page-title";
 import { applyAddOnDeltas, type BillingAddOnDeltas } from "@/lib/orgAdminBillingData";
 import { DATE_RANGE_OPTIONS, ORG_ADMIN_MOCK_DATA } from "@/lib/orgAdminMockData";
 import type { DateRangeGranularity } from "@/lib/orgAdminMockData";
@@ -39,29 +41,34 @@ export function OrgAdminDashboardScreen() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-h5 text-foreground">Dashboard &amp; Analytics</h1>
-        <DateRangeFilter value={granularity} onChange={setGranularity} options={DATE_RANGE_OPTIONS} />
+      <div className="-mx-6">
+        <PageHeader>
+          <PageTitle>Dashboard &amp; Analytics</PageTitle>
+          <DateRangeFilter
+            value={granularity}
+            onChange={setGranularity}
+            options={DATE_RANGE_OPTIONS}
+          />
+        </PageHeader>
+        <KpiRow banded className="mx-0 border-t-0">
+          <KpiCard
+            label="Total Invited Users"
+            value={formatNumber(kpis.totalInvitedUsers)}
+            trend={kpis.trends.totalInvitedUsers}
+          />
+          <KpiCard label="Active Users" value={formatNumber(kpis.activeUsers)} trend={kpis.trends.activeUsers} />
+          <KpiCard
+            label="Mock Interviews Conducted"
+            value={formatNumber(kpis.totalMockInterviews)}
+            trend={kpis.trends.totalMockInterviews}
+          />
+          <KpiCard
+            label="Average Interview Score"
+            value={`${kpis.avgInterviewScore.toFixed(1)} / 5`}
+            trend={kpis.trends.avgInterviewScore}
+          />
+        </KpiRow>
       </div>
-
-      <KpiRow banded>
-        <KpiCard
-          label="Total Invited Users"
-          value={formatNumber(kpis.totalInvitedUsers)}
-          trend={kpis.trends.totalInvitedUsers}
-        />
-        <KpiCard label="Active Users" value={formatNumber(kpis.activeUsers)} trend={kpis.trends.activeUsers} />
-        <KpiCard
-          label="Mock Interviews Conducted"
-          value={formatNumber(kpis.totalMockInterviews)}
-          trend={kpis.trends.totalMockInterviews}
-        />
-        <KpiCard
-          label="Average Interview Score"
-          value={`${kpis.avgInterviewScore.toFixed(1)} / 5`}
-          trend={kpis.trends.avgInterviewScore}
-        />
-      </KpiRow>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <InvitedUsersTrendChart data={dataset.invitedUsersTrend} />
