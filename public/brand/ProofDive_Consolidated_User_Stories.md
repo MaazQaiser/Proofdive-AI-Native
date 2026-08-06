@@ -2,8 +2,8 @@
 
 **Product:** ProofDive
 **Document type:** Consolidated User Story Specification
-**Version:** 2.0 (Consolidated)
-**Date:** 31 July 2026
+**Version:** 2.1 (Consolidated)
+**Date:** 3 August 2026
 **Original author:** Atiya Abid, Principal Business Analyst
 
 ---
@@ -16,6 +16,7 @@ This document consolidates the two source user story documents into a single spe
 | --- | --- |
 | `ProofDive - User Stories.md` | Base specification — all five personas, core epics |
 | `ProofDive_Payments_Commission_SocialLogin_FAQ_UserStories.md` | Payments & bundles, partner commissions, social login, AI FAQ Assistant, candidate profile, plus a **CRs** section carrying updated flows |
+| `proofdive-feature-readiness_3.html` | Feature readiness tracker — the current scope of record. Applied in v2.1 to correct supersessions, add newly landed stories, and refine story scope. |
 
 Where the two sources described the same story, **the newer flow supersedes the original**.
 Superseded content has been removed rather than duplicated. Every story is tagged:
@@ -24,7 +25,8 @@ Superseded content has been removed rather than duplicated. Every story is tagge
 | --- | --- |
 | `UPDATED` | Flow replaces an earlier version of the same story |
 | `NEW` | Story did not exist in the base document |
-| `NEEDS REVIEW` | Retained from the base document but likely affected by the new Bundle/pricing model |
+| `RE-SCOPED` | Retained, but narrowed because part of its scope moved to a newer story |
+| `CONFLICT` | Overlaps or contradicts another story — resolve before build |
 | `OUTLINE ONLY` | Scope agreed, full specification still outstanding |
 | *(untagged)* | Carried forward unchanged from the base document |
 
@@ -60,6 +62,7 @@ collisions present in the sources. Appendix A maps every new ID back to its orig
 | 4 | Wassi Rehman | April 2026 | Client review |
 | 5 | — | July 2026 | Payments, commissions, social login & AI FAQ stories added |
 | 6 | — | 31 July 2026 | **Consolidation** — both documents merged; CR flows applied as the source of truth |
+| 7 | — | 3 August 2026 | **v2.1** — aligned to feature readiness tracker: billing stories re-scoped and restored, Upgrade Plan CTA Touchpoints added, Analytics Report & AI Coach registered, story scope and flags refined |
 
 ---
 
@@ -67,7 +70,7 @@ collisions present in the sources. Appendix A maps every new ID back to its orig
 
 | Persona | ID | Story | Change |
 | --- | --- | --- | --- |
-| Super Admin | 7.1 | Set Price — Global Rate Configuration | `NEW` — Payments 1.1 |
+| Super Admin | 7.1 | Set Price — Global & Add-On Rate Configuration | `NEW` — Payments 1.1 |
 | Super Admin | 7.2 | Bundle Listing — Payments Module Overview | `NEW` — Payments 1.2 |
 | Super Admin | 7.3 | Create New Bundle — Bundle Configuration | `NEW` — Payments 1.3 |
 | Super Admin | 7.4 | View & Edit Bundle — Bundle Detail & Configuration Management | `NEW` — Payments 1.4 |
@@ -77,22 +80,22 @@ collisions present in the sources. Appendix A maps every new ID back to its orig
 | Super Admin | 7.8 | View & Manage Discount Code — Detail & Status Management | `NEW` — Payments 1.8 |
 | Super Admin | 8.1 | View Commissions & Payouts Listing | `NEW` — Commission 1.1 |
 | Super Admin | 8.2 | View Commission Detail | `NEW` — Commission 1.2 |
-| Org / Tenant Admin | 4.1 | Manage Subscription | `UPDATED` — Payments 2.1 — supersedes Base 4.3 |
-| Org / Tenant Admin | 4.2 | Purchase Add-Ons — Org-wide Usage Top-Up | `NEW` — Payments 2.2 |
+| Org / Tenant Admin | 4.1 | Manage Subscription | `CONFLICT` — Payments 2.1 |
+| Org / Tenant Admin | 4.2 | Billing — Payment Methods & Invoices | `RE-SCOPED` — Base 4.3 — re-scoped |
+| Org / Tenant Admin | 4.3 | Purchase Add-Ons — Org-wide Usage Top-Up | `NEW` — Payments 2.2 |
 | Partner / Affiliate | 3.1 | View Commissions & Payouts | `NEW` — Commission 3.1 |
 | Partner / Affiliate | 3.2 | Withdraw Funds | `NEW` — Commission 3.2 |
-| Partner / Affiliate | 4.3 | Manage Billing & Subscription | `NEEDS REVIEW` — Base 4.3 |
-| Employer | 4.3 | Manage Billing & Subscription | `NEEDS REVIEW` — Base 4.3 |
+| Employer | 4.3 | Manage Billing & Subscription | `CONFLICT` — Base 4.3 — outside bundle model |
 | Candidate | 1.3 | Social Sign Up — Google & LinkedIn | `NEW` — Social Login 1.3 |
 | Candidate | 1.4 | Social Sign In — Google & LinkedIn | `NEW` — Social Login 1.4 |
 | Candidate | 2.1 | Guided Candidate Onboarding Journey | `UPDATED` — CR — supersedes Base 2.1 |
 | Candidate | 2.2 | Add New Role for Existing User | `OUTLINE ONLY` — Base 2.2 |
 | Candidate | 3.1 | Candidate Dashboard & Readiness Progress | `UPDATED` — CR — supersedes Base 3.1 |
 | Candidate | 5.1 | Create New Storyboard | `UPDATED` — CR — supersedes Base 6.1 |
-| Candidate | 5.2 | Enrich Existing Storyboard & Generate New Version | `UPDATED` — CR — supersedes Base 6.2 |
-| Candidate | 5.3 | Generate Competency-Based Storyboards | `UPDATED` — CR — supersedes Base 6.3 |
+| Candidate | 5.2 | Enrich Storyboard / Add Competency | `UPDATED` — CR — supersedes Base 6.2 |
+| Candidate | 5.3 | Competency-Based Storyboard View | `UPDATED` — CR — supersedes Base 6.3 |
 | Candidate | 5.4 | Download Storyboards | `UPDATED` — CR — supersedes Base 6.4 |
-| Candidate | 6.1 | Access FAQ Bot | `NEW` — FAQ 5.1 |
+| Candidate | 6.1 | Access FAQ Bot — Avatar, Chat Shell, Root Menu | `NEW` — FAQ 5.1 |
 | Candidate | 6.2 | Storyboard Info | `NEW` — FAQ 5.2 |
 | Candidate | 6.3 | Mock Interview Info | `NEW` — FAQ 5.3 |
 | Candidate | 6.4 | What's Next in My Roadmap | `NEW` — FAQ 5.4 |
@@ -100,9 +103,11 @@ collisions present in the sources. Appendix A maps every new ID back to its orig
 | Candidate | 6.6 | Prepare for Another Role | `NEW` — FAQ 5.6 |
 | Candidate | 6.7 | Contact Support | `NEW` — FAQ 5.7 |
 | Candidate | 6.8 | Usage & Billing | `NEW` — FAQ 5.8 |
-| Candidate | 8.1 | Manage Subscription (B2C) | `UPDATED` — Payments 3.1 — supersedes Base 8.3 |
-| Candidate | 8.2 | Purchase Add-Ons (B2C) | `NEW` — Payments 3.2 |
-| Candidate | 9.1 | View & Edit My Profile | `UPDATED` — Profile 4.1 — supersedes Base 8.1 stub |
+| Candidate | 9.1 | Manage Subscription — Catalog, Subscribe, Switch, Cancel | `UPDATED` — Payments 3.1 |
+| Candidate | 9.2 | Upgrade Plan CTA Touchpoints | `NEW` — Payments 3.2 — new in readiness tracker v3 |
+| Candidate | 9.3 | Purchase Add-Ons | `NEW` — Payments 3.3 (was 3.2) |
+| Candidate | 9.4 | Billing — Payment Methods & Invoices | `RE-SCOPED` — Base 8.3 — re-scoped |
+| Candidate | 10.1 | View & Edit My Profile | `UPDATED` — Profile 4.1 — supersedes Base 8.1 stub |
 
 In addition:
 
@@ -143,7 +148,7 @@ In addition:
     - [6.2 — Update Competency as a New Version](#62--update-competency-as-a-new-version)
     - [6.3 — Deactivate / Reactivate Competency](#63--deactivate--reactivate-competency)
   - [Epic 7: Payments & Bundle Management](#epic-7-payments--bundle-management)
-    - [7.1 — Set Price — Global Rate Configuration](#71--set-price--global-rate-configuration-new)
+    - [7.1 — Set Price — Global & Add-On Rate Configuration](#71--set-price--global--add-on-rate-configuration-new)
     - [7.2 — Bundle Listing — Payments Module Overview](#72--bundle-listing--payments-module-overview-new)
     - [7.3 — Create New Bundle — Bundle Configuration](#73--create-new-bundle--bundle-configuration-new)
     - [7.4 — View & Edit Bundle — Bundle Detail & Configuration Management](#74--view--edit-bundle--bundle-detail--configuration-management-new)
@@ -159,21 +164,22 @@ In addition:
   - [Epic 10: Notification Management](#epic-10-notification-management)
     - [10.1 — Receive Notifications](#101--receive-notifications)
   - [Epic 11: Profile Management](#epic-11-profile-management)
-    - [11.1 — View & Edit My Profile Details](#111--view--edit-my-profile-details)
+    - [11.1 — View & Edit My Profile](#111--view--edit-my-profile)
     - [11.2 — Reset Password](#112--reset-password)
     - [11.3 — View Audit Logs](#113--view-audit-logs)
 - [2. Org / Tenant Admin](#2-org--tenant-admin)
   - [Epic 1: Login Module](#epic-1-login-module)
-    - [1.1 — Login with Email & Password](#11--login-with-email--password)
+    - [1.1 — Account Activation & Login with Email & Password](#11--account-activation--login-with-email--password)
     - [1.2 — Forgot Password](#12--forgot-password)
   - [Epic 2: Dashboard & Analytics](#epic-2-dashboard--analytics)
     - [2.1 — B2B Admin Dashboard & Analytics](#21--b2b-admin-dashboard--analytics)
   - [Epic 3: User Management](#epic-3-user-management)
     - [3.1 — View User / Candidate Listings](#31--view-user--candidate-listings)
-    - [3.2 — Add New User / Candidate](#32--add-new-user--candidate)
+    - [3.2 — Add New User / Candidate — CSV & Manual Invite](#32--add-new-user--candidate--csv--manual-invite)
   - [Epic 4: Payments & Subscription Management](#epic-4-payments--subscription-management)
-    - [4.1 — Manage Subscription](#41--manage-subscription-updated)
-    - [4.2 — Purchase Add-Ons — Org-wide Usage Top-Up](#42--purchase-add-ons--org-wide-usage-top-up-new)
+    - [4.1 — Manage Subscription](#41--manage-subscription-conflict)
+    - [4.2 — Billing — Payment Methods & Invoices](#42--billing--payment-methods--invoices-re-scoped)
+    - [4.3 — Purchase Add-Ons — Org-wide Usage Top-Up](#43--purchase-add-ons--org-wide-usage-top-up-new)
   - [Epic 5: Profile & Account Management](#epic-5-profile--account-management)
     - [5.1 — View & Edit My Profile Details](#51--view--edit-my-profile-details)
     - [5.2 — Reset Password](#52--reset-password)
@@ -185,17 +191,17 @@ In addition:
     - [6.2 — Receive Terms & Policy Updates](#62--receive-terms--policy-updates)
 - [3. Partner / Affiliate](#3-partner--affiliate)
   - [Epic 1: Login Module](#epic-1-login-module)
-    - [1.1 — Login with Email & Password](#11--login-with-email--password)
+    - [1.1 — Account Activation & Login with Email & Password](#11--account-activation--login-with-email--password)
     - [1.2 — Forgot Password](#12--forgot-password)
   - [Epic 2: Dashboard & Analytics](#epic-2-dashboard--analytics)
-    - [2.1 — Partner Dashboard & Analytics](#21--partner-dashboard--analytics)
+    - [2.1 — Partner Dashboard & Analytics — Signups, Earnings, Referral Code, Conversion Funnel](#21--partner-dashboard--analytics--signups-earnings-referral-code-conversion-funnel)
   - [Epic 3: Commissions & Payout Management](#epic-3-commissions--payout-management)
     - [3.1 — View Commissions & Payouts](#31--view-commissions--payouts-new)
     - [3.2 — Withdraw Funds](#32--withdraw-funds-new)
   - [Epic 4: Profile & Account Management](#epic-4-profile--account-management)
     - [4.1 — View & Edit My Profile Details](#41--view--edit-my-profile-details)
     - [4.2 — Reset Password](#42--reset-password)
-    - [4.3 — Manage Billing & Subscription](#43--manage-billing--subscription-needs-review)
+    - [4.3 — Manage Billing & Subscription](#43--manage-billing--subscription)
     - [4.4 — Revoke Consent / Delete Account](#44--revoke-consent--delete-account)
     - [4.5 — Contact Support](#45--contact-support)
     - [4.6 — View Audit Logs](#46--view-audit-logs)
@@ -204,7 +210,7 @@ In addition:
     - [5.2 — Receive Terms & Policy Updates](#52--receive-terms--policy-updates)
 - [4. Employer](#4-employer)
   - [Epic 1: Login Module](#epic-1-login-module)
-    - [1.1 — Login with Email & Password](#11--login-with-email--password)
+    - [1.1 — Account Activation & Login with Email & Password](#11--account-activation--login-with-email--password)
     - [1.2 — Forgot Password](#12--forgot-password)
   - [Epic 2: Dashboard Module](#epic-2-dashboard-module)
     - [2.1 — Employer Dashboard & Analytics](#21--employer-dashboard--analytics)
@@ -214,7 +220,7 @@ In addition:
   - [Epic 4: Profile & Account Management](#epic-4-profile--account-management)
     - [4.1 — View & Edit Profile Details](#41--view--edit-profile-details)
     - [4.2 — Reset Password](#42--reset-password)
-    - [4.3 — Manage Billing & Subscription](#43--manage-billing--subscription-needs-review)
+    - [4.3 — Manage Billing & Subscription](#43--manage-billing--subscription-conflict)
     - [4.4 — Revoke Consent / Delete Account](#44--revoke-consent--delete-account)
     - [4.5 — Contact Support](#45--contact-support)
     - [4.6 — View Audit Logs](#46--view-audit-logs)
@@ -237,11 +243,11 @@ In addition:
     - [4.1 — Complete Training Course](#41--complete-training-course)
   - [Epic 5: Storyboard Module](#epic-5-storyboard-module)
     - [5.1 — Create New Storyboard](#51--create-new-storyboard-updated)
-    - [5.2 — Enrich Existing Storyboard & Generate New Version](#52--enrich-existing-storyboard--generate-new-version-updated)
-    - [5.3 — Generate Competency-Based Storyboards](#53--generate-competency-based-storyboards-updated)
+    - [5.2 — Enrich Storyboard / Add Competency](#52--enrich-storyboard--add-competency-updated)
+    - [5.3 — Competency-Based Storyboard View](#53--competency-based-storyboard-view-updated)
     - [5.4 — Download Storyboards](#54--download-storyboards-updated)
   - [Epic 6: AI FAQ Assistant](#epic-6-ai-faq-assistant)
-    - [6.1 — Access FAQ Bot](#61--access-faq-bot-new)
+    - [6.1 — Access FAQ Bot — Avatar, Chat Shell, Root Menu](#61--access-faq-bot--avatar-chat-shell-root-menu-new)
     - [6.2 — Storyboard Info](#62--storyboard-info-new)
     - [6.3 — Mock Interview Info](#63--mock-interview-info-new)
     - [6.4 — What's Next in My Roadmap](#64--whats-next-in-my-roadmap-new)
@@ -250,18 +256,21 @@ In addition:
     - [6.7 — Contact Support](#67--contact-support-new)
     - [6.8 — Usage & Billing](#68--usage--billing-new)
   - [Epic 7: Mock Interview Module](#epic-7-mock-interview-module)
-  - [Epic 8: Payments & Subscription Management](#epic-8-payments--subscription-management)
-    - [8.1 — Manage Subscription (B2C)](#81--manage-subscription-b2c-updated)
-    - [8.2 — Purchase Add-Ons (B2C)](#82--purchase-add-ons-b2c-new)
-  - [Epic 9: Profile & Account Management](#epic-9-profile--account-management)
-    - [9.1 — View & Edit My Profile](#91--view--edit-my-profile-updated)
-    - [9.2 — Reset Password](#92--reset-password)
-    - [9.3 — Revoke Consent / Delete Account](#93--revoke-consent--delete-account)
-    - [9.4 — Contact Support](#94--contact-support)
-    - [9.5 — View Audit Logs](#95--view-audit-logs)
-  - [Epic 10: Notifications Module](#epic-10-notifications-module)
-    - [10.1 — Receive Notifications](#101--receive-notifications)
-    - [10.2 — Receive Terms & Policy Updates](#102--receive-terms--policy-updates)
+  - [Epic 8: Analytics Report & AI Coach](#epic-8-analytics-report--ai-coach)
+  - [Epic 9: Payments & Subscription Management](#epic-9-payments--subscription-management)
+    - [9.1 — Manage Subscription — Catalog, Subscribe, Switch, Cancel](#91--manage-subscription--catalog-subscribe-switch-cancel-updated)
+    - [9.2 — Upgrade Plan CTA Touchpoints](#92--upgrade-plan-cta-touchpoints-new)
+    - [9.3 — Purchase Add-Ons](#93--purchase-add-ons-new)
+    - [9.4 — Billing — Payment Methods & Invoices](#94--billing--payment-methods--invoices-re-scoped)
+  - [Epic 10: Profile & Account Management](#epic-10-profile--account-management)
+    - [10.1 — View & Edit My Profile](#101--view--edit-my-profile-updated)
+    - [10.2 — Reset Password](#102--reset-password)
+    - [10.3 — Revoke Consent / Delete Account](#103--revoke-consent--delete-account)
+    - [10.4 — Contact Support](#104--contact-support)
+    - [10.5 — View Audit Logs](#105--view-audit-logs)
+  - [Epic 11: Notifications Module](#epic-11-notifications-module)
+    - [11.1 — Receive Notifications](#111--receive-notifications)
+    - [11.2 — Receive Terms & Policy Updates](#112--receive-terms--policy-updates)
 
 - [Appendix A — Traceability Matrix](#appendix-a--traceability-matrix)
 - [Appendix B — Open Points](#appendix-b--open-points)
@@ -1924,7 +1933,7 @@ The Super Admin should be able to onboard a Partner through a guided multi-step 
 
 Global rate configuration, bundle catalogue management, and discount codes. Bundles defined here drive the subscription options available to B2B Admins and B2C Candidates.
 
-### 7.1 — Set Price — Global Rate Configuration `NEW`
+### 7.1 — Set Price — Global & Add-On Rate Configuration `NEW`
 
 #### Requirement Statement
 
@@ -2982,7 +2991,7 @@ Partner
 
 ## Epic 11: Profile Management
 
-### 11.1 — View & Edit My Profile Details
+### 11.1 — View & Edit My Profile
 
 #### Requirement Statement
 
@@ -3148,7 +3157,7 @@ Universities, institutions, or training organizations using ProofDive for candid
 
 ## Epic 1: Login Module
 
-### 1.1 — Login with Email & Password
+### 1.1 — Account Activation & Login with Email & Password
 
 #### Requirement Statement
 
@@ -3493,7 +3502,7 @@ Universities, institutions, or training organizations using ProofDive for candid
 - “Unable to apply filters at the moment.”
 
 
-### 3.2 — Add New User / Candidate
+### 3.2 — Add New User / Candidate — CSV & Manual Invite
 
 #### Requirement Statement
 
@@ -3579,7 +3588,7 @@ Universities, institutions, or training organizations using ProofDive for candid
 
 Supersedes the original generic *Manage Billing & Subscription* story. Subscription is now driven by the Bundle catalogue and seat-count model defined by the Super Admin in Super Admin Epic 7.
 
-### 4.1 — Manage Subscription `UPDATED`
+### 4.1 — Manage Subscription `CONFLICT`
 
 #### Requirement Statement
 
@@ -3638,7 +3647,75 @@ Supersedes the original generic *Manage Billing & Subscription* story. Subscript
 - Subscription Overview should load within an acceptable response time.
 
 
-### 4.2 — Purchase Add-Ons — Org-wide Usage Top-Up `NEW`
+### 4.2 — Billing — Payment Methods & Invoices `RE-SCOPED`
+
+> **Re-scoped.** This story is retained for payment methods and invoice history only. Its original *Subscription Overview* section is now covered by 4.1, and *Purchase Module Add-Ons* by 4.3.
+
+#### Requirement Statement
+
+> _As a B2B Admin user, I want to manage my payment methods and view my invoice and payment history, so that I can keep billing details current and reconcile what my organization has been charged._
+
+#### Story Details
+
+- The B2B Admin should be able to access a dedicated Billing & Subscription section.
+- The module should be integrated with Stripe for payment management.
+- **Payment Method Management**
+- The B2B Admin should be able to:
+  - View saved payment method/card details
+  - Add a new card
+  - Remove an existing card
+  - Set/update default payment method
+- **Invoice & Payment History**
+  - The B2B Admin should be able to:
+    - View the list of invoices/payments made
+    - View invoice details:
+      - Invoice Number
+      - Payment Date
+      - Amount
+      - Payment Status
+    - Download invoices/receipts
+- **Filters**
+  - The B2B Admin should be able to filter invoices by:
+  - Date Range
+
+#### Acceptance Criteria
+
+- B2B Admin can access the Billing & Subscription section successfully.
+- Stripe-integrated payment methods display correctly.
+- B2B Admin can add a new card successfully.
+- B2B Admin can remove an existing card successfully.
+- Invoice/payment history displays correctly.
+- Date filters update invoice listing accordingly.
+- B2B Admin can download invoices successfully.
+
+#### Alternate Scenarios
+
+- Invalid card details entered.
+- Stripe payment method update fails.
+- No invoices available for selected date range.
+- Invoice download temporarily unavailable.
+- Payment fails during checkout.
+
+#### Non-functional Requirements
+
+- Payment information must be securely handled via Stripe.
+- Sensitive card information should not be stored directly in the platform.
+- Billing data should load within acceptable response time.
+- Invoice history should support scalable retrieval and filtering.
+- Subscription allocations should update immediately after successful payment.
+
+#### Validation Rules / Errors
+
+- “Please enter valid card details.”
+- “Please enter a valid quantity.”
+- “Unable to add payment method at the moment.”
+- “Unable to process payment at the moment.”
+- “No invoices found for selected date range.”
+- “Invoice download failed. Please try again.”
+- “Unable to update subscription allocation. Please contact support.”
+
+
+### 4.3 — Purchase Add-Ons — Org-wide Usage Top-Up `NEW`
 
 #### Requirement Statement
 
@@ -4143,7 +4220,7 @@ External partners, influencers, trainers, universities, or affiliates responsibl
 
 ## Epic 1: Login Module
 
-### 1.1 — Login with Email & Password
+### 1.1 — Account Activation & Login with Email & Password
 
 #### Requirement Statement
 
@@ -4270,7 +4347,7 @@ External partners, influencers, trainers, universities, or affiliates responsibl
 
 ## Epic 2: Dashboard & Analytics
 
-### 2.1 — Partner Dashboard & Analytics
+### 2.1 — Partner Dashboard & Analytics — Signups, Earnings, Referral Code, Conversion Funnel
 
 #### Requirement Statement
 
@@ -4643,7 +4720,7 @@ Partner-facing view of earnings, invoices and withdrawals. Mirrors the Super Adm
 - “Password and Confirm Password do not match.”
 
 
-### 4.3 — Manage Billing & Subscription `NEEDS REVIEW`
+### 4.3 — Manage Billing & Subscription
 
 #### Requirement Statement
 
@@ -4969,7 +5046,7 @@ Hiring organizations and recruiters leveraging ProofDive to create AI-powered in
 
 ## Epic 1: Login Module
 
-### 1.1 — Login with Email & Password
+### 1.1 — Account Activation & Login with Email & Password
 
 #### Requirement Statement
 
@@ -5513,7 +5590,7 @@ Hiring organizations and recruiters leveraging ProofDive to create AI-powered in
 - “Password and Confirm Password do not match.”
 
 
-### 4.3 — Manage Billing & Subscription `NEEDS REVIEW`
+### 4.3 — Manage Billing & Subscription `CONFLICT`
 
 #### Requirement Statement
 
@@ -6671,7 +6748,7 @@ The platform shall allow existing users to initiate the onboarding journey again
 - Storyboard generation should complete within acceptable response times.
 
 
-### 5.2 — Enrich Existing Storyboard & Generate New Version `UPDATED`
+### 5.2 — Enrich Storyboard / Add Competency `UPDATED`
 
 #### Requirement Statement
 
@@ -6730,7 +6807,7 @@ The platform shall allow existing users to initiate the onboarding journey again
 - Newly generated CAR examples should complete within acceptable response times.
 
 
-### 5.3 — Generate Competency-Based Storyboards `UPDATED`
+### 5.3 — Competency-Based Storyboard View `UPDATED`
 
 #### Requirement Statement
 
@@ -6876,7 +6953,7 @@ The platform shall allow existing users to initiate the onboarding journey again
 
 Replaces the placeholder AI FAQ / Training Coach epic in the base document with fully specified stories.
 
-### 6.1 — Access FAQ Bot `NEW`
+### 6.1 — Access FAQ Bot — Avatar, Chat Shell, Root Menu `NEW`
 
 #### Requirement Statement
 
@@ -7309,11 +7386,28 @@ Replaces the placeholder AI FAQ / Training Coach epic in the base document with 
 - **7.5 — Receive AI Feedback & Recommendations**
 - **7.6 — Retry Mock Interviews**
 
-## Epic 8: Payments & Subscription Management
+## Epic 8: Analytics Report & AI Coach
 
-Supersedes the original *Manage Billing & Subscription (B2C)* story. Subscription is now driven by the Bundle catalogue defined by the Super Admin in Super Admin Epic 7.
+> **Status: not yet specified.** This module appears in the feature readiness tracker
+> with no source story and no written specification. It needs to be scoped and written before
+> it can be estimated.
 
-### 8.1 — Manage Subscription (B2C) `UPDATED`
+Known context from elsewhere in this document:
+
+- The Candidate Dashboard (3.1) surfaces an **Overall Interview Readiness Score** and a
+  pillar-wise breakdown, and recommends improvement areas based on the weakest pillars.
+- The AI FAQ Assistant (6.5) offers a **View Latest Report** answer that navigates the
+  Candidate to their latest readiness report.
+- Mock Interview (Epic 7) is expected to produce a score across competencies plus feedback.
+
+Whoever writes this epic will need to confirm whether the "report" referenced by 3.1 and 6.5
+is this module, or a separate artefact.
+
+## Epic 9: Payments & Subscription Management
+
+Plan selection is driven by the Bundle catalogue defined by the Super Admin in Super Admin Epic 7. Payment methods and invoice history remain in 9.4, retained from the original billing story.
+
+### 9.1 — Manage Subscription — Catalog, Subscribe, Switch, Cancel `UPDATED`
 
 #### Requirement Statement
 
@@ -7420,7 +7514,34 @@ Supersedes the original *Manage Billing & Subscription (B2C)* story. Subscriptio
 - Subscribe, switch, and cancellation actions should be logged for audit purposes.
 
 
-### 8.2 — Purchase Add-Ons (B2C) `NEW`
+### 9.2 — Upgrade Plan CTA Touchpoints `NEW`
+
+> **Status: outline only.** Added to the feature readiness tracker as *PAY 3.2*.
+> The four touchpoints below are the agreed scope; no story details, acceptance criteria
+> or validation rules have been written yet.
+
+#### Requirement Statement
+
+> _As a Candidate on the Free plan or approaching a usage limit, I want to be prompted to
+> upgrade at the moment the limit becomes relevant, so that I can continue without hunting
+> for the subscription page._
+
+#### Scope — Touchpoints to be specified
+
+- **Upgrade modal** — the shared modal presented when an upgrade is triggered
+- **Usage limit prompts** — shown at the point a Storyboard, Mock Interview or Masterclass
+  allocation is exhausted
+- **Dashboard widget** — a persistent upgrade entry point on the Candidate dashboard
+- **One-time nudge** — a single non-repeating prompt, trigger and dismissal rules to be defined
+
+#### Open Questions
+
+- What triggers each touchpoint, and can more than one fire at once?
+- Does the one-time nudge reset on plan change, or never repeat?
+- Do all four route into the Bundle Catalog (9.1), or straight to Purchase Add-Ons (9.3)?
+
+
+### 9.3 — Purchase Add-Ons `NEW`
 
 #### Requirement Statement
 
@@ -7523,11 +7644,74 @@ Supersedes the original *Manage Billing & Subscription (B2C)* story. Subscriptio
 - Add-on purchases should be logged for audit purposes.
 
 
+### 9.4 — Billing — Payment Methods & Invoices `RE-SCOPED`
+
+> **Re-scoped.** This story is retained for payment methods and invoice history only. Its original *Purchase Additional Interviews* section is now covered by 9.3, and plan selection by 9.1.
+
+#### Requirement Statement
+
+> _As a Candidate user, I want to manage my payment methods and view my invoice and payment history, so that I can keep my billing details current and track what I have been charged._
+
+#### Story Details
+
+- **Payment Method Management**
+  - The Candidate should be able to:
+    - View saved payment method/card details
+    - Add a new card
+    - Remove an existing card
+    - Set/update default payment method
+- **Invoice & Payment History**
+  - The Candidate should be able to:
+    - View the list of invoices/payments made
+    - View invoice details:
+      - Invoice Number
+      - Payment Date
+      - Amount
+      - Payment Status
+      - Download invoices/receipts
+- **Filters**
+  - The Candidate should be able to filter invoices by:
+    - Date Range
+
+#### Acceptance Criteria
+
+- The Candidate can access the Billing & Subscription section successfully.
+- Stripe-integrated payment methods display correctly.
+- Candidates can add/remove/update payment methods successfully.
+- Invoice/payment history displays correctly.
+- Date filters update the invoice listing accordingly.
+- The Candidate can download invoices successfully.
+
+#### Alternate Scenarios
+
+- Invalid card details entered.
+- Stripe payment fails.
+- No invoices available for the selected date range.
+- Invoice download temporarily unavailable.
+
+#### Non-functional Requirements
+
+- Payment information must be securely handled via Stripe.
+- Sensitive card information should not be stored directly in the platform.
+- Billing data should load within an acceptable response time.
+- Invoice history should support scalable retrieval and filtering.
+- Dynamic pricing calculations should reflect configured pricing accurately.
+
+#### Validation Rules / Errors
+
+- “Please enter valid card details.”
+- “Please enter a valid number of interviews.”
+- “Unable to process payment at the moment.”
+- “Unable to add payment method at the moment.”
+- “No invoices found for selected date range.”
+- “Invoice download failed. Please try again.”
+
+
 ---
 
-## Epic 9: Profile & Account Management
+## Epic 10: Profile & Account Management
 
-### 9.1 — View & Edit My Profile `UPDATED`
+### 10.1 — View & Edit My Profile `UPDATED`
 
 #### Requirement Statement
 
@@ -7628,7 +7812,7 @@ Supersedes the original *Manage Billing & Subscription (B2C)* story. Subscriptio
 - Validation checks should occur before saving updated information.
 
 
-### 9.2 — Reset Password
+### 10.2 — Reset Password
 
 #### Requirement Statement
 
@@ -7684,7 +7868,7 @@ Supersedes the original *Manage Billing & Subscription (B2C)* story. Subscriptio
 - “Password and Confirm Password do not match.”
 
 
-### 9.3 — Revoke Consent / Delete Account
+### 10.3 — Revoke Consent / Delete Account
 
 #### Requirement Statement
 
@@ -7734,7 +7918,7 @@ Supersedes the original *Manage Billing & Subscription (B2C)* story. Subscriptio
 - “Your account is already scheduled for deletion.”
 
 
-### 9.4 — Contact Support
+### 10.4 — Contact Support
 
 #### Requirement Statement
 
@@ -7782,7 +7966,7 @@ Supersedes the original *Manage Billing & Subscription (B2C)* story. Subscriptio
 - “Your support request has been submitted successfully.”
 
 
-### 9.5 — View Audit Logs
+### 10.5 — View Audit Logs
 
 #### Requirement Statement
 
@@ -7844,9 +8028,9 @@ Supersedes the original *Manage Billing & Subscription (B2C)* story. Subscriptio
 
 ---
 
-## Epic 10: Notifications Module
+## Epic 11: Notifications Module
 
-### 10.1 — Receive Notifications
+### 11.1 — Receive Notifications
 
 #### Requirement Statement
 
@@ -7902,7 +8086,7 @@ Supersedes the original *Manage Billing & Subscription (B2C)* story. Subscriptio
 - “No notifications available.”
 
 
-### 10.2 — Receive Terms & Policy Updates
+### 11.2 — Receive Terms & Policy Updates
 
 #### Requirement Statement
 
@@ -7974,7 +8158,7 @@ Maps every story in this document back to its origin.
 | Super Admin | 6.1 | View & Edit Existing Competency Listings | Base doc — Base 6.1 | Carried forward |
 | Super Admin | 6.2 | Update Competency as a New Version | Base doc — Base 6.2 | Carried forward |
 | Super Admin | 6.3 | Deactivate / Reactivate Competency | Base doc — Base 6.3 | Carried forward |
-| Super Admin | 7.1 | Set Price — Global Rate Configuration | Payments/CR doc — Payments 1.1 | New |
+| Super Admin | 7.1 | Set Price — Global & Add-On Rate Configuration | Payments/CR doc — Payments 1.1 | New |
 | Super Admin | 7.2 | Bundle Listing — Payments Module Overview | Payments/CR doc — Payments 1.2 | New |
 | Super Admin | 7.3 | Create New Bundle — Bundle Configuration | Payments/CR doc — Payments 1.3 | New |
 | Super Admin | 7.4 | View & Edit Bundle — Bundle Detail & Configuration Management | Payments/CR doc — Payments 1.4 | New |
@@ -7986,16 +8170,17 @@ Maps every story in this document back to its origin.
 | Super Admin | 8.2 | View Commission Detail | Payments/CR doc — Commission 1.2 | New |
 | Super Admin | 9.1 | Manage Support Requests | Base doc — Base 7.1 | Carried forward |
 | Super Admin | 10.1 | Receive Notifications | Base doc — Base 8.1 | Carried forward |
-| Super Admin | 11.1 | View & Edit My Profile Details | Base doc — Base 9.1 | Carried forward |
+| Super Admin | 11.1 | View & Edit My Profile | Base doc — Base 9.1 | Carried forward |
 | Super Admin | 11.2 | Reset Password | Base doc — Base 9.2 | Carried forward |
 | Super Admin | 11.3 | View Audit Logs | Base doc — Base 9.3 | Carried forward |
-| Org / Tenant Admin | 1.1 | Login with Email & Password | Base doc — Base 1.1 | Carried forward |
+| Org / Tenant Admin | 1.1 | Account Activation & Login with Email & Password | Base doc — Base 1.1 | Carried forward |
 | Org / Tenant Admin | 1.2 | Forgot Password | Base doc — Base 1.2 | Carried forward |
 | Org / Tenant Admin | 2.1 | B2B Admin Dashboard & Analytics | Base doc — Base 2.1 | Carried forward |
 | Org / Tenant Admin | 3.1 | View User / Candidate Listings | Base doc — Base 3.1 | Carried forward |
-| Org / Tenant Admin | 3.2 | Add New User / Candidate | Base doc — Base 3.2 | Carried forward |
-| Org / Tenant Admin | 4.1 | Manage Subscription | Payments/CR doc — Payments 2.1 — supersedes Base 4.3 | Updated flow applied |
-| Org / Tenant Admin | 4.2 | Purchase Add-Ons — Org-wide Usage Top-Up | Payments/CR doc — Payments 2.2 | New |
+| Org / Tenant Admin | 3.2 | Add New User / Candidate — CSV & Manual Invite | Base doc — Base 3.2 | Carried forward |
+| Org / Tenant Admin | 4.1 | Manage Subscription | Payments/CR doc — Payments 2.1 | Conflict — see Appendix B |
+| Org / Tenant Admin | 4.2 | Billing — Payment Methods & Invoices | Base doc — Base 4.3 — re-scoped | Retained, re-scoped |
+| Org / Tenant Admin | 4.3 | Purchase Add-Ons — Org-wide Usage Top-Up | Payments/CR doc — Payments 2.2 | New |
 | Org / Tenant Admin | 5.1 | View & Edit My Profile Details | Base doc — Base 4.1 (labelled 3.1 in source) | Carried forward |
 | Org / Tenant Admin | 5.2 | Reset Password | Base doc — Base 4.2 | Carried forward |
 | Org / Tenant Admin | 5.3 | Revoke Consent / Delete Account | Base doc — Base 4.4 | Carried forward |
@@ -8003,27 +8188,27 @@ Maps every story in this document back to its origin.
 | Org / Tenant Admin | 5.5 | View Audit Logs | Base doc — Base 4.6 | Carried forward |
 | Org / Tenant Admin | 6.1 | Receive Notifications | Base doc — Base 5.1 | Carried forward |
 | Org / Tenant Admin | 6.2 | Receive Terms & Policy Updates | Base doc — Base 5.2 | Carried forward |
-| Partner / Affiliate | 1.1 | Login with Email & Password | Base doc — Base 1.1 | Carried forward |
+| Partner / Affiliate | 1.1 | Account Activation & Login with Email & Password | Base doc — Base 1.1 | Carried forward |
 | Partner / Affiliate | 1.2 | Forgot Password | Base doc — Base 1.2 | Carried forward |
-| Partner / Affiliate | 2.1 | Partner Dashboard & Analytics | Base doc — Base 2.1 | Carried forward |
+| Partner / Affiliate | 2.1 | Partner Dashboard & Analytics — Signups, Earnings, Referral Code, Conversion Funnel | Base doc — Base 2.1 | Carried forward |
 | Partner / Affiliate | 3.1 | View Commissions & Payouts | Payments/CR doc — Commission 3.1 | New |
 | Partner / Affiliate | 3.2 | Withdraw Funds | Payments/CR doc — Commission 3.2 | New |
 | Partner / Affiliate | 4.1 | View & Edit My Profile Details | Base doc — Base 4.1 | Carried forward |
 | Partner / Affiliate | 4.2 | Reset Password | Base doc — Base 4.2 | Carried forward |
-| Partner / Affiliate | 4.3 | Manage Billing & Subscription | Base doc — Base 4.3 | Needs review |
+| Partner / Affiliate | 4.3 | Manage Billing & Subscription | Base doc — Base 4.3 | Carried forward |
 | Partner / Affiliate | 4.4 | Revoke Consent / Delete Account | Base doc — Base 4.4 | Carried forward |
 | Partner / Affiliate | 4.5 | Contact Support | Base doc — Base 4.5 | Carried forward |
 | Partner / Affiliate | 4.6 | View Audit Logs | Base doc — Base 4.6 | Carried forward |
 | Partner / Affiliate | 5.1 | Receive Notifications | Base doc — Base 5.1 | Carried forward |
 | Partner / Affiliate | 5.2 | Receive Terms & Policy Updates | Base doc — Base 5.2 | Carried forward |
-| Employer | 1.1 | Login with Email & Password | Base doc — Base 1.1 | Carried forward |
+| Employer | 1.1 | Account Activation & Login with Email & Password | Base doc — Base 1.1 | Carried forward |
 | Employer | 1.2 | Forgot Password | Base doc — Base 1.2 | Carried forward |
 | Employer | 2.1 | Employer Dashboard & Analytics | Base doc — Base 2.1 | Carried forward |
 | Employer | 3.1 | View JD Listings & Candidate Reports | Base doc — Base 3.1 | Carried forward |
 | Employer | 3.2 | Add New JD / Generate Interview Link | Base doc — Base 3.2 | Carried forward |
 | Employer | 4.1 | View & Edit Profile Details | Base doc — Base 4.1 | Carried forward |
 | Employer | 4.2 | Reset Password | Base doc — Base 4.2 | Carried forward |
-| Employer | 4.3 | Manage Billing & Subscription | Base doc — Base 4.3 | Needs review |
+| Employer | 4.3 | Manage Billing & Subscription | Base doc — Base 4.3 — outside bundle model | Conflict — see Appendix B |
 | Employer | 4.4 | Revoke Consent / Delete Account | Base doc — Base 4.4 | Carried forward |
 | Employer | 4.5 | Contact Support | Base doc — Base 4.5 | Carried forward |
 | Employer | 4.6 | View Audit Logs | Base doc — Base 4.6 | Carried forward |
@@ -8039,10 +8224,10 @@ Maps every story in this document back to its origin.
 | Candidate | 3.1 | Candidate Dashboard & Readiness Progress | Payments/CR doc — CR — supersedes Base 3.1 | Updated flow applied |
 | Candidate | 4.1 | Complete Training Course | Base doc — Base 5.1 | Carried forward |
 | Candidate | 5.1 | Create New Storyboard | Payments/CR doc — CR — supersedes Base 6.1 | Updated flow applied |
-| Candidate | 5.2 | Enrich Existing Storyboard & Generate New Version | Payments/CR doc — CR — supersedes Base 6.2 | Updated flow applied |
-| Candidate | 5.3 | Generate Competency-Based Storyboards | Payments/CR doc — CR — supersedes Base 6.3 | Updated flow applied |
+| Candidate | 5.2 | Enrich Storyboard / Add Competency | Payments/CR doc — CR — supersedes Base 6.2 | Updated flow applied |
+| Candidate | 5.3 | Competency-Based Storyboard View | Payments/CR doc — CR — supersedes Base 6.3 | Updated flow applied |
 | Candidate | 5.4 | Download Storyboards | Payments/CR doc — CR — supersedes Base 6.4 | Updated flow applied |
-| Candidate | 6.1 | Access FAQ Bot | Payments/CR doc — FAQ 5.1 | New |
+| Candidate | 6.1 | Access FAQ Bot — Avatar, Chat Shell, Root Menu | Payments/CR doc — FAQ 5.1 | New |
 | Candidate | 6.2 | Storyboard Info | Payments/CR doc — FAQ 5.2 | New |
 | Candidate | 6.3 | Mock Interview Info | Payments/CR doc — FAQ 5.3 | New |
 | Candidate | 6.4 | What's Next in My Roadmap | Payments/CR doc — FAQ 5.4 | New |
@@ -8051,35 +8236,64 @@ Maps every story in this document back to its origin.
 | Candidate | 6.7 | Contact Support | Payments/CR doc — FAQ 5.7 | New |
 | Candidate | 6.8 | Usage & Billing | Payments/CR doc — FAQ 5.8 | New |
 | Candidate | 7.1–7.6 | Mock Interview Module | Base — placeholder | Outline only |
-| Candidate | 8.1 | Manage Subscription (B2C) | Payments/CR doc — Payments 3.1 — supersedes Base 8.3 | Updated flow applied |
-| Candidate | 8.2 | Purchase Add-Ons (B2C) | Payments/CR doc — Payments 3.2 | New |
-| Candidate | 9.1 | View & Edit My Profile | Payments/CR doc — Profile 4.1 — supersedes Base 8.1 stub | Updated flow applied |
-| Candidate | 9.2 | Reset Password | Base doc — Base 8.2 | Carried forward |
-| Candidate | 9.3 | Revoke Consent / Delete Account | Base doc — Base 8.4 | Carried forward |
-| Candidate | 9.4 | Contact Support | Base doc — Base 8.5 | Carried forward |
-| Candidate | 9.5 | View Audit Logs | Base doc — Base 8.6 | Carried forward |
-| Candidate | 10.1 | Receive Notifications | Base doc — Base 9.1 | Carried forward |
-| Candidate | 10.2 | Receive Terms & Policy Updates | Base doc — Base 9.2 | Carried forward |
+| Candidate | 8 | Analytics Report & AI Coach | Readiness tracker v3 — no source story | No spec |
+| Candidate | 9.1 | Manage Subscription — Catalog, Subscribe, Switch, Cancel | Payments/CR doc — Payments 3.1 | Updated flow applied |
+| Candidate | 9.2 | Upgrade Plan CTA Touchpoints | Readiness tracker v3 — Payments 3.2 — new in readiness tracker v3 | New |
+| Candidate | 9.3 | Purchase Add-Ons | Payments/CR doc — Payments 3.3 (was 3.2) | New |
+| Candidate | 9.4 | Billing — Payment Methods & Invoices | Base doc — Base 8.3 — re-scoped | Retained, re-scoped |
+| Candidate | 10.1 | View & Edit My Profile | Payments/CR doc — Profile 4.1 — supersedes Base 8.1 stub | Updated flow applied |
+| Candidate | 10.2 | Reset Password | Base doc — Base 8.2 | Carried forward |
+| Candidate | 10.3 | Revoke Consent / Delete Account | Base doc — Base 8.4 | Carried forward |
+| Candidate | 10.4 | Contact Support | Base doc — Base 8.5 | Carried forward |
+| Candidate | 10.5 | View Audit Logs | Base doc — Base 8.6 | Carried forward |
+| Candidate | 11.1 | Receive Notifications | Base doc — Base 9.1 | Carried forward |
+| Candidate | 11.2 | Receive Terms & Policy Updates | Base doc — Base 9.2 | Carried forward |
 
 ---
 
 # Appendix B — Open Points
 
-Items surfaced while consolidating that need a decision before build:
+Items needing a decision before build. Items 1–3 are new in v2.1.
 
-1. **Mock Interview Module (Candidate Epic 7)** — the only epic still unspecified. Stories
-   7.1–7.6 have agreed titles but no story details, acceptance criteria or validation rules.
-2. **Partner and Employer billing (Partner 4.3, Employer 4.3)** — both still describe the
-   original generic Stripe billing flow. The Org Admin and Candidate equivalents were replaced
-   by the Bundle-driven model (Super Admin Epic 7). Confirm whether Partners and Employers
-   subscribe to Bundles, and if so replace these two stories to match.
-3. **Add New Role for Existing User (Candidate 2.2)** — captured as a single descriptive
-   paragraph only; needs full specification, particularly how a second role interacts with the
-   Core Four competency confirmation and the Competency Bank.
-4. **Partner Management story numbering** — the base document had no Partner Management story
-   3.2; stories have been renumbered sequentially here. Confirm nothing was omitted.
-5. **Candidate Sign Up (1.2) vs Social Sign Up (1.3)** — confirm how the two account creation
-   paths converge on the onboarding journey, and how a candidate who signed up with email later
-   linking a social account is handled.
-6. **Design links** — only Super Admin and Candidate had live prototype links in the source;
-   Org Admin, Partner and Employer links are still placeholders.
+1. **Upgrade Plan CTA Touchpoints (Candidate 9.2)** — landed in the readiness tracker as
+   PAY 3.2 with four touchpoints named but no specification written. Needs story details,
+   trigger rules and acceptance criteria before it can be estimated.
+2. **Analytics Report & AI Coach (Candidate Epic 8)** — appears in the readiness tracker with
+   no source story at all. The Dashboard (3.1) and AI FAQ (6.5) both reference a "latest
+   report"; confirm whether that is this module or a separate artefact, then scope it.
+3. **Do the new Purchase Add-On stories cover everything the old ones did?** The original
+   billing stories included per-unit add-on pricing calculations that do not appear in the new
+   Bundle-driven add-on stories (4.3 and 9.3). Confirm nothing was lost in the change of model.
+4. **Mock Interview Module (Candidate Epic 7)** — still unspecified. Stories 7.1–7.6 have
+   agreed titles but no story details, acceptance criteria or validation rules. The AI FAQ
+   (6.3) already makes promises about it ("about 30 minutes", "retake anytime").
+5. **Org Admin Manage Subscription (4.1)** — flagged as a conflict in the readiness tracker.
+   Confirm what it conflicts with: most likely the overlap between seat-based B2B subscription
+   and the retained billing story (4.2).
+6. **Employer billing (Employer 4.3)** — flagged "outside bundle model". The identical Partner
+   story (Partner 4.3) is *not* flagged. Confirm whether that asymmetry is deliberate — do
+   Partners subscribe to Bundles, or only earn commission?
+7. **Storyboard rules contradict each other** — 5.2 says the original four CAR examples
+   "remain unchanged" when a competency is added; 5.3 says unlocked sections "continue to
+   evolve". These cannot both hold.
+8. **Storyboard version limit** — 5.3 fixes it at three versions; Create Bundle (7.3) lets
+   Super Admin set Storyboard quantity with "no upper limit". Confirm which governs.
+9. **AI FAQ describes the superseded storyboard flow** — Epic 6 is the only place still using
+   "Experience Bank" and still saying CAR means "Cause, Action, Result" where the storyboard
+   stories say "Context, Action, Result". The FAQ answer text needs rewriting.
+10. **Competing terminology for the same concept** — Power of Thinking / Action / People /
+    Mastery is called *Success Drivers* in onboarding, *Pillars* on the dashboard, and
+    *Competency Groups* in Super Admin. Pick one.
+11. **Super Admin cannot configure Success Drivers** — onboarding (2.1) requires exactly one
+    competency per Success Driver, but Competency Framework Management has no screen to define
+    them, and no rule for what happens to a confirmed Core Four when a new framework version
+    is published.
+12. **Free plan is never defined** — stories refer to reverting to "Free" and to a one-time
+    free allocation, but no story states what a Free candidate actually gets.
+13. **Social accounts have no password** — social sign-up creates accounts "with no password
+    set", yet Reset Password and Forgot Password still exist. Define the behaviour.
+14. **Add New Role for Existing User (Candidate 2.2)** — one descriptive paragraph only; needs
+    full specification, particularly how a second role interacts with Core Four confirmation
+    and the Competency Bank.
+15. **Design links** — only Super Admin and Candidate had live prototype links in the source;
+    Org Admin, Partner and Employer links are still placeholders.

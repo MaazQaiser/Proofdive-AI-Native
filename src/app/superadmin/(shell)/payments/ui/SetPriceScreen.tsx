@@ -238,7 +238,7 @@ export function SetPriceScreen() {
               <col />
               <col className="w-[96px]" />
             </colgroup>
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Item</TableHead>
                 {PRICE_CELLS.map((cell) => (
@@ -281,6 +281,7 @@ export function SetPriceScreen() {
                                     step={0.01}
                                     className="h-9 w-full"
                                     value={value ?? ""}
+                                    placeholder="0.00"
                                     onChange={(e) => onChange(cell.section, key, e.target.value)}
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") {
@@ -299,14 +300,12 @@ export function SetPriceScreen() {
                                 <PriceDisplay value={value} />
                               )}
                             </div>
-                            <div className="mt-0.5 min-h-4">
-                              {editing && error ? (
-                                <p className="text-caption text-destructive">{error}</p>
-                              ) : null}
-                              {!editing && value !== saved ? (
-                                <span className="text-overline text-amber-700">Unsaved</span>
-                              ) : null}
-                            </div>
+                            {editing && error ? (
+                              <p className="mt-0.5 text-caption text-destructive">{error}</p>
+                            ) : null}
+                            {!editing && value !== saved ? (
+                              <span className="mt-0.5 block text-overline text-amber-700">Unsaved</span>
+                            ) : null}
                           </div>
                         </TableCell>
                       );

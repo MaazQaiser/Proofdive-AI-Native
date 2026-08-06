@@ -126,6 +126,7 @@ export function ProfileDetailsSection() {
                   id="profile-org-name"
                   value={form.name}
                   onChange={(e) => updateField("name", e.target.value)}
+                  placeholder="e.g. Acme University"
                   aria-invalid={!!errors.name}
                 />
                 {errors.name && <p className="text-caption text-destructive">{errors.name}</p>}
@@ -158,6 +159,7 @@ export function ProfileDetailsSection() {
                   id="profile-contact-name"
                   value={form.contactName}
                   onChange={(e) => updateField("contactName", e.target.value)}
+                  placeholder="Jane Doe"
                   aria-invalid={!!errors.contactName}
                 />
                 {errors.contactName && <p className="text-caption text-destructive">{errors.contactName}</p>}
@@ -172,6 +174,7 @@ export function ProfileDetailsSection() {
                     value={form.contactCountryCode}
                     onChange={(e) => updateField("contactCountryCode", e.target.value)}
                     className="w-16 shrink-0"
+                    placeholder="+1"
                     aria-label="Country code"
                     aria-invalid={!!errors.contactPhone}
                   />
@@ -179,6 +182,7 @@ export function ProfileDetailsSection() {
                     id="profile-contact-phone"
                     value={form.contactPhone}
                     onChange={(e) => updateField("contactPhone", e.target.value)}
+                    placeholder="5551234567"
                     aria-invalid={!!errors.contactPhone}
                     className="flex-1"
                   />
@@ -195,6 +199,7 @@ export function ProfileDetailsSection() {
                   id="profile-designation"
                   value={form.contactDesignation}
                   onChange={(e) => updateField("contactDesignation", e.target.value)}
+                  placeholder="Head of Talent"
                   aria-invalid={!!errors.contactDesignation}
                 />
                 {errors.contactDesignation && (

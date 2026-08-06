@@ -8,7 +8,6 @@ import {
   Copy,
   MoreHorizontal,
   Search,
-  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -55,8 +54,8 @@ import type {
 } from "@/lib/superAdminCompetencyFrameworks";
 import { useCompetencyFrameworks } from "@/lib/useCompetencyFrameworks";
 
-import { CreateFrameworkCopyDialog } from "./CreateFrameworkCopyDialog";
-import { FrameworkDetailDrawer, FrameworkStatusPill } from "./FrameworkDetailDrawer";
+import { CreateFrameworkCloneDialog } from "./CreateFrameworkCloneDialog";
+import { FrameworkStatusPill } from "./FrameworkStatusPill";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
 
@@ -74,7 +73,7 @@ function formatUpdated(iso: string): string {
 
 export function CompetencyFrameworksListScreen() {
   const router = useRouter();
-  const { frameworks, createCopy, deleteFramework, isNameTaken, hydrated } =
+  const { frameworks, createClone, deleteFramework, isNameTaken, hydrated } =
     useCompetencyFrameworks();
 
   const [search, setSearch] = useState("");
@@ -82,11 +81,8 @@ export function CompetencyFrameworksListScreen() {
   const [typeFilter, setTypeFilter] = useState<"all" | "default" | "custom">("all");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState<number>(ROWS_PER_PAGE_OPTIONS[0]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [copySource, setCopySource] = useState<CompetencyFrameworkVersion | null>(null);
+  const [cloneSource, setCloneSource] = useState<CompetencyFrameworkVersion | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CompetencyFrameworkVersion | null>(null);
-
-  const selectedFramework = frameworks.find((f) => f.id === selectedId) ?? null;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -105,19 +101,18 @@ export function CompetencyFrameworksListScreen() {
   const pageEnd = Math.min(pageStart + rowsPerPage, filtered.length);
   const pageRows = filtered.slice(pageStart, pageEnd);
 
-  function openCopy(framework: CompetencyFrameworkVersion) {
-    setCopySource(framework);
+  function openClone(framework: CompetencyFrameworkVersion) {
+    setCloneSource(framework);
   }
 
-  function handleConfirmCopy(name: string) {
-    if (!copySource) return;
-    const created = createCopy(copySource.id, name);
+  function handleConfirmClone(name: string) {
+    if (!cloneSource) return;
+    const created = createClone(cloneSource.id, name);
     if (!created) {
-      toast.error("Could not create framework copy.");
+      toast.error("Could not create framework clone.");
       return;
     }
-    setCopySource(null);
-    setSelectedId(null);
+    setCloneSource(null);
     toast.success(`Draft "${created.name}" created.`);
     router.push(`/superadmin/competency-engine/${created.id}/edit`);
   }
@@ -125,9 +120,12 @@ export function CompetencyFrameworksListScreen() {
   function handleConfirmDelete() {
     if (!deleteTarget || deleteTarget.isDefault) return;
     deleteFramework(deleteTarget.id);
-    if (selectedId === deleteTarget.id) setSelectedId(null);
     setDeleteTarget(null);
     toast.success("Framework deleted.");
+  }
+
+  function openDetails(id: string) {
+    router.push(`/superadmin/competency-engine/${id}`);
   }
 
   const defaultFramework = frameworks.find((f) => f.isDefault) ?? frameworks[0] ?? null;
@@ -135,14 +133,14 @@ export function CompetencyFrameworksListScreen() {
   return (
     <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
       <PageHeader>
-        <PageTitle>Competency Frameworks</PageTitle>
+        <PageTitle>Competency Engine</PageTitle>
         <Button
           type="button"
-          onClick={() => defaultFramework && openCopy(defaultFramework)}
+          onClick={() => defaultFramework && openClone(defaultFramework)}
           disabled={!defaultFramework}
         >
           <Copy className="h-4 w-4" />
-          Create copy
+          Create clone
         </Button>
       </PageHeader>
 
@@ -171,7 +169,7 @@ export function CompetencyFrameworksListScreen() {
             <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="all">Types</SelectItem>
             <SelectItem value="default">Default</SelectItem>
             <SelectItem value="custom">Custom</SelectItem>
           </SelectContent>
@@ -187,7 +185,7 @@ export function CompetencyFrameworksListScreen() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="all">Statuses</SelectItem>
             <SelectItem value="published">Published</SelectItem>
             <SelectItem value="draft">Draft</SelectItem>
           </SelectContent>
@@ -205,7 +203,7 @@ export function CompetencyFrameworksListScreen() {
           </p>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Type</TableHead>
@@ -224,7 +222,7 @@ export function CompetencyFrameworksListScreen() {
                     <button
                       type="button"
                       className="text-left font-semibold text-text-primary hover:underline"
-                      onClick={() => setSelectedId(framework.id)}
+                      onClick={() => openDetails(framework.id)}
                     >
                       {framework.name}
                     </button>
@@ -257,11 +255,11 @@ export function CompetencyFrameworksListScreen() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setSelectedId(framework.id)}>
+                        <DropdownMenuItem onClick={() => openDetails(framework.id)}>
                           View details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openCopy(framework)}>
-                          Create copy
+                        <DropdownMenuItem onClick={() => openClone(framework)}>
+                          Create clone
                         </DropdownMenuItem>
                         {!framework.isDefault ? (
                           <>
@@ -279,7 +277,6 @@ export function CompetencyFrameworksListScreen() {
                               className="text-destructive focus:text-destructive"
                               onClick={() => setDeleteTarget(framework)}
                             >
-                              <Trash2 className="h-4 w-4" />
                               Delete
                             </DropdownMenuItem>
                           </>
@@ -367,27 +364,14 @@ export function CompetencyFrameworksListScreen() {
         </div>
       </div>
 
-      <FrameworkDetailDrawer
-        framework={selectedFramework}
-        frameworks={frameworks}
-        onOpenChange={(open) => {
-          if (!open) setSelectedId(null);
-        }}
-        onCreateCopy={(framework) => {
-          setSelectedId(null);
-          openCopy(framework);
-        }}
-        onSelectFramework={(id) => setSelectedId(id)}
-      />
-
-      <CreateFrameworkCopyDialog
-        open={copySource !== null}
-        source={copySource}
+      <CreateFrameworkCloneDialog
+        open={cloneSource !== null}
+        source={cloneSource}
         isNameTaken={isNameTaken}
         onOpenChange={(open) => {
-          if (!open) setCopySource(null);
+          if (!open) setCloneSource(null);
         }}
-        onConfirm={handleConfirmCopy}
+        onConfirm={handleConfirmClone}
       />
 
       <Dialog

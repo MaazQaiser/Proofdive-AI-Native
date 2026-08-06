@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import {
   DISCOUNT_STATUS_LABEL,
   DISCOUNT_TYPE_LABEL,
@@ -45,29 +46,20 @@ import {
   type DiscountType,
 } from "@/lib/superAdminPaymentsData";
 import { useDiscountCodes } from "@/lib/useDiscountCodes";
-import { cn } from "@/lib/utils";
 
 import { PaymentsShell } from "./PaymentsShell";
+import { DiscountDetailDrawer } from "./DiscountDetailDrawer";
 
-function StatusPill({ status }: { status: DiscountStatus }) {
-  const tone =
+function DiscountStatusPill({ status }: { status: DiscountStatus }) {
+  const tone: StatusTone =
     status === "active"
-      ? "border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg"
-      : status === "deactivated"
-        ? "border-border bg-muted text-muted-foreground"
-        : status === "scheduled"
-          ? "border-scoring-yellow/30 bg-scoring-yellow/20 text-scoring-yellow-fg"
-          : "border-scoring-red/25 bg-scoring-red/15 text-scoring-red-fg";
-  return (
-    <span
-      className={cn(
-        "text-overline inline-flex h-6 w-fit items-center rounded-full border px-2 whitespace-nowrap",
-        tone,
-      )}
-    >
-      {DISCOUNT_STATUS_LABEL[status]}
-    </span>
-  );
+      ? "success"
+      : status === "scheduled"
+        ? "warning"
+        : status === "deactivated"
+          ? "neutral"
+          : "danger";
+  return <StatusPill tone={tone}>{DISCOUNT_STATUS_LABEL[status]}</StatusPill>;
 }
 
 function formatValue(type: DiscountType, value: number | null): string {
@@ -82,6 +74,9 @@ export function DiscountListingScreen() {
   const [typeFilter, setTypeFilter] = useState<DiscountType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<DiscountStatus | "all">("all");
   const [confirmDeactivateId, setConfirmDeactivateId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const selectedCode = withStatus.find((c) => c.id === selectedId) ?? null;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -97,13 +92,14 @@ export function DiscountListingScreen() {
   function handleReactivate(id: string) {
     const result = reactivate(id);
     if (!result.ok) {
+      setSelectedId(id);
       toast.error(
         result.reason === "expiry"
-          ? "This code’s expiry date has passed. Extend it on the detail page to reactivate."
+          ? "This code’s expiry date has passed. Use Reactivate in the drawer to extend it."
           : result.reason === "max"
-            ? "This code has reached its redemption limit. Increase the limit on the detail page."
+            ? "This code has reached its redemption limit. Use Reactivate in the drawer to increase it."
             : result.reason === "both"
-              ? "Extend expiry and increase the redemption limit on the detail page."
+              ? "Extend expiry and increase the redemption limit from the drawer to reactivate."
               : "Code not found.",
       );
       return;
@@ -146,7 +142,7 @@ export function DiscountListingScreen() {
             <SelectValue placeholder="Discount Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="all">Types</SelectItem>
             <SelectItem value="percentage">Percentage</SelectItem>
             <SelectItem value="fixed">Fixed Amount</SelectItem>
             <SelectItem value="free">Free Access</SelectItem>
@@ -160,7 +156,7 @@ export function DiscountListingScreen() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">Statuses</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="scheduled">Scheduled</SelectItem>
             <SelectItem value="expired">Expired</SelectItem>
@@ -178,7 +174,7 @@ export function DiscountListingScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Code</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Discount Type</TableHead>
@@ -195,12 +191,13 @@ export function DiscountListingScreen() {
               {filtered.map((code) => (
                 <TableRow key={code.id}>
                   <TableCell className="pl-6">
-                    <Link
-                      href={`/superadmin/payments/discounts/${code.id}`}
+                    <button
+                      type="button"
                       className="font-semibold text-text-primary hover:underline"
+                      onClick={() => setSelectedId(code.id)}
                     >
                       {code.code}
-                    </Link>
+                    </button>
                   </TableCell>
                   <TableCell className="text-caption text-muted-foreground">
                     {DISCOUNT_TYPE_LABEL[code.discountType]}
@@ -221,7 +218,7 @@ export function DiscountListingScreen() {
                     {code.startDate} → {code.expiryDate}
                   </TableCell>
                   <TableCell>
-                    <StatusPill status={code.status} />
+                    <DiscountStatusPill status={code.status} />
                   </TableCell>
                   <TableCell className="pr-6 text-right">
                     <DropdownMenu>
@@ -231,8 +228,8 @@ export function DiscountListingScreen() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/superadmin/payments/discounts/${code.id}`}>View</Link>
+                        <DropdownMenuItem onClick={() => setSelectedId(code.id)}>
+                          View details
                         </DropdownMenuItem>
                         {code.status === "active" || code.status === "scheduled" ? (
                           <DropdownMenuItem onClick={() => setConfirmDeactivateId(code.id)}>
@@ -252,6 +249,14 @@ export function DiscountListingScreen() {
           </table>
         )}
       </div>
+
+      <DiscountDetailDrawer
+        code={selectedCode}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null);
+        }}
+        onRequestDeactivate={(c) => setConfirmDeactivateId(c.id)}
+      />
 
       <Dialog
           open={Boolean(confirmDeactivateId)}

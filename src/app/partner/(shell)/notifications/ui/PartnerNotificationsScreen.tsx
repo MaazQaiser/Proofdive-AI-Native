@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CheckCircle2, FileText, UserPlus } from "lucide-react";
+import { CheckCircle2, FileText, ScrollText, UserPlus } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ const timestampFormatter = new Intl.DateTimeFormat("en-US", {
 function iconFor(kind: PartnerNotification["kind"]) {
   if (kind === "invoice") return FileText;
   if (kind === "referral") return UserPlus;
-  return Bell;
+  return ScrollText;
 }
 
 export function PartnerNotificationsScreen() {
@@ -75,10 +75,33 @@ export function PartnerNotificationsScreen() {
                       <Icon className="h-4 w-4" />
                     </span>
                     <div className="flex flex-col gap-0.5">
-                      <p className="text-body-sm text-foreground">{notification.message}</p>
-                      <p className="text-caption text-muted-foreground">
-                        {timestampFormatter.format(new Date(notification.timestamp))}
-                      </p>
+                      {isPolicy ? (
+                        <>
+                          <p className="text-body-sm font-medium text-foreground">
+                            {notification.title ?? notification.message}
+                          </p>
+                          {notification.effectiveDate ? (
+                            <p className="text-caption text-muted-foreground">
+                              Effective {notification.effectiveDate}
+                            </p>
+                          ) : null}
+                          {notification.summary ? (
+                            <p className="mt-1 text-caption text-muted-foreground">
+                              {notification.summary}
+                            </p>
+                          ) : null}
+                          <p className="mt-1 text-caption text-muted-foreground">
+                            {timestampFormatter.format(new Date(notification.timestamp))}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-body-sm text-foreground">{notification.message}</p>
+                          <p className="text-caption text-muted-foreground">
+                            {timestampFormatter.format(new Date(notification.timestamp))}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                   {isPolicy ? (

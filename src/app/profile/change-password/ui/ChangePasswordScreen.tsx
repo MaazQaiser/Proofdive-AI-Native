@@ -75,6 +75,7 @@ export function ChangePasswordScreen() {
                     autoComplete="current-password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
                     aria-invalid={!!errors.current}
                   />
                   {errors.current && <p className="text-caption text-destructive">{errors.current}</p>}
@@ -87,6 +88,7 @@ export function ChangePasswordScreen() {
                     autoComplete="new-password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
                     aria-invalid={!!errors.next}
                   />
                   {errors.next && <p className="text-caption text-destructive">{errors.next}</p>}
@@ -99,6 +101,7 @@ export function ChangePasswordScreen() {
                     autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter new password"
                     aria-invalid={!!errors.confirm}
                   />
                   {errors.confirm && <p className="text-caption text-destructive">{errors.confirm}</p>}

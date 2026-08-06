@@ -351,6 +351,7 @@ export function CandidatePricingScreen() {
                 const priced = priceForCycle(bundle, effectiveCycle);
                 const isCurrent = bundle.id === subscription.bundleId;
                 const isFeatured = bundle.id === featuredId;
+                const isCareerStarter = bundle.id === "bundle_career_starter";
                 const savings = yearlySavingsPercent(bundle);
                 const features = bundleFeatures(bundle);
                 const unavailableForCycle = !priced;
@@ -360,10 +361,12 @@ export function CandidatePricingScreen() {
                   <article
                     key={bundle.id}
                     className={cn(
-                      "flex flex-col rounded-[20px] border p-7 shadow-[0_12px_40px_-24px_rgba(7,62,76,0.35)] backdrop-blur-sm",
-                      isFeatured
-                        ? "border-primary/25 bg-gradient-to-b from-brand-1000 via-white to-white"
-                        : "border-border/70 bg-white/90",
+                      "relative flex flex-col overflow-hidden rounded-[20px] border p-7 shadow-[0_12px_40px_-24px_rgba(7,62,76,0.35)] backdrop-blur-sm",
+                      isCareerStarter
+                        ? "border-border/70 bg-[url('/brand/pricing/career-starter-bg.png')] bg-cover bg-center bg-no-repeat"
+                        : isFeatured
+                          ? "border-primary/25 bg-gradient-to-b from-brand-1000 via-white to-white"
+                          : "border-border/70 bg-white/90",
                     )}
                   >
                     <div className="grid grid-rows-[auto_4.5rem_auto] gap-4">

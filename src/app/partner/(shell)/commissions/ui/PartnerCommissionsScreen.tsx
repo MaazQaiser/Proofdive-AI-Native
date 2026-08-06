@@ -126,19 +126,14 @@ export function PartnerCommissionsScreen() {
   return (
     <div className="-m-6 flex h-full flex-col overflow-hidden">
       <PageHeader>
-        <div>
-          <PageTitle>Commissions &amp; Payouts</PageTitle>
-          <p className="mt-0.5 text-caption text-muted-foreground">
-            Track earnings, download invoices, and withdraw available balance.
-          </p>
-        </div>
+        <PageTitle>Commissions &amp; Payouts</PageTitle>
         <Button onClick={openWithdraw} disabled={availableBalance <= 0}>
           <Wallet className="h-4 w-4" />
           Withdraw Funds
         </Button>
       </PageHeader>
 
-      <div className="shrink-0 border-b border-border px-6 py-5">
+      <div className="shrink-0 border-b border-border px-6">
         <KpiRow>
           <KpiCard label="Total Earnings" value={formatCents(totalEarnings)} />
           <KpiCard label="Available Balance" value={formatCents(availableBalance)} />
@@ -160,7 +155,7 @@ export function PartnerCommissionsScreen() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="all_time">All Time</SelectItem>
+                <SelectItem value="all_time">Lifetime</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -183,7 +178,7 @@ export function PartnerCommissionsScreen() {
           </p>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Invoice #</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Date</TableHead>
@@ -224,7 +219,7 @@ export function PartnerCommissionsScreen() {
           <p className="px-6 py-10 text-center text-caption text-muted-foreground">No withdrawals found.</p>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Request Date</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Amount</TableHead>
@@ -265,6 +260,7 @@ export function PartnerCommissionsScreen() {
                   setAmountDollars(e.target.value);
                   setWithdrawError(null);
                 }}
+                placeholder="100.00"
               />
             </div>
             <div className="flex flex-col gap-1.5">

@@ -63,9 +63,9 @@ function glassCardSurfaceClasses(variant: "primary" | "gray" = "primary") {
         "hover:shadow-[0_14px_28px_rgba(14,154,181,0.26),inset_0_1px_0_rgba(255,255,255,0.5)]",
       ]
     : [
-        "bg-[color-mix(in_srgb,var(--extended-cyan-green)_8%,white)]",
+        "bg-white",
         "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
-        "hover:bg-[color-mix(in_srgb,var(--extended-cyan-green)_12%,white)] hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
+        "hover:bg-white hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
       ];
 }
 

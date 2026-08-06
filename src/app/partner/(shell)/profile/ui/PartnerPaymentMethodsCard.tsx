@@ -165,7 +165,11 @@ export function PartnerPaymentMethodsCard({
           <div className="grid gap-3">
             <div className="flex flex-col gap-1.5">
               <Label>Name on card</Label>
-              <Input value={form.name} onChange={(e) => updateForm("name", e.target.value)} />
+              <Input
+                value={form.name}
+                onChange={(e) => updateForm("name", e.target.value)}
+                placeholder="Jane Doe"
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Card number</Label>

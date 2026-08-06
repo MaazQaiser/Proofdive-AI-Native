@@ -20,7 +20,7 @@ export type PartnerDashboardDataset = {
 export const PARTNER_DATE_RANGE_OPTIONS: { value: PartnerDateRangeGranularity; label: string }[] = [
   { value: "weekly", label: "Weekly" },
   { value: "monthly", label: "Monthly" },
-  { value: "all_time", label: "All Time" },
+  { value: "all_time", label: "Lifetime" },
 ];
 
 export const PARTNER_DASHBOARD_DATA: Record<PartnerDateRangeGranularity, PartnerDashboardDataset> = {
@@ -115,6 +115,12 @@ export type PartnerNotification = {
   kind: PartnerNotificationKind;
   message: string;
   timestamp: string;
+  /** Policy notifications: update title. */
+  title?: string;
+  /** Policy notifications: short summary. */
+  summary?: string;
+  /** Policy notifications: effective date (YYYY-MM-DD). */
+  effectiveDate?: string;
   /** Present for policy notifications — links to policy page. */
   href?: string;
   policyId?: string;
@@ -142,7 +148,10 @@ export const SEED_PARTNER_NOTIFICATIONS: PartnerNotification[] = [
   {
     id: "pn_4",
     kind: "policy",
-    message: "Privacy Policy has been updated. Please review and acknowledge.",
+    message: "Privacy Policy update",
+    title: "Privacy Policy update",
+    summary: "Clarified how partner referral and commission data is processed and retained.",
+    effectiveDate: "2026-06-15",
     timestamp: "2026-06-15T08:00:00.000Z",
     href: "/privacy",
     policyId: "privacy-2026-06",
@@ -150,7 +159,10 @@ export const SEED_PARTNER_NOTIFICATIONS: PartnerNotification[] = [
   {
     id: "pn_5",
     kind: "policy",
-    message: "Terms & Conditions have been updated. Please review and acknowledge.",
+    message: "Terms & Conditions update",
+    title: "Terms & Conditions update",
+    summary: "Updated affiliate terms covering commission payouts and referral attribution.",
+    effectiveDate: "2026-03-01",
     timestamp: "2026-03-01T08:00:00.000Z",
     href: "/terms",
     policyId: "terms-2026-03",

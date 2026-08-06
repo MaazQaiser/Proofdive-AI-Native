@@ -54,7 +54,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
   useEffect(() => {
     if (!hydrated || !stored) return;
     if (stored.isDefault) {
-      toast.error("The default framework is view-only. Create a copy to edit.");
+      toast.error("The default framework is view-only. Create a clone to edit.");
       router.replace("/superadmin/competency-engine");
       return;
     }
@@ -157,7 +157,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
         <PageBreadcrumb
           parentHref="/superadmin/competency-engine"
           parentLabel="Competency Engine"
-          title={name.trim() ? `Edit: ${name.trim()}` : "Edit copy"}
+          title={name.trim() ? `Edit: ${name.trim()}` : "Edit clone"}
         />
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="ghost" onClick={handleClose}>
@@ -185,6 +185,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
                 id="framework-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Acme Custom Framework"
               />
             </div>
           </section>
@@ -249,6 +250,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
                                     onChange={(e) =>
                                       updateCompetency(comp.id, { definition: e.target.value })
                                     }
+                                    placeholder="Describe this competency…"
                                     rows={3}
                                   />
                                 </div>
@@ -267,6 +269,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
                                         coreQuestion: e.target.value,
                                       })
                                     }
+                                    placeholder="What question reveals this skill?"
                                     rows={2}
                                   />
                                 </div>
@@ -278,7 +281,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
                                 <Layers className="size-3.5 shrink-0" aria-hidden />
                                 Level descriptors
                               </h4>
-                              <div className="flex flex-col gap-2">
+                              <div className="flex flex-col">
                                 {comp.levels.map((level) => (
                                   <Disclosure
                                     key={level.level}
@@ -317,6 +320,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
                                               humanDescriptor: e.target.value,
                                             })
                                           }
+                                          placeholder="What a human at this level can do…"
                                           rows={3}
                                         />
                                       </div>
@@ -335,6 +339,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
                                               aiDescriptor: e.target.value,
                                             })
                                           }
+                                          placeholder="How AI should assess this level…"
                                           rows={4}
                                         />
                                       </div>

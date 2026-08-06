@@ -42,7 +42,7 @@ export function SuperAdminDashboardScreen() {
         <DateRangeFilter value={granularity} onChange={setGranularity} options={DATE_RANGE_OPTIONS} />
       </div>
 
-      <KpiRow>
+      <KpiRow banded>
         <KpiCard label="Total Organizations" value={formatNumber(kpis.totalOrganizations)} />
         <KpiCard label="Total Active Users" value={formatNumber(kpis.totalActiveUsers)} />
         <KpiCard label="Mock Interviews" value={formatNumber(kpis.totalMockInterviews)} />

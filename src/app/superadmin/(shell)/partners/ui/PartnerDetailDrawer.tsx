@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, CheckCircle2, Pencil } from "lucide-react";
+import { Ban, CheckCircle2, Pencil, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -9,7 +9,8 @@ import { DetailField, DetailGrid, DetailSection } from "@/components/ui/detail-f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCents } from "@/lib/partnerMockData";
 import { COUNTRY_OPTIONS, PHONE_COUNTRY_CODES } from "@/lib/superAdminOrganizationWizard";
@@ -182,56 +183,67 @@ export function PartnerDetailDrawer({
 
   return (
     <Sheet open={!!partner} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-1/2 max-w-[50vw] flex-col gap-0 overflow-hidden sm:max-w-[50vw]">
-        <SheetHeader className="flex shrink-0 flex-col items-stretch gap-3 space-y-0 border-b border-border px-6 py-4">
-          <div className="flex items-start justify-between gap-3 pr-8">
-            <div className="flex min-w-0 flex-col gap-1">
-              <SheetTitle className="truncate text-h5">{partner.fullName}</SheetTitle>
-              <p className="truncate text-caption text-muted-foreground">{partner.email}</p>
-            </div>
-            <PartnerStatusPill status={partner.status} />
-          </div>
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button
-              size="sm"
-              className="bg-extended-light-cyan text-extended-green-blue hover:bg-extended-light-cyan/80"
-              onClick={() => {
-                setForm(buildForm(partner));
-                setErrors({});
-                setIsEditing(true);
-              }}
-              disabled={isEditing}
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Edit Partner
+      <SheetContent
+        showCloseButton={false}
+        className="flex w-1/2 max-w-[50vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[50vw]"
+      >
+        <SheetHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-end gap-2 space-y-0 border-b border-border py-4 pl-6 pr-4">
+          <SheetTitle className="sr-only">{partner.fullName}</SheetTitle>
+          <Button
+            size="sm"
+            variant={partner.status === "active" ? "destructive" : "default"}
+            onClick={() => onRequestStatusChange(partner)}
+          >
+            {partner.status === "active" ? (
+              <>
+                <Ban className="h-3.5 w-3.5" />
+                Deactivate
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Activate
+              </>
+            )}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setForm(buildForm(partner));
+              setErrors({});
+              setIsEditing(true);
+            }}
+            disabled={isEditing}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit Partner
+          </Button>
+          <SheetClose asChild>
+            <Button size="sm" variant="ghost" className="size-8 shrink-0 p-0!" aria-label="Close">
+              <X className="h-4 w-4" />
             </Button>
-            <Button
-              size="sm"
-              variant={partner.status === "active" ? "destructive" : "default"}
-              onClick={() => onRequestStatusChange(partner)}
-            >
-              {partner.status === "active" ? (
-                <>
-                  <Ban className="h-3.5 w-3.5" />
-                  Deactivate
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Activate
-                </>
-              )}
-            </Button>
-          </div>
+          </SheetClose>
         </SheetHeader>
 
         <Tabs defaultValue="details" className="flex min-h-0 flex-1 flex-col gap-0">
-          <TabsList className="mx-6 mt-4 w-fit shrink-0">
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsList variant="underline" className="shrink-0 px-6">
+            <TabsTrigger variant="underline" value="details">
+              Details
+            </TabsTrigger>
+            <TabsTrigger variant="underline" value="performance">
+              Performance
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 py-4">
+            <div className="mb-8 flex min-w-0 flex-col gap-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <p className="truncate text-h4 text-foreground">{partner.fullName}</p>
+                <PartnerStatusPill status={partner.status} />
+              </div>
+              <p className="truncate text-caption text-muted-foreground">{partner.email}</p>
+            </div>
             {isEditing ? (
               <div className="flex flex-col gap-4">
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -240,6 +252,7 @@ export function PartnerDetailDrawer({
                     <Input
                       value={form.fullName}
                       onChange={(e) => updateField("fullName", e.target.value)}
+                      placeholder="Jane Doe"
                       aria-invalid={!!errors.fullName}
                     />
                     {errors.fullName ? <p className="text-caption text-destructive">{errors.fullName}</p> : null}
@@ -249,6 +262,7 @@ export function PartnerDetailDrawer({
                     <Input
                       value={form.email}
                       onChange={(e) => updateField("email", e.target.value)}
+                      placeholder="you@company.com"
                       aria-invalid={!!errors.email}
                     />
                     {errors.email ? <p className="text-caption text-destructive">{errors.email}</p> : null}
@@ -274,6 +288,7 @@ export function PartnerDetailDrawer({
                       <Input
                         value={form.phone}
                         onChange={(e) => updateField("phone", e.target.value.replace(/\D/g, ""))}
+                        placeholder="5551234567"
                         aria-invalid={!!errors.phone}
                       />
                     </div>
@@ -337,6 +352,7 @@ export function PartnerDetailDrawer({
                         <Input
                           value={form.companyName}
                           onChange={(e) => updateField("companyName", e.target.value)}
+                          placeholder="Acme Partners"
                           aria-invalid={!!errors.companyName}
                         />
                         {errors.companyName ? (
@@ -345,7 +361,11 @@ export function PartnerDetailDrawer({
                       </div>
                       <div className="flex flex-col gap-1.5 sm:col-span-2">
                         <Label>Website</Label>
-                        <Input value={form.website} onChange={(e) => updateField("website", e.target.value)} />
+                        <Input
+                          value={form.website}
+                          onChange={(e) => updateField("website", e.target.value)}
+                          placeholder="https://"
+                        />
                       </div>
                     </>
                   ) : null}
@@ -376,6 +396,7 @@ export function PartnerDetailDrawer({
                         max={100}
                         value={form.discountPercent}
                         onChange={(e) => updateField("discountPercent", e.target.value)}
+                        placeholder="10"
                         className="pr-8"
                         aria-invalid={!!errors.discountPercent}
                       />
@@ -414,6 +435,7 @@ export function PartnerDetailDrawer({
                         type="number"
                         value={form.commissionPercent}
                         onChange={(e) => updateField("commissionPercent", e.target.value)}
+                        placeholder="15"
                         aria-invalid={!!errors.commissionPercent}
                       />
                       {errors.commissionPercent ? (
@@ -428,6 +450,7 @@ export function PartnerDetailDrawer({
                         type="number"
                         value={form.commissionFixedDollars}
                         onChange={(e) => updateField("commissionFixedDollars", e.target.value)}
+                        placeholder="50"
                         aria-invalid={!!errors.commissionFixedDollars}
                       />
                       {errors.commissionFixedDollars ? (
@@ -463,6 +486,7 @@ export function PartnerDetailDrawer({
                     <DetailField label="Country / Region" value={partner.country} />
                   </DetailGrid>
                 </DetailSection>
+                <Separator />
                 <DetailSection title="Entity Details">
                   <DetailGrid>
                     <DetailField label="Entity Type" value={ENTITY_TYPE_LABEL[partner.entityType]} />
@@ -475,6 +499,7 @@ export function PartnerDetailDrawer({
                     ) : null}
                   </DetailGrid>
                 </DetailSection>
+                <Separator />
                 <DetailSection title="Partner Configuration">
                   <DetailGrid>
                     <DetailField label="Partner Type" value={PARTNER_TYPE_LABEL[partner.partnerType]} />
@@ -489,6 +514,7 @@ export function PartnerDetailDrawer({
                     />
                   </DetailGrid>
                 </DetailSection>
+                <Separator />
                 <DetailSection title="Commission Configuration">
                   <DetailGrid>
                     <DetailField

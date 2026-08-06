@@ -40,16 +40,11 @@ export function OrgAdminDashboardScreen() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-h5 text-foreground">Dashboard &amp; Analytics</h1>
-          <p className="mt-0.5 text-caption text-muted-foreground">
-            Organization-wide readiness, engagement, training, and subscription analytics.
-          </p>
-        </div>
+        <h1 className="text-h5 text-foreground">Dashboard &amp; Analytics</h1>
         <DateRangeFilter value={granularity} onChange={setGranularity} options={DATE_RANGE_OPTIONS} />
       </div>
 
-      <KpiRow>
+      <KpiRow banded>
         <KpiCard
           label="Total Invited Users"
           value={formatNumber(kpis.totalInvitedUsers)}

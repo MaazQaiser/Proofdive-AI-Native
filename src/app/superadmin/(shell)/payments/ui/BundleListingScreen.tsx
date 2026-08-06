@@ -5,7 +5,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Copy,
   CreditCard,
   MoreHorizontal,
   Plus,
@@ -49,6 +48,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import {
   BILLING_CYCLE_LABEL,
   BUNDLE_STATUS_LABEL,
@@ -61,29 +61,16 @@ import {
 } from "@/lib/superAdminPaymentsData";
 import { usePaymentBundles } from "@/lib/usePaymentBundles";
 import { useGlobalRates } from "@/lib/usePaymentRates";
-import { cn } from "@/lib/utils";
 
 import { PaymentsShell } from "./PaymentsShell";
+import { BundleDetailDrawer } from "./BundleDetailDrawer";
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
 
 function BundleStatusPill({ status }: { status: BundleStatus }) {
-  const tone =
-    status === "active"
-      ? "border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg"
-      : status === "draft"
-        ? "border-border bg-muted text-muted-foreground"
-        : "border-scoring-yellow/30 bg-scoring-yellow/20 text-scoring-yellow-fg";
-  return (
-    <span
-      className={cn(
-        "text-overline inline-flex h-6 w-fit items-center rounded-full border px-2 whitespace-nowrap",
-        tone,
-      )}
-    >
-      {BUNDLE_STATUS_LABEL[status]}
-    </span>
-  );
+  const tone: StatusTone =
+    status === "active" ? "success" : status === "draft" ? "warning" : "neutral";
+  return <StatusPill tone={tone}>{BUNDLE_STATUS_LABEL[status]}</StatusPill>;
 }
 
 function formatUpdated(iso: string): string {
@@ -121,7 +108,9 @@ export function BundleListingScreen() {
   const [rowsPerPage, setRowsPerPage] = useState<number>(ROWS_PER_PAGE_OPTIONS[0]);
   const [confirmDeactivate, setConfirmDeactivate] = useState<PaymentBundle | null>(null);
   const [reactivateErrors, setReactivateErrors] = useState<string[] | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  const selectedBundle = bundles.find((b) => b.id === selectedId) ?? null;
   const stats = useMemo(() => computeBundleSummary(bundles), [bundles]);
 
   const filtered = useMemo(() => {
@@ -198,7 +187,7 @@ export function BundleListingScreen() {
         </Button>
       }
     >
-      <div className="shrink-0 border-b border-border px-6 py-5">
+      <div className="shrink-0 border-b border-border px-6">
         <KpiRow>
           <KpiCard label="Total Active Bundles" value={String(stats.totalActiveBundles)} />
           <KpiCard label="Earnings" value={formatUsd(stats.earnings)} />
@@ -232,7 +221,7 @@ export function BundleListingScreen() {
             <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="all">Types</SelectItem>
             <SelectItem value="B2C">B2C</SelectItem>
             <SelectItem value="B2B">B2B</SelectItem>
           </SelectContent>
@@ -248,7 +237,7 @@ export function BundleListingScreen() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">Statuses</SelectItem>
             <SelectItem value="draft">Draft</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
@@ -265,7 +254,7 @@ export function BundleListingScreen() {
             <SelectValue placeholder="Billing Cycle" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Cycles</SelectItem>
+            <SelectItem value="all">Cycles</SelectItem>
             <SelectItem value="monthly">Monthly</SelectItem>
             <SelectItem value="quarterly">Quarterly</SelectItem>
             <SelectItem value="yearly">Yearly</SelectItem>
@@ -283,7 +272,7 @@ export function BundleListingScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Bundle Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Type</TableHead>
@@ -300,12 +289,13 @@ export function BundleListingScreen() {
               {pageRows.map((bundle) => (
                 <TableRow key={bundle.id}>
                   <TableCell className="pl-6">
-                    <Link
-                      href={`/superadmin/payments/bundles/${bundle.id}`}
+                    <button
+                      type="button"
                       className="text-left font-semibold text-text-primary hover:underline"
+                      onClick={() => setSelectedId(bundle.id)}
                     >
                       {bundle.name}
-                    </Link>
+                    </button>
                   </TableCell>
                   <TableCell className="text-caption text-muted-foreground">{bundle.type}</TableCell>
                   <TableCell className="text-caption text-muted-foreground">
@@ -332,13 +322,17 @@ export function BundleListingScreen() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/superadmin/payments/bundles/${bundle.id}`}>
-                            Edit Bundle
-                          </Link>
+                        <DropdownMenuItem onClick={() => setSelectedId(bundle.id)}>
+                          View details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            router.push(`/superadmin/payments/bundles/${bundle.id}?edit=1`)
+                          }
+                        >
+                          Edit Bundle
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDuplicate(bundle)}>
-                          <Copy className="h-4 w-4" />
                           Duplicate
                         </DropdownMenuItem>
                         {bundle.status === "active" || bundle.status === "inactive" ? (
@@ -434,6 +428,15 @@ export function BundleListingScreen() {
           </div>
         </div>
       </div>
+
+      <BundleDetailDrawer
+        bundle={selectedBundle}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null);
+        }}
+        onRequestDeactivate={(b) => setConfirmDeactivate(b)}
+        onRequestReactivate={(b) => handleReactivate(b)}
+      />
 
       <Dialog
         open={Boolean(confirmDeactivate)}

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/success-driver-card";
 import {
   AudioLines,
+  ArrowUpRight,
   Calendar,
   Captions,
   ChartNoAxesColumn,
@@ -30,7 +31,6 @@ import {
   Gauge,
   Hand,
   Lightbulb,
-  ListChecks,
   ListTree,
   MessageSquareQuote,
   Mic,
@@ -42,7 +42,6 @@ import {
   Sparkles,
   SpellCheck,
   UserRound,
-  Video,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -186,51 +185,6 @@ function MetaChip({
   );
 }
 
-function driverIdFromPillarLabel(pillar: string): SuccessDriverId | null {
-  const n = pillar.trim().toLowerCase();
-  for (const id of SUCCESS_DRIVER_ORDER) {
-    const meta = SUCCESS_DRIVERS[id];
-    if (id === n || meta.shortLabel.toLowerCase() === n || meta.label.toLowerCase() === n) {
-      return id;
-    }
-  }
-  return null;
-}
-
-function TrainingMetaRow({
-  pillar,
-  difficulty,
-  durationMinutes,
-}: {
-  pillar: string;
-  difficulty?: string;
-  durationMinutes: number;
-}) {
-  const driverId = driverIdFromPillarLabel(pillar);
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {driverId ? (
-        <SuccessDriverCompetencyPill
-          driver={driverId}
-          label={SUCCESS_DRIVERS[driverId].shortLabel}
-        />
-      ) : (
-        <MetaChip icon={<Sparkles className="size-4 shrink-0 text-text-secondary" aria-hidden />}>
-          {pillar}
-        </MetaChip>
-      )}
-      {difficulty ? (
-        <MetaChip icon={<Gauge className="size-4 shrink-0 text-text-secondary" aria-hidden />}>
-          {difficulty}
-        </MetaChip>
-      ) : null}
-      <MetaChip icon={<Clock3 className="size-4 shrink-0 text-text-secondary" aria-hidden />}>
-        {durationMinutes} min
-      </MetaChip>
-    </div>
-  );
-}
-
 function HighlightChip({ prefix, text }: { prefix: string; text: string }) {
   const match = text.match(/^(.*?)\s*(\d+(?:\.\d+)?)\/5\s*$/);
   const rest = match ? match[1].replace(/\s*·\s*$/, "").trim() : text.trim();
@@ -282,7 +236,7 @@ function DriverRow({
   const score = driver.score;
   const driverId = driver.id as SuccessDriverId;
   return (
-    <div className="border-t border-extended-green py-[18px]">
+    <div className="-mx-6 border-t border-extended-green px-6 py-[18px]">
       <div className="flex w-full flex-wrap items-center gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <SuccessDriverIcon
@@ -318,9 +272,9 @@ function DriverRow({
           />
         </button>
         {expanded ? (
-          <div className="mt-4 space-y-2">
+          <div className="mt-4 divide-y divide-[#dfe7e9]">
             {driver.subSkills.map((s) => (
-              <div key={s.name} className="flex items-center justify-between gap-3">
+              <div key={s.name} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
                 <div className="min-w-0 truncate text-caption text-text-primary">{s.name}</div>
                 <div className="flex shrink-0 items-baseline gap-0.5 font-gilroy whitespace-nowrap">
                   <span className={cn("text-caption font-semibold", scoreTextClasses(s.score))}>
@@ -422,28 +376,28 @@ function QuestionRow({
               </div>
               <div className="min-w-0">
                 <PanelLabel icon={Sparkles}>Areas for improvement</PanelLabel>
-                <div className="mt-3 grid gap-3">
-                  {q.improvements.map((imp, index) => {
-                    const Icon = improvementIconFor(imp.title, index);
-                    return (
-                      <div
-                        key={imp.title}
-                        className="flex gap-3 rounded-lg border border-[#dde7e9] bg-white p-4"
-                      >
-                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-extended-light-cyan text-extended-cyan-green">
-                          <Icon className="size-4" aria-hidden />
-                        </span>
-                        <div className="min-w-0">
-                          <div className="text-body-sm font-semibold text-extended-cyan-green">
-                            {imp.title}
+                <div className="mt-3 overflow-hidden rounded-lg border border-[#dde7e9] bg-white">
+                  <div className="divide-y divide-[#dfe7e9]">
+                    {q.improvements.map((imp, index) => {
+                      const Icon = improvementIconFor(imp.title, index);
+                      return (
+                        <div key={imp.title} className="flex items-start gap-3 p-4">
+                          <Icon
+                            className="mt-0.5 size-4 shrink-0 text-extended-cyan-green"
+                            aria-hidden
+                          />
+                          <div className="min-w-0">
+                            <div className="text-body-sm font-semibold text-extended-cyan-green">
+                              {imp.title}
+                            </div>
+                            <p className="mt-1 text-caption leading-relaxed text-text-secondary">
+                              {imp.detail}
+                            </p>
                           </div>
-                          <p className="mt-1 text-caption leading-relaxed text-text-secondary">
-                            {imp.detail}
-                          </p>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
@@ -529,7 +483,7 @@ export function ReportDetailScreen({ reportId }: Props) {
 
   if (report === undefined) {
     return (
-      <AppShell>
+      <AppShell contentTopClassName="pt-16">
         <CoachFloatingNav />
         <div className="pb-44">
           <Card className="gap-0 py-0">
@@ -546,7 +500,7 @@ export function ReportDetailScreen({ reportId }: Props) {
 
   if (missing) {
     return (
-      <AppShell>
+      <AppShell contentTopClassName="pt-16">
         <CoachFloatingNav />
         <div className="pb-44">
           <Card className="gap-0 py-0">
@@ -575,7 +529,7 @@ export function ReportDetailScreen({ reportId }: Props) {
 
   if (!reportAllowed) {
     return (
-      <AppShell>
+      <AppShell contentTopClassName="pt-16">
         <CoachFloatingNav />
         <div className="pb-44">
           <Card className="gap-0 py-0">
@@ -603,7 +557,7 @@ export function ReportDetailScreen({ reportId }: Props) {
   }
 
   return (
-    <AppShell>
+    <AppShell contentTopClassName="pt-16">
       <CoachFloatingNav />
 
       {showSticky ? (
@@ -726,17 +680,11 @@ export function ReportDetailScreen({ reportId }: Props) {
             .
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <MetaChip icon={<Video className="size-5 shrink-0 text-text-secondary" aria-hidden />}>
-              {report.meta.interviewName}
-            </MetaChip>
             <MetaChip icon={<Calendar className="size-5 shrink-0 text-text-secondary" aria-hidden />}>
               {fmtDate(report.meta.createdAt)}
             </MetaChip>
             <MetaChip icon={<Clock3 className="size-5 shrink-0 text-text-secondary" aria-hidden />}>
               {fmtDuration(report.meta.durationSeconds)}
-            </MetaChip>
-            <MetaChip icon={<ListChecks className="size-5 shrink-0 text-text-secondary" aria-hidden />}>
-              {report.meta.questionCount} questions
             </MetaChip>
           </div>
         </div>
@@ -815,7 +763,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                 <summary className="cursor-pointer list-none">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-body-sm font-semibold text-text-primary">
-                      View all competency areas
+                      At a glance
                     </div>
                     <ChevronDown className="size-5 shrink-0 text-text-primary/60 transition-transform duration-200" aria-hidden />
                   </div>
@@ -863,24 +811,34 @@ export function ReportDetailScreen({ reportId }: Props) {
         </section>
 
         <section className="mt-10">
-          <Card className="gap-0 py-0">
-            <CardContent className="p-6">
-              <SectionTitle
-                title={
-                  <>
-                    What{" "}
-                    <span className="rounded-sm bg-[#B9EFF4] px-1 text-[#095B73]">AI Coach</span>{" "}
-                    saw in your session
-                  </>
-                }
-                subtitle={report.narrative.subtitle}
-              />
-              <div className="mt-4 max-w-4xl text-caption leading-6 text-text-secondary">
-                {report.narrative.paragraph}
+          <Card className="gap-0 overflow-hidden py-0">
+            <CardContent className="relative isolate overflow-hidden p-6">
+              <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/brand/report-ai-coach/logo-artifact.png"
+                  alt=""
+                  className="absolute bottom-0 right-0 h-[min(72%,168px)] w-auto max-w-[40%] origin-bottom-right scale-[1.2] object-contain object-bottom-right opacity-90 mix-blend-screen"
+                />
               </div>
-              <div className="mt-6 flex flex-wrap gap-2">
-                <HighlightChip prefix="Strongest:" text={report.highlightChips.strongest} />
-                <HighlightChip prefix="Biggest gap:" text={report.highlightChips.biggestGap} />
+              <div className="relative z-[1]">
+                <SectionTitle
+                  title={
+                    <>
+                      What{" "}
+                      <span className="rounded-sm bg-[#B9EFF4] px-1 text-[#095B73]">AI Coach</span>{" "}
+                      saw in your session
+                    </>
+                  }
+                  subtitle={report.narrative.subtitle}
+                />
+                <div className="mt-4 max-w-4xl text-caption leading-6 text-text-secondary">
+                  {report.narrative.paragraph}
+                </div>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <HighlightChip prefix="Strongest:" text={report.highlightChips.strongest} />
+                  <HighlightChip prefix="Biggest gap:" text={report.highlightChips.biggestGap} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -928,7 +886,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                     </span>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
                     <MetaChip icon={<SkipBack className="size-5 shrink-0 text-text-secondary" aria-hidden />}>
                       ±10s
                     </MetaChip>
@@ -944,14 +902,11 @@ export function ReportDetailScreen({ reportId }: Props) {
                 <div className="min-w-0">
                   <div className="rounded-lg border border-[#dde7e9] bg-white p-4">
                     <PanelLabel icon={Captions}>Transcript</PanelLabel>
-                    <div className="mt-3 max-h-[320px] space-y-2 overflow-auto pr-1">
+                    <div className="mt-3 max-h-[320px] divide-y divide-[#dfe7e9] overflow-auto pr-1">
                       {report.transcript.map((line, idx) => {
                         const isCandidate = line.speaker === "Candidate";
                         return (
-                          <div
-                            key={idx}
-                            className="rounded-lg border border-[#dde7e9] bg-white p-3"
-                          >
+                          <div key={idx} className="py-3 first:pt-0 last:pb-0">
                             <div className="flex items-center gap-2">
                               <span
                                 className={cn(
@@ -1140,55 +1095,112 @@ export function ReportDetailScreen({ reportId }: Props) {
         <section className="mt-10">
           <Card className="gap-0 py-0">
             <CardContent className="p-6">
-              <SectionTitle title="What to work on next" subtitle="Suggested trainings based on your highest-leverage gaps." />
+              <SectionTitle
+                title="What to work on next"
+                subtitle="Suggested trainings based on your highest-leverage gaps."
+              />
 
-              <div className="mt-6 grid gap-4 lg:grid-cols-4">
-                <Card className="gap-0 py-0 lg:col-span-2">
-                  <CardContent className="p-5">
-                    <MetaChip icon={<Sparkles className="size-4 shrink-0 text-text-secondary" aria-hidden />}>
-                      Featured
-                    </MetaChip>
-                    <div className="mt-3 text-h6 text-text-primary">
-                      {report.trainings.featured.title}
-                    </div>
-                    <div className="mt-2 text-caption leading-6 text-text-secondary">
-                      {report.trainings.featured.description}
-                    </div>
-                    <div className="mt-4">
-                      <TrainingMetaRow
-                        pillar={report.trainings.featured.pillar}
-                        difficulty={report.trainings.featured.difficulty}
-                        durationMinutes={report.trainings.featured.durationMinutes}
-                      />
-                    </div>
-                    <div className="mt-4">
-                      <Link
-                        href={report.trainings.featured.href}
-                        className="text-caption font-semibold text-text-primary underline decoration-black/20 underline-offset-4 hover:decoration-black/40"
-                      >
-                        Start training
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {report.trainings.more.map((t) => (
-                  <Card key={t.id} className="gap-0 py-0">
-                    <CardContent className="p-5">
-                      <TrainingMetaRow pillar={t.pillar} durationMinutes={t.durationMinutes} />
-                      <div className="mt-3 text-body-sm font-semibold text-text-primary">{t.title}</div>
-                      <div className="mt-2 text-caption leading-6 text-text-secondary">{t.description}</div>
-                      <div className="mt-4">
-                        <Link
-                          href={t.href}
-                          className="text-caption font-semibold text-text-primary underline decoration-black/20 underline-offset-4 hover:decoration-black/40"
+              <div className="mt-6 flex w-full flex-col">
+                {[
+                  {
+                    id: report.trainings.featured.id,
+                    title: report.trainings.featured.title,
+                    description: report.trainings.featured.description,
+                    href: report.trainings.featured.href,
+                    pillar: report.trainings.featured.pillar,
+                    durationMinutes: report.trainings.featured.durationMinutes,
+                  },
+                  ...report.trainings.more.map((t) => ({
+                    id: t.id,
+                    title: t.title,
+                    description: t.description,
+                    href: t.href,
+                    pillar: t.pillar,
+                    durationMinutes: t.durationMinutes,
+                  })),
+                ].map((item, index, list) => {
+                  const isLast = index === list.length - 1;
+                  const pillarKey = item.pillar?.trim().toLowerCase() ?? "";
+                  const driverId =
+                    SUCCESS_DRIVER_ORDER.find(
+                      (id) => SUCCESS_DRIVERS[id].shortLabel.toLowerCase() === pillarKey,
+                    ) ?? null;
+                  return (
+                    <div
+                      key={item.id}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-4 py-4",
+                        index === 0 && "pt-0",
+                        isLast ? "pb-0" : "border-b border-extended-green",
+                      )}
+                    >
+                      <div className="flex min-w-0 flex-1 items-start gap-4">
+                        <span
+                          aria-hidden
+                          className="flex shrink-0 self-stretch items-center font-gilroy text-[52px] font-normal leading-[52px] tracking-[-1.04px] tabular-nums text-brand-500"
                         >
-                          Start training
-                        </Link>
+                          {index + 1}
+                        </span>
+                        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-[18px] font-medium leading-[27px] tracking-[-1.3px] text-text-primary">
+                              {item.title}
+                            </h3>
+                            {index === 0 ? (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1",
+                                  "bg-[linear-gradient(135deg,var(--brand-100)_0%,var(--brand-300)_100%)]",
+                                  "text-overline leading-[18px] font-medium text-primary-foreground",
+                                )}
+                              >
+                                <Sparkles className="size-3.5 shrink-0" aria-hidden />
+                                Featured
+                              </span>
+                            ) : null}
+                            {driverId ? (
+                              <SuccessDriverCompetencyPill
+                                driver={driverId}
+                                label={SUCCESS_DRIVERS[driverId].shortLabel}
+                              />
+                            ) : item.pillar ? (
+                              <span className="inline-flex items-center rounded-full border border-[#b3effa] bg-white py-1.5 px-3">
+                                <span className="text-overline leading-[18px] text-text-primary">
+                                  {item.pillar}
+                                </span>
+                              </span>
+                            ) : null}
+                            {item.durationMinutes != null ? (
+                              <MetaChip
+                                icon={
+                                  <Clock3
+                                    className="size-4 shrink-0 text-text-secondary"
+                                    aria-hidden
+                                  />
+                                }
+                              >
+                                {item.durationMinutes} min
+                              </MetaChip>
+                            ) : null}
+                          </div>
+                          <p className="text-[16px] font-normal leading-6 text-text-secondary">
+                            {item.description}
+                          </p>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      <Button
+                        asChild
+                        variant="ghost"
+                        className="h-auto shrink-0 gap-2 rounded-md py-2 pl-4 pr-2! text-[14px] font-medium leading-5 text-extended-dark-cyan hover:bg-transparent hover:text-extended-dark-cyan"
+                      >
+                        <Link href={item.href}>
+                          Start training
+                          <ArrowUpRight className="size-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

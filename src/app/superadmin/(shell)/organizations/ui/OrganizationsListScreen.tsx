@@ -80,7 +80,7 @@ export function OrganizationsListScreen() {
   const [confirmTarget, setConfirmTarget] = useState<{ org: Organization; nextStatus: OrganizationStatus } | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
-  const { summaries: frameworks, createCopy } = useCompetencyFrameworks();
+  const { summaries: frameworks, createClone } = useCompetencyFrameworks();
 
   const selectedOrganization = organizations.find((o) => o.id === selectedOrgId) ?? null;
 
@@ -179,7 +179,7 @@ export function OrganizationsListScreen() {
             <SelectValue placeholder="Organization Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="all">Types</SelectItem>
             {(Object.entries(ORGANIZATION_TYPE_LABEL) as [OrganizationType, string][]).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -198,7 +198,7 @@ export function OrganizationsListScreen() {
             <SelectValue placeholder="Country" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Countries</SelectItem>
+            <SelectItem value="all">Countries</SelectItem>
             {countries.map((country) => (
               <SelectItem key={country} value={country}>
                 {country}
@@ -217,7 +217,7 @@ export function OrganizationsListScreen() {
             <SelectValue placeholder="Subscription Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Subscription Statuses</SelectItem>
+            <SelectItem value="all">Subscription Statuses</SelectItem>
             {(Object.entries(SUBSCRIPTION_STATUS_LABEL) as [SubscriptionStatus, string][]).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -236,7 +236,7 @@ export function OrganizationsListScreen() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">Statuses</SelectItem>
             {(Object.entries(ORGANIZATION_STATUS_LABEL) as [OrganizationStatus, string][]).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -256,7 +256,7 @@ export function OrganizationsListScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Organization</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Type</TableHead>
@@ -423,9 +423,9 @@ export function OrganizationsListScreen() {
         existingOrganizationNames={existingNames}
         frameworks={frameworks.length > 0 ? frameworks : COMPETENCY_FRAMEWORKS}
         onCreateFramework={(name) => {
-          const created = createCopy(DEFAULT_FRAMEWORK_ID, name);
+          const created = createClone(DEFAULT_FRAMEWORK_ID, name);
           if (!created) {
-            toast.error("Could not create competency framework copy.");
+            toast.error("Could not create competency framework clone.");
             return null;
           }
           toast.success(`Draft framework "${created.name}" created.`);

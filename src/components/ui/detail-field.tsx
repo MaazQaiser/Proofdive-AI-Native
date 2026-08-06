@@ -21,8 +21,8 @@ export function DetailField({
       <p className="text-overline text-muted-foreground">{label}</p>
       <div
         className={cn(
-          "text-body-sm break-words font-medium text-text-primary",
-          (muted || empty) && "font-normal text-muted-foreground",
+          "text-body-sm break-words font-normal text-text-primary",
+          (muted || empty) && "text-muted-foreground",
         )}
       >
         {display}
@@ -42,7 +42,7 @@ export function DetailSection({
 }) {
   return (
     <section className={cn("flex flex-col gap-4", className)}>
-      <h3 className="text-body-sm font-medium text-text-primary">{title}</h3>
+      <h3 className="text-body font-semibold tracking-tight text-foreground">{title}</h3>
       {children}
     </section>
   );

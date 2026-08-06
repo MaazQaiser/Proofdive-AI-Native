@@ -229,6 +229,7 @@ export function DiscountDetailScreen({ codeId }: { codeId: string }) {
                 min={code.redemptions.length + 1}
                 value={extendMax}
                 onChange={(e) => setExtendMax(e.target.value)}
+                placeholder="100"
               />
             </div>
           )}

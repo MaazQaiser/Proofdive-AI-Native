@@ -89,7 +89,7 @@ export function AuditLogsSection() {
               <SelectValue placeholder="Activity Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Activity Types</SelectItem>
+              <SelectItem value="all">Activity Types</SelectItem>
               {(Object.entries(AUDIT_LOG_ACTIVITY_LABEL) as [AuditLogActivityType, string][]).map(([value, label]) => (
                 <SelectItem key={value} value={value}>
                   {label}

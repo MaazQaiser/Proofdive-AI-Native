@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { formatNumber } from "@/components/dashboard/format";
 import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,7 +98,7 @@ export function CommissionsListingScreen() {
         </Button>
       </PageHeader>
 
-      <div className="shrink-0 border-b border-border px-6 py-5">
+      <div className="shrink-0 border-b border-border px-6">
         <KpiRow>
           <KpiCard label="Total Commissions Generated" value={formatCents(kpis.totalCents)} />
           <KpiCard label="Tiered" value={formatCents(kpis.tieredCents)} />
@@ -142,7 +141,7 @@ export function CommissionsListingScreen() {
             <SelectValue placeholder="Commission Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Commission Types</SelectItem>
+            <SelectItem value="all">Commission Types</SelectItem>
             {(Object.entries(COMMISSION_TYPE_LABEL) as [CommissionType, string][]).map(
               ([value, label]) => (
                 <SelectItem key={value} value={value}>
@@ -160,7 +159,7 @@ export function CommissionsListingScreen() {
             <SelectValue placeholder="Partner Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Partner Types</SelectItem>
+            <SelectItem value="all">Partner Types</SelectItem>
             {(Object.entries(PARTNER_TYPE_LABEL) as [PartnerType, string][]).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -184,7 +183,7 @@ export function CommissionsListingScreen() {
           </div>
         ) : (
           <table className="w-full caption-bottom text-sm">
-            <TableHeader className="sticky top-0 z-10 border-b border-border">
+            <TableHeader sticky>
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Partner Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Partner Type</TableHead>
@@ -194,16 +193,15 @@ export function CommissionsListingScreen() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredRows.map(({ partner, totalEarnedCents, invoiceCount }) => (
+              {filteredRows.map(({ partner, totalEarnedCents }) => (
                 <TableRow key={partner.id}>
                   <TableCell className="pl-6">
                     <button
                       type="button"
                       onClick={() => router.push(`/superadmin/commissions/${partner.id}`)}
-                      className="flex flex-col text-left"
+                      className="text-left font-semibold text-text-primary hover:underline"
                     >
-                      <span className="font-semibold text-text-primary hover:underline">{partner.fullName}</span>
-                      <span className="text-caption text-muted-foreground">{partner.email}</span>
+                      {partner.fullName}
                     </button>
                   </TableCell>
                   <TableCell className="text-caption text-muted-foreground">
@@ -212,20 +210,14 @@ export function CommissionsListingScreen() {
                   <TableCell className="text-caption text-muted-foreground">
                     {COMMISSION_TYPE_LABEL[partner.commissionType]}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-body-sm font-medium text-foreground">
-                        {formatCents(totalEarnedCents)}
-                      </span>
-                      <span className="text-caption text-muted-foreground">
-                        {formatNumber(invoiceCount)} invoice{invoiceCount === 1 ? "" : "s"}
-                      </span>
-                    </div>
+                  <TableCell className="text-body-sm font-medium text-foreground">
+                    {formatCents(totalEarnedCents)}
                   </TableCell>
                   <TableCell className="pr-6 text-right">
                     <Button
                       size="sm"
                       variant="ghost"
+                      className="text-extended-dark-cyan hover:bg-transparent hover:text-extended-dark-cyan"
                       onClick={() => router.push(`/superadmin/commissions/${partner.id}`)}
                     >
                       View Detail

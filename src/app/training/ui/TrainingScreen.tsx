@@ -336,8 +336,8 @@ export function TrainingScreen() {
                             isImageBg
                               ? [
                                   "bg-white",
-                                  "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
-                                  "hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
+                                  "shadow-[-4px_-4px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
+                                  "hover:shadow-[-4px_-4px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
                                 ]
                               : glassCardSurfaceClasses(variant),
                           )}

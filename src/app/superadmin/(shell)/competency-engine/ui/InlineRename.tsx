@@ -78,6 +78,7 @@ export function InlineRename({
               cancel();
             }
           }}
+          placeholder="Enter name"
           className="h-8 min-w-0 flex-1 text-body-sm"
           aria-label={ariaLabel}
         />

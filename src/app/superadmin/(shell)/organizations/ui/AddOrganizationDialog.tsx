@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { SuccessDriverCompetencyPill } from "@/components/ui/success-driver-card";
 import { cn } from "@/lib/utils";
 import { SUCCESS_DRIVER_ORDER, SUCCESS_DRIVERS } from "@/lib/successDrivers";
 import {
@@ -369,7 +370,7 @@ export function AddOrganizationDialog({
     }
     const created = onCreateFramework(trimmedName);
     if (!created) {
-      setCompetencyNameError("Could not create competency framework copy.");
+      setCompetencyNameError("Could not create competency framework clone.");
       return;
     }
     updateField("competencyFrameworkId", created.id);
@@ -558,6 +559,7 @@ export function AddOrganizationDialog({
                       id="org-city"
                       value={form.city}
                       onChange={(e) => updateField("city", e.target.value)}
+                      placeholder="San Francisco"
                       aria-invalid={!!errors.city}
                     />
                     {errors.city && <p className="text-caption text-destructive">{errors.city}</p>}
@@ -568,6 +570,7 @@ export function AddOrganizationDialog({
                       id="org-region"
                       value={form.region}
                       onChange={(e) => updateField("region", e.target.value)}
+                      placeholder="California"
                       aria-invalid={!!errors.region}
                     />
                     {errors.region && <p className="text-caption text-destructive">{errors.region}</p>}
@@ -624,6 +627,7 @@ export function AddOrganizationDialog({
                       id="contact-name"
                       value={form.contactName}
                       onChange={(e) => updateField("contactName", e.target.value)}
+                      placeholder="Jane Doe"
                       aria-invalid={!!errors.contactName}
                     />
                     {errors.contactName && <p className="text-caption text-destructive">{errors.contactName}</p>}
@@ -635,6 +639,7 @@ export function AddOrganizationDialog({
                       type="email"
                       value={form.contactEmail}
                       onChange={(e) => updateField("contactEmail", e.target.value)}
+                      placeholder="you@company.com"
                       aria-invalid={!!errors.contactEmail}
                     />
                     {errors.contactEmail && <p className="text-caption text-destructive">{errors.contactEmail}</p>}
@@ -661,6 +666,7 @@ export function AddOrganizationDialog({
                         id="contact-phone"
                         value={form.contactPhone}
                         onChange={(e) => updateField("contactPhone", e.target.value)}
+                        placeholder="5551234567"
                         aria-invalid={!!errors.contactPhone}
                         className="flex-1"
                       />
@@ -673,6 +679,7 @@ export function AddOrganizationDialog({
                       id="contact-designation"
                       value={form.contactDesignation}
                       onChange={(e) => updateField("contactDesignation", e.target.value)}
+                      placeholder="Head of Talent"
                       aria-invalid={!!errors.contactDesignation}
                     />
                     {errors.contactDesignation && (
@@ -724,12 +731,11 @@ export function AddOrganizationDialog({
                       </span>
                       <div className="flex flex-wrap gap-2">
                         {SUCCESS_DRIVER_ORDER.map((driverId) => (
-                          <span
+                          <SuccessDriverCompetencyPill
                             key={driverId}
-                            className="text-caption rounded-full border border-border bg-muted px-3 py-1 text-muted-foreground"
-                          >
-                            {SUCCESS_DRIVERS[driverId].label}
-                          </span>
+                            driver={driverId}
+                            label={SUCCESS_DRIVERS[driverId].label}
+                          />
                         ))}
                       </div>
                       <p className="text-caption text-muted-foreground">
@@ -764,7 +770,7 @@ export function AddOrganizationDialog({
                     )}
                   </div>
                   <p className="text-caption text-muted-foreground">
-                    Creates a draft copy of the default framework. Open Competency Framework
+                    Creates a draft clone of the default framework. Open Competency Framework
                     Management afterward to edit definitions and level descriptors.
                   </p>
                   <Button type="button" onClick={saveNewCompetency} className="w-fit">
@@ -828,6 +834,7 @@ export function AddOrganizationDialog({
                       max={100}
                       value={form.discountPercent}
                       onChange={(e) => updateField("discountPercent", e.target.value)}
+                      placeholder="10"
                       className="pr-8"
                     />
                     <span className="absolute top-1/2 right-3 -translate-y-1/2 text-caption text-muted-foreground">
@@ -843,6 +850,7 @@ export function AddOrganizationDialog({
                     min={1}
                     value={form.numberOfUsers}
                     onChange={(e) => updateField("numberOfUsers", e.target.value)}
+                    placeholder="25"
                     aria-invalid={!!errors.numberOfUsers}
                   />
                   {errors.numberOfUsers && <p className="text-caption text-destructive">{errors.numberOfUsers}</p>}

@@ -14,12 +14,25 @@ type Props = {
   className?: string;
 };
 
-export function KpiRow({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={cn("flex flex-wrap items-stretch", className)}>
-      {children}
-    </div>
-  );
+export function KpiRow({
+  children,
+  className,
+  banded = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  /** Full-bleed top/bottom rules — use on padded overview layouts. */
+  banded?: boolean;
+}) {
+  if (banded) {
+    return (
+      <div className={cn("-mx-6 border-y border-border px-6", className)}>
+        <div className="flex flex-wrap items-stretch">{children}</div>
+      </div>
+    );
+  }
+
+  return <div className={cn("flex flex-wrap items-stretch", className)}>{children}</div>;
 }
 
 export function KpiCard({
@@ -42,7 +55,7 @@ export function KpiCard({
   return (
     <div
       className={cn(
-        "min-w-[140px] flex-1 px-6 py-1 first:pl-0 last:pr-0 [&:not(:first-child)]:border-l [&:not(:first-child)]:border-border",
+        "min-w-[140px] flex-1 self-stretch px-6 py-5 first:pl-0 last:pr-0 [&:not(:first-child)]:border-l [&:not(:first-child)]:border-border",
         className,
       )}
     >
@@ -75,9 +88,6 @@ export function KpiCard({
               </span>
             ) : null}
           </div>
-          {trend?.label ? (
-            <p className="mt-0.5 text-overline text-muted-foreground">{trend.label}</p>
-          ) : null}
         </>
       )}
     </div>

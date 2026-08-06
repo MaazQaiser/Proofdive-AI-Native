@@ -390,6 +390,7 @@ function OrgPurchaseAddOnsDialog({
                         min={1}
                         value={mockQty}
                         onChange={(e) => setMockQty(e.target.value)}
+                        placeholder="1"
                       />
                       {errors.mockQty ? (
                         <p className="text-caption text-destructive">{errors.mockQty}</p>
@@ -404,6 +405,7 @@ function OrgPurchaseAddOnsDialog({
                         min={1}
                         value={storyQty}
                         onChange={(e) => setStoryQty(e.target.value)}
+                        placeholder="1"
                       />
                       {errors.storyQty ? (
                         <p className="text-caption text-destructive">{errors.storyQty}</p>

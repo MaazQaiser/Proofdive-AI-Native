@@ -417,6 +417,7 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
                 id="bundle-name"
                 value={bundle.name}
                 onChange={(e) => updateField("name", e.target.value)}
+                placeholder="e.g. Pro Interview Pack"
                 aria-invalid={Boolean(errors.name)}
               />
               {errors.name ? <p className="text-caption text-destructive">{errors.name}</p> : null}
@@ -447,6 +448,7 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
                 id="bundle-desc"
                 value={bundle.description}
                 onChange={(e) => updateField("description", e.target.value)}
+                placeholder="Short summary of what’s included…"
               />
             </div>
           </CardContent>
@@ -487,6 +489,7 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
                     type="number"
                     min={1}
                     value={bundle.mockInterview.quantity}
+                    placeholder="10"
                     onChange={(e) =>
                       setBundle((prev) => ({
                         ...prev,
@@ -508,6 +511,7 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
                     min={0.01}
                     step={0.01}
                     value={bundle.mockInterview.unitPrice}
+                    placeholder="29.99"
                     onChange={(e) =>
                       setBundle((prev) => ({
                         ...prev,
@@ -551,6 +555,7 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
                     type="number"
                     min={1}
                     value={bundle.storyboard.quantity}
+                    placeholder="5"
                     onChange={(e) =>
                       setBundle((prev) => ({
                         ...prev,
@@ -572,6 +577,7 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
                     min={0.01}
                     step={0.01}
                     value={bundle.storyboard.unitPrice}
+                    placeholder="19.99"
                     onChange={(e) =>
                       setBundle((prev) => ({
                         ...prev,
@@ -683,6 +689,7 @@ export function BundleFormScreen({ mode, bundleId }: Props) {
                           min={0.01}
                           step={0.01}
                           value={sel.price}
+                          placeholder="99.00"
                           onChange={(e) =>
                             setBundle((prev) => ({
                               ...prev,

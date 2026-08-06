@@ -1,7 +1,14 @@
 import { LineChartPrimitive } from "@/components/dashboard/charts/LineChartPrimitive";
 import { formatCompactCurrencyFromCents } from "@/components/dashboard/format";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { RevenuePoint } from "@/lib/superAdminMockData";
 
 type Props = { data: RevenuePoint[] };
@@ -12,12 +19,10 @@ export function RevenueAnalyticsChart({ data }: Props) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <CardTitle>Revenue Analytics</CardTitle>
-            <CardDescription>Subscription revenue trends</CardDescription>
-          </div>
-          {latestGrowthPct !== null ? (
+        <CardTitle>Revenue Analytics</CardTitle>
+        <CardDescription>Subscription revenue trends</CardDescription>
+        {latestGrowthPct !== null ? (
+          <CardAction>
             <Badge
               variant="outline"
               className={
@@ -29,8 +34,8 @@ export function RevenueAnalyticsChart({ data }: Props) {
               {latestGrowthPct >= 0 ? "+" : ""}
               {latestGrowthPct.toFixed(1)}% growth
             </Badge>
-          ) : null}
-        </div>
+          </CardAction>
+        ) : null}
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (

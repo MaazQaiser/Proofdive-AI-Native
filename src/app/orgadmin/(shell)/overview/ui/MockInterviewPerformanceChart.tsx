@@ -1,9 +1,29 @@
+import { ChartLegend } from "@/components/dashboard/charts/ChartLegend";
 import { ComboBarLineChartPrimitive } from "@/components/dashboard/charts/ComboBarLineChartPrimitive";
 import { formatCompactNumber } from "@/components/dashboard/format";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { MockInterviewPerformancePoint } from "@/lib/orgAdminMockData";
 
 type Props = { data: MockInterviewPerformancePoint[] };
+
+const BAR = {
+  key: "interviews",
+  label: "Mock Interviews Conducted",
+  color: "var(--primary)",
+} as const;
+
+const LINE = {
+  key: "avgScore",
+  label: "Average Interview Score",
+  color: "var(--scoring-yellow)",
+} as const;
 
 export function MockInterviewPerformanceChart({ data }: Props) {
   const highest = data.length > 0 ? data.reduce((a, b) => (b.avgScore > a.avgScore ? b : a)) : null;
@@ -14,6 +34,9 @@ export function MockInterviewPerformanceChart({ data }: Props) {
       <CardHeader>
         <CardTitle>Mock Interview Performance Summary</CardTitle>
         <CardDescription>Mock interview activity and interview quality trends</CardDescription>
+        <CardAction>
+          <ChartLegend items={[BAR, LINE]} />
+        </CardAction>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
@@ -23,15 +46,11 @@ export function MockInterviewPerformanceChart({ data }: Props) {
             <ComboBarLineChartPrimitive
               labels={data.map((d) => d.label)}
               bar={{
-                key: "interviews",
-                label: "Mock Interviews Conducted",
-                color: "var(--primary)",
+                ...BAR,
                 values: data.map((d) => d.interviewsConducted),
               }}
               line={{
-                key: "avgScore",
-                label: "Average Interview Score",
-                color: "var(--scoring-yellow)",
+                ...LINE,
                 values: data.map((d) => d.avgScore),
               }}
               lineMax={5}

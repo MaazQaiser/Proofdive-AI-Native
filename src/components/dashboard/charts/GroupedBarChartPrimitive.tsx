@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { niceCeiling, shouldShowLabel } from "./chartMath";
+import { useChartLabelFontSize } from "./useChartLabelFontSize";
 
 export type BarSeries = {
   key: string;
@@ -23,6 +24,8 @@ const PADDING = { left: 44, right: 12, top: 12, bottom: 28 };
 const TICK_COUNT = 4;
 
 export function GroupedBarChartPrimitive({ series, labels, height = 220, yFormatter }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const labelFontSize = useChartLabelFontSize(containerRef, WIDTH);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const plotWidth = WIDTH - PADDING.left - PADDING.right;
@@ -41,20 +44,12 @@ export function GroupedBarChartPrimitive({ series, labels, height = 220, yFormat
   const barWidth = Math.max((groupWidth - groupPadding * 2 - barGap * (series.length - 1)) / series.length, 1);
 
   return (
-    <div className="relative w-full">
-      <div className="mb-3 flex flex-wrap gap-4">
-        {series.map((s) => (
-          <div key={s.key} className="flex items-center gap-1.5 text-overline text-muted-foreground">
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
-            {s.label}
-          </div>
-        ))}
-      </div>
+    <div ref={containerRef} className="relative w-full">
       <svg viewBox={`0 0 ${WIDTH} ${height}`} className="h-auto w-full overflow-visible" role="img" aria-label="Bar chart">
         {ticks.map((t, i) => (
           <g key={i}>
             <line x1={PADDING.left} x2={WIDTH - PADDING.right} y1={yFor(t)} y2={yFor(t)} stroke="var(--border)" strokeDasharray="4 4" />
-            <text x={PADDING.left - 8} y={yFor(t)} textAnchor="end" dominantBaseline="middle" className="fill-muted-foreground text-[10px]">
+            <text x={PADDING.left - 8} y={yFor(t)} textAnchor="end" dominantBaseline="middle" className="fill-muted-foreground" fontSize={labelFontSize}>
               {format(t)}
             </text>
           </g>
@@ -87,7 +82,8 @@ export function GroupedBarChartPrimitive({ series, labels, height = 220, yFormat
                   x={groupX + (groupWidth - groupPadding * 2) / 2}
                   y={height - 6}
                   textAnchor="middle"
-                  className="fill-muted-foreground text-[10px]"
+                  className="fill-muted-foreground"
+                  fontSize={labelFontSize}
                 >
                   {label}
                 </text>

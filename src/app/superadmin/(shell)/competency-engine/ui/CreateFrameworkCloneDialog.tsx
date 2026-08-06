@@ -24,7 +24,7 @@ type Props = {
   onConfirm: (name: string) => void;
 };
 
-export function CreateFrameworkCopyDialog({
+export function CreateFrameworkCloneDialog({
   open,
   source,
   isNameTaken,
@@ -35,7 +35,7 @@ export function CreateFrameworkCopyDialog({
 
   useEffect(() => {
     if (!open || !source) return;
-    setName(`${source.name} (Copy)`);
+    setName(`${source.name} (Clone)`);
   }, [open, source]);
 
   function handleConfirm() {
@@ -55,7 +55,7 @@ export function CreateFrameworkCopyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create framework copy</DialogTitle>
+          <DialogTitle>Create framework clone</DialogTitle>
           <DialogDescription>
             Duplicate{" "}
             <span className="font-medium text-foreground">
@@ -65,9 +65,9 @@ export function CreateFrameworkCopyDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-1.5 py-2">
-          <Label htmlFor="framework-copy-name">Version name</Label>
+          <Label htmlFor="framework-clone-name">Version name</Label>
           <Input
-            id="framework-copy-name"
+            id="framework-clone-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Acme Custom Framework"
@@ -85,7 +85,7 @@ export function CreateFrameworkCopyDialog({
             Cancel
           </Button>
           <Button type="button" onClick={handleConfirm}>
-            Create copy
+            Create clone
           </Button>
         </DialogFooter>
       </DialogContent>

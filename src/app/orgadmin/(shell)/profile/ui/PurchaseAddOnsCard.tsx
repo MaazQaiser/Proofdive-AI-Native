@@ -90,6 +90,7 @@ export function PurchaseAddOnsCard() {
                 setQuantity(e.target.value);
                 setError(null);
               }}
+              placeholder="1"
               aria-invalid={!!error}
             />
             {error ? <p className="text-caption text-destructive">{error}</p> : null}

@@ -17,11 +17,8 @@ import type { Partner } from "@/lib/superAdminPartners";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 
 function initialsFor(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return parts
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
+  const first = name.trim()[0];
+  return first ? first.toUpperCase() : "";
 }
 
 export function PartnerUserMenu() {
@@ -37,7 +34,7 @@ export function PartnerUserMenu() {
         <button
           type="button"
           aria-label="Account menu"
-          className="mb-2.5 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-muted text-caption font-medium text-muted-foreground">
@@ -59,16 +56,13 @@ export function PartnerUserMenu() {
           </div>
         </div>
         <DropdownMenuSeparator className="my-0" />
-        <div className="flex justify-end p-1">
-          <DropdownMenuItem
-            variant="destructive"
-            aria-label="Logout"
-            className="size-9 justify-center p-0"
-            onClick={() => router.push("/login")}
-          >
-            <LogOut className="h-4 w-4" />
-          </DropdownMenuItem>
-        </div>
+        <DropdownMenuItem
+          className="gap-2 rounded-none px-4 py-3 text-caption font-medium text-foreground [&_svg]:text-foreground"
+          onClick={() => router.push("/login")}
+        >
+          <LogOut className="h-4 w-4" />
+          Sign out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
