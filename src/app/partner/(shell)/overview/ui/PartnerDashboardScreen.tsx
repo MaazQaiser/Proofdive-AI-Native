@@ -1,13 +1,12 @@
 "use client";
 
-import { Copy, Link2 } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import { formatNumber } from "@/components/dashboard/format";
 import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopyableReferralCode } from "@/components/ui/copyable-referral-code";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTitle } from "@/components/ui/page-title";
 import {
@@ -57,15 +56,6 @@ export function PartnerDashboardScreen() {
 
   const maxFunnel = Math.max(...funnel.map((s) => s.count), 1);
 
-  async function handleCopyReferralCode() {
-    try {
-      await navigator.clipboard.writeText(referralCode);
-      toast.success("Referral code copied.");
-    } catch {
-      toast.error("Referral code could not be copied. Please try again.");
-    }
-  }
-
   if (!dataset) {
     return (
       <Card>
@@ -77,44 +67,44 @@ export function PartnerDashboardScreen() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="-mx-6">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
+      <div className="shrink-0">
         <PageHeader>
           <PageTitle>Dashboard &amp; Analytics</PageTitle>
           <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={granularity}
-            onValueChange={(v) => setGranularity(v as PartnerDateRangeGranularity)}
-          >
-            <SelectTrigger
-              size="sm"
-              variant="filter"
-              aria-label="Date range"
-              className="border border-extended-green-blue/25 px-2.5 py-1.5 text-caption [&_svg]:!size-4"
+            <Select
+              value={granularity}
+              onValueChange={(v) => setGranularity(v as PartnerDateRangeGranularity)}
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PARTNER_DATE_RANGE_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={conversionFilter}
-            onValueChange={(v) => setConversionFilter(v as ConversionStatusFilter)}
-          >
-            <SelectTrigger size="sm" variant="filter" active={conversionFilter !== "all"}>
-              <SelectValue placeholder="Conversion status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Conversions</SelectItem>
-              <SelectItem value="converted">Converted only</SelectItem>
-              <SelectItem value="not_converted">Not converted</SelectItem>
-            </SelectContent>
-          </Select>
+              <SelectTrigger
+                size="sm"
+                variant="filter"
+                aria-label="Date range"
+                className="border border-extended-green-blue/25 px-2.5 py-1.5 text-caption [&_svg]:!size-4"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PARTNER_DATE_RANGE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={conversionFilter}
+              onValueChange={(v) => setConversionFilter(v as ConversionStatusFilter)}
+            >
+              <SelectTrigger size="sm" variant="filter" active={conversionFilter !== "all"}>
+                <SelectValue placeholder="Conversion status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Conversions</SelectItem>
+                <SelectItem value="converted">Converted only</SelectItem>
+                <SelectItem value="not_converted">Not converted</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </PageHeader>
         <KpiRow banded className="mx-0 border-t-0">
@@ -124,23 +114,21 @@ export function PartnerDashboardScreen() {
         </KpiRow>
       </div>
 
-      <Card className="gap-0 py-0">
-        <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6">
+        <Card className="gap-0 py-0">
+          <CardContent className="flex items-center gap-2 p-4">
             <Link2 className="h-4 w-4 text-muted-foreground" />
             <span className="text-caption text-muted-foreground">Referral Code</span>
-            <span className="font-mono text-h6 font-semibold text-foreground">{referralCode}</span>
-          </div>
-          <Button size="sm" variant="outline" onClick={handleCopyReferralCode}>
-            <Copy className="h-3.5 w-3.5" />
-            Copy
-          </Button>
-        </CardContent>
-      </Card>
+            <CopyableReferralCode
+              code={referralCode}
+              codeClassName="text-h6 font-semibold text-foreground"
+            />
+          </CardContent>
+        </Card>
 
-      <Card>
-          <CardHeader>
-            <CardTitle>Conversion Funnel</CardTitle>
+        <Card>
+          <CardHeader className="gap-1">
+            <CardTitle className="text-h5 font-semibold">Conversion Funnel</CardTitle>
             <CardDescription>
               User journey from referral code usage through paid conversion.
             </CardDescription>
@@ -181,6 +169,7 @@ export function PartnerDashboardScreen() {
             )}
           </CardContent>
         </Card>
+      </div>
     </div>
   );
 }

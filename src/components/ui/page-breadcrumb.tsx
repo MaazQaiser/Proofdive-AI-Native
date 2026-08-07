@@ -20,7 +20,7 @@ export function PageBreadcrumb({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-wrap items-center gap-3", className)}>
+    <div className={cn("flex min-w-0 flex-wrap items-center gap-3", className)}>
       <Link
         href={parentHref}
         className="text-h5 font-medium text-primary transition-colors hover:underline"
@@ -28,7 +28,7 @@ export function PageBreadcrumb({
         {parentLabel}
       </Link>
       <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
-      <PageTitle>{title}</PageTitle>
+      <PageTitle className="min-w-0 truncate">{title}</PageTitle>
     </div>
   );
 }

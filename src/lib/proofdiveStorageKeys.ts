@@ -47,6 +47,8 @@ export const StorageKeys = {
   orgAdminPolicyAcknowledgements: "proofdive.orgAdmin.policyAcknowledgements.v1",
   /** Org Admin in-app notifications list. */
   orgAdminNotifications: "proofdive.orgAdmin.notifications.v1",
+  /** IDs of Org Admin notifications marked read. */
+  orgAdminNotificationReadIds: "proofdive.orgAdmin.notificationReadIds.v1",
   /** Saved mock payment methods (Billing & Subscription section). */
   orgAdminPaymentMethods: "proofdive.orgAdmin.paymentMethods.v1",
   /** Mock invoice/payment history (Billing & Subscription section). */
@@ -106,6 +108,8 @@ export const StorageKeys = {
   partnerTotalWithdrawnCents: "proofdive.partner.totalWithdrawnCents.v1",
   /** Partner in-app notifications list. */
   partnerNotifications: "proofdive.partner.notifications.v1",
+  /** IDs of Partner notifications marked read. */
+  partnerNotificationReadIds: "proofdive.partner.notificationReadIds.v1",
   /** Whether the Org Admin demo account has completed invite activation (set password). */
   orgAdminAccountActivated: "proofdive.orgAdmin.accountActivated.v1",
   /** Whether the Partner demo account has completed invite activation (set password). */
@@ -116,6 +120,8 @@ export const StorageKeys = {
   superAdminSupportRequests: "proofdive.superAdmin.supportRequests.v1",
   /** Super Admin in-app notifications. */
   superAdminNotifications: "proofdive.superAdmin.notifications.v1",
+  /** IDs of Super Admin notifications marked read. */
+  superAdminNotificationReadIds: "proofdive.superAdmin.notificationReadIds.v1",
   /** Super Admin profile overrides (full name). */
   superAdminProfileOverrides: "proofdive.superAdmin.profileOverrides.v2",
   /** Super Admin audit log entries. */

@@ -31,8 +31,8 @@ export function MockInterviewPerformanceChart({ data }: Props) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Mock Interview Performance Summary</CardTitle>
+      <CardHeader className="gap-1">
+        <CardTitle className="text-h5 font-semibold">Mock Interview Performance Summary</CardTitle>
         <CardDescription>Mock interview activity and interview quality trends</CardDescription>
         <CardAction>
           <ChartLegend items={[BAR, LINE]} />

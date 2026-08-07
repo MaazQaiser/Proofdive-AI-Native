@@ -13,6 +13,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { OrgAdminUserDetailDrawer } from "@/app/orgadmin/(shell)/users/ui/OrgAdminUserDetailDrawer";
+import { EditUserDialog } from "@/app/orgadmin/(shell)/users/ui/EditUserDialog";
 import { OrgAdminUserStatusPill } from "@/app/orgadmin/(shell)/users/ui/OrgAdminUserStatusPill";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,8 +64,10 @@ export function CandidatesListScreen() {
   } | null>(null);
   const [removeTarget, setRemoveTarget] = useState<OrgAdminUser | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
 
   const selectedUser = candidates.find((u) => u.id === selectedUserId) ?? null;
+  const editUser = candidates.find((u) => u.id === editUserId) ?? null;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -137,7 +140,7 @@ export function CandidatesListScreen() {
   }
 
   return (
-    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
       <PageHeader>
         <PageTitle>Candidates</PageTitle>
       </PageHeader>
@@ -179,7 +182,7 @@ export function CandidatesListScreen() {
         </Select>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         {pageRows.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-6 py-20 text-center">
             <Users className="h-8 w-8 text-muted-foreground" />
@@ -234,7 +237,7 @@ export function CandidatesListScreen() {
                         <DropdownMenuItem onClick={() => handleViewDetails(user)}>
                           View Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleViewDetails(user)}>
+                        <DropdownMenuItem onClick={() => setEditUserId(user.id)}>
                           Edit User
                         </DropdownMenuItem>
                         {user.status === "invited" ? (
@@ -267,36 +270,33 @@ export function CandidatesListScreen() {
             </TableBody>
           </table>
         )}
-      </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
-        <div className="text-caption flex items-center gap-2 text-muted-foreground">
-          <span>Rows per page</span>
-          <Select
-            value={String(rowsPerPage)}
-            onValueChange={(v) => {
-              setRowsPerPage(Number(v));
-              resetToFirstPage();
-            }}
-          >
-            <SelectTrigger size="sm" className="w-[72px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ROWS_PER_PAGE_OPTIONS.map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="text-caption flex items-center gap-4 text-muted-foreground">
-          <span>
-            {filtered.length === 0
-              ? "0 items found"
-              : `${filtered.length} item${filtered.length === 1 ? "" : "s"} found, displaying ${pageStart + 1} to ${pageEnd}`}
-          </span>
+        <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-4 border-t border-border app-canvas-wash px-6 py-4">
+          <div className="text-caption flex items-center gap-2 text-muted-foreground">
+            <span>Rows per page</span>
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => {
+                setRowsPerPage(Number(v));
+                resetToFirstPage();
+              }}
+            >
+              <SelectTrigger size="sm" className="w-[72px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROWS_PER_PAGE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-caption flex items-center gap-4 text-muted-foreground">
+            <span>
+              {`page ${currentPage} of ${totalPages}`}
+            </span>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -334,6 +334,7 @@ export function CandidatesListScreen() {
             >
               <ChevronsRight className="h-4 w-4" />
             </Button>
+          </div>
           </div>
         </div>
       </div>
@@ -393,13 +394,25 @@ export function CandidatesListScreen() {
         </DialogContent>
       </Dialog>
 
+      <EditUserDialog
+        open={!!editUser}
+        onOpenChange={(open) => {
+          if (!open) setEditUserId(null);
+        }}
+        user={editUser}
+        onUpdate={handleUpdateUser}
+      />
+
       <OrgAdminUserDetailDrawer
         user={selectedUser}
         onOpenChange={(open) => {
           if (!open) setSelectedUserId(null);
         }}
-        onUpdate={handleUpdateUser}
         onRequestStatusChange={handleRequestStatusChange}
+        onRequestEdit={(user) => {
+          setSelectedUserId(null);
+          setEditUserId(user.id);
+        }}
       />
     </div>
   );

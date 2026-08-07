@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { CheckCircle2, ChevronDown, ClipboardCheck, Clock3, Eye, FileText, ListChecks, MicOff, RotateCcw, SkipForward, Video, VideoOff } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, ClipboardCheck, Eye, MicOff, RotateCcw, Video, VideoOff, Zap } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { cn } from "@/components/cn";
@@ -25,14 +24,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   InterviewReadinessCard,
   readinessPillarsFromReport,
@@ -55,7 +46,6 @@ import {
   savedDivesForRole,
   type PillarId,
 } from "@/lib/storyboardDraft";
-import { ONBOARDING_INTRO_VIDEO_SRC } from "@/lib/onboardingIntroVideo";
 import { hasCompletedAnyTrainingForRole } from "@/lib/trainingJourneyProgress";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 import { useStoryboardDiveStore } from "@/lib/useStoryboardDiveStore";
@@ -90,19 +80,6 @@ function sessionTypeLabel(report: InterviewReport): string {
   return `Mock session · ${min} min`;
 }
 
-function fmtShortDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "Unknown date";
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
-}
-
-function fmtShortDuration(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds));
-  const mm = Math.floor(s / 60);
-  const ss = String(s % 60).padStart(2, "0");
-  return `${mm}m ${ss}s`;
-}
-
 function LatestReportSummary({
   report,
   onViewReport,
@@ -112,31 +89,44 @@ function LatestReportSummary({
   onViewReport: () => void;
   onRetake: () => void;
 }) {
+  const [open, setOpen] = useState(true);
+
   return (
     <section className="mt-8 w-full border-t border-border pt-8">
-      <h2 className="text-h5 text-text-primary">Mock Interview report</h2>
-      <p className="mt-1 text-caption text-text-secondary">
-        {fmtShortDate(report.meta.createdAt)}
-        {" · "}
-        {fmtShortDuration(report.meta.durationSeconds)}
-      </p>
-      <InterviewReadinessCard
-        className="mt-3"
-        title="Overall Performance"
-        overall={report.overallScore}
-        pillars={readinessPillarsFromReport(report)}
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
       >
-        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-extended-green pt-4">
-          <Button type="button" variant="ghost" size="sm" onClick={onViewReport}>
-            <Eye aria-hidden />
-            View full report
-          </Button>
-          <Button type="button" size="sm" onClick={onRetake}>
-            <RotateCcw aria-hidden />
-            Retake interview
-          </Button>
-        </div>
-      </InterviewReadinessCard>
+        <h2 className="text-h5 text-text-primary">View interview report</h2>
+        <ChevronDown
+          className={cn(
+            "size-5 shrink-0 text-text-secondary transition-transform duration-200",
+            open && "rotate-180",
+          )}
+          aria-hidden
+        />
+      </button>
+      {open ? (
+        <InterviewReadinessCard
+          className="mt-3"
+          title="Overall Performance"
+          overall={report.overallScore}
+          pillars={readinessPillarsFromReport(report)}
+        >
+          <div className="flex flex-wrap items-center justify-end gap-2 border-t border-extended-green pt-4">
+            <Button type="button" variant="ghost" size="sm" onClick={onViewReport}>
+              <Eye aria-hidden />
+              View full report
+            </Button>
+            <Button type="button" size="sm" onClick={onRetake}>
+              <RotateCcw aria-hidden />
+              Retake interview
+            </Button>
+          </div>
+        </InterviewReadinessCard>
+      ) : null}
     </section>
   );
 }
@@ -157,7 +147,7 @@ const CONSENT_TIPS: ReactNode[] = [
 export function InterviewScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  /** When set (e.g. coach “quick interview” CTA), always show the first-time 10 min flow even if post-journey landing would apply. */
+  /** When set (e.g. coach “quick interview” CTA), always show the first-mock landing even if post-journey landing would apply. */
   const forceFirstMockFlow =
     searchParams.get("first") === "1" || searchParams.get("first")?.toLowerCase() === "true";
   /** When set (e.g. coach journey “Start interview”), show the “welcome back” landing. */
@@ -212,16 +202,10 @@ export function InterviewScreen() {
   const showPostJourneyMockLanding =
     (forceWelcomeBackLanding || (trainingComplete && hasCreatedStoryboard)) && !forceFirstMockFlow;
 
-  const [jobDescriptionName, setJobDescriptionName] = useState<string>("");
-  const [cameraEnabled, setCameraEnabled] = useState(false);
-  const [sessionLength, setSessionLength] = useState<"short" | "full">("short");
-  const jobDescriptionInputRef = useRef<HTMLInputElement | null>(null);
   const [consentOpen, setConsentOpen] = useState(false);
   const [cancelRecording, setCancelRecording] = useState(false);
   const [turnOffCamera, setTurnOffCamera] = useState(false);
   const [sessionKind, setSessionKind] = useState<InterviewSessionKind | null>(null);
-  const [introLearnModalOpen, setIntroLearnModalOpen] = useState(false);
-  const introLearnVideoRef = useRef<HTMLVideoElement>(null);
   const [recentStatsOpen, setRecentStatsOpen] = useState(false);
   const [recentReports, setRecentReports] = useState<InterviewReport[]>([]);
   const [latestReport, setLatestReport] = useState<InterviewReport | null>(null);
@@ -230,34 +214,6 @@ export function InterviewScreen() {
   const [selectivePillarIds, setSelectivePillarIds] = useState<PillarId[]>([]);
   const [pillarPickError, setPillarPickError] = useState<string | null>(null);
   const [pendingSelectivePillars, setPendingSelectivePillars] = useState<PillarId[] | null>(null);
-
-  const closeIntroLearnModal = useCallback(() => {
-    const v = introLearnVideoRef.current;
-    if (v) {
-      v.pause();
-      v.currentTime = 0;
-    }
-    setIntroLearnModalOpen(false);
-  }, []);
-
-  useEffect(() => {
-    if (!introLearnModalOpen) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeIntroLearnModal();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [introLearnModalOpen, closeIntroLearnModal]);
-
-  useEffect(() => {
-    if (!introLearnModalOpen) return;
-    void introLearnVideoRef.current?.play().catch(() => {});
-  }, [introLearnModalOpen]);
 
   useEffect(() => {
     setLatestReport(pickRecentReports(role, 1)[0] ?? null);
@@ -378,17 +334,17 @@ export function InterviewScreen() {
               <div className="mt-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
                 <CardButton
                   variant="primary"
-                  icon={<Clock3 />}
+                  icon={<Video />}
                   title="30-minute full mock"
-                  subtitle="All competency pillars, aligned with your storyboard."
+                  subtitle="Full practice across every competency pillar."
                   illustrationSrc="/brand/illustration-1.svg"
                   onClick={() => openConsent("full_competency")}
                 />
                 <CardButton
                   variant="gray"
-                  icon={<ListChecks />}
+                  icon={<Zap />}
                   title="Short interview"
-                  subtitle="Focus on selected competency pillars when time is tight."
+                  subtitle="A quicker session when time is tight."
                   illustrationSrc="/brand/illustration-4.svg"
                   onClick={openSelectivePillarPicker}
                 />
@@ -512,164 +468,40 @@ export function InterviewScreen() {
                 </p>
               ) : (
                 <p className="mt-3 w-full text-agent-question leading-relaxed text-text-primary">
-                  This is a first mock interview. You’ll be judged based on the ProofDive Competency
-                  Engine.{" "}
+                  This is a timed mock interview. It assesses how you demonstrate
+                  capability under interview conditions, using the ProofDive
+                  competency standard.{" "}
                   <button
                     type="button"
-                    className="font-semibold text-primary underline-offset-2 hover:underline"
-                    onClick={() => setIntroLearnModalOpen(true)}
+                    onClick={() => openConsent("full_competency")}
+                    className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                   >
-                    Learn more
+                    Start the interview
+                    <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />
                   </button>
-                  .
                 </p>
               )}
 
-              <div className="mt-4 overflow-hidden rounded-[16px] border border-[#dde7e9] bg-card">
-                <input
-                  ref={jobDescriptionInputRef}
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.doc,.docx,.txt"
-                  onChange={(e) => {
-                    const file = e.currentTarget.files?.[0];
-                    setJobDescriptionName(file?.name ?? "");
-                  }}
-                />
-
-                {roleProfile?.jobDescription ? (
-                  <div className="flex items-start gap-3 px-5 py-4">
-                    <CheckCircle2
-                      className="mt-0.5 size-5 shrink-0 text-scoring-green-fg"
-                      aria-hidden
-                    />
-                    <div className="min-w-0">
-                      <p className="text-body-sm font-semibold text-extended-cyan-green">
-                        Job description ready
-                      </p>
-                      <p className="mt-0.5 text-caption leading-snug text-text-secondary">
-                        Using the job description from your profile to tailor this interview.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex min-w-0 items-start gap-3">
-                      <FileText
-                        className="mt-0.5 size-5 shrink-0 text-extended-cyan-green"
-                        aria-hidden
-                      />
-                      <div className="min-w-0">
-                        <p className="text-body-sm font-semibold text-extended-cyan-green">
-                          Add a job description
-                        </p>
-                        <p className="mt-0.5 text-caption leading-snug text-text-secondary">
-                          Optional — helps tailor the interview.
-                        </p>
-                        {jobDescriptionName ? (
-                          <p className="mt-1.5 text-overline text-text-secondary">
-                            {jobDescriptionName}
-                          </p>
-                        ) : null}
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0"
-                      onClick={() => jobDescriptionInputRef.current?.click()}
-                    >
-                      Upload JD
-                    </Button>
-                  </div>
-                )}
-
-                <label className="flex cursor-pointer items-start gap-3 border-t border-[#dfe7e9] px-5 py-4 transition-colors duration-200 hover:bg-[#edf5f7]/40 has-[:focus-visible]:bg-[#edf5f7]/40">
-                  <Video
-                    className="mt-0.5 size-5 shrink-0 text-extended-cyan-green"
-                    aria-hidden
+              {latestReport ? (
+                <div className="mt-5 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+                  <CardButton
+                    variant="primary"
+                    icon={<Video />}
+                    title="30-minute full mock"
+                    subtitle="Full practice across every competency pillar."
+                    illustrationSrc="/brand/illustration-1.svg"
+                    onClick={() => openConsent("full_competency")}
                   />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="text-body-sm font-semibold text-extended-cyan-green">
-                        Enable camera
-                      </span>
-                      <span className="text-overline text-text-secondary">Optional</span>
-                    </span>
-                    <span className="mt-0.5 block text-caption leading-snug text-text-secondary">
-                      Captures video for gesture and presence analytics.
-                    </span>
-                  </span>
-                  <Switch
-                    checked={cameraEnabled}
-                    onCheckedChange={setCameraEnabled}
-                    className="mt-0.5"
-                    aria-label="Enable camera"
+                  <CardButton
+                    variant="gray"
+                    icon={<Zap />}
+                    title="Short interview"
+                    subtitle="A quicker session when time is tight."
+                    illustrationSrc="/brand/illustration-4.svg"
+                    onClick={() => openConsent("first_time")}
                   />
-                </label>
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-center gap-2.5">
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="sm"
-                  className="text-extended-dark-cyan hover:bg-transparent hover:text-extended-dark-cyan"
-                >
-                  <Link href="/coach?welcome=1">
-                    <SkipForward aria-hidden />
-                    Skip interview
-                  </Link>
-                </Button>
-                <div className="inline-flex overflow-hidden rounded-md">
-                  <Button
-                    size="sm"
-                    className="rounded-none"
-                    onClick={() => {
-                      openConsent(sessionLength === "full" ? "full_competency" : "first_time");
-                    }}
-                  >
-                    Start mock interview · {sessionLength === "full" ? "30 min" : "10 min"}
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        size="sm"
-                        aria-label="Choose session length"
-                        className="rounded-none border-l border-primary-foreground/25 px-2!"
-                      >
-                        <ChevronDown className="size-4" aria-hidden />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="min-w-[14rem]">
-                      <DropdownMenuLabel className="text-overline font-normal text-muted-foreground">
-                        Session length
-                      </DropdownMenuLabel>
-                      <DropdownMenuRadioGroup
-                        value={sessionLength}
-                        onValueChange={(value) => {
-                          if (value === "short" || value === "full") setSessionLength(value);
-                        }}
-                      >
-                        <DropdownMenuRadioItem value="short" className="flex flex-col items-start gap-0.5 py-2.5">
-                          <span className="font-medium">Short · 10 min</span>
-                          <span className="text-caption text-muted-foreground">
-                            Focused first mock across core competencies.
-                          </span>
-                        </DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="full" className="flex flex-col items-start gap-0.5 py-2.5">
-                          <span className="font-medium">Full · 30 min</span>
-                          <span className="text-caption text-muted-foreground">
-                            All competency pillars in a complete session.
-                          </span>
-                        </DropdownMenuRadioItem>
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
-              </div>
+              ) : null}
 
               {latestReportSummaryEl}
             </>
@@ -891,7 +723,7 @@ export function InterviewScreen() {
                   const payload: Record<string, unknown> = {
                     cancelRecording,
                     turnOffCamera,
-                    cameraEnabled,
+                    cameraEnabled: false,
                     sessionKind: kind,
                   };
                   if (
@@ -920,52 +752,6 @@ export function InterviewScreen() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {introLearnModalOpen
-        ? createPortal(
-        <div
-          className="fixed inset-0 z-[110] overflow-y-auto bg-black/40"
-          onClick={closeIntroLearnModal}
-          role="presentation"
-        >
-          <div className="flex min-h-full items-center justify-center p-4 sm:p-8">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="interview-intro-video-title"
-            className="relative w-full max-w-2xl overflow-hidden rounded-lg border border-border bg-card"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
-              <span
-                id="interview-intro-video-title"
-                className="min-w-0 flex-1 truncate text-caption font-semibold text-text-primary"
-              >
-                Learn about ProofDive
-              </span>
-              <button
-                type="button"
-                onClick={closeIntroLearnModal}
-                className="inline-flex h-9 min-w-[72px] shrink-0 items-center justify-center rounded-full border border-border bg-muted px-3 text-caption font-semibold text-text-primary transition hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-              >
-                Close
-              </button>
-            </div>
-            <div className="bg-black p-2 sm:p-3">
-              <video
-                ref={introLearnVideoRef}
-                className="mx-auto max-h-[min(52vh,480px)] w-full rounded-lg object-contain"
-                controls
-                playsInline
-                src={ONBOARDING_INTRO_VIDEO_SRC}
-              />
-            </div>
-          </div>
-          </div>
-        </div>,
-            document.body,
-          )
-        : null}
 
       <CoachBottomChatBar />
       <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />

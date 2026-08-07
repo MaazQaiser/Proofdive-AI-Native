@@ -283,7 +283,7 @@ export function TrainingScreen() {
               <Link href="/onboarding">
                 <Button>Go to onboarding</Button>
               </Link>
-              <Link href="/coach?journey=1">
+              <Link href="/coach">
                 <Button variant="outline">Back to Coach</Button>
               </Link>
             </CardContent>

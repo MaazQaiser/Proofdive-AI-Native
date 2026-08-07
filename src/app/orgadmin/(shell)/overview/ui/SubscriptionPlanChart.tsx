@@ -20,8 +20,8 @@ export function SubscriptionPlanChart({ data }: Props) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Subscription Plan Overview</CardTitle>
+      <CardHeader className="gap-1">
+        <CardTitle className="text-h5 font-semibold">Subscription Plan Overview</CardTitle>
         <CardDescription>Real-time usage consumption against your purchased plan</CardDescription>
         <CardAction>
           <ChartLegend items={modules.map(({ key, label, color }) => ({ key, label, color }))} />

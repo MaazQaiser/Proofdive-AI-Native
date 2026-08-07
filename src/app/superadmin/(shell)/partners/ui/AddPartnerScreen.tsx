@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -63,14 +63,58 @@ function createInitialFormState(): FormState {
   };
 }
 
+function formFromPartner(partner: Partner): FormState {
+  return {
+    fullName: partner.fullName,
+    email: partner.email,
+    phoneCountryCode: partner.phoneCountryCode,
+    phone: partner.phone,
+    country: partner.country,
+    entityType: partner.entityType,
+    companyName: partner.companyName,
+    website: partner.website,
+    audienceType: partner.audienceType,
+    partnerType: partner.partnerType,
+    discountPercent: partner.discountPercent ? String(partner.discountPercent) : "",
+    commissionType: partner.commissionType,
+    commissionPercent: String(partner.commissionPercent),
+    commissionFixedDollars: String(partner.commissionFixedCents / 100),
+  };
+}
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type FieldErrors = Record<string, string>;
 
-export function AddPartnerScreen() {
+type AddPartnerScreenProps = {
+  mode?: "create" | "edit";
+  partnerId?: string;
+};
+
+export function AddPartnerScreen({ mode = "create", partnerId }: AddPartnerScreenProps) {
   const router = useRouter();
-  const { addPartner, existingEmails, existingReferralCodes } = usePartners();
+  const { partners, addPartner, updatePartner, existingEmails, existingReferralCodes, hydrated } =
+    usePartners();
+  const isEdit = mode === "edit";
+
+  const existingPartner = useMemo(
+    () => (partnerId ? partners.find((p) => p.id === partnerId) : undefined),
+    [partners, partnerId],
+  );
+
   const [form, setForm] = useState<FormState>(createInitialFormState);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [hydratedForm, setHydratedForm] = useState(!isEdit);
+
+  useEffect(() => {
+    if (!isEdit || !hydrated) return;
+    if (!existingPartner) {
+      setHydratedForm(true);
+      return;
+    }
+    setForm(formFromPartner(existingPartner));
+    setErrors({});
+    setHydratedForm(true);
+  }, [isEdit, hydrated, existingPartner]);
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -88,8 +132,13 @@ export function AddPartnerScreen() {
     if (!form.fullName.trim()) next.fullName = "Full Name is required.";
     if (!form.email.trim()) next.email = "Email Address is required.";
     else if (!EMAIL_PATTERN.test(form.email.trim())) next.email = "Please enter a valid email address.";
-    else if (existingEmails.includes(form.email.trim().toLowerCase()))
-      next.email = "Email address already exists.";
+    else {
+      const lower = form.email.trim().toLowerCase();
+      const takenByOther =
+        existingEmails.includes(lower) &&
+        (!existingPartner || existingPartner.email.toLowerCase() !== lower);
+      if (takenByOther) next.email = "Email address already exists.";
+    }
     if (!form.phone.trim()) next.phone = "Please enter a valid phone number.";
     else if (!/^\d{6,12}$/.test(form.phone.trim())) next.phone = "Please enter a valid phone number.";
     if (!form.country) next.country = "Country / Region is required.";
@@ -121,10 +170,39 @@ export function AddPartnerScreen() {
     return next;
   }
 
+  function handleDiscard() {
+    if (!existingPartner) return;
+    setForm(formFromPartner(existingPartner));
+    setErrors({});
+  }
+
   function handleSubmit() {
     const nextErrors = validateAll();
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
+      return;
+    }
+
+    if (isEdit && existingPartner) {
+      updatePartner(existingPartner.id, {
+        fullName: form.fullName.trim(),
+        email: form.email.trim().toLowerCase(),
+        phoneCountryCode: form.phoneCountryCode,
+        phone: form.phone.trim(),
+        country: form.country,
+        entityType: form.entityType as EntityType,
+        companyName: form.entityType === "company" ? form.companyName.trim() : "",
+        website: form.website.trim(),
+        audienceType: form.audienceType as AudienceType,
+        partnerType: form.partnerType as PartnerType,
+        expectedUserVolume: existingPartner.expectedUserVolume,
+        discountPercent: form.discountPercent.trim() ? Number(form.discountPercent) : 0,
+        commissionType: form.commissionType as CommissionType,
+        commissionPercent: Number(form.commissionPercent) || existingPartner.commissionPercent,
+        commissionFixedCents: Math.round((Number(form.commissionFixedDollars) || 0) * 100),
+      });
+      toast.success("Partner updated successfully.");
+      router.push("/superadmin/partners");
       return;
     }
 
@@ -169,26 +247,67 @@ export function AddPartnerScreen() {
     router.push("/superadmin/partners");
   }
 
-  return (
-    <div className="flex flex-col gap-8">
-      <PageHeader sticky bleed>
-        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  if (isEdit && hydratedForm && !existingPartner) {
+    return (
+      <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
+        <PageHeader>
           <PageBreadcrumb
             parentHref="/superadmin/partners"
             parentLabel="Partners"
-            title="Add New Partner"
+            title="Partner not found"
           />
-          <div className="flex shrink-0 flex-wrap items-center gap-4">
+        </PageHeader>
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8">
+          <Card>
+            <CardContent className="py-10 text-center">
+              <p className="text-caption text-muted-foreground">This partner does not exist.</p>
+              <Button className="mt-4" asChild>
+                <Link href="/superadmin/partners">Back to listing</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEdit && !hydratedForm) {
+    return null;
+  }
+
+  return (
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
+      <PageHeader>
+        <div className="flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <PageBreadcrumb
+            className="min-w-0"
+            parentHref="/superadmin/partners"
+            parentLabel="Partners"
+            title={isEdit ? `Edit: ${existingPartner?.fullName ?? "Partner"}` : "Add New Partner"}
+          />
+          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:gap-4">
             <Button type="button" variant="outline" asChild>
               <Link href="/superadmin/partners">Cancel</Link>
             </Button>
-            <Button type="button" onClick={handleSubmit}>
-              Generate Referral Code &amp; Send Invite
-            </Button>
+            {isEdit ? (
+              <>
+                <Button type="button" variant="ghost" onClick={handleDiscard}>
+                  Discard Changes
+                </Button>
+                <Button type="button" onClick={handleSubmit}>
+                  Save Changes
+                </Button>
+              </>
+            ) : (
+              <Button type="button" onClick={handleSubmit}>
+                Generate Referral Code &amp; Send Invite
+              </Button>
+            )}
           </div>
         </div>
       </PageHeader>
 
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
         <Card>
           <CardHeader>
@@ -478,6 +597,7 @@ export function AddPartnerScreen() {
             </p>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

@@ -6,7 +6,8 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CopyableReferralCode } from "@/components/ui/copyable-referral-code";
 import { DetailField, DetailGrid, DetailSection } from "@/components/ui/detail-field";
 import { PageBreadcrumb } from "@/components/ui/page-breadcrumb";
 import { PageHeader } from "@/components/ui/page-header";
@@ -78,29 +79,32 @@ export function CommissionDetailScreen({ partnerId }: Props) {
 
   if (!partner) {
     return (
-      <div className="flex flex-col gap-8">
-        <PageHeader sticky bleed>
+      <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
+        <PageHeader>
           <PageBreadcrumb
             parentHref="/superadmin/commissions"
             parentLabel="Commissions"
             title="Partner not found"
           />
         </PageHeader>
-        <Card>
-          <CardContent className="py-16 text-center text-caption text-muted-foreground">
-            Unable to load partner commission details at the moment.
-          </CardContent>
-        </Card>
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8">
+          <Card>
+            <CardContent className="py-16 text-center text-caption text-muted-foreground">
+              Unable to load partner commission details at the moment.
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader sticky bleed>
-        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
+      <PageHeader>
+        <div className="flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 flex-wrap items-center gap-3">
             <PageBreadcrumb
+              className="min-w-0"
               parentHref="/superadmin/commissions"
               parentLabel="Commissions"
               title={partner.fullName}
@@ -115,10 +119,7 @@ export function CommissionDetailScreen({ partnerId }: Props) {
         </div>
       </PageHeader>
 
-      <p className="text-caption text-muted-foreground">
-        Commission detail is read-only. Edit commission structure from Partners.
-      </p>
-
+      <div className="min-h-0 min-w-0 flex-1 space-y-8 overflow-y-auto px-6 py-8">
       <PartnerProfileRecap partner={partner} />
 
       <div className="-mx-6 border-t border-border">
@@ -198,6 +199,7 @@ export function CommissionDetailScreen({ partnerId }: Props) {
           </table>
         )}
       </div>
+      </div>
     </div>
   );
 }
@@ -205,10 +207,6 @@ export function CommissionDetailScreen({ partnerId }: Props) {
 function PartnerProfileRecap({ partner }: { partner: Partner }) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Partner Profile Recap</CardTitle>
-        <CardDescription>Same profile information as Partner Management detail.</CardDescription>
-      </CardHeader>
       <CardContent className="flex flex-col gap-8">
         <DetailSection title="Basic Details">
           <DetailGrid className="lg:grid-cols-4">
@@ -237,7 +235,7 @@ function PartnerProfileRecap({ partner }: { partner: Partner }) {
             <DetailField label="Partner Type" value={PARTNER_TYPE_LABEL[partner.partnerType]} />
             <DetailField
               label="Referral Code"
-              value={<span className="font-mono">{partner.referralCode}</span>}
+              value={<CopyableReferralCode code={partner.referralCode} />}
             />
             <DetailField
               label="Commission Type"

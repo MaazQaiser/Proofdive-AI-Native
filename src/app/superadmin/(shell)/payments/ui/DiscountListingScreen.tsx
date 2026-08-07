@@ -165,7 +165,7 @@ export function DiscountListingScreen() {
         </Select>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         {!hydrated ? (
           <p className="px-6 py-10 text-caption text-muted-foreground">Loading…</p>
         ) : filtered.length === 0 ? (

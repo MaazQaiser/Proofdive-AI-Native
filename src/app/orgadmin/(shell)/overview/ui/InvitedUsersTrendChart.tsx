@@ -22,8 +22,8 @@ const SERIES = [
 export function InvitedUsersTrendChart({ data }: Props) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Total Invited Users</CardTitle>
+      <CardHeader className="gap-1">
+        <CardTitle className="text-h5 font-semibold">Total Invited Users</CardTitle>
         <CardDescription>Organization-wide user invitation and engagement trends</CardDescription>
         <CardAction>
           <ChartLegend items={[...SERIES]} />

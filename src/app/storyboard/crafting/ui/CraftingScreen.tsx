@@ -440,7 +440,7 @@ export function CraftingScreen() {
                     <Link href="/storyboard">Back to Storyboard</Link>
                   </Button>
                   <Button asChild variant="outline">
-                    <Link href="/coach?journey=1">Coach</Link>
+                    <Link href="/coach">Coach</Link>
                   </Button>
                 </div>
               </CardContent>

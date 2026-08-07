@@ -106,7 +106,7 @@ export function SupportRequestsScreen() {
   }
 
   return (
-    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
       <PageHeader>
         <PageTitle>Support Tickets</PageTitle>
         <Button
@@ -172,7 +172,7 @@ export function SupportRequestsScreen() {
         </Select>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-6 py-20 text-center">
             <LifeBuoy className="h-8 w-8 text-muted-foreground" />

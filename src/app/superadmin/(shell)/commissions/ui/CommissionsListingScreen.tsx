@@ -1,6 +1,14 @@
 "use client";
 
-import { Download, Handshake, Search } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Download,
+  Handshake,
+  Search,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -39,6 +47,8 @@ import {
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 import { usePartners } from "@/lib/usePartners";
 
+const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
+
 export function CommissionsListingScreen() {
   const router = useRouter();
   const { partners } = usePartners();
@@ -49,6 +59,8 @@ export function CommissionsListingScreen() {
   const [search, setSearch] = useState("");
   const [commissionFilter, setCommissionFilter] = useState<CommissionType | "all">("all");
   const [partnerTypeFilter, setPartnerTypeFilter] = useState<PartnerType | "all">("all");
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(ROWS_PER_PAGE_OPTIONS[0]);
 
   const baseRows = useMemo(
     () => buildCommissionListingRows(partners, SUPER_ADMIN_COMMISSION_INVOICES, dateRange),
@@ -64,6 +76,16 @@ export function CommissionsListingScreen() {
       }),
     [baseRows, search, commissionFilter, partnerTypeFilter],
   );
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * rowsPerPage;
+  const pageEnd = Math.min(pageStart + rowsPerPage, filteredRows.length);
+  const pageRows = filteredRows.slice(pageStart, pageEnd);
+
+  function resetToFirstPage() {
+    setPage(1);
+  }
 
   /** KPIs are platform-wide for the date range (before search/type filters), per story. */
   const kpis = useMemo(() => computeCommissionKpis(baseRows), [baseRows]);
@@ -89,7 +111,7 @@ export function CommissionsListingScreen() {
   }
 
   return (
-    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
       <PageHeader>
         <PageTitle>Commissions &amp; Payouts</PageTitle>
         <Button variant="outline" onClick={handleExport} disabled={filteredRows.length === 0}>
@@ -112,7 +134,10 @@ export function CommissionsListingScreen() {
           <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              resetToFirstPage();
+            }}
             placeholder="Search partners by name, email, or code"
             className="pl-9"
           />
@@ -120,7 +145,10 @@ export function CommissionsListingScreen() {
         <Separator orientation="vertical" className="h-6" />
         <Select
           value={dateRange}
-          onValueChange={(v) => setDateRange(v as SuperAdminCommissionDateRange)}
+          onValueChange={(v) => {
+            setDateRange(v as SuperAdminCommissionDateRange);
+            resetToFirstPage();
+          }}
         >
           <SelectTrigger size="sm" variant="filter" active={dateRange !== "all_time"}>
             <SelectValue placeholder="Date Range" />
@@ -135,7 +163,10 @@ export function CommissionsListingScreen() {
         </Select>
         <Select
           value={commissionFilter}
-          onValueChange={(v) => setCommissionFilter(v as CommissionType | "all")}
+          onValueChange={(v) => {
+            setCommissionFilter(v as CommissionType | "all");
+            resetToFirstPage();
+          }}
         >
           <SelectTrigger size="sm" variant="filter" active={commissionFilter !== "all"}>
             <SelectValue placeholder="Commission Type" />
@@ -153,7 +184,10 @@ export function CommissionsListingScreen() {
         </Select>
         <Select
           value={partnerTypeFilter}
-          onValueChange={(v) => setPartnerTypeFilter(v as PartnerType | "all")}
+          onValueChange={(v) => {
+            setPartnerTypeFilter(v as PartnerType | "all");
+            resetToFirstPage();
+          }}
         >
           <SelectTrigger size="sm" variant="filter" active={partnerTypeFilter !== "all"}>
             <SelectValue placeholder="Partner Type" />
@@ -169,8 +203,8 @@ export function CommissionsListingScreen() {
         </Select>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        {filteredRows.length === 0 ? (
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+        {pageRows.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-6 py-20 text-center">
             <Handshake className="h-8 w-8 text-muted-foreground" />
             <p className="text-body-sm font-medium text-foreground">
@@ -193,7 +227,7 @@ export function CommissionsListingScreen() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredRows.map(({ partner, totalEarnedCents }) => (
+              {pageRows.map(({ partner, totalEarnedCents }) => (
                 <TableRow key={partner.id}>
                   <TableCell className="pl-6">
                     <button
@@ -228,6 +262,73 @@ export function CommissionsListingScreen() {
             </TableBody>
           </table>
         )}
+
+        <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-4 border-t border-border app-canvas-wash px-6 py-4">
+          <div className="text-caption flex items-center gap-2 text-muted-foreground">
+            <span>Rows per page</span>
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => {
+                setRowsPerPage(Number(v));
+                resetToFirstPage();
+              }}
+            >
+              <SelectTrigger size="sm" className="w-[72px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROWS_PER_PAGE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-caption flex items-center gap-4 text-muted-foreground">
+            <span>
+              {`page ${currentPage} of ${totalPages}`}
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={currentPage === 1}
+                onClick={() => setPage(1)}
+                aria-label="First page"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={currentPage === 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={currentPage === totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                aria-label="Next page"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={currentPage === totalPages}
+                onClick={() => setPage(totalPages)}
+                aria-label="Last page"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

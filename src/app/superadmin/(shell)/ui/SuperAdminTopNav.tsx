@@ -122,7 +122,7 @@ function NavGroupItem({
 export function SuperAdminTopNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex h-full items-center gap-1 overflow-x-auto" aria-label="Super admin">
+    <nav className="flex h-full min-w-0 flex-1 items-center gap-1 overflow-x-auto" aria-label="Super admin">
       {SUPER_ADMIN_NAV_ITEMS.map((item) =>
         item.type === "link" ? (
           <NavLinkItem key={item.href} href={item.href} label={item.label} pathname={pathname} />

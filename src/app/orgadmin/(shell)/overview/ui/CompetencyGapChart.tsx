@@ -16,8 +16,8 @@ export function CompetencyGapChart({ data }: Props) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Competency Gap Overview</CardTitle>
+      <CardHeader className="gap-1">
+        <CardTitle className="text-h5 font-semibold">Competency Gap Overview</CardTitle>
         <CardDescription>Lowest performing competencies across the organization</CardDescription>
       </CardHeader>
       <CardContent>

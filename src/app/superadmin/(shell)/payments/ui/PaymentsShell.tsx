@@ -33,10 +33,11 @@ export function PaymentsShell({
 
   if (isNestedChrome) {
     return (
-      <div className="flex flex-col gap-8">
-        <PageHeader sticky bleed>
-          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
+        <PageHeader>
+          <div className="flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <PageBreadcrumb
+              className="min-w-0"
               parentHref={breadcrumbParent.href}
               parentLabel={breadcrumbParent.label}
               title={title}
@@ -46,13 +47,13 @@ export function PaymentsShell({
             ) : null}
           </div>
         </PageHeader>
-        {children}
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8">{children}</div>
       </div>
     );
   }
 
   return (
-    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
       <PageHeader>
         <PageTitle>{title}</PageTitle>
         {actions ? (

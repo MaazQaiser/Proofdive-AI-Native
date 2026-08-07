@@ -11,6 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -67,7 +68,8 @@ import { OrganizationStatusPill, SubscriptionStatusPill } from "./StatusPills";
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
 
 export function OrganizationsListScreen() {
-  const { organizations, updateOrganization, existingNames } = useOrganizations();
+  const router = useRouter();
+  const { organizations, updateOrganization } = useOrganizations();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<OrganizationType | "all">("all");
   const [countryFilter, setCountryFilter] = useState<string>("all");
@@ -124,12 +126,8 @@ export function OrganizationsListScreen() {
     toast.success("Organization status updated successfully.");
   }
 
-  function handleUpdateOrganization(id: string, patch: Partial<Organization>) {
-    updateOrganization(id, patch);
-  }
-
   return (
-    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
       <PageHeader>
         <PageTitle>Organizations</PageTitle>
         <Button asChild>
@@ -232,7 +230,7 @@ export function OrganizationsListScreen() {
         </Select>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         {pageRows.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-6 py-20 text-center">
             <Building2 className="h-8 w-8 text-muted-foreground" />
@@ -285,7 +283,11 @@ export function OrganizationsListScreen() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleViewDetails(org)}>View Details</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleViewDetails(org)}>Edit Organization</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => router.push(`/superadmin/organizations/${org.id}/edit`)}
+                        >
+                          Edit Organization
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           variant={org.status === "active" ? "destructive" : "default"}
@@ -301,73 +303,71 @@ export function OrganizationsListScreen() {
             </TableBody>
           </table>
         )}
-      </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
-        <div className="text-caption flex items-center gap-2 text-muted-foreground">
-          <span>Rows per page</span>
-          <Select
-            value={String(rowsPerPage)}
-            onValueChange={(v) => {
-              setRowsPerPage(Number(v));
-              resetToFirstPage();
-            }}
-          >
-            <SelectTrigger size="sm" className="w-[72px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ROWS_PER_PAGE_OPTIONS.map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="text-caption flex items-center gap-4 text-muted-foreground">
-          <span>
-            {filtered.length === 0
-              ? "0 items found"
-              : `${filtered.length} item${filtered.length === 1 ? "" : "s"} found, displaying ${pageStart + 1} to ${pageEnd}`}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled={currentPage === 1}
-              onClick={() => setPage(1)}
-              aria-label="First page"
+        <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-4 border-t border-border app-canvas-wash px-6 py-4">
+          <div className="text-caption flex items-center gap-2 text-muted-foreground">
+            <span>Rows per page</span>
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => {
+                setRowsPerPage(Number(v));
+                resetToFirstPage();
+              }}
             >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled={currentPage === 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled={currentPage === totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              aria-label="Next page"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled={currentPage === totalPages}
-              onClick={() => setPage(totalPages)}
-              aria-label="Last page"
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
+              <SelectTrigger size="sm" className="w-[72px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROWS_PER_PAGE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-caption flex items-center gap-4 text-muted-foreground">
+            <span>
+              {`page ${currentPage} of ${totalPages}`}
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={currentPage === 1}
+                onClick={() => setPage(1)}
+                aria-label="First page"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={currentPage === 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={currentPage === totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                aria-label="Next page"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={currentPage === totalPages}
+                onClick={() => setPage(totalPages)}
+                aria-label="Last page"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -408,9 +408,7 @@ export function OrganizationsListScreen() {
         onOpenChange={(open) => {
           if (!open) setSelectedOrgId(null);
         }}
-        existingOrganizationNames={existingNames}
         frameworks={frameworks.length > 0 ? frameworks : COMPETENCY_FRAMEWORKS}
-        onUpdate={handleUpdateOrganization}
         onRequestStatusChange={handleRequestStatusChange}
       />
     </div>

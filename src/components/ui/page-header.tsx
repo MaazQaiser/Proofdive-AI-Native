@@ -26,7 +26,7 @@ export function PageHeader({
         "flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3",
         sticky &&
           "sticky top-0 z-10 bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60",
-        bleed && "-mx-6",
+        bleed && "-mx-6 w-[calc(100%+3rem)] min-w-0 max-w-none",
         className,
       )}
       {...props}

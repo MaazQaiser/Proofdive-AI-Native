@@ -141,7 +141,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
 
   if (!hydrated) {
     return (
-      <div className="-mx-6 -mb-6 flex h-full items-center justify-center">
+      <div className="-mx-6 flex h-full items-center justify-center">
         <p className="text-body-sm text-muted-foreground">Loading framework…</p>
       </div>
     );
@@ -152,7 +152,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
   }
 
   return (
-    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
       <PageHeader sticky>
         <PageBreadcrumb
           parentHref="/superadmin/competency-engine"

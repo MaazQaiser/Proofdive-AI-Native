@@ -587,7 +587,7 @@ export function ProfileScreen() {
                 <CardContent className="flex flex-col gap-4">
                   <DetailRow label="Status" value="Active" />
 
-                  <Button variant="destructive" className="w-full" onClick={() => router.push("/login")}>
+                  <Button variant="outline" className="w-full" onClick={() => router.push("/login")}>
                     Sign out
                   </Button>
                 </CardContent>

@@ -14,6 +14,10 @@ export function ResetFlowCta() {
     removeKey(StorageKeys.storyboardFromCraft);
     removeKey(StorageKeys.storyboardCraftEditing);
     removeKey(StorageKeys.storyboardDives);
+    removeKey(StorageKeys.reports);
+    removeKey(StorageKeys.interviewSessionPrefs);
+    removeKey(StorageKeys.candidateAccessedReportIds);
+    removeKey(StorageKeys.candidatePostInterviewUpgradeNudgeSeen);
     removeKey(StorageKeys.orgAdminAccountActivated);
     removeKey(StorageKeys.partnerAccountActivated);
 

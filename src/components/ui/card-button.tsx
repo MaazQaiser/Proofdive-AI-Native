@@ -79,7 +79,7 @@ function CardButton({
           </p>
           <p
             className={cn(
-              "max-w-[14rem] text-caption leading-snug",
+              "text-caption leading-snug",
               isPrimary ? "text-primary-foreground/90" : "text-text-secondary",
             )}
           >

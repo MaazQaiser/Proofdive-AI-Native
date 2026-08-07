@@ -14,18 +14,10 @@ import {
 
 import { cn } from "@/components/cn";
 
-function coachHomeHref(pathname: string | null) {
-  if (pathname === "/coach" || pathname?.startsWith("/coach/")) {
-    return "/coach";
-  }
-  if (pathname == null) return "/coach?journey=1";
-  if (pathname === "/interview" || pathname.startsWith("/interview/")) {
-    return "/coach?journey=1";
-  }
-  if (pathname.startsWith("/report")) {
-    return "/coach?journey=1";
-  }
-  return "/coach?journey=1";
+function coachHomeHref(_pathname: string | null) {
+  // Always return plain `/coach` so welcome/roadmap/final localStorage state
+  // survives tab changes. Do not force `?journey=1` — that wiped suggested roadmap.
+  return "/coach";
 }
 
 export function CoachFloatingNav() {

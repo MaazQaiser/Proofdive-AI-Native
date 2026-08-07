@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Bell,
   Building2,
   CreditCard,
   Handshake,
@@ -32,7 +31,6 @@ export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/superadmin/candidates", label: "Candidates", icon: Users },
   { href: "/superadmin/competency-engine", label: "Competency Engine", icon: Target },
   { href: "/superadmin/support", label: "Support Requests", icon: LifeBuoy },
-  { href: "/superadmin/notifications", label: "Notifications", icon: Bell },
 ];
 
 export function SuperAdminSidebarNav() {

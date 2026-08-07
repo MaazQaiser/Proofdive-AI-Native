@@ -1,5 +1,5 @@
-import { OrgAdminNotificationsScreen } from "./ui/OrgAdminNotificationsScreen";
+import { redirect } from "next/navigation";
 
 export default function OrgAdminNotificationsPage() {
-  return <OrgAdminNotificationsScreen />;
+  redirect("/orgadmin/overview");
 }
