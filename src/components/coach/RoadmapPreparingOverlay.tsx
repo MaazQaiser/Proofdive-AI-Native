@@ -22,8 +22,8 @@ const BLOBS = [
   },
 ] as const;
 
-/** Fill duration — covers typing “Preparing roadmap” plus the post-type hold. */
-const FILL_DURATION_MS = 4200;
+/** Fill duration — snappy but still readable. */
+export const ROADMAP_PREPARING_FILL_MS = 1600;
 
 /**
  * Full-screen preparing state for Coach “View Roadmap” — same logo-fill
@@ -36,8 +36,19 @@ export function RoadmapPreparingOverlay() {
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setProgress(100));
-    return () => window.cancelAnimationFrame(frame);
+    // Double rAF so the empty mark paints before we animate to 100%.
+    let cancelled = false;
+    let innerFrame = 0;
+    const outerFrame = window.requestAnimationFrame(() => {
+      innerFrame = window.requestAnimationFrame(() => {
+        if (!cancelled) setProgress(100);
+      });
+    });
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(outerFrame);
+      window.cancelAnimationFrame(innerFrame);
+    };
   }, []);
 
   if (!mounted) return null;
@@ -77,7 +88,7 @@ export function RoadmapPreparingOverlay() {
         <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4">
           <LogoFillProgress
             progress={progress}
-            durationMs={FILL_DURATION_MS}
+            durationMs={ROADMAP_PREPARING_FILL_MS}
             aria-label="Preparing roadmap progress"
           />
 

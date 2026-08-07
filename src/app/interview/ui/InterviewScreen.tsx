@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight, CheckCircle2, ChevronDown, ClipboardCheck, Eye, MicOff, RotateCcw, Video, VideoOff, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, ClipboardCheck, Eye, ListChecks, MicOff, RotateCcw, Video, VideoOff, Zap } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { cn } from "@/components/cn";
@@ -611,11 +611,11 @@ export function InterviewScreen() {
             <div
               data-slot="app-dialog-header"
               className={cn(
-                "relative flex items-start gap-3 px-5 py-4",
+                "relative flex items-center gap-3 px-5 py-4",
                 "bg-[linear-gradient(189.44deg,rgba(255,255,255,0.2)_50.11%,rgba(14,154,181,0.1)_110.8%),linear-gradient(#fff,#fff)]",
               )}
             >
-              <div className="flex min-w-0 items-start gap-2.5">
+              <div className="flex min-w-0 items-center gap-2.5">
                 <span
                   className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"
                   aria-hidden
@@ -644,11 +644,17 @@ export function InterviewScreen() {
               </div>
             ) : null}
 
-            <ul className="space-y-2 text-caption leading-relaxed text-text-secondary">
-              {CONSENT_TIPS.map((tip, index) => (
-                <li key={index}>{tip}</li>
-              ))}
-            </ul>
+            <div className="space-y-1.5 rounded-lg bg-primary/10 px-3.5 py-3">
+              <div className="flex items-center gap-1.5 text-[14px] font-medium text-text-primary">
+                <ListChecks className="size-4 shrink-0 text-primary" aria-hidden />
+                Before you start
+              </div>
+              <ul className="list-disc space-y-1.5 pl-5 text-body-sm leading-6 text-text-secondary">
+                {CONSENT_TIPS.map((tip, index) => (
+                  <li key={index}>{tip}</li>
+                ))}
+              </ul>
+            </div>
 
             <div>
               <p className="text-overline text-text-secondary">Session options</p>
@@ -658,10 +664,8 @@ export function InterviewScreen() {
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-primary">
                         <MicOff className="size-3.5 text-text-secondary" aria-hidden />
-                        Cancel recording
-                      </span>
-                      <span className="rounded-full bg-[#f5f5f3] px-2 py-0.5 text-caption font-medium text-extended-cyan">
-                        Optional
+                        Cancel recording{" "}
+                        <span className="font-medium text-text-secondary">(Optional)</span>
                       </span>
                     </span>
                     <span className="mt-1 block text-caption leading-snug text-text-secondary">
@@ -681,10 +685,8 @@ export function InterviewScreen() {
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-primary">
                         <VideoOff className="size-3.5 text-text-secondary" aria-hidden />
-                        Turn off camera
-                      </span>
-                      <span className="rounded-full bg-[#f5f5f3] px-2 py-0.5 text-caption font-medium text-extended-cyan">
-                        Optional
+                        Turn off camera{" "}
+                        <span className="font-medium text-text-secondary">(Optional)</span>
                       </span>
                     </span>
                     <span className="mt-1 block text-caption leading-snug text-text-secondary">

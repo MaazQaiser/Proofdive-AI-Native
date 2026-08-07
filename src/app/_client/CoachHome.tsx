@@ -10,7 +10,7 @@ import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { COACH_HUB_CONTENT_TOP_CLASS } from "@/components/coachNavLayout";
 import { cn } from "@/components/cn";
 import { CoachConversationalDock } from "@/components/coach/CoachConversationalDock";
-import { RoadmapPreparingOverlay } from "@/components/coach/RoadmapPreparingOverlay";
+import { RoadmapPreparingOverlay, ROADMAP_PREPARING_FILL_MS } from "@/components/coach/RoadmapPreparingOverlay";
 import { TypingText } from "@/components/TypingText";
 import { Button } from "@/components/ui/button";
 import { CardButton } from "@/components/ui/card-button";
@@ -53,8 +53,8 @@ const COACH_READINESS_BANNER_DISMISS_KEY = "proofdive.session.coachReadinessBann
 
 const DRIVER_ORDER = SUCCESS_DRIVER_ORDER;
 
-/** Matches `RoadmapPreparingOverlay` logo-fill duration. */
-const ROADMAP_PREPARING_MS = 4200;
+/** Slightly longer than the logo fill so it reaches 100% before dismiss. */
+const ROADMAP_PREPARING_MS = ROADMAP_PREPARING_FILL_MS + 200;
 
 function CoachJourneyPlanCard({
   mode,
