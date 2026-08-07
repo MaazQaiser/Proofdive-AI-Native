@@ -25,7 +25,7 @@ type NavItem = {
 export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { href: "/superadmin/overview", label: "Overview", icon: LayoutDashboard },
   { href: "/superadmin/organizations", label: "Organizations", icon: Building2 },
-  { href: "/superadmin/payments", label: "Payments", icon: CreditCard },
+  { href: "/superadmin/payments", label: "Bundles", icon: CreditCard },
   { href: "/superadmin/partners", label: "Partners", icon: Handshake },
   { href: "/superadmin/commissions", label: "Commissions", icon: Wallet },
   { href: "/superadmin/candidates", label: "Candidates", icon: Users },

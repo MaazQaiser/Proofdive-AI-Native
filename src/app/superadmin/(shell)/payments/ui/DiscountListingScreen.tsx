@@ -116,7 +116,7 @@ export function DiscountListingScreen() {
 
   return (
     <PaymentsShell
-      title="Payments"
+      title="Bundles"
       actions={
         <Button asChild>
           <Link href="/superadmin/payments/discounts/new">

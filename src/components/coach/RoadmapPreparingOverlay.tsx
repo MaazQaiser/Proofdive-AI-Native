@@ -36,7 +36,8 @@ export function RoadmapPreparingOverlay() {
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    // Double rAF so the empty mark paints before we animate to 100%.
+    if (!mounted) return;
+    // Wait until the portal (and empty logo) have painted, then fill.
     let cancelled = false;
     let innerFrame = 0;
     const outerFrame = window.requestAnimationFrame(() => {
@@ -49,7 +50,7 @@ export function RoadmapPreparingOverlay() {
       window.cancelAnimationFrame(outerFrame);
       window.cancelAnimationFrame(innerFrame);
     };
-  }, []);
+  }, [mounted]);
 
   if (!mounted) return null;
 

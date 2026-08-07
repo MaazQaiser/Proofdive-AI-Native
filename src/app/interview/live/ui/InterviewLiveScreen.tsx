@@ -579,8 +579,8 @@ export function InterviewLiveScreen() {
                 onClick={() => setMicOn((v) => !v)}
                 className={cn(
                   micOn
-                    ? "bg-card/60 text-foreground hover:bg-card/80"
-                    : "bg-destructive/90 text-destructive-foreground hover:bg-destructive",
+                    ? "bg-card/60 text-text-primary hover:bg-card/80 hover:text-text-primary"
+                    : "bg-destructive/90 text-white hover:bg-destructive hover:text-white",
                 )}
                 disabled={isEnding}
                 aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
@@ -601,6 +601,13 @@ export function InterviewLiveScreen() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
+                  <path
+                    d="M12 19v3"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </IconButton>
 
@@ -610,8 +617,8 @@ export function InterviewLiveScreen() {
                 onClick={() => setCamOn((v) => !v)}
                 className={cn(
                   camOn
-                    ? "bg-card/60 text-foreground hover:bg-card/80"
-                    : "bg-destructive/90 text-destructive-foreground hover:bg-destructive",
+                    ? "bg-card/60 text-text-primary hover:bg-card/80 hover:text-text-primary"
+                    : "bg-destructive/90 text-white hover:bg-destructive hover:text-white",
                 )}
                 disabled={isEnding}
                 aria-label={camOn ? "Turn camera off" : "Turn camera on"}
@@ -647,7 +654,7 @@ export function InterviewLiveScreen() {
                 setIsEnding(true);
               }}
               disabled={isEnding}
-              className="rounded-md px-6"
+              className="rounded-full px-6"
             >
               {isEnding ? "Ending…" : "End"}
             </Button>

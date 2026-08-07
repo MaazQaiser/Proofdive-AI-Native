@@ -216,7 +216,7 @@ export function SetPriceScreen() {
 
   return (
     <PaymentsShell
-      title="Payments"
+      title="Bundles"
       actions={
         <>
           <Button type="button" variant="outline" disabled={!dirty} onClick={discardAll}>

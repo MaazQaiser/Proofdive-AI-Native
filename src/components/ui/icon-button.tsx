@@ -48,7 +48,7 @@ function IconButton({
     <Comp
       data-slot="icon-button"
       type={asChild ? undefined : "button"}
-      className={cn(iconButtonVariants({ variant, size, className }))}
+      className={cn(iconButtonVariants({ variant, size }), className)}
       {...props}
     />
   );

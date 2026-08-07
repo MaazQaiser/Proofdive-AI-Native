@@ -35,7 +35,7 @@ export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
     type: "group",
     label: "Finance",
     items: [
-      { href: "/superadmin/payments", label: "Payments" },
+      { href: "/superadmin/payments", label: "Bundles" },
       { href: "/superadmin/commissions", label: "Commissions" },
     ],
   },
