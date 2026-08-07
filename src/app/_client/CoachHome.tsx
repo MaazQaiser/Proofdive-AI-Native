@@ -474,12 +474,12 @@ export function CoachHome() {
   useEffect(() => {
     if (coachJourneyView !== "final") return;
     if (!coachFinalReportId || typeof window === "undefined") {
-      if (coachJourneyView !== "journey") setCoachJourneyView("journey");
+      setCoachJourneyView("journey");
       return;
     }
     if (!getReportById(coachFinalReportId)) {
       setCoachFinalReportId(null);
-      if (coachJourneyView !== "journey") setCoachJourneyView("journey");
+      setCoachJourneyView("journey");
     }
   }, [coachJourneyView, coachFinalReportId, pathname, setCoachJourneyView, setCoachFinalReportId]);
 
@@ -521,7 +521,7 @@ export function CoachHome() {
     setRoadmapPhase("idle");
     setRoadmapCardVisible(false);
     setCoachFinalReportId(null);
-    if (coachJourneyView !== "journey") setCoachJourneyView("journey");
+    setCoachJourneyView("journey");
   }, [
     coachJourneyView,
     roleProfile,
