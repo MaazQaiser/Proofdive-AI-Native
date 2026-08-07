@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import { cn } from "@/lib/utils";
 
 type LogoFillProgressProps = {
@@ -12,6 +16,9 @@ type LogoFillProgressProps = {
 /**
  * Brand mark that fills bottom-up via luminance mask — same treatment as the
  * interview report-generating screen (`ReportGeneratingOverlay`).
+ *
+ * Always paints empty on the first frame, then applies `progress` so a CSS
+ * clip-path transition can run (avoids mounting already-full with no animation).
  */
 export function LogoFillProgress({
   progress,
@@ -19,7 +26,21 @@ export function LogoFillProgress({
   className,
   "aria-label": ariaLabel = "Loading progress",
 }: LogoFillProgressProps) {
-  const clipped = Math.min(100, Math.max(0, progress));
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let inner = 0;
+    const outer = window.requestAnimationFrame(() => {
+      inner = window.requestAnimationFrame(() => setReady(true));
+    });
+    return () => {
+      window.cancelAnimationFrame(outer);
+      window.cancelAnimationFrame(inner);
+    };
+  }, []);
+
+  const target = Math.min(100, Math.max(0, progress));
+  const clipped = ready ? target : 0;
   const insetTop = `${100 - clipped}%`;
 
   return (
@@ -36,7 +57,7 @@ export function LogoFillProgress({
         className="report-loading-logo-mask absolute inset-0 bg-[#0e9ab5] motion-reduce:transition-none"
         style={{
           clipPath: `inset(${insetTop} 0 0 0)`,
-          transition: `clip-path ${durationMs}ms linear`,
+          transition: ready ? `clip-path ${durationMs}ms linear` : "none",
         }}
         aria-hidden
       />

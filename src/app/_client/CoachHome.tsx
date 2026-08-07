@@ -54,7 +54,8 @@ const COACH_READINESS_BANNER_DISMISS_KEY = "proofdive.session.coachReadinessBann
 const DRIVER_ORDER = SUCCESS_DRIVER_ORDER;
 
 /** Slightly longer than the logo fill so it reaches 100% before dismiss. */
-const ROADMAP_PREPARING_MS = ROADMAP_PREPARING_FILL_MS + 200;
+/** Matches `RoadmapPreparingOverlay` logo-fill duration (+ settle for paint/ready). */
+const ROADMAP_PREPARING_MS = ROADMAP_PREPARING_FILL_MS + 400;
 
 function CoachJourneyPlanCard({
   mode,
@@ -384,13 +385,14 @@ export function CoachHome() {
       const v = searchParams.get(k);
       return v === "1" || v?.toLowerCase() === "true";
     };
+    const setView = (next: CoachJourneyView) => {
+      if (coachJourneyView !== next) setCoachJourneyView(next);
+    };
     // Developer preview: force empty welcome landing (Storyboard + Roadmap CTAs)
     // regardless of stored data. Keeps `?empty=1` in the URL so it stays bookmarkable.
     if (is("empty")) {
       setCoachFinalReportId(null);
-      if (coachJourneyView !== "welcome") {
-        setCoachJourneyView("welcome");
-      }
+      setView("welcome");
       return;
     }
     if (is("welcome")) {
@@ -405,13 +407,13 @@ export function CoachHome() {
         sessionStorage.removeItem(COACH_WELCOME_ENTRY_SESSION_KEY);
         sessionStorage.removeItem(COACH_ROADMAP_ENTRY_SESSION_KEY);
         setCoachFinalReportId(null);
-        setCoachJourneyView("journey");
+        setView("journey");
         router.replace("/coach", { scroll: false });
         return;
       }
       sessionStorage.setItem(COACH_WELCOME_ENTRY_SESSION_KEY, "1");
       setCoachFinalReportId(null);
-      setCoachJourneyView("welcome");
+      setView("welcome");
       router.replace("/coach", { scroll: false });
       return;
     }
@@ -419,20 +421,20 @@ export function CoachHome() {
       sessionStorage.removeItem(COACH_WELCOME_ENTRY_SESSION_KEY);
       sessionStorage.removeItem(COACH_ROADMAP_ENTRY_SESSION_KEY);
       setCoachFinalReportId(null);
-      setCoachJourneyView("journey");
+      setView("journey");
       router.replace("/coach", { scroll: false });
       return;
     }
     if (is("roadmap")) {
       if (sessionStorage.getItem(COACH_WELCOME_ENTRY_SESSION_KEY) !== "1") {
         setCoachFinalReportId(null);
-        setCoachJourneyView("journey");
+        setView("journey");
         router.replace("/coach", { scroll: false });
         return;
       }
       sessionStorage.setItem(COACH_ROADMAP_ENTRY_SESSION_KEY, "1");
       setCoachFinalReportId(null);
-      setCoachJourneyView("roadmap");
+      setView("roadmap");
       router.replace("/coach", { scroll: false });
       return;
     }
@@ -443,13 +445,13 @@ export function CoachHome() {
           sessionStorage.removeItem(COACH_WELCOME_ENTRY_SESSION_KEY);
           sessionStorage.removeItem(COACH_ROADMAP_ENTRY_SESSION_KEY);
           setCoachFinalReportId(rid);
-          setCoachJourneyView("final");
+          setView("final");
           router.replace("/coach", { scroll: false });
           return;
         }
       }
       setCoachFinalReportId(null);
-      setCoachJourneyView("journey");
+      setView("journey");
       router.replace("/coach", { scroll: false });
       return;
     }
@@ -458,7 +460,7 @@ export function CoachHome() {
     // Do not demote `roadmap` when the session key is missing — localStorage must
     // keep the suggested roadmap across tab changes until storyboard/interview.
     if (coachJourneyView === "welcome" && !hasWelcomeEntry) {
-      setCoachJourneyView("journey");
+      setView("journey");
     }
   }, [
     searchParams,
@@ -472,12 +474,12 @@ export function CoachHome() {
   useEffect(() => {
     if (coachJourneyView !== "final") return;
     if (!coachFinalReportId || typeof window === "undefined") {
-      setCoachJourneyView("journey");
+      if (coachJourneyView !== "journey") setCoachJourneyView("journey");
       return;
     }
     if (!getReportById(coachFinalReportId)) {
       setCoachFinalReportId(null);
-      setCoachJourneyView("journey");
+      if (coachJourneyView !== "journey") setCoachJourneyView("journey");
     }
   }, [coachJourneyView, coachFinalReportId, pathname, setCoachJourneyView, setCoachFinalReportId]);
 
@@ -496,6 +498,14 @@ export function CoachHome() {
   useEffect(() => {
     if (coachJourneyView !== "welcome" && coachJourneyView !== "roadmap") return;
     if (typeof window === "undefined") return;
+    // Wait until entry query params are stripped — otherwise this fights the
+    // `?welcome=1` / `?roadmap=1` handler and loops setState.
+    const flag = (k: string) => {
+      const v = searchParams.get(k);
+      return v === "1" || v?.toLowerCase() === "true";
+    };
+    if (flag("welcome") || flag("roadmap") || flag("empty")) return;
+
     const roleTitle = roleProfile?.targetRole?.trim() ?? "";
     const hasInterview = reportCountForRole(roleTitle) > 0;
     const diveStore = readJson<StoryboardDiveStore>(StorageKeys.storyboardDives);
@@ -511,12 +521,13 @@ export function CoachHome() {
     setRoadmapPhase("idle");
     setRoadmapCardVisible(false);
     setCoachFinalReportId(null);
-    setCoachJourneyView("journey");
+    if (coachJourneyView !== "journey") setCoachJourneyView("journey");
   }, [
     coachJourneyView,
     roleProfile,
     pathname,
     latestInterviewReport,
+    searchParams,
     setCoachJourneyView,
     setCoachFinalReportId,
   ]);

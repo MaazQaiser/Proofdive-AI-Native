@@ -29,7 +29,7 @@ export function PaymentsShell({
 
   const breadcrumbParent = isDiscountDetail
     ? { href: "/superadmin/payments/discounts", label: "Discount Codes" }
-    : { href: "/superadmin/payments", label: "Payments" };
+    : { href: "/superadmin/payments", label: "Bundles" };
 
   if (isNestedChrome) {
     return (

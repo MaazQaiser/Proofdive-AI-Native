@@ -1,9 +1,8 @@
 "use client";
 
-import { Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,20 +16,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import {
   BILLING_CYCLE_LABEL,
   BUNDLE_STATUS_LABEL,
   formatUsd,
   getMasterclassById,
-  ITEM_KIND_LABEL,
   type BundleStatus,
 } from "@/lib/superAdminPaymentsData";
 import { usePaymentBundles } from "@/lib/usePaymentBundles";
 import { useGlobalRates } from "@/lib/usePaymentRates";
 
 import { BundleFormScreen } from "./BundleFormScreen";
+import { BundleSubscribersTable } from "./BundleSubscribersTable";
 import { PaymentsShell } from "./PaymentsShell";
 
 function BundleStatusPill({ status }: { status: BundleStatus }) {
@@ -52,18 +50,8 @@ export function BundleDetailScreen({
   const bundle = getById(bundleId);
 
   const [editing, setEditing] = useState(initialEditing);
-  const [subscriberSearch, setSubscriberSearch] = useState("");
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [reactivateErrors, setReactivateErrors] = useState<string[] | null>(null);
-
-  const filteredSubscribers = useMemo(() => {
-    if (!bundle) return [];
-    const q = subscriberSearch.trim().toLowerCase();
-    if (!q) return bundle.subscribers;
-    return bundle.subscribers.filter(
-      (s) => s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q),
-    );
-  }, [bundle, subscriberSearch]);
 
   if (!hydrated) {
     return (
@@ -189,58 +177,13 @@ export function BundleDetailScreen({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="flex min-h-[420px] flex-col overflow-hidden lg:col-span-2">
+          <CardHeader className="shrink-0">
             <CardTitle>Subscribers</CardTitle>
             <CardDescription>{bundle.subscribers.length} total</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="relative">
-              <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="pl-9"
-                placeholder="Search by name or email…"
-                value={subscriberSearch}
-                onChange={(e) => setSubscriberSearch(e.target.value)}
-              />
-            </div>
-            {filteredSubscribers.length === 0 ? (
-              <p className="py-6 text-center text-caption text-muted-foreground">
-                {bundle.subscribers.length === 0
-                  ? "No subscribers yet."
-                  : "No matching subscribers found."}
-              </p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {filteredSubscribers.map((sub) => (
-                  <li key={sub.id} className="py-3">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <div className="text-caption font-medium">{sub.name}</div>
-                        <div className="text-overline text-muted-foreground">{sub.email}</div>
-                      </div>
-                      <div className="text-right text-overline text-muted-foreground">
-                        <div>{BILLING_CYCLE_LABEL[sub.billingCycle]}</div>
-                        <div className="capitalize">{sub.status}</div>
-                        <div>{new Date(sub.purchasedAt).toLocaleDateString()}</div>
-                      </div>
-                    </div>
-                    {sub.addOns.length > 0 ? (
-                      <ul className="mt-2 space-y-1 border-l-2 border-border pl-3 text-overline text-muted-foreground">
-                        {sub.addOns.map((ao) => (
-                          <li key={ao.id}>
-                            {ITEM_KIND_LABEL[ao.item]}
-                            {ao.quantity != null ? ` × ${ao.quantity}` : ""} ·{" "}
-                            {formatUsd(ao.pricePaid)} ·{" "}
-                            {new Date(ao.datePurchased).toLocaleDateString()}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            )}
+          <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0 pb-4">
+            <BundleSubscribersTable subscribers={bundle.subscribers} />
           </CardContent>
         </Card>
       </div>
