@@ -40,8 +40,8 @@ export function OrgAdminDashboardScreen() {
   const { kpis } = dataset;
 
   return (
-    <div className="space-y-6">
-      <div className="-mx-6">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
+      <div className="shrink-0">
         <PageHeader>
           <PageTitle>Dashboard &amp; Analytics</PageTitle>
           <DateRangeFilter
@@ -70,12 +70,14 @@ export function OrgAdminDashboardScreen() {
         </KpiRow>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <InvitedUsersTrendChart data={dataset.invitedUsersTrend} />
-        <MockInterviewPerformanceChart data={dataset.mockInterviewPerformance} />
-        <SubscriptionPlanChart data={applyAddOnDeltas(dataset.subscriptionModules, billingOverrides)} />
-        <OrganizationReadinessChart data={dataset.organizationReadiness} />
-        <CompetencyGapChart data={dataset.competencyGap} />
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <InvitedUsersTrendChart data={dataset.invitedUsersTrend} />
+          <MockInterviewPerformanceChart data={dataset.mockInterviewPerformance} />
+          <SubscriptionPlanChart data={applyAddOnDeltas(dataset.subscriptionModules, billingOverrides)} />
+          <OrganizationReadinessChart data={dataset.organizationReadiness} />
+          <CompetencyGapChart data={dataset.competencyGap} />
+        </div>
       </div>
     </div>
   );

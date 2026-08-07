@@ -118,7 +118,7 @@ export function ProfileDetailsSection() {
       </CardHeader>
       <CardContent className="flex flex-col gap-8">
         <DetailSection title="Organization Details">
-          <DetailGrid className="sm:grid-cols-2">
+          <DetailGrid className="grid-cols-1 sm:grid-cols-2">
             {isEditing ? (
               <div className="flex flex-col gap-2 sm:col-span-2">
                 <Label htmlFor="profile-org-name">Organization Name</Label>
@@ -151,7 +151,7 @@ export function ProfileDetailsSection() {
               <p className="text-caption text-muted-foreground">{org.contactDesignation}</p>
             </div>
           ) : null}
-          <DetailGrid className="sm:grid-cols-2">
+          <DetailGrid className="grid-cols-1 sm:grid-cols-2">
             {isEditing ? (
               <div className="flex flex-col gap-2">
                 <Label htmlFor="profile-contact-name">Primary Contact Name</Label>

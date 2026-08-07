@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import {
   BILLING_CYCLE_LABEL,
   BILLING_CYCLES,
@@ -49,8 +48,6 @@ import { PaymentsShell } from "./PaymentsShell";
 type Props = {
   mode: "create" | "edit";
   bundleId?: string;
-  /** `embedded` renders inside a drawer without PaymentsShell. */
-  presentation?: "page" | "embedded";
   onCancel?: () => void;
   onSaved?: () => void;
 };
@@ -61,29 +58,13 @@ function FormSection({
   title,
   description,
   children,
-  embedded,
   contentClassName,
 }: {
   title: string;
   description?: ReactNode;
   children: ReactNode;
-  embedded: boolean;
   contentClassName?: string;
 }) {
-  if (embedded) {
-    return (
-      <section className="flex flex-col gap-4">
-        <div>
-          <h3 className="text-body font-semibold tracking-tight text-foreground">{title}</h3>
-          {description ? (
-            <p className="mt-0.5 text-caption text-muted-foreground">{description}</p>
-          ) : null}
-        </div>
-        <div className={contentClassName}>{children}</div>
-      </section>
-    );
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -98,12 +79,10 @@ function FormSection({
 export function BundleFormScreen({
   mode,
   bundleId,
-  presentation = "page",
   onCancel,
   onSaved,
 }: Props) {
   const router = useRouter();
-  const embedded = presentation === "embedded";
   const { getById, upsert, nameTaken, hydrated } = usePaymentBundles();
   const { rates: globalRates } = useGlobalRates();
 
@@ -131,6 +110,18 @@ export function BundleFormScreen({
   const autoSubtotal = useMemo(() => calculateBundleItemSubtotal(bundle), [bundle]);
 
   const selectedCycles = bundle.cycles.map((c) => c.cycle);
+
+  function handleDiscard() {
+    if (!existing) return;
+    setBundle(existing);
+    const overrides: Partial<Record<BillingCycle, string>> = {};
+    for (const c of existing.cycles) {
+      if (c.priceOverridden) overrides[c.cycle] = String(c.price);
+    }
+    setCycleOverrides(overrides);
+    setErrors({});
+    setStep("form");
+  }
 
   function handleCancel() {
     if (onCancel) {
@@ -392,17 +383,6 @@ export function BundleFormScreen({
   }
 
   function renderChrome(title: string, actions: ReactNode, children: ReactNode) {
-    if (embedded) {
-      return (
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-body font-semibold tracking-tight text-foreground">{title}</h3>
-            <div className="flex shrink-0 items-center gap-2">{actions}</div>
-          </div>
-          {children}
-        </div>
-      );
-    }
     return (
       <PaymentsShell title={title} actions={actions}>
         {children}
@@ -411,13 +391,6 @@ export function BundleFormScreen({
   }
 
   if (mode === "edit" && hydrated && !existing) {
-    if (embedded) {
-      return (
-        <p className="py-6 text-center text-caption text-muted-foreground">
-          This bundle does not exist.
-        </p>
-      );
-    }
     return (
       <PaymentsShell title="Bundle not found">
         <Card>
@@ -434,56 +407,48 @@ export function BundleFormScreen({
 
   if (step === "preview") {
     return renderChrome(
-      embedded ? "Bundle Preview" : "Bundle preview",
+      "Bundle preview",
       <>
-        <Button
-          type="button"
-          variant={embedded ? "ghost" : "outline"}
-          size={embedded ? "sm" : "default"}
-          onClick={() => setStep("form")}
-        >
-          {embedded ? "Back" : "Back to edit"}
+        <Button type="button" variant="outline" onClick={() => setStep("form")}>
+          Back to edit
         </Button>
+        {mode === "edit" ? (
+          <Button type="button" variant="ghost" onClick={handleDiscard}>
+            Discard Changes
+          </Button>
+        ) : null}
         {isActiveEdit ? (
-          <Button type="button" size={embedded ? "sm" : "default"} onClick={() => save("active")}>
-            {embedded ? "Save Changes" : "Save"}
+          <Button type="button" onClick={() => save("active")}>
+            Save Changes
           </Button>
         ) : (
           <>
-            <Button
-              type="button"
-              variant="outline"
-              size={embedded ? "sm" : "default"}
-              onClick={() => save("draft")}
-            >
+            <Button type="button" variant="outline" onClick={() => save("draft")}>
               Save as Draft
             </Button>
-            <Button type="button" size={embedded ? "sm" : "default"} onClick={() => save("active")}>
+            <Button type="button" onClick={() => save("active")}>
               Save & Activate
             </Button>
           </>
         )}
       </>,
-      embedded ? (
-        <div className="flex flex-col gap-8">
-          <section className="flex flex-col gap-4">
-            <div>
-              <h3 className="text-body font-semibold tracking-tight text-foreground">Summary</h3>
-              <p className="mt-0.5 text-caption text-muted-foreground">
-                {bundle.type} · {bundle.description || "No description"}
-              </p>
+      <Card className="mx-auto w-full max-w-[800px]">
+        <CardHeader>
+          <CardTitle>{bundle.name}</CardTitle>
+          <CardDescription>
+            {bundle.type} · {bundle.description || "No description"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 text-caption">
+          <div>
+            <div className="font-medium text-foreground">Included items</div>
+            <div className="mt-1">
+              <PreviewItems bundle={bundle} rates={globalRates} />
             </div>
-            <p className="text-body-sm font-medium text-foreground">{bundle.name}</p>
-          </section>
-          <Separator />
-          <section className="flex flex-col gap-4">
-            <h3 className="text-body font-semibold tracking-tight text-foreground">Included items</h3>
-            <PreviewItems bundle={bundle} rates={globalRates} />
-          </section>
-          <Separator />
-          <section className="flex flex-col gap-4">
-            <h3 className="text-body font-semibold tracking-tight text-foreground">Billing cycles</h3>
-            <ul className="space-y-1 text-body-sm text-muted-foreground">
+          </div>
+          <div>
+            <div className="font-medium text-foreground">Billing cycles</div>
+            <ul className="mt-1 space-y-1 text-muted-foreground">
               {bundle.cycles.map((c) => (
                 <li key={c.cycle}>
                   {BILLING_CYCLE_LABEL[c.cycle]}: {formatUsd(c.price)}
@@ -491,64 +456,29 @@ export function BundleFormScreen({
                 </li>
               ))}
             </ul>
-          </section>
-        </div>
-      ) : (
-        <Card className="mx-auto w-full max-w-[800px]">
-          <CardHeader>
-            <CardTitle>{bundle.name}</CardTitle>
-            <CardDescription>
-              {bundle.type} · {bundle.description || "No description"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-caption">
-            <div>
-              <div className="font-medium text-foreground">Included items</div>
-              <div className="mt-1">
-                <PreviewItems bundle={bundle} rates={globalRates} />
-              </div>
-            </div>
-            <div>
-              <div className="font-medium text-foreground">Billing cycles</div>
-              <ul className="mt-1 space-y-1 text-muted-foreground">
-                {bundle.cycles.map((c) => (
-                  <li key={c.cycle}>
-                    {BILLING_CYCLE_LABEL[c.cycle]}: {formatUsd(c.price)}
-                    {c.priceOverridden ? " (overridden)" : ""}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      ),
+          </div>
+        </CardContent>
+      </Card>,
     );
   }
 
   return renderChrome(
-    embedded ? "Edit Bundle Details" : mode === "create" ? "Create New Bundle" : `Edit: ${bundle.name || "Bundle"}`,
+    mode === "create" ? "Create New Bundle" : `Edit: ${bundle.name || "Bundle"}`,
     <>
-      <Button
-        type="button"
-        variant={embedded ? "ghost" : "outline"}
-        size={embedded ? "sm" : "default"}
-        onClick={handleCancel}
-      >
+      <Button type="button" variant="outline" onClick={handleCancel}>
         Cancel
       </Button>
-      <Button type="button" size={embedded ? "sm" : "default"} onClick={goPreview}>
+      {mode === "edit" ? (
+        <Button type="button" variant="ghost" onClick={handleDiscard}>
+          Discard Changes
+        </Button>
+      ) : null}
+      <Button type="button" onClick={goPreview}>
         Continue to preview
       </Button>
     </>,
-    <div
-      className={cn(
-        embedded
-          ? "flex flex-col gap-8"
-          : "mx-auto flex w-full max-w-[800px] flex-col gap-6",
-      )}
-    >
+    <div className="mx-auto flex w-full max-w-[800px] flex-col gap-6">
         <FormSection
-          embedded={embedded}
           title="Bundle Details"
           contentClassName="grid gap-4 sm:grid-cols-2"
         >
@@ -594,10 +524,7 @@ export function BundleFormScreen({
           </div>
         </FormSection>
 
-        {embedded ? <Separator /> : null}
-
         <FormSection
-          embedded={embedded}
           title="Included Items"
           description="At least one item type is required."
           contentClassName="grid gap-4 sm:grid-cols-2"
@@ -864,10 +791,7 @@ export function BundleFormScreen({
             ) : null}
         </FormSection>
 
-        {embedded ? <Separator /> : null}
-
         <FormSection
-          embedded={embedded}
           title="Billing Cycle & Pricing"
           description={`Calculated subtotal: ${formatUsd(autoSubtotal)}. Override per cycle as needed.`}
           contentClassName="flex flex-col gap-4"
@@ -878,7 +802,7 @@ export function BundleFormScreen({
             {BILLING_CYCLES.map((cycle) => {
               const checked = selectedCycles.includes(cycle);
               return (
-                <div key={cycle} className="grid gap-4 sm:grid-cols-2">
+                <div key={cycle} className="flex flex-col gap-2">
                   <label className="flex min-h-9 items-center gap-2 text-caption">
                     <Checkbox
                       checked={checked}
@@ -887,7 +811,7 @@ export function BundleFormScreen({
                     {BILLING_CYCLE_LABEL[cycle]}
                   </label>
                   {checked ? (
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-1.5 pl-6">
                       <Label className="sr-only">Price for {BILLING_CYCLE_LABEL[cycle]}</Label>
                       <Input
                         type="number"
@@ -903,9 +827,7 @@ export function BundleFormScreen({
                         default {formatUsd(autoSubtotal)}
                       </span>
                     </div>
-                  ) : (
-                    <div className="hidden sm:block" />
-                  )}
+                  ) : null}
                 </div>
               );
             })}

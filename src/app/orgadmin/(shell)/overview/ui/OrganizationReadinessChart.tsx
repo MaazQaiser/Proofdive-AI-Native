@@ -21,8 +21,8 @@ const SERIES = [
 export function OrganizationReadinessChart({ data }: Props) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Organization Readiness Overview</CardTitle>
+      <CardHeader className="gap-1">
+        <CardTitle className="text-h5 font-semibold">Organization Readiness Overview</CardTitle>
         <CardDescription>Overall readiness distribution across the organization</CardDescription>
         <CardAction>
           <ChartLegend items={[...SERIES]} />

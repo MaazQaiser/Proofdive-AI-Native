@@ -21,7 +21,7 @@ export const ORG_ADMIN_NAV_ITEMS: NavItem[] = [
 export function OrgAdminTopNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex h-full items-center gap-1 overflow-x-auto" aria-label="Organization admin">
+    <nav className="flex h-full min-w-0 flex-1 items-center gap-1 overflow-x-auto" aria-label="Organization admin">
       {ORG_ADMIN_NAV_ITEMS.map(({ href, label }) => {
         const active = pathname === href || pathname?.startsWith(`${href}/`);
         return (

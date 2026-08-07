@@ -1,5 +1,5 @@
-import { PartnerNotificationsScreen } from "./ui/PartnerNotificationsScreen";
+import { redirect } from "next/navigation";
 
 export default function PartnerNotificationsPage() {
-  return <PartnerNotificationsScreen />;
+  redirect("/partner/overview");
 }

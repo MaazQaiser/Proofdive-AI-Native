@@ -124,7 +124,7 @@ export function PartnerCommissionsScreen() {
   }
 
   return (
-    <div className="-m-6 flex h-full flex-col overflow-hidden">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
       <PageHeader>
         <PageTitle>Commissions &amp; Payouts</PageTitle>
         <Button onClick={openWithdraw} disabled={availableBalance <= 0}>
@@ -142,7 +142,7 @@ export function PartnerCommissionsScreen() {
         </KpiRow>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-3">
           <div>
             <h2 className="text-body-sm font-medium text-foreground">Monthly Invoices</h2>

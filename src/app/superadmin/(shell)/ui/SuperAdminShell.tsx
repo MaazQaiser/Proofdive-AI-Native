@@ -11,6 +11,7 @@ import {
   ROLE_SHELL_ROOT_CANVAS_CLASS,
 } from "@/components/shell/roleShellCanvas";
 import { RoleShellUtilityActions } from "@/components/shell/RoleShellUtilityActions";
+import { SuperAdminNotificationsPanel } from "@/components/shell/notifications/SuperAdminNotificationsPanel";
 import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
 
@@ -26,12 +27,12 @@ export function SuperAdminShell({ children }: Props) {
   return (
     <div
       className={cn(
-        "flex h-screen w-full min-w-[1200px] flex-col overflow-x-auto",
+        "flex h-screen w-full min-w-[1360px] flex-col overflow-x-auto min-[1360px]:overflow-x-hidden",
         ROLE_SHELL_ROOT_CANVAS_CLASS,
         isHub && ROLE_HUB_MOTIF_CLASS,
       )}
     >
-      <header className={cn("flex h-14 shrink-0 items-stretch gap-6 px-6 print:hidden", ROLE_SHELL_HEADER_SURFACE_CLASS)}>
+      <header className={cn("flex h-14 min-w-0 shrink-0 items-stretch gap-6 px-6 print:hidden", ROLE_SHELL_HEADER_SURFACE_CLASS)}>
         <Link
           href="/superadmin/overview"
           className="flex shrink-0 items-center border-r border-border pr-6"
@@ -42,13 +43,13 @@ export function SuperAdminShell({ children }: Props) {
         <div className="ml-auto flex h-full shrink-0 items-center gap-4 border-l border-border pl-6">
           <RoleShellUtilityActions
             settingsHref="/superadmin/profile"
-            notificationsHref="/superadmin/notifications"
+            notificationsPanel={<SuperAdminNotificationsPanel />}
           />
           <SuperAdminUserMenu />
         </div>
       </header>
 
-      <main className="relative z-[2] min-h-0 min-w-0 flex-1 overflow-y-auto px-6 pb-6">{children}</main>
+      <main className="relative z-[2] min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-6">{children}</main>
     </div>
   );
 }

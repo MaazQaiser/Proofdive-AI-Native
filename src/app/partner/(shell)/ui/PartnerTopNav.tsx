@@ -15,7 +15,7 @@ export const PARTNER_NAV_ITEMS: NavItem[] = [
 export function PartnerTopNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex h-full items-center gap-1 overflow-x-auto" aria-label="Partner portal">
+    <nav className="flex h-full min-w-0 flex-1 items-center gap-1 overflow-x-auto" aria-label="Partner portal">
       {PARTNER_NAV_ITEMS.map(({ href, label }) => {
         const active = pathname === href || pathname?.startsWith(`${href}/`);
         return (

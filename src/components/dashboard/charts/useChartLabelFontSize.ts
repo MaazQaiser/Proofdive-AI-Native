@@ -19,8 +19,10 @@ export function useChartLabelFontSize(
 
     const update = (width: number) => {
       if (width <= 0) return;
-      // Clamp so labels stay readable in 2-col cards without blowing up on ultra-wide.
-      setFontSize(Math.min(18, Math.max(targetPx, (targetPx * viewBoxWidth) / width)));
+      // viewBoxFont * (width / viewBoxWidth) ≈ targetPx → viewBoxFont = targetPx * viewBoxWidth / width
+      // Cap only the upper viewBox size for very narrow cards; never floor at targetPx
+      // (that would let rendered labels grow past the card title on wide layouts).
+      setFontSize(Math.min(16, (targetPx * viewBoxWidth) / width));
     };
 
     update(el.getBoundingClientRect().width);

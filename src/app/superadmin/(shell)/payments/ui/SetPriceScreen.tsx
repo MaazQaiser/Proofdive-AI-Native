@@ -228,7 +228,7 @@ export function SetPriceScreen() {
         </>
       }
     >
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <table className="w-full min-w-[800px] table-fixed caption-bottom text-sm">
             <colgroup>
               <col className="w-[180px]" />

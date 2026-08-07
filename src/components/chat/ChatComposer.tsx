@@ -10,7 +10,7 @@ import {
   type TransitionEvent,
 } from "react";
 import { createPortal } from "react-dom";
-import { Maximize2, MessageCircleQuestion, X, type LucideIcon } from "lucide-react";
+import { Maximize2, MessageCircleQuestion, Minimize2, X, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/components/cn";
 import { useSpeechDictation } from "@/components/chat/useSpeechDictation";
@@ -81,19 +81,45 @@ export function ChatComposer({
   const [pendingUploads, setPendingUploads] = useState<File[]>([]);
   /** Full-screen FAQ portal (Maximize), not the compact/expanded Chatbox variant. */
   const [fullscreen, setFullscreen] = useState(false);
+  const [expandSettled, setExpandSettled] = useState(false);
+  const [originRect, setOriginRect] = useState<{
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const [textOverflows, setTextOverflows] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const skipOpenOnNextFocusRef = useRef(false);
   const measureRef = useRef<HTMLInputElement | null>(null);
+  const chatboxShellRef = useRef<HTMLDivElement | null>(null);
+  const reduceMotionRef = useRef(false);
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (disabled) skipOpenOnNextFocusRef.current = false;
   }, [disabled]);
 
   useEffect(() => {
-    if (!thread) setFullscreen(false);
+    if (!thread) {
+      setFullscreen(false);
+      setExpandSettled(false);
+      setOriginRect(null);
+    }
   }, [thread]);
+
+  useEffect(() => {
+    reduceMotionRef.current =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    };
+  }, []);
 
   // Full-screen FAQ agent — lock page scroll and allow Escape to exit.
   useEffect(() => {
@@ -101,14 +127,70 @@ export function ChatComposer({
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setFullscreen(false);
+      if (e.key === "Escape") exitFullscreen();
     }
     window.addEventListener("keydown", onKeyDown);
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fullscreen]);
+
+  function measureChatboxRect() {
+    const el =
+      chatboxShellRef.current?.querySelector<HTMLElement>('[data-slot="chatbox"]') ??
+      chatboxShellRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    return {
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+    };
+  }
+
+  function finishExit() {
+    if (exitTimerRef.current) {
+      clearTimeout(exitTimerRef.current);
+      exitTimerRef.current = null;
+    }
+    setFullscreen(false);
+    setExpandSettled(false);
+    setOriginRect(null);
+  }
+
+  function enterFullscreen() {
+    const rect = measureChatboxRect();
+    if (rect) setOriginRect(rect);
+    setFullscreen(true);
+    setExpandSettled(false);
+    if (reduceMotionRef.current) {
+      setExpandSettled(true);
+      return;
+    }
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setExpandSettled(true));
+    });
+  }
+
+  function exitFullscreen() {
+    if (!fullscreen) return;
+    if (reduceMotionRef.current || !originRect) {
+      finishExit();
+      return;
+    }
+    setExpandSettled(false);
+    if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    exitTimerRef.current = setTimeout(finishExit, 460);
+  }
+
+  function handleExpandTransitionEnd(e: TransitionEvent<HTMLDivElement>) {
+    if (e.target !== e.currentTarget) return;
+    if (!["top", "left", "width", "height"].includes(e.propertyName)) return;
+    if (!expandSettled && fullscreen) finishExit();
+  }
 
   const appendFinalTranscript = useCallback((segment: string) => {
     setText((prev) => {
@@ -184,7 +266,7 @@ export function ChatComposer({
   }
 
   function handleThreadClose() {
-    setFullscreen(false);
+    exitFullscreen();
     onThreadClose?.();
   }
 
@@ -277,11 +359,11 @@ export function ChatComposer({
           <IconButton
             variant="ghost"
             size="md"
-            onClick={() => setFullscreen(true)}
+            onClick={() => (fullscreen ? exitFullscreen() : enterFullscreen())}
             className="text-text-secondary hover:text-text-primary active:bg-muted"
-            aria-label="Expand to full screen"
+            aria-label={fullscreen ? "Exit full screen" : "Expand to full screen"}
           >
-            <Maximize2 />
+            {fullscreen ? <Minimize2 /> : <Maximize2 />}
           </IconButton>
           {onThreadClose ? (
             <IconButton
@@ -298,15 +380,21 @@ export function ChatComposer({
       </div>
       <div
         data-slot="chatbox-thread-log"
-        className="flex min-h-0 w-full max-h-[min(380px,42dvh)] flex-1 flex-col border-b border-[#d4d4d2]"
+        className={cn(
+          "flex min-h-0 w-full flex-1 flex-col border-b border-[#d4d4d2]",
+          !fullscreen && "max-h-[min(380px,42dvh)]",
+        )}
       >
         <div
-          className="min-h-0 w-full flex-1 overflow-y-auto scroll-smooth py-0 pr-3 pl-6"
+          className={cn(
+            "min-h-0 w-full flex-1 overflow-y-auto scroll-smooth py-0",
+            fullscreen ? "px-6" : "pr-3 pl-6",
+          )}
           tabIndex={0}
           role="log"
           aria-relevant="additions"
         >
-          {thread}
+          <div className={cn(fullscreen && "mx-auto w-full max-w-2xl")}>{thread}</div>
         </div>
       </div>
     </>
@@ -381,6 +469,21 @@ export function ChatComposer({
 
   const chatbox = renderChatbox({ leading: threadLeading ?? undefined });
 
+  const expandStyle = fullscreen
+    ? ({
+        position: "fixed",
+        zIndex: 70,
+        top: expandSettled || !originRect ? 24 : originRect.top,
+        left: expandSettled || !originRect ? 24 : originRect.left,
+        width: expandSettled || !originRect ? "calc(100vw - 48px)" : originRect.width,
+        height: expandSettled || !originRect ? "calc(100dvh - 48px)" : originRect.height,
+        maxWidth: "none",
+        transition: reduceMotionRef.current
+          ? undefined
+          : "top 420ms cubic-bezier(0.22, 1, 0.36, 1), left 420ms cubic-bezier(0.22, 1, 0.36, 1), width 420ms cubic-bezier(0.22, 1, 0.36, 1), height 420ms cubic-bezier(0.22, 1, 0.36, 1)",
+      } as const)
+    : undefined;
+
   return (
     <>
       {/* Hidden measure mirror for compact single-line overflow detection. */}
@@ -452,7 +555,17 @@ export function ChatComposer({
             />
           ) : null}
 
-          {!fullscreen ? chatbox : null}
+          {fullscreen && originRect ? (
+            <div
+              aria-hidden
+              className="w-full shrink-0"
+              style={{ height: originRect.height }}
+            />
+          ) : (
+            <div ref={chatboxShellRef} className="flex min-h-0 w-full flex-1 flex-col">
+              {chatbox}
+            </div>
+          )}
         </div>
       </div>
 
@@ -462,53 +575,28 @@ export function ChatComposer({
               role="dialog"
               aria-modal="true"
               aria-label={threadHeaderTitle ?? "Full screen assistant"}
-              className="fixed inset-0 z-[60] flex h-dvh w-screen flex-col overflow-hidden bg-white"
+              className="fixed inset-0 z-[60]"
             >
-              <div className="app-canvas app-canvas--motif pointer-events-none absolute inset-0" aria-hidden />
+              <div
+                aria-hidden
+                className={cn(
+                  "absolute inset-0 bg-black/30 backdrop-blur-md transition-opacity duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+                  expandSettled ? "opacity-100" : "opacity-0",
+                )}
+                onClick={exitFullscreen}
+              />
 
-              <IconButton
-                variant="ghost"
-                size="lg"
-                onClick={() => setFullscreen(false)}
-                className="absolute top-4 right-4 z-20 text-text-secondary hover:text-text-primary"
-                aria-label="Close full screen"
+              <div
+                ref={chatboxShellRef}
+                onTransitionEnd={handleExpandTransitionEnd}
+                className="pointer-events-auto flex flex-col overflow-hidden rounded-[20px] shadow-[0_24px_80px_-24px_rgba(7,62,76,0.35)]"
+                style={expandStyle}
               >
-                <X strokeWidth={2} />
-              </IconButton>
-
-              <div className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-[800px] flex-col px-6 pt-14 pb-6">
-                <div className="min-h-0 flex-1 overflow-y-auto scroll-smooth">
-                  <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 py-6">
-                    {threadHeaderTitle ? (
-                      <div className="flex flex-col items-center gap-3 pt-4 text-center">
-                        <MessageCircleQuestion
-                          className="size-9 text-foreground"
-                          strokeWidth={1.6}
-                          aria-hidden
-                        />
-                        <h1 className="text-h2 font-normal tracking-tight text-foreground">
-                          {threadHeaderTitle}
-                        </h1>
-                      </div>
-                    ) : null}
-                    <div
-                      className="w-full"
-                      tabIndex={0}
-                      role="log"
-                      aria-relevant="additions"
-                      aria-label="Assistant responses"
-                    >
-                      {thread}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative z-[2] mx-auto w-full max-w-2xl shrink-0 pt-3">
-                  {renderChatbox({
-                    className: "max-w-none",
-                    forceVariant: "expanded",
-                  })}
-                </div>
+                {renderChatbox({
+                  leading: threadLeading ?? undefined,
+                  className: "h-full max-w-none min-h-0 flex-1",
+                  forceVariant: "expanded",
+                })}
               </div>
             </div>,
             document.body,

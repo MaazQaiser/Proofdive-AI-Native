@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopyableReferralCode } from "@/components/ui/copyable-referral-code";
 import { DetailField, DetailGrid, DetailSection } from "@/components/ui/detail-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -139,7 +140,7 @@ export function PartnerProfileDetailsSection() {
         ) : (
           <>
             <DetailSection title="Basic Details">
-              <DetailGrid>
+              <DetailGrid className="grid-cols-1 sm:grid-cols-2">
                 <DetailField label="Full Name" value={partner.fullName} />
                 <DetailField label="Email Address" value={partner.email} />
                 <DetailField
@@ -151,7 +152,7 @@ export function PartnerProfileDetailsSection() {
             </DetailSection>
             <Separator />
             <DetailSection title="Entity Details">
-              <DetailGrid>
+              <DetailGrid className="grid-cols-1 sm:grid-cols-2">
                 <DetailField label="Entity Type" value={ENTITY_TYPE_LABEL[partner.entityType]} />
                 <DetailField label="Audience Type" value={AUDIENCE_TYPE_LABEL[partner.audienceType]} />
                 {partner.entityType === "company" ? (
@@ -165,7 +166,7 @@ export function PartnerProfileDetailsSection() {
             </DetailSection>
             <Separator />
             <DetailSection title="Commission">
-              <DetailGrid>
+              <DetailGrid className="grid-cols-1 sm:grid-cols-2">
                 <DetailField
                   label="Commission Structure"
                   value={COMMISSION_TYPE_LABEL[partner.commissionType]}
@@ -178,7 +179,7 @@ export function PartnerProfileDetailsSection() {
                 <DetailField label="Payment Method" value="Stripe" />
                 <DetailField
                   label="Referral Code"
-                  value={<span className="font-mono">{partner.referralCode}</span>}
+                  value={<CopyableReferralCode code={partner.referralCode} />}
                 />
               </DetailGrid>
             </DetailSection>

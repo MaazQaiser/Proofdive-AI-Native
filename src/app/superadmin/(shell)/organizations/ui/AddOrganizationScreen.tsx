@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -93,25 +93,99 @@ function createInitialFormState(): FormState {
   };
 }
 
+function formFromOrganization(org: Organization): FormState {
+  const plan = PRICING_PLANS.find((p) => p.name === org.subscriptionPlan);
+  return {
+    orgType: org.type,
+    name: org.name,
+    industry: org.industry,
+    country: org.country,
+    city: org.city,
+    region: org.region,
+    logoFileName: org.logoFileName,
+    domain: org.domain,
+    contactName: org.contactName,
+    contactEmail: org.contactEmail,
+    contactCountryCode: org.contactCountryCode,
+    contactPhone: org.contactPhone,
+    contactDesignation: org.contactDesignation,
+    competencyFrameworkId: org.competencyFrameworkId,
+    selectedCourseIds: [...org.courseIds],
+    pricingPlanId: plan?.id ?? "",
+    discountPercent: org.discountPercent ? String(org.discountPercent) : "",
+    numberOfUsers: String(org.numberOfUsers),
+    startDate: org.subscriptionStartDate,
+    expiryDate: org.subscriptionExpiryDate,
+    csvFileName: "",
+    userEmails: [],
+  };
+}
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type FieldErrors = Record<string, string>;
 
-export function AddOrganizationScreen() {
+const SECTION_ID_MAP: Record<string, string> = {
+  details: "section-details",
+  competencies: "section-competencies",
+  courses: "section-courses",
+  payment: "section-payment",
+};
+
+type AddOrganizationScreenProps = {
+  mode?: "create" | "edit";
+  organizationId?: string;
+  section?: string;
+};
+
+export function AddOrganizationScreen({
+  mode = "create",
+  organizationId,
+  section,
+}: AddOrganizationScreenProps) {
   const router = useRouter();
-  const { existingNames, addOrganization } = useOrganizations();
+  const { organizations, updateOrganization, existingNames, addOrganization, hydrated } =
+    useOrganizations();
   const { summaries, createClone } = useCompetencyFrameworks();
+  const isEdit = mode === "edit";
+
   const frameworks: CompetencyFramework[] =
     summaries.length > 0
       ? summaries.map((f) => ({ id: f.id, name: f.name, isDefault: f.isDefault }))
       : COMPETENCY_FRAMEWORKS;
 
+  const existingOrganization = useMemo(
+    () => (organizationId ? organizations.find((o) => o.id === organizationId) : undefined),
+    [organizations, organizationId],
+  );
+
   const [form, setForm] = useState<FormState>(createInitialFormState);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [hydratedForm, setHydratedForm] = useState(!isEdit);
   const [isCreatingCompetency, setIsCreatingCompetency] = useState(false);
   const [newCompetencyName, setNewCompetencyName] = useState("");
   const [competencyNameError, setCompetencyNameError] = useState("");
   const [csvError, setCsvError] = useState("");
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isEdit || !hydrated) return;
+    if (!existingOrganization) {
+      setHydratedForm(true);
+      return;
+    }
+    setForm(formFromOrganization(existingOrganization));
+    setErrors({});
+    setHydratedForm(true);
+  }, [isEdit, hydrated, existingOrganization]);
+
+  useEffect(() => {
+    if (!section || !hydratedForm) return;
+    const sectionId = SECTION_ID_MAP[section] ?? `section-${section}`;
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [section, hydratedForm]);
 
   useEffect(() => {
     return () => {
@@ -148,8 +222,12 @@ export function AddOrganizationScreen() {
 
     const trimmedName = form.name.trim();
     if (!trimmedName) next.name = "Organization Name is required.";
-    else if (existingNames.some((n) => n.toLowerCase() === trimmedName.toLowerCase()))
-      next.name = "Organization Name already exists.";
+    else {
+      const takenByOther =
+        existingNames.some((n) => n.toLowerCase() === trimmedName.toLowerCase()) &&
+        (!existingOrganization || existingOrganization.name.toLowerCase() !== trimmedName.toLowerCase());
+      if (takenByOther) next.name = "Organization Name already exists.";
+    }
     if (!form.industry) next.industry = "Industry / Domain is required.";
     if (!form.country) next.country = "Country is required.";
     if (!form.city.trim()) next.city = "City is required.";
@@ -173,6 +251,13 @@ export function AddOrganizationScreen() {
     return next;
   }
 
+  function handleDiscard() {
+    if (!existingOrganization) return;
+    setForm(formFromOrganization(existingOrganization));
+    setErrors({});
+    setCsvError("");
+  }
+
   function handleSubmit() {
     if (csvError) return;
 
@@ -183,6 +268,36 @@ export function AddOrganizationScreen() {
     }
 
     const plan = PRICING_PLANS.find((p) => p.id === form.pricingPlanId);
+
+    if (isEdit && existingOrganization) {
+      const patch: Partial<Organization> = {
+        name: form.name.trim(),
+        type: form.orgType as OrganizationType,
+        industry: form.industry,
+        country: form.country,
+        city: form.city.trim(),
+        region: form.region.trim(),
+        domain: form.domain.trim(),
+        logoFileName: form.logoFileName,
+        contactName: form.contactName.trim(),
+        contactEmail: form.contactEmail.trim(),
+        contactCountryCode: form.contactCountryCode,
+        contactPhone: form.contactPhone.trim(),
+        contactDesignation: form.contactDesignation.trim(),
+        competencyFrameworkId: form.competencyFrameworkId,
+        courseIds: form.selectedCourseIds,
+        subscriptionPlan: plan?.name ?? existingOrganization.subscriptionPlan,
+        numberOfUsers: Number(form.numberOfUsers),
+        subscriptionStartDate: form.startDate,
+        subscriptionExpiryDate: form.expiryDate,
+        discountPercent: form.discountPercent.trim() ? Number(form.discountPercent) : 0,
+      };
+      updateOrganization(existingOrganization.id, patch);
+      toast.success("Organization updated successfully.");
+      router.push("/superadmin/organizations");
+      return;
+    }
+
     const newOrganization: Organization = {
       id: `org_${Date.now()}`,
       name: form.name.trim(),
@@ -291,28 +406,75 @@ export function AddOrganizationScreen() {
 
   const selectedFramework = frameworks.find((f) => f.id === form.competencyFrameworkId);
 
-  return (
-    <div className="flex flex-col gap-8">
-      <PageHeader sticky bleed>
-        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  if (isEdit && hydratedForm && !existingOrganization) {
+    return (
+      <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
+        <PageHeader>
           <PageBreadcrumb
             parentHref="/superadmin/organizations"
             parentLabel="Organizations"
-            title="Add New Organization"
+            title="Organization not found"
           />
-          <div className="flex shrink-0 flex-wrap items-center gap-4">
+        </PageHeader>
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8">
+          <Card>
+            <CardContent className="py-10 text-center">
+              <p className="text-caption text-muted-foreground">This organization does not exist.</p>
+              <Button className="mt-4" asChild>
+                <Link href="/superadmin/organizations">Back to listing</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEdit && !hydratedForm) {
+    return null;
+  }
+
+  return (
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
+      <PageHeader>
+        <div className="flex w-full min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <PageBreadcrumb
+            className="min-w-0"
+            parentHref="/superadmin/organizations"
+            parentLabel="Organizations"
+            title={
+              isEdit
+                ? existingOrganization
+                  ? `Edit: ${existingOrganization.name}`
+                  : "Edit Organization"
+                : "Add New Organization"
+            }
+          />
+          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:gap-4">
             <Button type="button" variant="outline" asChild>
               <Link href="/superadmin/organizations">Cancel</Link>
             </Button>
-            <Button type="button" onClick={handleSubmit}>
-              Send Invite
-            </Button>
+            {isEdit ? (
+              <>
+                <Button type="button" variant="ghost" onClick={handleDiscard}>
+                  Discard Changes
+                </Button>
+                <Button type="button" onClick={handleSubmit}>
+                  Save Changes
+                </Button>
+              </>
+            ) : (
+              <Button type="button" onClick={handleSubmit}>
+                Send Invite
+              </Button>
+            )}
           </div>
         </div>
       </PageHeader>
 
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <Card>
+        <Card id="section-details">
           <CardHeader>
             <CardTitle className="text-h5 font-medium">Organization Details</CardTitle>
           </CardHeader>
@@ -408,7 +570,7 @@ export function AddOrganizationScreen() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="section-personalization">
           <CardHeader>
             <CardTitle className="text-h5 font-medium">Personalization</CardTitle>
           </CardHeader>
@@ -485,7 +647,7 @@ export function AddOrganizationScreen() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="section-contact">
           <CardHeader>
             <CardTitle className="text-h5 font-medium">Point of Contact</CardTitle>
           </CardHeader>
@@ -564,7 +726,7 @@ export function AddOrganizationScreen() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="section-competencies">
           <CardHeader>
             <CardTitle className="text-h5 font-medium">Competency Configuration</CardTitle>
           </CardHeader>
@@ -657,7 +819,7 @@ export function AddOrganizationScreen() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="section-courses">
           <CardHeader>
             <CardTitle className="text-h5 font-medium">Course Selection</CardTitle>
           </CardHeader>
@@ -684,7 +846,7 @@ export function AddOrganizationScreen() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card id="section-payment">
           <CardHeader>
             <CardTitle className="text-h5 font-medium">Payment Plan</CardTitle>
           </CardHeader>
@@ -781,71 +943,74 @@ export function AddOrganizationScreen() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-h5 font-medium">User Onboarding</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <p className="text-body-sm text-muted-foreground">
-              Optionally upload a CSV file of user email addresses to invite them to this organization.
-              Invitations are sent once onboarding is complete and the Organization Admin has activated their
-              account.
-            </p>
-            {!form.csvFileName ? (
-              <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-border px-6 py-10 text-center">
-                <FileSpreadsheet className="h-8 w-8 text-muted-foreground" />
-                <div className="flex flex-col gap-1">
-                  <Button variant="outline" size="sm" asChild>
-                    <label htmlFor="user-csv" className="cursor-pointer">
-                      <Upload className="h-4 w-4" />
-                      Upload CSV File
-                    </label>
-                  </Button>
-                  <input
-                    id="user-csv"
-                    type="file"
-                    accept=".csv,text/csv"
-                    className="hidden"
-                    onChange={(e) => handleCsvUpload(e.target.files?.[0])}
-                  />
-                </div>
-                {csvError ? <p className="text-caption text-destructive">{csvError}</p> : null}
-                <p className="text-caption text-muted-foreground">
-                  This step is optional — you can invite users later.
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3 rounded-md border border-border p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-body-sm font-medium text-foreground">{form.csvFileName}</span>
+        {!isEdit ? (
+          <Card id="section-users">
+            <CardHeader>
+              <CardTitle className="text-h5 font-medium">User Onboarding</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <p className="text-body-sm text-muted-foreground">
+                Optionally upload a CSV file of user email addresses to invite them to this organization.
+                Invitations are sent once onboarding is complete and the Organization Admin has activated their
+                account.
+              </p>
+              {!form.csvFileName ? (
+                <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-border px-6 py-10 text-center">
+                  <FileSpreadsheet className="h-8 w-8 text-muted-foreground" />
+                  <div className="flex flex-col gap-1">
+                    <Button variant="outline" size="sm" asChild>
+                      <label htmlFor="user-csv" className="cursor-pointer">
+                        <Upload className="h-4 w-4" />
+                        Upload CSV File
+                      </label>
+                    </Button>
+                    <input
+                      id="user-csv"
+                      type="file"
+                      accept=".csv,text/csv"
+                      className="hidden"
+                      onChange={(e) => handleCsvUpload(e.target.files?.[0])}
+                    />
                   </div>
-                  <Button variant="ghost" size="sm" onClick={handleRemoveCsv}>
-                    <Trash2 className="h-4 w-4" />
-                    Remove
-                  </Button>
+                  {csvError ? <p className="text-caption text-destructive">{csvError}</p> : null}
+                  <p className="text-caption text-muted-foreground">
+                    This step is optional — you can invite users later.
+                  </p>
                 </div>
-                <p className="text-caption text-muted-foreground">
-                  {form.userEmails.length} user{form.userEmails.length === 1 ? "" : "s"} will be invited once
-                  onboarding is complete.
-                </p>
-                <div className="flex max-h-40 flex-col gap-1 overflow-y-auto rounded-md bg-muted p-2">
-                  {form.userEmails.slice(0, 8).map((email) => (
-                    <span key={email} className="text-caption text-muted-foreground">
-                      {email}
-                    </span>
-                  ))}
-                  {form.userEmails.length > 8 ? (
-                    <span className="text-caption text-muted-foreground">
-                      +{form.userEmails.length - 8} more
-                    </span>
-                  ) : null}
+              ) : (
+                <div className="flex flex-col gap-3 rounded-md border border-border p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-body-sm font-medium text-foreground">{form.csvFileName}</span>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={handleRemoveCsv}>
+                      <Trash2 className="h-4 w-4" />
+                      Remove
+                    </Button>
+                  </div>
+                  <p className="text-caption text-muted-foreground">
+                    {form.userEmails.length} user{form.userEmails.length === 1 ? "" : "s"} will be invited once
+                    onboarding is complete.
+                  </p>
+                  <div className="flex max-h-40 flex-col gap-1 overflow-y-auto rounded-md bg-muted p-2">
+                    {form.userEmails.slice(0, 8).map((email) => (
+                      <span key={email} className="text-caption text-muted-foreground">
+                        {email}
+                      </span>
+                    ))}
+                    {form.userEmails.length > 8 ? (
+                      <span className="text-caption text-muted-foreground">
+                        +{form.userEmails.length - 8} more
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        ) : null}
+      </div>
       </div>
     </div>
   );

@@ -37,8 +37,8 @@ export function SuperAdminDashboardScreen() {
   const { kpis } = dataset;
 
   return (
-    <div className="space-y-6">
-      <div className="-mx-6">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
+      <div className="shrink-0">
         <PageHeader>
           <PageTitle>Overview</PageTitle>
           <DateRangeFilter
@@ -56,11 +56,13 @@ export function SuperAdminDashboardScreen() {
         </KpiRow>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <TenantGrowthChart data={dataset.tenantGrowth} />
-        <ActiveUserTrendChart data={dataset.activeUserTrend} />
-        <PlatformUsageChart data={dataset.platformUsage} />
-        <RevenueAnalyticsChart data={dataset.revenueAnalytics} />
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <TenantGrowthChart data={dataset.tenantGrowth} />
+          <ActiveUserTrendChart data={dataset.activeUserTrend} />
+          <PlatformUsageChart data={dataset.platformUsage} />
+          <RevenueAnalyticsChart data={dataset.revenueAnalytics} />
+        </div>
       </div>
     </div>
   );

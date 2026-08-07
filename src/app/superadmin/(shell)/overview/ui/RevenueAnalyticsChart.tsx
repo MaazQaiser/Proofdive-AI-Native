@@ -18,8 +18,8 @@ export function RevenueAnalyticsChart({ data }: Props) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Revenue Analytics</CardTitle>
+      <CardHeader className="gap-1">
+        <CardTitle className="text-h5 font-semibold">Revenue Analytics</CardTitle>
         <CardDescription>Subscription revenue trends</CardDescription>
         {latestGrowthPct !== null ? (
           <CardAction>

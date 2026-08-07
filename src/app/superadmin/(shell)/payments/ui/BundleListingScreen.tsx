@@ -11,6 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -95,6 +96,7 @@ function formatPricesInline(bundle: PaymentBundle): string {
 }
 
 export function BundleListingScreen() {
+  const router = useRouter();
   const { bundles, deactivate, reactivate, duplicate, hydrated } = usePaymentBundles();
   const { rates: globalRates } = useGlobalRates();
 
@@ -107,7 +109,6 @@ export function BundleListingScreen() {
   const [confirmDeactivate, setConfirmDeactivate] = useState<PaymentBundle | null>(null);
   const [reactivateErrors, setReactivateErrors] = useState<string[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [drawerEditing, setDrawerEditing] = useState(false);
 
   const selectedBundle = bundles.find((b) => b.id === selectedId) ?? null;
   const stats = useMemo(() => computeBundleSummary(bundles), [bundles]);
@@ -148,7 +149,6 @@ export function BundleListingScreen() {
       return;
     }
     toast.success(`Draft "${copy.name}" created.`);
-    setDrawerEditing(true);
     setSelectedId(copy.id);
   }
 
@@ -262,7 +262,7 @@ export function BundleListingScreen() {
         </Select>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         {!hydrated ? (
           <p className="px-6 py-10 text-caption text-muted-foreground">Loading bundles…</p>
         ) : pageRows.length === 0 ? (
@@ -292,10 +292,7 @@ export function BundleListingScreen() {
                     <button
                       type="button"
                       className="text-left font-semibold text-text-primary hover:underline"
-                      onClick={() => {
-                        setDrawerEditing(false);
-                        setSelectedId(bundle.id);
-                      }}
+                      onClick={() => setSelectedId(bundle.id)}
                     >
                       {bundle.name}
                     </button>
@@ -325,19 +322,13 @@ export function BundleListingScreen() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setDrawerEditing(false);
-                            setSelectedId(bundle.id);
-                          }}
-                        >
+                        <DropdownMenuItem onClick={() => setSelectedId(bundle.id)}>
                           View details
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => {
-                            setDrawerEditing(true);
-                            setSelectedId(bundle.id);
-                          }}
+                          onClick={() =>
+                            router.push(`/superadmin/payments/bundles/${bundle.id}?edit=1`)
+                          }
                         >
                           Edit Bundle
                         </DropdownMenuItem>
@@ -367,36 +358,33 @@ export function BundleListingScreen() {
             </TableBody>
           </table>
         )}
-      </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
-        <div className="text-caption flex items-center gap-2 text-muted-foreground">
-          <span>Rows per page</span>
-          <Select
-            value={String(rowsPerPage)}
-            onValueChange={(v) => {
-              setRowsPerPage(Number(v));
-              resetToFirstPage();
-            }}
-          >
-            <SelectTrigger size="sm" className="w-[72px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ROWS_PER_PAGE_OPTIONS.map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="text-caption flex items-center gap-4 text-muted-foreground">
-          <span>
-            {filtered.length === 0
-              ? "0 items found"
-              : `${filtered.length} item${filtered.length === 1 ? "" : "s"} found, displaying ${pageStart + 1} to ${pageEnd}`}
-          </span>
+        <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-4 border-t border-border app-canvas-wash px-6 py-4">
+          <div className="text-caption flex items-center gap-2 text-muted-foreground">
+            <span>Rows per page</span>
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => {
+                setRowsPerPage(Number(v));
+                resetToFirstPage();
+              }}
+            >
+              <SelectTrigger size="sm" className="w-[72px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROWS_PER_PAGE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-caption flex items-center gap-4 text-muted-foreground">
+            <span>
+              {`page ${currentPage} of ${totalPages}`}
+            </span>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -435,17 +423,14 @@ export function BundleListingScreen() {
               <ChevronsRight className="h-4 w-4" />
             </Button>
           </div>
+          </div>
         </div>
       </div>
 
       <BundleDetailDrawer
         bundle={selectedBundle}
-        initialEditing={drawerEditing}
         onOpenChange={(open) => {
-          if (!open) {
-            setSelectedId(null);
-            setDrawerEditing(false);
-          }
+          if (!open) setSelectedId(null);
         }}
         onRequestDeactivate={(b) => setConfirmDeactivate(b)}
         onRequestReactivate={(b) => handleReactivate(b)}

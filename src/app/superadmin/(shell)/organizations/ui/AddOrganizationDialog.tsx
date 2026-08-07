@@ -387,7 +387,7 @@ export function AddOrganizationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="flex h-[85vh] max-h-[760px] w-full max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl"
+        className="app-canvas-wash flex h-[85vh] max-h-[760px] w-full max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
           {step === "landing" ? (

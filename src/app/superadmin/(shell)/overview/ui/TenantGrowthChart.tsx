@@ -21,8 +21,8 @@ const SERIES = [
 export function TenantGrowthChart({ data }: Props) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Tenant Growth Analytics</CardTitle>
+      <CardHeader className="gap-1">
+        <CardTitle className="text-h5 font-semibold">Tenant Growth Analytics</CardTitle>
         <CardDescription>Onboarding trends across the platform</CardDescription>
         <CardAction>
           <ChartLegend items={[...SERIES]} />

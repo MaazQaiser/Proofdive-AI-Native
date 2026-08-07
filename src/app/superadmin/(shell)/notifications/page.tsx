@@ -1,5 +1,5 @@
-import { SuperAdminNotificationsScreen } from "./ui/SuperAdminNotificationsScreen";
+import { redirect } from "next/navigation";
 
 export default function SuperAdminNotificationsPage() {
-  return <SuperAdminNotificationsScreen />;
+  redirect("/superadmin/overview");
 }

@@ -611,7 +611,7 @@ export function TrainingChapterOneJourney({
                           } catch {
                             // ignore localStorage write failures
                           }
-                          router.push("/coach?journey=1");
+                          router.push("/coach");
                         }}
                       >
                         {CTA_TAKE_A_BREAK}

@@ -1,5 +1,6 @@
 import { BookOpen, CreditCard, FileText, LifeBuoy, Plus, UserCheck, type LucideIcon } from "lucide-react";
 
+import { ONBOARDING_INTRO_VIDEO_SRC } from "@/lib/onboardingIntroVideo";
 import type { RecommendedNextStep } from "@/lib/recommendedNextStep";
 import type { InterviewReport } from "@/lib/proofdiveTypes";
 
@@ -20,6 +21,8 @@ export type FaqFollowup = {
   id: string;
   question: string;
   answer: string;
+  /** Optional explainer video shown under the answer (e.g. ProofDive intro). */
+  videoSrc?: string;
 };
 
 export type FaqAnswer = {
@@ -27,6 +30,8 @@ export type FaqAnswer = {
   cta?: FaqCtaAction;
   /** Only ever present on the root item's own answer, never on a follow-up's answer. */
   followups?: FaqFollowup[];
+  /** Optional explainer video shown under the answer. */
+  videoSrc?: string;
 };
 
 /** Already-resolved data every item's `getAnswer` may need — no localStorage reads happen in this file. */
@@ -136,6 +141,13 @@ export const FAQ_ROOT_ITEMS: FaqRootItem[] = [
       text: "Mock Interview puts you through a realistic, timed interview with an AI interviewer that asks adaptive follow-up questions. You'll get a full transcript, a score across key competencies, and personalized feedback on what worked and what to improve.",
       cta: MOCK_INTERVIEW_CTA,
       followups: [
+        {
+          id: "competency_engine",
+          question: "What is the ProofDive Competency Engine?",
+          answer:
+            "You'll be judged on Thinking, Action, People, and Mastery. Watch this short overview to see how ProofDive scores your answers.",
+          videoSrc: ONBOARDING_INTRO_VIDEO_SRC,
+        },
         {
           id: "how_long",
           question: "How long does a mock interview take?",

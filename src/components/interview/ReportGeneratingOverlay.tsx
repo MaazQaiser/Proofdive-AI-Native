@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Logo } from "@/components/ui/logo";
+import { LogoFillProgress } from "@/components/ui/logo-fill-progress";
 import { cn } from "@/lib/utils";
 
 const BLOBS = [
@@ -34,30 +35,6 @@ type Props = {
   stepIdx: number;
   steps: readonly string[];
 };
-
-function LogoFillProgress({ progress }: { progress: number }) {
-  const clipped = Math.min(100, Math.max(0, progress));
-  const insetTop = `${100 - clipped}%`;
-
-  return (
-    <div
-      className="relative size-[88px] shrink-0 sm:size-[112px]"
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(clipped)}
-      aria-label="Report generation progress"
-    >
-      {/* Empty / filled mark via luminance mask (assets are teal-on-black). */}
-      <div className="report-loading-logo-mask absolute inset-0 bg-[#d7ebf0]" aria-hidden />
-      <div
-        className="report-loading-logo-mask absolute inset-0 bg-[#0e9ab5] transition-[clip-path] duration-[2800ms] ease-linear motion-reduce:transition-none"
-        style={{ clipPath: `inset(${insetTop} 0 0 0)` }}
-        aria-hidden
-      />
-    </div>
-  );
-}
 
 export function ReportGeneratingOverlay({ stepIdx, steps }: Props) {
   const [mounted, setMounted] = useState(false);
@@ -108,7 +85,7 @@ export function ReportGeneratingOverlay({ stepIdx, steps }: Props) {
         </div>
 
         <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4">
-          <LogoFillProgress progress={progress} />
+          <LogoFillProgress progress={progress} aria-label="Report generation progress" />
 
           <div className="flex max-w-3xl flex-col items-center gap-3 text-center">
             <h1

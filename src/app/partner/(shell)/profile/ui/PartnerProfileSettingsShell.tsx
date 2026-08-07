@@ -26,7 +26,7 @@ export function PartnerProfileSettingsShell({ children }: { children: ReactNode 
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+    <div className="flex flex-col gap-6 pt-6 lg:flex-row lg:items-start">
       <nav aria-label="Profile & Account Management" className="w-full shrink-0 lg:w-60">
         <h1 className="mb-4 text-h5 text-foreground">Profile & Account Management</h1>
         <ul className="flex flex-col gap-0.5">

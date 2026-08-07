@@ -131,7 +131,7 @@ export function CompetencyFrameworksListScreen() {
   const defaultFramework = frameworks.find((f) => f.isDefault) ?? frameworks[0] ?? null;
 
   return (
-    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
       <PageHeader>
         <PageTitle>Competency Engine</PageTitle>
         <Button
@@ -192,7 +192,7 @@ export function CompetencyFrameworksListScreen() {
         </Select>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         {!hydrated ? (
           <p className="px-6 py-4 text-body-sm text-muted-foreground">Loading frameworks…</p>
         ) : filtered.length === 0 ? (
@@ -289,36 +289,33 @@ export function CompetencyFrameworksListScreen() {
             </TableBody>
           </table>
         )}
-      </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
-        <div className="text-caption flex items-center gap-2 text-muted-foreground">
-          <span>Rows per page</span>
-          <Select
-            value={String(rowsPerPage)}
-            onValueChange={(v) => {
-              setRowsPerPage(Number(v));
-              setPage(1);
-            }}
-          >
-            <SelectTrigger size="sm" className="w-[72px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ROWS_PER_PAGE_OPTIONS.map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="text-caption flex items-center gap-4 text-muted-foreground">
-          <span>
-            {filtered.length === 0
-              ? "0 items found"
-              : `${filtered.length} item${filtered.length === 1 ? "" : "s"} found, displaying ${pageStart + 1} to ${pageEnd}`}
-          </span>
+        <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-4 border-t border-border app-canvas-wash px-6 py-4">
+          <div className="text-caption flex items-center gap-2 text-muted-foreground">
+            <span>Rows per page</span>
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => {
+                setRowsPerPage(Number(v));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger size="sm" className="w-[72px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROWS_PER_PAGE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-caption flex items-center gap-4 text-muted-foreground">
+            <span>
+              {`page ${currentPage} of ${totalPages}`}
+            </span>
           <div className="flex items-center gap-1">
             <Button
               type="button"
@@ -360,6 +357,7 @@ export function CompetencyFrameworksListScreen() {
             >
               <ChevronsRight className="h-4 w-4" />
             </Button>
+          </div>
           </div>
         </div>
       </div>

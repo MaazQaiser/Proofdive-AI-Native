@@ -11,10 +11,12 @@ import {
   Search,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { CopyableReferralCode } from "@/components/ui/copyable-referral-code";
 import {
   Dialog,
   DialogContent,
@@ -59,7 +61,8 @@ import { PartnerStatusPill } from "./PartnerStatusPills";
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50] as const;
 
 export function PartnersListScreen() {
-  const { partners, updatePartner, existingEmails } = usePartners();
+  const router = useRouter();
+  const { partners, updatePartner } = usePartners();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<PartnerType | "all">("all");
   const [commissionFilter, setCommissionFilter] = useState<CommissionType | "all">("all");
@@ -123,7 +126,7 @@ export function PartnersListScreen() {
   }
 
   return (
-    <div className="-mx-6 -mb-6 flex h-full flex-col overflow-hidden">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
       <PageHeader>
         <PageTitle>Partners</PageTitle>
         <Button asChild>
@@ -207,7 +210,7 @@ export function PartnersListScreen() {
         </Select>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         {pageRows.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-6 py-20 text-center">
             <Handshake className="h-8 w-8 text-muted-foreground" />
@@ -244,7 +247,9 @@ export function PartnersListScreen() {
                   <TableCell className="text-caption text-muted-foreground">
                     {PARTNER_TYPE_LABEL[partner.partnerType]}
                   </TableCell>
-                  <TableCell className="font-mono text-caption text-foreground">{partner.referralCode}</TableCell>
+                  <TableCell className="text-caption text-foreground">
+                    <CopyableReferralCode code={partner.referralCode} codeClassName="text-caption text-foreground" />
+                  </TableCell>
                   <TableCell className="text-caption text-muted-foreground">
                     {COMMISSION_TYPE_LABEL[partner.commissionType]}
                   </TableCell>
@@ -260,7 +265,11 @@ export function PartnersListScreen() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleViewDetails(partner)}>View Details</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleViewDetails(partner)}>Edit Partner</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => router.push(`/superadmin/partners/${partner.id}/edit`)}
+                        >
+                          Edit Partner
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           variant={partner.status === "active" ? "destructive" : "default"}
@@ -276,36 +285,33 @@ export function PartnersListScreen() {
             </TableBody>
           </table>
         )}
-      </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
-        <div className="text-caption flex items-center gap-2 text-muted-foreground">
-          <span>Rows per page</span>
-          <Select
-            value={String(rowsPerPage)}
-            onValueChange={(v) => {
-              setRowsPerPage(Number(v));
-              resetToFirstPage();
-            }}
-          >
-            <SelectTrigger size="sm" className="w-[72px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ROWS_PER_PAGE_OPTIONS.map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="text-caption flex items-center gap-4 text-muted-foreground">
-          <span>
-            {filtered.length === 0
-              ? "0 items found"
-              : `${filtered.length} item${filtered.length === 1 ? "" : "s"} found, displaying ${pageStart + 1} to ${pageEnd}`}
-          </span>
+        <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-4 border-t border-border app-canvas-wash px-6 py-4">
+          <div className="text-caption flex items-center gap-2 text-muted-foreground">
+            <span>Rows per page</span>
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => {
+                setRowsPerPage(Number(v));
+                resetToFirstPage();
+              }}
+            >
+              <SelectTrigger size="sm" className="w-[72px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROWS_PER_PAGE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-caption flex items-center gap-4 text-muted-foreground">
+            <span>
+              {`page ${currentPage} of ${totalPages}`}
+            </span>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -343,6 +349,7 @@ export function PartnersListScreen() {
             >
               <ChevronsRight className="h-4 w-4" />
             </Button>
+          </div>
           </div>
         </div>
       </div>
@@ -383,8 +390,6 @@ export function PartnersListScreen() {
         onOpenChange={(open) => {
           if (!open) setSelectedPartnerId(null);
         }}
-        existingEmails={existingEmails}
-        onUpdate={(id, patch) => updatePartner(id, patch)}
         onRequestStatusChange={handleRequestStatusChange}
       />
     </div>

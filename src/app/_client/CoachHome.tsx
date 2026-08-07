@@ -10,6 +10,7 @@ import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { COACH_HUB_CONTENT_TOP_CLASS } from "@/components/coachNavLayout";
 import { cn } from "@/components/cn";
 import { CoachConversationalDock } from "@/components/coach/CoachConversationalDock";
+import { RoadmapPreparingOverlay, ROADMAP_PREPARING_FILL_MS } from "@/components/coach/RoadmapPreparingOverlay";
 import { TypingText } from "@/components/TypingText";
 import { Button } from "@/components/ui/button";
 import { CardButton } from "@/components/ui/card-button";
@@ -25,6 +26,11 @@ import { getReportById, useLatestInterviewReport } from "@/lib/interviewReports"
 import { reportCountForRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { readJson } from "@/lib/storage";
+import {
+  isDiveStore,
+  savedDivesForRole,
+  type StoryboardDiveStore,
+} from "@/lib/storyboardDraft";
 import { pickMostRecentForRole } from "@/lib/trainingJourneyProgress";
 import type {
   RoleProfile,
@@ -47,26 +53,8 @@ const COACH_READINESS_BANNER_DISMISS_KEY = "proofdive.session.coachReadinessBann
 
 const DRIVER_ORDER = SUCCESS_DRIVER_ORDER;
 
-/** Same astroid mark as onboarding “Generate a Job Description”. */
-function AstroidIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={cn("lucide lucide-astroid-icon lucide-astroid", className)}
-      aria-hidden
-    >
-      <path d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203" />
-    </svg>
-  );
-}
+/** Slightly longer than the logo fill so it reaches 100% before dismiss. */
+const ROADMAP_PREPARING_MS = ROADMAP_PREPARING_FILL_MS + 200;
 
 function CoachJourneyPlanCard({
   mode,
@@ -79,6 +67,8 @@ function CoachJourneyPlanCard({
 }) {
   const isSecondInterview = mode === "final" && !isFirstStart;
   const showIntro = mode !== "roadmap";
+  /** Add competency only after the user has a storyboard or interview journey. */
+  const showAddCompetency = mode === "journey" || mode === "final";
 
   return (
     <div className="mt-4 w-full max-w-[800px] scroll-mt-24 pt-4">
@@ -183,16 +173,18 @@ function CoachJourneyPlanCard({
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <Button
-                asChild
-                variant="ghost"
-                className="h-auto gap-2 rounded-md py-2 pl-0! pr-2 text-[14px] font-medium leading-5 text-text-secondary hover:bg-transparent hover:text-text-secondary"
-              >
-                <Link href="/storyboard?new=1">
-                  <Plus className="size-4" />
-                  {isSecondInterview ? "Add more" : "Add competency"}
-                </Link>
-              </Button>
+              {showAddCompetency ? (
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="h-auto gap-2 rounded-md py-2 pl-0! pr-2 text-[14px] font-medium leading-5 text-text-secondary hover:bg-transparent hover:text-text-secondary"
+                >
+                  <Link href="/storyboard?new=1">
+                    <Plus className="size-4" />
+                    {isSecondInterview ? "Add more" : "Add competency"}
+                  </Link>
+                </Button>
+              ) : null}
               <Button
                 asChild
                 variant="ghost"
@@ -307,27 +299,26 @@ export function CoachHome() {
     return latestInterviewReport;
   }, [coachJourneyView, coachFinalReportId, latestInterviewReport, pathname]);
 
-  const stayOnWelcomeForRoadmapReveal = roadmapPhase !== "idle";
+  /** Suggested roadmap stays on the welcome chrome (actions + empty readiness) until storyboard or interview. */
   const showWelcomeLanding =
-    coachJourneyView === "welcome" ||
-    (coachJourneyView === "roadmap" && stayOnWelcomeForRoadmapReveal);
+    coachJourneyView === "welcome" || coachJourneyView === "roadmap";
   const isRoadmapCoach = coachJourneyView === "roadmap";
   const isFinalCoach = coachJourneyView === "final";
   const showJourneyColumn =
-    (coachJourneyView === "roadmap" && !stayOnWelcomeForRoadmapReveal) ||
-    coachJourneyView === "journey" ||
-    coachJourneyView === "final";
+    coachJourneyView === "journey" || coachJourneyView === "final";
   /**
-   * Readiness sidebar: empty placeholders on `welcome`, scored on `journey` / `final`.
-   * Hidden on `roadmap` (planned journey — same hero area pattern without the card).
+   * Readiness sidebar: empty placeholders on `welcome` / `roadmap`, scored on `journey` / `final`.
    */
   const showInterviewReadinessCard =
     coachJourneyView === "welcome" ||
-    stayOnWelcomeForRoadmapReveal ||
+    coachJourneyView === "roadmap" ||
     coachJourneyView === "journey" ||
     coachJourneyView === "final";
   const interviewReadinessEmpty =
-    coachJourneyView === "welcome" || stayOnWelcomeForRoadmapReveal;
+    coachJourneyView === "welcome" || coachJourneyView === "roadmap";
+  /** Until a mock exists, show the action plan above the empty readiness card. */
+  const showActionsAboveReadiness =
+    interviewReadinessEmpty || !latestInterviewReport;
 
   const readinessCardModel = useMemo(() => {
     const emptyPillars = DRIVER_ORDER.map((id) => ({
@@ -464,12 +455,9 @@ export function CoachHome() {
     }
 
     const hasWelcomeEntry = sessionStorage.getItem(COACH_WELCOME_ENTRY_SESSION_KEY) === "1";
-    const hasRoadmapEntry = sessionStorage.getItem(COACH_ROADMAP_ENTRY_SESSION_KEY) === "1";
+    // Do not demote `roadmap` when the session key is missing — localStorage must
+    // keep the suggested roadmap across tab changes until storyboard/interview.
     if (coachJourneyView === "welcome" && !hasWelcomeEntry) {
-      setCoachJourneyView("journey");
-      return;
-    }
-    if (coachJourneyView === "roadmap" && !hasRoadmapEntry) {
       setCoachJourneyView("journey");
     }
   }, [
@@ -495,6 +483,44 @@ export function CoachHome() {
 
   const role = roleProfile?.targetRole?.trim() ?? "";
 
+  /** Restore suggested roadmap chrome after remount (phase/card are in-memory). */
+  useEffect(() => {
+    if (coachJourneyView !== "roadmap") return;
+    if (roadmapPhase === "idle") {
+      setRoadmapPhase("ready");
+      setRoadmapCardVisible(true);
+    }
+  }, [coachJourneyView, roadmapPhase]);
+
+  /** Leave welcome/roadmap once the role has a saved Storyboard or a mock report. */
+  useEffect(() => {
+    if (coachJourneyView !== "welcome" && coachJourneyView !== "roadmap") return;
+    if (typeof window === "undefined") return;
+    const roleTitle = roleProfile?.targetRole?.trim() ?? "";
+    const hasInterview = reportCountForRole(roleTitle) > 0;
+    const diveStore = readJson<StoryboardDiveStore>(StorageKeys.storyboardDives);
+    const hasStoryboard =
+      Boolean(roleTitle) &&
+      isDiveStore(diveStore) &&
+      savedDivesForRole(diveStore, roleTitle).length > 0;
+    if (!hasInterview && !hasStoryboard) return;
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(COACH_WELCOME_ENTRY_SESSION_KEY);
+      sessionStorage.removeItem(COACH_ROADMAP_ENTRY_SESSION_KEY);
+    }
+    setRoadmapPhase("idle");
+    setRoadmapCardVisible(false);
+    setCoachFinalReportId(null);
+    setCoachJourneyView("journey");
+  }, [
+    coachJourneyView,
+    roleProfile,
+    pathname,
+    latestInterviewReport,
+    setCoachJourneyView,
+    setCoachFinalReportId,
+  ]);
+
   const trainingProgressForRole = useMemo(
     () => pickMostRecentForRole(trainingJourneyProgressMap, role),
     [trainingJourneyProgressMap, role],
@@ -511,7 +537,8 @@ export function CoachHome() {
     setRoadmapPhase("preparing");
   }, [roadmapPhase]);
 
-  const handlePreparingTyped = useCallback(() => {
+  useEffect(() => {
+    if (roadmapPhase !== "preparing") return;
     if (roadmapHoldTimerRef.current != null) {
       window.clearTimeout(roadmapHoldTimerRef.current);
     }
@@ -519,8 +546,13 @@ export function CoachHome() {
       sessionStorage.setItem(COACH_ROADMAP_ENTRY_SESSION_KEY, "1");
       setCoachJourneyView("roadmap");
       setRoadmapPhase("ready");
-    }, 2400);
-  }, [setCoachJourneyView]);
+    }, ROADMAP_PREPARING_MS);
+    return () => {
+      if (roadmapHoldTimerRef.current != null) {
+        window.clearTimeout(roadmapHoldTimerRef.current);
+      }
+    };
+  }, [roadmapPhase, setCoachJourneyView]);
 
   const handleReadyTyped = useCallback(() => {
     setRoadmapCardVisible(true);
@@ -543,6 +575,7 @@ export function CoachHome() {
   return (
     <AppShell contentTopClassName={COACH_HUB_CONTENT_TOP_CLASS}>
       <CoachFloatingNav />
+      {roadmapPhase === "preparing" ? <RoadmapPreparingOverlay /> : null}
       <div className="flex min-h-[70vh] flex-col items-start justify-start pb-44">
         <div className="mx-auto mt-0 flex w-full max-w-[840px] flex-row items-center justify-center gap-6 px-6">
           <div
@@ -556,30 +589,24 @@ export function CoachHome() {
                 <h2 className="text-agent-heading text-heading-teal">Welcome to ProofDive</h2>
                 <h4 className="mt-3 mb-[14px] text-agent-question text-text-primary">
                   {roadmapPhase === "preparing" ? (
-                    <span className="inline-flex items-center gap-1" aria-live="polite">
-                      <TypingText
-                        key="roadmap-preparing"
-                        text="Preparing roadmap"
-                        mode="word"
-                        cursor
-                        startDelayMs={120}
-                        onDone={handlePreparingTyped}
-                      />
-                      <AstroidIcon className="size-[0.7em] shrink-0 animate-pulse text-primary" />
-                    </span>
+                    "Preparing roadmap…"
                   ) : roadmapPhase === "ready" ? (
-                    <span aria-live="polite">
-                      <TypingText
-                        key="roadmap-ready"
-                        text="Here's the roadmap we suggested."
-                        mode="word"
-                        cursor
-                        startDelayMs={180}
-                        onDone={handleReadyTyped}
-                      />
-                    </span>
+                    roadmapCardVisible ? (
+                      "Follow the path below to prepare for this role."
+                    ) : (
+                      <span aria-live="polite">
+                        <TypingText
+                          key="roadmap-ready"
+                          text="Follow the path below to prepare for this role."
+                          mode="word"
+                          cursor
+                          startDelayMs={180}
+                          onDone={handleReadyTyped}
+                        />
+                      </span>
+                    )
                   ) : (
-                    "Let's get interview ready"
+                    "Start with your story, or open a guided prep path for this role."
                   )}
                 </h4>
                 {roadmapPhase === "idle" ? (
@@ -610,15 +637,31 @@ export function CoachHome() {
                 ) : null}
                 {roadmapCardVisible ? (
                   <>
-                    {readinessNoteBanner}
-                    {readinessCardEl}
-                    <div ref={journeyCardRef} className="w-full max-w-[800px]">
-                      <CoachJourneyPlanCard
-                        mode="suggested"
-                        isFirstStart={Boolean(isFirstStart)}
-                        trainingContinue={trainingContinue}
-                      />
-                    </div>
+                    {showActionsAboveReadiness ? (
+                      <>
+                        <div ref={journeyCardRef} className="w-full max-w-[800px]">
+                          <CoachJourneyPlanCard
+                            mode="suggested"
+                            isFirstStart={Boolean(isFirstStart)}
+                            trainingContinue={trainingContinue}
+                          />
+                        </div>
+                        {readinessNoteBanner}
+                        {readinessCardEl}
+                      </>
+                    ) : (
+                      <>
+                        {readinessNoteBanner}
+                        {readinessCardEl}
+                        <div ref={journeyCardRef} className="w-full max-w-[800px]">
+                          <CoachJourneyPlanCard
+                            mode="suggested"
+                            isFirstStart={Boolean(isFirstStart)}
+                            trainingContinue={trainingContinue}
+                          />
+                        </div>
+                      </>
+                    )}
                   </>
                 ) : null}
               </>
@@ -633,7 +676,7 @@ export function CoachHome() {
                 </h2>
                 <h4 className="mt-3 mb-[14px] text-agent-question text-text-primary">
                   {(() => {
-                    if (isRoadmapCoach) return "Here's the roadmap we suggested.";
+                    if (isRoadmapCoach) return "Follow the path below to prepare for this role.";
                     if (isFinalCoach) {
                       return isFirstStart
                         ? "Follow the path below to keep improving."
@@ -642,13 +685,27 @@ export function CoachHome() {
                     return "Follow the path below to keep improving.";
                   })()}
                 </h4>
-                {readinessNoteBanner}
-                {readinessCardEl}
-                <CoachJourneyPlanCard
-                  mode={isFinalCoach ? "final" : isRoadmapCoach ? "roadmap" : "journey"}
-                  isFirstStart={Boolean(isFirstStart)}
-                  trainingContinue={trainingContinue}
-                />
+                {showActionsAboveReadiness ? (
+                  <>
+                    <CoachJourneyPlanCard
+                      mode={isFinalCoach ? "final" : isRoadmapCoach ? "roadmap" : "journey"}
+                      isFirstStart={Boolean(isFirstStart)}
+                      trainingContinue={trainingContinue}
+                    />
+                    {readinessNoteBanner}
+                    {readinessCardEl}
+                  </>
+                ) : (
+                  <>
+                    {readinessNoteBanner}
+                    {readinessCardEl}
+                    <CoachJourneyPlanCard
+                      mode={isFinalCoach ? "final" : isRoadmapCoach ? "roadmap" : "journey"}
+                      isFirstStart={Boolean(isFirstStart)}
+                      trainingContinue={trainingContinue}
+                    />
+                  </>
+                )}
               </>
             ) : null}
           </div>

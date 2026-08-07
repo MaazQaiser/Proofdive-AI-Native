@@ -40,6 +40,7 @@ import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 
 import { AddUserDialog } from "./AddUserDialog";
+import { EditUserDialog } from "./EditUserDialog";
 import { OrgAdminUserDetailDrawer } from "./OrgAdminUserDetailDrawer";
 import { OrgAdminUserStatusPill } from "./OrgAdminUserStatusPill";
 
@@ -57,6 +58,7 @@ export function OrgAdminUsersListScreen() {
   const [removeTarget, setRemoveTarget] = useState<OrgAdminUser | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
 
   const [, setAuditEntries] = useLocalStorageState<AuditLogEntry[]>(
     StorageKeys.orgAdminAuditLogEntries,
@@ -64,6 +66,7 @@ export function OrgAdminUsersListScreen() {
   );
 
   const selectedUser = users.find((u) => u.id === selectedUserId) ?? null;
+  const editUser = users.find((u) => u.id === editUserId) ?? null;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -157,7 +160,7 @@ export function OrgAdminUsersListScreen() {
   }
 
   return (
-    <div className="-m-6 flex h-full flex-col overflow-hidden">
+    <div className="-mx-6 flex h-full min-w-0 flex-col overflow-hidden">
       <PageHeader>
         <PageTitle>User Management</PageTitle>
         <Button onClick={() => setIsAddDialogOpen(true)}>
@@ -201,7 +204,7 @@ export function OrgAdminUsersListScreen() {
         </Select>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         {pageRows.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-6 py-20 text-center">
             <Users className="h-8 w-8 text-muted-foreground" />
@@ -246,7 +249,7 @@ export function OrgAdminUsersListScreen() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleViewDetails(user)}>View Details</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleViewDetails(user)}>Edit User</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditUserId(user.id)}>Edit User</DropdownMenuItem>
                         {user.status === "invited" && (
                           <>
                             <DropdownMenuSeparator />
@@ -274,36 +277,33 @@ export function OrgAdminUsersListScreen() {
             </TableBody>
           </table>
         )}
-      </div>
 
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-4">
-        <div className="text-caption flex items-center gap-2 text-muted-foreground">
-          <span>Rows per page</span>
-          <Select
-            value={String(rowsPerPage)}
-            onValueChange={(v) => {
-              setRowsPerPage(Number(v));
-              resetToFirstPage();
-            }}
-          >
-            <SelectTrigger size="sm" className="w-[72px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {ROWS_PER_PAGE_OPTIONS.map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="text-caption flex items-center gap-4 text-muted-foreground">
-          <span>
-            {filtered.length === 0
-              ? "0 items found"
-              : `${filtered.length} item${filtered.length === 1 ? "" : "s"} found, displaying ${pageStart + 1} to ${pageEnd}`}
-          </span>
+        <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-4 border-t border-border app-canvas-wash px-6 py-4">
+          <div className="text-caption flex items-center gap-2 text-muted-foreground">
+            <span>Rows per page</span>
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => {
+                setRowsPerPage(Number(v));
+                resetToFirstPage();
+              }}
+            >
+              <SelectTrigger size="sm" className="w-[72px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROWS_PER_PAGE_OPTIONS.map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-caption flex items-center gap-4 text-muted-foreground">
+            <span>
+              {`page ${currentPage} of ${totalPages}`}
+            </span>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" disabled={currentPage === 1} onClick={() => setPage(1)} aria-label="First page">
               <ChevronsLeft className="h-4 w-4" />
@@ -335,6 +335,7 @@ export function OrgAdminUsersListScreen() {
             >
               <ChevronsRight className="h-4 w-4" />
             </Button>
+          </div>
           </div>
         </div>
       </div>
@@ -401,13 +402,25 @@ export function OrgAdminUsersListScreen() {
         onCreate={handleCreateUsers}
       />
 
+      <EditUserDialog
+        open={!!editUser}
+        onOpenChange={(open) => {
+          if (!open) setEditUserId(null);
+        }}
+        user={editUser}
+        onUpdate={handleUpdateUser}
+      />
+
       <OrgAdminUserDetailDrawer
         user={selectedUser}
         onOpenChange={(open) => {
           if (!open) setSelectedUserId(null);
         }}
-        onUpdate={handleUpdateUser}
         onRequestStatusChange={handleRequestStatusChange}
+        onRequestEdit={(user) => {
+          setSelectedUserId(null);
+          setEditUserId(user.id);
+        }}
       />
     </div>
   );
