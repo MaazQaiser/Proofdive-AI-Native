@@ -42,7 +42,7 @@ export function SuperAdminUserMenu() {
           className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-muted text-caption font-medium text-muted-foreground">
+            <AvatarFallback className="bg-[#c4edf3] text-caption font-medium text-extended-dark-cyan">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -51,7 +51,7 @@ export function SuperAdminUserMenu() {
       <DropdownMenuContent align="end" className="w-72 p-0">
         <div className="flex items-center gap-3 p-4">
           <Avatar className="h-12 w-12">
-            <AvatarFallback className="bg-primary/10 text-body-sm font-semibold text-primary">
+            <AvatarFallback className="bg-[#c4edf3] text-body-sm font-semibold text-extended-dark-cyan">
               {initials}
             </AvatarFallback>
           </Avatar>

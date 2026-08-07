@@ -1,5 +1,5 @@
-import { AddOrganizationScreen } from "../ui/AddOrganizationScreen";
+import { AddOrganizationWizardPage } from "../ui/AddOrganizationWizardPage";
 
 export default function SuperAdminAddOrganizationPage() {
-  return <AddOrganizationScreen />;
+  return <AddOrganizationWizardPage />;
 }
