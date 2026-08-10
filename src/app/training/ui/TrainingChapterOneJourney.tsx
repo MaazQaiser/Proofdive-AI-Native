@@ -1,14 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { Briefcase, Check, ClipboardCheck, ListChecks, Video } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { IconButton } from "@/components/ui/icon-button";
-import { ProgressBar } from "@/components/ui/progress-bar";
 import { cn } from "@/components/cn";
 import {
   AFTER_CASE,
@@ -72,34 +71,6 @@ function countWords(s: string) {
   const t = s.trim();
   if (!t) return 0;
   return t.split(/\s+/).length;
-}
-
-/** Segment between step `leftIdx` and `leftIdx + 1` is complete (filled line). */
-function segmentCompleteBetween(leftIdx: number, phase: TrainingJourneyPhase): boolean {
-  if (leftIdx === 0) {
-    return (
-      phase === "post_video" ||
-      phase === "quiz" ||
-      phase === "after_quiz" ||
-      phase === "case" ||
-      phase === "after_case" ||
-      phase === "assessment" ||
-      phase === "complete"
-    );
-  }
-  if (leftIdx === 1) {
-    return (
-      phase === "after_quiz" ||
-      phase === "case" ||
-      phase === "after_case" ||
-      phase === "assessment" ||
-      phase === "complete"
-    );
-  }
-  if (leftIdx === 2) {
-    return phase === "after_case" || phase === "assessment" || phase === "complete";
-  }
-  return false;
 }
 
 function CoachBlock({ children }: { children: ReactNode }) {
@@ -166,27 +137,45 @@ export function TrainingChapterOneJourney({
       { id: "v" as const, label: "Video", icon: Video },
       { id: "q" as const, label: "Quiz", icon: ListChecks },
       { id: "c" as const, label: "Case", icon: Briefcase },
-      { id: "a" as const, label: "Final assessment", icon: ClipboardCheck },
+      { id: "a" as const, label: "Assessment", icon: ClipboardCheck },
     ];
-    const atVideo = phase === "video_intro" || phase === "video" || phase === "post_video";
-    const atQuiz = phase === "quiz" || phase === "after_quiz";
-    const atCase = phase === "case" || phase === "after_case";
-    const atAssess = phase === "assessment";
 
     return steps.map((step, idx) => {
-      const active =
-        (idx === 0 && atVideo) ||
-        (idx === 1 && atQuiz) ||
-        (idx === 2 && atCase) ||
-        (idx === 3 && atAssess);
       const done =
-        (idx === 0 && (phase === "post_video" || atQuiz || atCase || atAssess)) ||
-        (idx === 1 && (phase === "after_quiz" || atCase || atAssess)) ||
-        (idx === 2 && (phase === "after_case" || atAssess)) ||
+        (idx === 0 &&
+          (phase === "post_video" ||
+            phase === "quiz" ||
+            phase === "after_quiz" ||
+            phase === "case" ||
+            phase === "after_case" ||
+            phase === "assessment" ||
+            phase === "complete")) ||
+        (idx === 1 &&
+          (phase === "after_quiz" ||
+            phase === "case" ||
+            phase === "after_case" ||
+            phase === "assessment" ||
+            phase === "complete")) ||
+        (idx === 2 &&
+          (phase === "after_case" || phase === "assessment" || phase === "complete")) ||
         false;
+      const active =
+        !done &&
+        ((idx === 0 && (phase === "video_intro" || phase === "video")) ||
+          (idx === 1 && (phase === "quiz" || phase === "post_video")) ||
+          (idx === 2 && (phase === "case" || phase === "after_quiz")) ||
+          (idx === 3 && (phase === "assessment" || phase === "after_case")));
       return { ...step, idx, active, done };
     });
   }, [phase]);
+
+  const activeStepIndex = timelineSteps.findIndex((s) => s.active);
+  const currentStepNumber = (activeStepIndex >= 0 ? activeStepIndex : timelineSteps.filter((s) => s.done).length) + 1;
+  const currentStepLabel =
+    timelineSteps.find((s) => s.active)?.label ??
+    timelineSteps.find((s) => !s.done)?.label ??
+    "Complete";
+  const progressPct = percentForTrainingPhase(phase);
 
   return (
     <div className="mt-6 w-full">
@@ -237,75 +226,102 @@ export function TrainingChapterOneJourney({
         <div className="mt-8 flex flex-col gap-6">
           <div className="min-w-0 w-full space-y-6">
             {showTimeline ? (
-              <Card className="gap-0 overflow-hidden rounded-[16px] border-[#dde7e9] py-0">
-                <CardContent className="p-4">
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-                          <ListChecks className="size-4" aria-hidden />
-                        </span>
-                        <span className="text-overline text-extended-cyan-green">Module progress</span>
-                      </div>
-                      <span className="text-overline font-semibold leading-none text-heading-teal">
-                        {percentForTrainingPhase(phase)}%
-                      </span>
+              <Card
+                className={cn(
+                  "gap-0 overflow-hidden rounded-[16px] border-0 py-0",
+                  "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+                )}
+              >
+                <CardContent className="p-5 sm:p-6">
+                  <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-overline text-extended-cyan-green">Module progress</p>
+                      <p className="mt-1 text-[18px] font-semibold tracking-[-0.4px] text-heading-teal">
+                        Step {Math.min(currentStepNumber, timelineSteps.length)} of{" "}
+                        {timelineSteps.length}
+                      </p>
                     </div>
-                    <ProgressBar
-                      value={percentForTrainingPhase(phase)}
-                      className="mt-3"
-                      aria-label="Module progress"
-                    />
+                    <p
+                      className="shrink-0 text-[28px] font-semibold leading-none tracking-[-1px] tabular-nums text-heading-teal"
+                      aria-hidden
+                    >
+                      {progressPct}
+                      <span className="text-[16px] font-medium text-text-secondary">%</span>
+                    </p>
                   </div>
+
+                  {/* Segmented rail — clearer than a single bar for discrete steps */}
                   <div
-                    className="flex w-full flex-wrap items-start justify-center gap-y-3 sm:flex-nowrap"
-                    aria-label="Chapter progress"
+                    className="mt-5 grid grid-cols-4 gap-1.5"
+                    role="progressbar"
+                    aria-valuenow={progressPct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`Module progress: step ${Math.min(currentStepNumber, timelineSteps.length)} of ${timelineSteps.length}, ${currentStepLabel}`}
                   >
+                    {timelineSteps.map(({ id, done, active }) => (
+                      <div
+                        key={`seg-${id}`}
+                        className={cn(
+                          "h-1.5 rounded-full transition-colors duration-300 ease-out motion-reduce:transition-none",
+                          done
+                            ? "bg-primary"
+                            : active
+                              ? "bg-brand-400"
+                              : "bg-[#dde7e9]",
+                        )}
+                      />
+                    ))}
+                  </div>
+
+                  <ol className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-2">
                     {timelineSteps.map(({ id, label, idx, active, done, icon: StepIcon }) => (
-                      <Fragment key={id}>
-                        {idx > 0 ? (
-                          <div
-                            aria-hidden
-                            className={cn(
-                              "mx-0.5 mt-[18px] hidden h-0.5 min-w-[10px] flex-1 rounded-full sm:block",
-                              segmentCompleteBetween(idx - 1, phase)
-                                ? "bg-primary"
-                                : "bg-[#dde7e9]",
-                            )}
-                          />
-                        ) : null}
-                        <div
-                          className="flex w-[46%] min-w-[5.5rem] max-w-[10rem] shrink-0 flex-col items-center sm:w-auto sm:min-w-[4.75rem] sm:max-w-[7.5rem] sm:flex-1"
-                          aria-current={active ? "step" : undefined}
+                      <li
+                        key={id}
+                        className={cn(
+                          "flex min-w-0 items-center gap-2.5 rounded-xl px-2.5 py-2.5 transition-colors duration-200 motion-reduce:transition-none",
+                          active
+                            ? "bg-brand-1000 ring-1 ring-brand-500/40"
+                            : done
+                              ? "bg-white/60"
+                              : "bg-transparent",
+                        )}
+                        aria-current={active ? "step" : undefined}
+                      >
+                        <span
+                          className={cn(
+                            "grid size-8 shrink-0 place-items-center rounded-full text-overline font-semibold transition-colors duration-200",
+                            done
+                              ? "bg-primary text-primary-foreground"
+                              : active
+                                ? "bg-primary text-primary-foreground"
+                                : "border border-[#dde7e9] bg-white text-text-secondary",
+                          )}
                         >
-                          <div
-                            className={cn(
-                              "grid size-9 shrink-0 place-items-center rounded-full border transition",
-                              done
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : active
-                                  ? "border-primary bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-card"
-                                  : "border-[#dde7e9] bg-extended-light-cyan text-extended-cyan-green",
-                            )}
-                          >
-                            {done ? (
-                              <Check className="size-4" aria-hidden />
-                            ) : (
-                              <StepIcon className="size-4" aria-hidden />
-                            )}
-                          </div>
+                          {done ? (
+                            <Check className="size-3.5 stroke-[2.5]" aria-hidden />
+                          ) : active ? (
+                            <StepIcon className="size-3.5" aria-hidden />
+                          ) : (
+                            <span aria-hidden>{idx + 1}</span>
+                          )}
+                        </span>
+                        <div className="min-w-0">
                           <p
                             className={cn(
-                              "mt-2 w-full px-0.5 text-center text-overline leading-snug",
-                              active || done ? "text-extended-cyan-green" : "text-text-secondary",
+                              "truncate text-[13px] font-semibold leading-4",
+                              done || active ? "text-text-primary" : "text-text-secondary",
                             )}
                           >
                             {label}
                           </p>
+                          <p className="mt-0.5 text-[11px] leading-4 text-text-secondary">
+                            {done ? "Done" : active ? "Now" : "Up next"}
+                          </p>
                         </div>
-                      </Fragment>
+                      </li>
                     ))}
-                  </div>
+                  </ol>
                 </CardContent>
               </Card>
             ) : null}
@@ -349,7 +365,7 @@ export function TrainingChapterOneJourney({
                               <path d="M8 5v14l11-7z" />
                             </svg>
                           </IconButton>
-                          <span className="text-overline uppercase text-text-secondary">
+                          <span className="text-overline text-text-secondary">
                             Video
                           </span>
                           <p className="text-caption font-semibold text-text-secondary">
@@ -402,17 +418,17 @@ export function TrainingChapterOneJourney({
                         Quick quiz · 3 questions
                       </h3>
                     </div>
-                    <div className="mt-5 space-y-4">
+                    <div className="mt-5 divide-y divide-[#dde7e9]">
                       {QUIZ.map((item, qi) => (
                         <fieldset
                           key={qi}
-                          className="rounded-lg border border-[#dde7e9] bg-white p-4"
+                          className="py-5 first:pt-0 last:pb-0"
                         >
                           <legend className="sr-only">
                             Question {qi + 1}
                           </legend>
                           <div className="flex items-center gap-3">
-                            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-extended-light-cyan text-overline font-semibold text-extended-cyan-green">
+                            <span className="grid size-8 shrink-0 place-items-center text-overline font-semibold text-extended-cyan-green">
                               {qi + 1}
                             </span>
                             <p className="text-body-sm font-semibold text-extended-cyan-green">
@@ -426,11 +442,11 @@ export function TrainingChapterOneJourney({
                                 <label
                                   key={opt}
                                   className={cn(
-                                    "flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-caption transition-colors",
+                                    "flex cursor-pointer items-center gap-3 rounded-lg p-3 text-caption transition-colors",
                                     "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40",
                                     selected
-                                      ? "border-[#b3effa] bg-extended-light-cyan/40"
-                                      : "border-[#dde7e9] bg-white hover:bg-extended-light-cyan/30",
+                                      ? "bg-extended-light-cyan/40"
+                                      : "bg-transparent hover:bg-extended-light-cyan/30",
                                   )}
                                 >
                                   <input

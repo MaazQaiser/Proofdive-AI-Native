@@ -10,21 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
-  CircleDashed,
-  Download,
-  FileCheck,
-  Lock,
-  Pencil,
-  Plus,
-  Save,
-  Tags,
-  Unlock,
-  X,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUp, CircleDashed, Download, FileCheck, Lock, SquarePen, Plus, Save, Tags, Unlock, X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
@@ -1174,7 +1160,7 @@ function DraftSectionCard({
                 onClick={onDeepenEdit}
                 title="Edit this section in a new Dive"
               >
-                <Pencil />
+                <SquarePen />
                 Edit
               </Button>
             ) : null}
@@ -1206,7 +1192,7 @@ function DraftSectionCard({
                   }}
                   title={isEditing ? "Cancel edit" : "Show improve options"}
                 >
-                  {isEditing ? <X /> : <Pencil />}
+                  {isEditing ? <X /> : <SquarePen />}
                   {isEditing ? "Cancel" : "Edit"}
                 </Button>
               </>

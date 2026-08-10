@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,7 @@ import {
 } from "@/lib/superAdminPaymentsData";
 import { useDiscountCodes } from "@/lib/useDiscountCodes";
 
+import { DiscountRedemptionsTable } from "./DiscountRedemptionsTable";
 import { PaymentsShell } from "./PaymentsShell";
 
 export function DiscountDetailScreen({ codeId }: { codeId: string }) {
@@ -144,28 +145,12 @@ export function DiscountDetailScreen({ codeId }: { codeId: string }) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="flex min-h-[420px] flex-col overflow-hidden lg:col-span-2">
+          <CardHeader className="shrink-0">
             <CardTitle>Redemption Log</CardTitle>
-            <CardDescription>{code.redemptions.length} redemptions</CardDescription>
           </CardHeader>
-          <CardContent>
-            {code.redemptions.length === 0 ? (
-              <p className="py-6 text-center text-caption text-muted-foreground">
-                No redemptions yet.
-              </p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {code.redemptions.map((r) => (
-                  <li key={r.id} className="flex justify-between gap-4 py-2 text-caption">
-                    <span>{r.organizationOrUser}</span>
-                    <span className="text-muted-foreground">
-                      {new Date(r.dateRedeemed).toLocaleDateString()}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+          <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0 pb-4">
+            <DiscountRedemptionsTable redemptions={code.redemptions} />
           </CardContent>
         </Card>
       </div>

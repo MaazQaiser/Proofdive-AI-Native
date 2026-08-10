@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight, Check, Pencil } from "lucide-react";
+import { ArrowRight, Check, SquarePen } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { IconButton } from "@/components/ui/icon-button";
@@ -139,7 +139,7 @@ export function GeneratedJdPanel({
                 </>
               ) : (
                 <>
-                  <Pencil className="size-4" />
+                  <SquarePen className="size-4" />
                   Edit
                 </>
               )}

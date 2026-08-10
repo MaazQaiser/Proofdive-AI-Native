@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Copy, HelpCircle, Layers, Pencil, User } from "lucide-react";
+import { Bot, Copy, HelpCircle, Layers, SquarePen, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -83,7 +83,7 @@ export function FrameworkDetailScreen({ frameworkId }: Props) {
           {framework.isDefault ? (
             <Badge variant="secondary">Default</Badge>
           ) : (
-            <Badge variant="outline">Custom</Badge>
+            <Badge variant="default">Custom</Badge>
           )}
           <FrameworkStatusPill status={framework.status} />
         </div>
@@ -95,7 +95,7 @@ export function FrameworkDetailScreen({ frameworkId }: Props) {
           {!framework.isDefault ? (
             <Button type="button" size="sm" asChild>
               <Link href={`/superadmin/competency-engine/${framework.id}/edit`}>
-                <Pencil className="h-3.5 w-3.5" />
+                <SquarePen className="h-3.5 w-3.5" />
                 Edit
               </Link>
             </Button>
@@ -180,7 +180,7 @@ export function FrameworkDetailScreen({ frameworkId }: Props) {
                             </FieldBlock>
                             <Separator />
                             <div className="space-y-2">
-                              <div className="text-overline inline-flex items-center gap-1.5 font-medium tracking-wide text-muted-foreground uppercase">
+                              <div className="text-overline inline-flex items-center gap-1.5 font-medium tracking-wide text-muted-foreground">
                                 <Layers className="size-3.5 shrink-0" aria-hidden />
                                 Levels
                               </div>

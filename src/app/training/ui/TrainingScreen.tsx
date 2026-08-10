@@ -9,7 +9,6 @@ import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { COACH_HUB_CONTENT_TOP_CLASS } from "@/components/coachNavLayout";
 import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -555,37 +554,77 @@ export function TrainingScreen() {
                   <h2 className="mt-4 text-left text-agent-heading text-heading-teal">
                     {COURSE_ENTRY_HEADING}
                   </h2>
-                  <div className="mt-3 text-agent-question text-text-primary">
-                    {selectedCourse.title}
-                  </div>
-                  <p className="mt-2 text-caption leading-6 text-text-secondary">{selectedCourse.subtitle}</p>
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="border-border">
-                      {selectedCourse.duration}
-                    </Badge>
-                    <Badge variant="outline" className="border-border">
-                      {selectedCourse.checkpoints} touch points
-                    </Badge>
-                    <Badge variant="outline" className="border-border">
-                      {selectedCourse.chapters.length} chapters
-                    </Badge>
-                  </div>
 
                   {(() => {
                     const pct = journeyProgress?.percentComplete ?? 0;
                     const status =
                       pct >= 100 ? "Complete" : pct > 0 ? "In progress" : "Not started";
+                    const ctaLabel = journeyProgress ? "Continue" : "Start course";
                     return (
-                      <div className="mt-5 flex max-w-md items-center gap-3">
-                        <ProgressBar
-                          value={pct}
-                          className="min-w-0 flex-1"
-                          aria-label="Course progress"
-                        />
-                        <p className="shrink-0 whitespace-nowrap text-overline leading-none">
-                          <span className="font-semibold text-heading-teal">{pct}%</span>
-                          <span className="ml-1.5 text-text-secondary">{status}</span>
-                        </p>
+                      <div
+                        data-slot="card"
+                        className={cn(
+                          "relative mt-5 overflow-hidden rounded-[28px] bg-[#0c1f26] bg-cover bg-center bg-no-repeat text-white",
+                          "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
+                        )}
+                        style={{ backgroundImage: "url(/brand/training-course-hero-bg.png)" }}
+                      >
+                        <div className="relative z-[1] px-6 pb-6 pt-7 sm:px-8 sm:pb-8 sm:pt-8">
+                          <h3 className="max-w-[34rem] text-[26px] font-semibold leading-8 tracking-[-0.5px] text-white sm:text-[30px] sm:leading-9">
+                            {selectedCourse.title}
+                          </h3>
+                          <p className="mt-2 max-w-[36rem] text-[15px] leading-6 text-white/80">
+                            {selectedCourse.subtitle}
+                          </p>
+
+                          <div className="mt-4 flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center rounded-md bg-white/10 px-2.5 py-1 text-[12px] font-medium text-white/95">
+                              {selectedCourse.duration}
+                            </span>
+                            <span className="inline-flex items-center rounded-md bg-white/10 px-2.5 py-1 text-[12px] font-medium text-white/95">
+                              {selectedCourse.checkpoints} touch points
+                            </span>
+                            <span className="inline-flex items-center rounded-md bg-white/10 px-2.5 py-1 text-[12px] font-medium text-white/95">
+                              {selectedCourse.chapters.length} chapters
+                            </span>
+                          </div>
+
+                          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                            <Button
+                              type="button"
+                              onClick={() => {
+                                if (!selectedCourse) return;
+                                const key = trainingProgressKey(role, selectedCourse.id);
+                                setJourneyProgressMap((prev) => ({
+                                  ...prev,
+                                  [key]: buildTrainingJourneyProgress({
+                                    courseId: selectedCourse.id,
+                                    courseTitle: selectedCourse.title,
+                                    phase: "video_intro",
+                                    roleKey: role,
+                                  }),
+                                }));
+                                setStartedCourseId(selectedCourse.id);
+                              }}
+                              className="h-10 shrink-0 gap-2 rounded-full bg-white px-5 text-[14px] font-semibold text-extended-cyan-green hover:bg-brand-1000 hover:text-extended-cyan-green"
+                            >
+                              <ArrowRight className="size-4" aria-hidden />
+                              {ctaLabel}
+                            </Button>
+                            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+                              <ProgressBar
+                                value={pct}
+                                className="h-1 min-w-0 bg-white/20"
+                                indicatorClassName="h-1 border-0 bg-brand-400"
+                                aria-label="Course progress"
+                              />
+                              <p className="text-[11px] leading-none text-brand-700">
+                                <span className="font-semibold text-white">{pct}%</span>
+                                <span className="ml-1.5">{status}</span>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     );
                   })()}
@@ -628,28 +667,6 @@ export function TrainingScreen() {
                       ))}
                     </div>
                   </div>
-                </div>
-
-                <div className="mx-auto mt-6 w-[800px] max-w-full">
-                  <Button
-                    onClick={() => {
-                      if (!selectedCourse) return;
-                      const key = trainingProgressKey(role, selectedCourse.id);
-                      setJourneyProgressMap((prev) => ({
-                        ...prev,
-                        [key]: buildTrainingJourneyProgress({
-                          courseId: selectedCourse.id,
-                          courseTitle: selectedCourse.title,
-                          phase: "video_intro",
-                          roleKey: role,
-                        }),
-                      }));
-                      setStartedCourseId(selectedCourse.id);
-                    }}
-                    className="w-full sm:w-auto"
-                  >
-                    {journeyProgress ? "Continue" : "Start course"}
-                  </Button>
                 </div>
               </>
             )}

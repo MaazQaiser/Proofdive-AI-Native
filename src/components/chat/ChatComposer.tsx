@@ -474,10 +474,16 @@ export function ChatComposer({
         position: "fixed",
         zIndex: 70,
         top: expandSettled || !originRect ? 24 : originRect.top,
-        left: expandSettled || !originRect ? 24 : originRect.left,
-        width: expandSettled || !originRect ? "calc(100vw - 48px)" : originRect.width,
+        left:
+          expandSettled || !originRect
+            ? "max(24px, calc((100vw - min(960px, 100vw - 48px)) / 2))"
+            : originRect.left,
+        width:
+          expandSettled || !originRect
+            ? "min(960px, calc(100vw - 48px))"
+            : originRect.width,
         height: expandSettled || !originRect ? "calc(100dvh - 48px)" : originRect.height,
-        maxWidth: "none",
+        maxWidth: "960px",
         transition: reduceMotionRef.current
           ? undefined
           : "top 420ms cubic-bezier(0.22, 1, 0.36, 1), left 420ms cubic-bezier(0.22, 1, 0.36, 1), width 420ms cubic-bezier(0.22, 1, 0.36, 1), height 420ms cubic-bezier(0.22, 1, 0.36, 1)",

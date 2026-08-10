@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { SquarePen } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -53,7 +53,7 @@ export function SuperAdminProfileDetailsSection() {
           </div>
           {!isEditing ? (
             <Button size="sm" variant="outline" onClick={startEditing}>
-              <Pencil className="h-3.5 w-3.5" />
+              <SquarePen className="h-3.5 w-3.5" />
               Edit
             </Button>
           ) : null}

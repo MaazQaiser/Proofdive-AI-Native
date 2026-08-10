@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, X } from "lucide-react";
+import { Check, SquarePen, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -340,7 +340,7 @@ export function SetPriceScreen() {
                             aria-label={`Edit ${ITEM_KIND_LABEL[kind]}`}
                             onClick={() => startEdit(kind)}
                           >
-                            <Pencil className="h-3.5 w-3.5" />
+                            <SquarePen className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Pencil, X } from "lucide-react";
+import { Check, SquarePen, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { IconButton } from "@/components/ui/icon-button";
@@ -118,7 +118,7 @@ export function InlineRename({
         className="inline-flex size-3 shrink-0 items-center justify-center text-text-secondary transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
         aria-label={ariaLabel}
       >
-        <Pencil className="size-3" strokeWidth={2} aria-hidden />
+        <SquarePen className="size-3" strokeWidth={2} aria-hidden />
       </button>
     </span>
   );

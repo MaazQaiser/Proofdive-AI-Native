@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, CheckCircle2, Pencil, X } from "lucide-react";
+import { Ban, CheckCircle2, SquarePen, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
@@ -23,7 +23,7 @@ function ManageButton({ onClick, children }: { onClick: () => void; children: Re
       onClick={onClick}
       className="bg-extended-light-cyan text-extended-green-blue hover:bg-extended-light-cyan/80"
     >
-      <Pencil className="h-3.5 w-3.5" />
+      <SquarePen className="h-3.5 w-3.5" />
       {children}
     </Button>
   );
@@ -66,34 +66,36 @@ export function OrganizationDetailDrawer({
         showCloseButton={false}
         className="flex flex-col gap-0 overflow-hidden p-0"
       >
-        <SheetHeader className="flex min-h-14 shrink-0 flex-row items-center justify-end gap-2 space-y-0 border-b border-border py-4 pl-6 pr-4">
-          <SheetTitle className="sr-only">{organization.name}</SheetTitle>
-          <Button
-            size="sm"
-            variant={organization.status === "active" ? "destructive" : "default"}
-            onClick={() => onRequestStatusChange(organization)}
-          >
-            {organization.status === "active" ? (
-              <>
-                <Ban className="h-3.5 w-3.5" />
-                Deactivate
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Activate
-              </>
-            )}
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => goToEdit("details")}>
-            <Pencil className="h-3.5 w-3.5" />
-            Edit Details
-          </Button>
-          <SheetClose asChild>
-            <Button size="sm" variant="ghost" className="size-8 shrink-0 p-0!" aria-label="Close">
-              <X className="h-4 w-4" />
+        <SheetHeader className="flex min-h-14 shrink-0 flex-row items-center justify-between gap-3 space-y-0 border-b border-border py-4 pl-6 pr-4">
+          <SheetTitle className="min-w-0 flex-1 truncate text-left">{organization.name}</SheetTitle>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              size="sm"
+              variant={organization.status === "active" ? "destructive" : "default"}
+              onClick={() => onRequestStatusChange(organization)}
+            >
+              {organization.status === "active" ? (
+                <>
+                  <Ban className="h-3.5 w-3.5" />
+                  Deactivate
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Activate
+                </>
+              )}
             </Button>
-          </SheetClose>
+            <Button size="sm" variant="ghost" onClick={() => goToEdit("details")}>
+              <SquarePen className="h-3.5 w-3.5" />
+              Edit
+            </Button>
+            <SheetClose asChild>
+              <Button size="sm" variant="ghost" className="size-8 shrink-0 p-0!" aria-label="Close">
+                <X className="h-4 w-4" />
+              </Button>
+            </SheetClose>
+          </div>
         </SheetHeader>
 
         <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col gap-0">

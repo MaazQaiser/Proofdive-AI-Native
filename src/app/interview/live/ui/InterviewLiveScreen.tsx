@@ -561,7 +561,7 @@ export function InterviewLiveScreen() {
 
             <div className="rounded-lg border border-border bg-card p-4">
               <div className="text-overline text-text-secondary">
-                NOTES
+                Notes
               </div>
               <div className="mt-2 text-caption text-text-secondary">
                 Answer naturally. Use STAR/CARE structure where possible. Stay concise.

@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Upload } from "lucide-react";
+import { SquarePen, Upload } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -101,7 +101,7 @@ export function ProfileDetailsSection() {
           </div>
           {!isEditing ? (
             <Button variant="outline" size="sm" onClick={startEditing}>
-              <Pencil className="h-3.5 w-3.5" />
+              <SquarePen className="h-3.5 w-3.5" />
               Edit
             </Button>
           ) : (

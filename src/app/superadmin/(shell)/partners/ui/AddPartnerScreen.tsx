@@ -286,9 +286,6 @@ export function AddPartnerScreen({ mode = "create", partnerId }: AddPartnerScree
             title={isEdit ? `Edit: ${existingPartner?.fullName ?? "Partner"}` : "Add New Partner"}
           />
           <div className="flex shrink-0 flex-wrap items-center gap-2 sm:gap-4">
-            <Button type="button" variant="outline" asChild>
-              <Link href="/superadmin/partners">Cancel</Link>
-            </Button>
             {isEdit ? (
               <>
                 <Button type="button" variant="ghost" onClick={handleDiscard}>
@@ -299,9 +296,14 @@ export function AddPartnerScreen({ mode = "create", partnerId }: AddPartnerScree
                 </Button>
               </>
             ) : (
-              <Button type="button" onClick={handleSubmit}>
-                Generate Referral Code &amp; Send Invite
-              </Button>
+              <>
+                <Button type="button" variant="outline" asChild>
+                  <Link href="/superadmin/partners">Cancel</Link>
+                </Button>
+                <Button type="button" onClick={handleSubmit}>
+                  Generate Referral Code &amp; Send Invite
+                </Button>
+              </>
             )}
           </div>
         </div>

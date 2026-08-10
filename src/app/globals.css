@@ -679,6 +679,111 @@
   }
 }
 
+/* Logo loader — rotate → cube swap → rotate, loops forever.
+   Cube deltas are % of the mark box (aspect 95/106): centers differ by ~13.56×40.69.
+   Timing is deliberately paced (eased spins, held beats, arcing swap) so the
+   cycle reads with weight rather than a thin continuous spin. */
+@keyframes logo-loader-spin {
+  0% {
+    transform: rotate(0deg);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  28% {
+    transform: rotate(360deg);
+    animation-timing-function: linear;
+  }
+  36% {
+    transform: rotate(360deg);
+    animation-timing-function: linear;
+  }
+  54% {
+    transform: rotate(360deg);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  82% {
+    transform: rotate(720deg);
+    animation-timing-function: linear;
+  }
+  100% {
+    transform: rotate(720deg);
+  }
+}
+
+@keyframes logo-loader-cube-a {
+  0%,
+  36% {
+    transform: translate(0%, 0%);
+    animation-timing-function: linear;
+  }
+  36% {
+    animation-timing-function: cubic-bezier(0.45, 0.05, 0.25, 1);
+  }
+  45% {
+    /* Arc past center — perpendicular bulge so the cross has body */
+    transform: translate(2.9%, 20.8%);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.55, 1);
+  }
+  54%,
+  99.9% {
+    transform: translate(14.277%, 38.391%);
+    animation-timing-function: linear;
+  }
+  100% {
+    transform: translate(0%, 0%);
+  }
+}
+
+@keyframes logo-loader-cube-b {
+  0%,
+  36% {
+    transform: translate(0%, 0%);
+    animation-timing-function: linear;
+  }
+  36% {
+    animation-timing-function: cubic-bezier(0.45, 0.05, 0.25, 1);
+  }
+  45% {
+    transform: translate(-2.9%, -20.8%);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.55, 1);
+  }
+  54%,
+  99.9% {
+    transform: translate(-14.277%, -38.391%);
+    animation-timing-function: linear;
+  }
+  100% {
+    transform: translate(0%, 0%);
+  }
+}
+
+.logo-loader__spin {
+  transform-origin: center center;
+  animation: logo-loader-spin 4.8s linear infinite;
+  will-change: transform;
+}
+
+.logo-loader__cube-a,
+.logo-loader__cube-b {
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.logo-loader__cube-a {
+  animation: logo-loader-cube-a 4.8s linear infinite;
+}
+
+.logo-loader__cube-b {
+  animation: logo-loader-cube-b 4.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-loader__spin,
+  .logo-loader__cube-a,
+  .logo-loader__cube-b {
+    animation: none;
+  }
+}
+
 /* Typography utilities — one class per Figma text style, applying size,
    weight, and tracking together (native Tailwind v4 `@utility` at-rule). */
 @utility text-h1 {

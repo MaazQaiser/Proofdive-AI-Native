@@ -90,7 +90,7 @@ export function Disclosure({
   );
 }
 
-/** Small uppercase section label + body text for read-only detail hierarchy. */
+/** Small section label + body text for read-only detail hierarchy. */
 export function FieldBlock({
   label,
   icon: Icon,
@@ -104,7 +104,7 @@ export function FieldBlock({
 }) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <div className="text-overline inline-flex items-center gap-1.5 font-medium tracking-wide text-muted-foreground uppercase">
+      <div className="text-overline inline-flex items-center gap-1.5 font-medium tracking-wide text-muted-foreground">
         {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden /> : null}
         {label}
       </div>

@@ -30,6 +30,8 @@ import {
 } from "@/lib/superAdminPaymentsData";
 import { useDiscountCodes } from "@/lib/useDiscountCodes";
 
+import { DiscountRedemptionsTable } from "./DiscountRedemptionsTable";
+
 function DiscountStatusPill({ status }: { status: DiscountStatus }) {
   const tone: StatusTone =
     status === "active"
@@ -100,25 +102,27 @@ export function DiscountDetailDrawer({ code, onOpenChange, onRequestDeactivate }
           showCloseButton={false}
           className="flex flex-col gap-0 overflow-hidden p-0"
         >
-          <SheetHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-end gap-2 space-y-0 border-b border-border py-4 pl-6 pr-4">
-            <SheetTitle className="sr-only">{code.code}</SheetTitle>
-            {!code.deactivated && status !== "expired" ? (
-              <Button size="sm" variant="destructive" onClick={() => onRequestDeactivate(code)}>
-                <Ban className="h-3.5 w-3.5" />
-                Deactivate
-              </Button>
-            ) : null}
-            {code.deactivated ? (
-              <Button size="sm" onClick={() => setConfirmReactivate(true)}>
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Reactivate
-              </Button>
-            ) : null}
-            <SheetClose asChild>
-              <Button size="sm" variant="ghost" className="size-8 shrink-0 p-0!" aria-label="Close">
-                <X className="h-4 w-4" />
-              </Button>
-            </SheetClose>
+          <SheetHeader className="flex min-h-14 shrink-0 flex-row items-center justify-between gap-3 space-y-0 border-b border-border py-4 pl-6 pr-4">
+            <SheetTitle className="min-w-0 flex-1 truncate text-left">{code.code}</SheetTitle>
+            <div className="flex shrink-0 items-center gap-2">
+              {!code.deactivated && status !== "expired" ? (
+                <Button size="sm" variant="destructive" onClick={() => onRequestDeactivate(code)}>
+                  <Ban className="h-3.5 w-3.5" />
+                  Deactivate
+                </Button>
+              ) : null}
+              {code.deactivated ? (
+                <Button size="sm" onClick={() => setConfirmReactivate(true)}>
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Reactivate
+                </Button>
+              ) : null}
+              <SheetClose asChild>
+                <Button size="sm" variant="ghost" className="size-8 shrink-0 p-0!" aria-label="Close">
+                  <X className="h-4 w-4" />
+                </Button>
+              </SheetClose>
+            </div>
           </SheetHeader>
 
           <Tabs defaultValue="details" className="flex min-h-0 flex-1 flex-col gap-0">
@@ -190,36 +194,12 @@ export function DiscountDetailDrawer({ code, onOpenChange, onRequestDeactivate }
 
             <TabsContent
               value="redemptions"
-              className="mt-0 min-h-0 flex-1 overflow-y-auto px-6 py-5"
+              className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden p-0"
             >
-              <div className="mb-6 flex min-w-0 flex-col gap-1">
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <p className="truncate text-h4 text-foreground">Redemption log</p>
-                  <span className="text-caption text-muted-foreground">
-                    {code.redemptions.length} total
-                  </span>
-                </div>
+              <div className="flex shrink-0 flex-wrap items-center gap-2 px-6 pt-5 pb-2">
+                <p className="truncate text-h4 text-foreground">Redemption log</p>
               </div>
-
-              {code.redemptions.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-border bg-muted/30 px-3 py-6 text-center text-caption text-muted-foreground">
-                  No redemptions yet.
-                </p>
-              ) : (
-                <ul className="flex flex-col divide-y divide-border">
-                  {code.redemptions.map((r) => (
-                    <li
-                      key={r.id}
-                      className="flex items-center justify-between gap-4 py-3 text-body-sm"
-                    >
-                      <span className="font-medium text-foreground">{r.organizationOrUser}</span>
-                      <span className="text-caption text-muted-foreground">
-                        {new Date(r.dateRedeemed).toLocaleDateString()}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <DiscountRedemptionsTable redemptions={code.redemptions} />
             </TabsContent>
           </Tabs>
         </SheetContent>

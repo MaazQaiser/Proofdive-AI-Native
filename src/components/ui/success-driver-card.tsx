@@ -157,6 +157,8 @@ type SuccessDriverCompetencyPillProps = {
   /** e.g. "Thinking · Analytical Thinking" */
   label: ReactNode;
   className?: string;
+  /** `filled` = report-style chip (#eff5f7 / #122b34). Default keeps outlined Figma chip. */
+  variant?: "outline" | "filled";
 };
 
 /** Compact competency chip — Figma node 332:4299 (white fill, #b3effa stroke). */
@@ -164,16 +166,32 @@ function SuccessDriverCompetencyPill({
   driver,
   label,
   className,
+  variant = "outline",
 }: SuccessDriverCompetencyPillProps) {
+  const filled = variant === "filled";
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border border-[#b3effa] bg-white py-1.5 pl-1.5 pr-3",
+        "inline-flex items-center rounded-full",
+        filled
+          ? "h-6 gap-1.5 border border-[#CADDE3] bg-[#eff5f7] py-0 pl-1 pr-2"
+          : "gap-2 border border-[#b3effa] bg-white py-1.5 pl-1.5 pr-3",
         className,
       )}
     >
-      <SuccessDriverIcon driver={driver} className="size-4" />
-      <span className="text-overline leading-[18px] text-text-primary">{label}</span>
+      <SuccessDriverIcon
+        driver={driver}
+        className={cn(filled ? "size-3.5 text-[#122b34]" : "size-4")}
+      />
+      <span
+        className={cn(
+          filled
+            ? "text-[11px] leading-4 font-medium tracking-[0.5px] text-[#122b34]"
+            : "text-overline leading-[18px] text-text-primary",
+        )}
+      >
+        {label}
+      </span>
     </span>
   );
 }

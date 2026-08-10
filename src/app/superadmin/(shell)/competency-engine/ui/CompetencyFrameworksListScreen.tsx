@@ -231,7 +231,7 @@ export function CompetencyFrameworksListScreen() {
                     {framework.isDefault ? (
                       <Badge variant="secondary">Default</Badge>
                     ) : (
-                      <Badge variant="outline">Custom</Badge>
+                      <Badge variant="default">Custom</Badge>
                     )}
                   </TableCell>
                   <TableCell>
