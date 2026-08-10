@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, FilePenLine, HelpCircle, Layers, Save, User, X } from "lucide-react";
+import { Bot, SquarePen, HelpCircle, Layers, Save, User, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -165,7 +165,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
             Cancel
           </Button>
           <Button type="button" variant="outline" onClick={() => persist("draft", false)}>
-            <FilePenLine className="h-4 w-4" />
+            <SquarePen className="h-4 w-4" />
             Save draft
           </Button>
           <Button type="button" onClick={() => persist("published", false)}>
@@ -236,7 +236,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
                         >
                           <div className="flex flex-col gap-5">
                             <div className="space-y-3">
-                              <h4 className="text-overline font-medium tracking-wide text-muted-foreground uppercase">
+                              <h4 className="text-overline font-medium tracking-wide text-muted-foreground">
                                 Competency overview
                               </h4>
                               <div className="flex flex-col gap-3">
@@ -277,7 +277,7 @@ export function CompetencyFrameworkEditorScreen({ frameworkId }: Props) {
                             </div>
 
                             <div className="space-y-2">
-                              <h4 className="text-overline inline-flex items-center gap-1.5 font-medium tracking-wide text-muted-foreground uppercase">
+                              <h4 className="text-overline inline-flex items-center gap-1.5 font-medium tracking-wide text-muted-foreground">
                                 <Layers className="size-3.5 shrink-0" aria-hidden />
                                 Level descriptors
                               </h4>

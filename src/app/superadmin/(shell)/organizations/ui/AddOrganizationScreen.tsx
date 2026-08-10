@@ -451,9 +451,6 @@ export function AddOrganizationScreen({
             }
           />
           <div className="flex shrink-0 flex-wrap items-center gap-2 sm:gap-4">
-            <Button type="button" variant="outline" asChild>
-              <Link href="/superadmin/organizations">Cancel</Link>
-            </Button>
             {isEdit ? (
               <>
                 <Button type="button" variant="ghost" onClick={handleDiscard}>
@@ -464,9 +461,14 @@ export function AddOrganizationScreen({
                 </Button>
               </>
             ) : (
-              <Button type="button" onClick={handleSubmit}>
-                Send Invite
-              </Button>
+              <>
+                <Button type="button" variant="outline" asChild>
+                  <Link href="/superadmin/organizations">Cancel</Link>
+                </Button>
+                <Button type="button" onClick={handleSubmit}>
+                  Send Invite
+                </Button>
+              </>
             )}
           </div>
         </div>

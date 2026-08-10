@@ -88,10 +88,7 @@ export function EditUserDialog({ open, onOpenChange, user, onUpdate }: EditUserD
         </div>
 
         <DialogFooter className="shrink-0 border-t border-border px-6 py-4 sm:justify-end">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button variant="outline" onClick={handleDiscard} disabled={!user}>
+          <Button variant="ghost" onClick={handleDiscard} disabled={!user}>
             Discard Changes
           </Button>
           <Button onClick={handleSave} disabled={!user}>

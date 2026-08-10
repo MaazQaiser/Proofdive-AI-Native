@@ -61,15 +61,18 @@ function CoachJourneyPlanCard({
   mode,
   isFirstStart,
   trainingContinue,
+  hasCraftedStoryboard,
 }: {
   mode: "roadmap" | "journey" | "final" | "suggested";
   isFirstStart: boolean;
   trainingContinue: boolean;
+  hasCraftedStoryboard: boolean;
 }) {
   const isSecondInterview = mode === "final" && !isFirstStart;
   const showIntro = mode !== "roadmap";
-  /** Add competency only after the user has a storyboard or interview journey. */
-  const showAddCompetency = mode === "journey" || mode === "final";
+  /** Add competency only after the user already has a crafted storyboard. */
+  const showAddCompetency =
+    (mode === "journey" || mode === "final") && hasCraftedStoryboard;
 
   return (
     <div className="mt-4 w-full max-w-[800px] scroll-mt-24 pt-4">
@@ -485,6 +488,12 @@ export function CoachHome() {
 
   const role = roleProfile?.targetRole?.trim() ?? "";
 
+  const hasCraftedStoryboard = useMemo(() => {
+    if (!role || typeof window === "undefined") return false;
+    const diveStore = readJson<StoryboardDiveStore>(StorageKeys.storyboardDives);
+    return isDiveStore(diveStore) && savedDivesForRole(diveStore, role).length > 0;
+  }, [role, coachJourneyView, pathname]);
+
   /** Restore suggested roadmap chrome after remount (phase/card are in-memory). */
   useEffect(() => {
     if (coachJourneyView !== "roadmap") return;
@@ -655,6 +664,7 @@ export function CoachHome() {
                             mode="suggested"
                             isFirstStart={Boolean(isFirstStart)}
                             trainingContinue={trainingContinue}
+                            hasCraftedStoryboard={hasCraftedStoryboard}
                           />
                         </div>
                         {readinessNoteBanner}
@@ -669,6 +679,7 @@ export function CoachHome() {
                             mode="suggested"
                             isFirstStart={Boolean(isFirstStart)}
                             trainingContinue={trainingContinue}
+                            hasCraftedStoryboard={hasCraftedStoryboard}
                           />
                         </div>
                       </>
@@ -702,6 +713,7 @@ export function CoachHome() {
                       mode={isFinalCoach ? "final" : isRoadmapCoach ? "roadmap" : "journey"}
                       isFirstStart={Boolean(isFirstStart)}
                       trainingContinue={trainingContinue}
+                      hasCraftedStoryboard={hasCraftedStoryboard}
                     />
                     {readinessNoteBanner}
                     {readinessCardEl}
@@ -714,6 +726,7 @@ export function CoachHome() {
                       mode={isFinalCoach ? "final" : isRoadmapCoach ? "roadmap" : "journey"}
                       isFirstStart={Boolean(isFirstStart)}
                       trainingContinue={trainingContinue}
+                      hasCraftedStoryboard={hasCraftedStoryboard}
                     />
                   </>
                 )}

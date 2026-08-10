@@ -90,7 +90,7 @@ export function DiscountGenerateScreen() {
     if (!discountType) return;
     const record: DiscountCode = {
       id: `dc_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      code: code.trim().toUpperCase(),
+      code: code.trim(),
       discountType,
       value:
         discountType === "percentage"
@@ -138,8 +138,8 @@ export function DiscountGenerateScreen() {
               <Input
                 id="dc-code"
                 value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="e.g. SPRING25"
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="e.g. Spring25"
                 aria-invalid={Boolean(errors.code)}
               />
               <Button

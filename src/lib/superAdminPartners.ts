@@ -87,13 +87,14 @@ export const PAYOUT_FREQUENCY_LABEL: Record<PayoutFrequency, string> = {
 
 export function generateReferralCode(fullName: string, existingCodes: string[]): string {
   const base = fullName
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "")
+    .replace(/[^A-Za-z0-9]+/g, "")
     .slice(0, 6)
-    .padEnd(4, "X");
+    .padEnd(4, "x");
+  const isTaken = (code: string) =>
+    existingCodes.some((c) => c.toUpperCase() === code.toUpperCase());
   let attempt = `${base}${Math.floor(100 + Math.random() * 900)}`;
   let guard = 0;
-  while (existingCodes.includes(attempt) && guard < 50) {
+  while (isTaken(attempt) && guard < 50) {
     attempt = `${base}${Math.floor(100 + Math.random() * 900)}`;
     guard += 1;
   }

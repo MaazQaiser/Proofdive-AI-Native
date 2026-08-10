@@ -420,7 +420,7 @@ export function resolveDiscountStatus(code: DiscountCode, now = new Date()): Dis
 }
 
 export function generateDiscountCodeString(length = 8): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
   let out = "";
   for (let i = 0; i < length; i++) out += chars[Math.floor(Math.random() * chars.length)];
   return out;

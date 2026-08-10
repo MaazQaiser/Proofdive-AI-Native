@@ -85,14 +85,24 @@ function formatUpdated(iso: string): string {
   }
 }
 
-function formatCyclesInline(bundle: PaymentBundle): string {
-  if (bundle.cycles.length === 0) return "—";
-  return bundle.cycles.map((c) => BILLING_CYCLE_LABEL[c.cycle]).join(", ");
-}
-
-function formatPricesInline(bundle: PaymentBundle): string {
-  if (bundle.cycles.length === 0) return "—";
-  return bundle.cycles.map((c) => formatUsd(c.price)).join(", ");
+function BundlePricingCell({ bundle }: { bundle: PaymentBundle }) {
+  if (bundle.cycles.length === 0) {
+    return <span className="text-caption text-muted-foreground">—</span>;
+  }
+  return (
+    <div className="flex w-fit min-w-[9.5rem] flex-col gap-0.5">
+      {bundle.cycles.map((c) => (
+        <div key={c.cycle} className="flex items-baseline justify-between gap-2 text-caption">
+          <span className="shrink-0 text-left text-text-primary">
+            {BILLING_CYCLE_LABEL[c.cycle]}:
+          </span>
+          <span className="text-right tabular-nums text-muted-foreground">
+            {formatUsd(c.price)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function BundleListingScreen() {
@@ -276,8 +286,9 @@ export function BundleListingScreen() {
               <TableRow>
                 <TableHead className="text-overline pl-6 text-muted-foreground">Bundle Name</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Type</TableHead>
-                <TableHead className="text-overline text-muted-foreground">Billing Cycle</TableHead>
-                <TableHead className="text-overline text-muted-foreground">Price</TableHead>
+                <TableHead className="text-overline text-muted-foreground">
+                  Billing Cycle | Price
+                </TableHead>
                 <TableHead className="text-overline text-muted-foreground">Last Updated</TableHead>
                 <TableHead className="text-overline text-muted-foreground">Status</TableHead>
                 <TableHead className="text-overline pr-6 text-right text-muted-foreground">
@@ -298,11 +309,8 @@ export function BundleListingScreen() {
                     </button>
                   </TableCell>
                   <TableCell className="text-caption text-muted-foreground">{bundle.type}</TableCell>
-                  <TableCell className="text-caption text-muted-foreground">
-                    {formatCyclesInline(bundle)}
-                  </TableCell>
-                  <TableCell className="text-caption text-muted-foreground">
-                    {formatPricesInline(bundle)}
+                  <TableCell>
+                    <BundlePricingCell bundle={bundle} />
                   </TableCell>
                   <TableCell className="text-caption text-muted-foreground">
                     {formatUpdated(bundle.updatedAt)}

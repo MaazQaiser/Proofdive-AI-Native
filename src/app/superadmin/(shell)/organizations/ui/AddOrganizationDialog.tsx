@@ -487,7 +487,7 @@ export function AddOrganizationDialog({
                           <Icon className="h-4.5 w-4.5" />
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-overline text-muted-foreground">STEP {card.step}</span>
+                          <span className="text-overline text-muted-foreground">Step {card.step}</span>
                           <span className="text-body-sm font-medium text-foreground">{card.title}</span>
                         </div>
                       </div>

@@ -465,16 +465,17 @@ export function BundleFormScreen({
   return renderChrome(
     mode === "create" ? "Create New Bundle" : `Edit: ${bundle.name || "Bundle"}`,
     <>
-      <Button type="button" variant="outline" onClick={handleCancel}>
-        Cancel
-      </Button>
       {mode === "edit" ? (
         <Button type="button" variant="ghost" onClick={handleDiscard}>
           Discard Changes
         </Button>
-      ) : null}
+      ) : (
+        <Button type="button" variant="outline" onClick={handleCancel}>
+          Cancel
+        </Button>
+      )}
       <Button type="button" onClick={goPreview}>
-        Continue to preview
+        Continue
       </Button>
     </>,
     <div className="mx-auto flex w-full max-w-[800px] flex-col gap-6">

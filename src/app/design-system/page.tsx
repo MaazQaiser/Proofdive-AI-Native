@@ -1,26 +1,6 @@
 "use client";
 
-import {
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
-  ArrowUpRight,
-  BookOpen,
-  ChevronRight,
-  Download,
-  Eye,
-  EyeOff,
-  Info,
-  Mic,
-  MicOff,
-  Pencil,
-  Play,
-  Plus,
-  UserCheck,
-  Video,
-  VideoOff,
-  X,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, BookOpen, ChevronRight, Download, Eye, EyeOff, Info, Mic, MicOff, SquarePen, Play, Plus, UserCheck, Video, VideoOff, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -50,6 +30,7 @@ import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo, type LogoSize } from "@/components/ui/logo";
+import { LogoLoader } from "@/components/ui/logo-loader";
 import { MediaListItem } from "@/components/ui/media-list-item";
 import { PixelMedia } from "@/components/ui/pixel-media";
 import {
@@ -371,7 +352,7 @@ function PillarToggleDemo() {
           : "border-border bg-card text-text-primary hover:bg-muted",
       )}
     >
-      <span className="block text-overline uppercase text-current opacity-70">
+      <span className="block text-overline text-current opacity-70">
         {on ? "Selected" : "Tap to add"}
       </span>
       <span className="mt-2 block text-body-sm">Product Thinking</span>
@@ -453,7 +434,7 @@ export default function DesignSystemPage() {
         <div className="mx-auto max-w-6xl space-y-16 px-6 py-12">
           <header className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-overline text-muted-foreground">DESIGN SYSTEM</p>
+              <p className="text-overline text-muted-foreground">Design system</p>
               <h1 className="text-h2 text-foreground">ProofDive Foundation</h1>
               <p className="text-body text-muted-foreground mt-2 max-w-2xl">
                 Color tokens and typography from the Figma design foundation, plus a
@@ -686,6 +667,38 @@ export default function DesignSystemPage() {
           <Separator />
 
           <Section
+            title="Logo loader"
+            description="Indeterminate brand-mark loader (loops continuously): full rotation, cubes cross-swap, then another rotation. src/components/ui/logo-loader.tsx — design-system demo only; not wired into product flows yet."
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card className="overflow-hidden bg-black text-white">
+                <CardHeader>
+                  <CardTitle className="text-white">Dark surface</CardTitle>
+                  <CardDescription className="text-white/70">
+                    text-primary on black — matches the teal mark treatment
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center justify-center py-12">
+                  <LogoLoader className="h-20" />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Light surface</CardTitle>
+                  <CardDescription>
+                    Same loader on the default card background
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center justify-center py-12">
+                  <LogoLoader className="h-20" />
+                </CardContent>
+              </Card>
+            </div>
+          </Section>
+
+          <Separator />
+
+          <Section
             title="Fonts"
             description="--font-sans (Inter) is the only typeface used across the application."
           >
@@ -766,7 +779,7 @@ export default function DesignSystemPage() {
                       <Button size="default">Default</Button>
                       <Button size="lg">Large</Button>
                       <Button size="icon" variant="outline" aria-label="Edit">
-                        <Pencil />
+                        <SquarePen />
                       </Button>
                       <Button size="icon" variant="ghost" aria-label="More actions">
                         <ChevronRight />
@@ -784,7 +797,7 @@ export default function DesignSystemPage() {
                         Add another email
                       </Button>
                       <Button variant="outline">
-                        <Pencil />
+                        <SquarePen />
                         Edit
                       </Button>
                       <Button variant="destructive">
@@ -933,7 +946,7 @@ export default function DesignSystemPage() {
 
               <AppCard>
                 <AppCardBody>
-                  <p className="text-overline text-[var(--app-muted)]">APP CARD + NESTEDCARD</p>
+                  <p className="text-overline text-[var(--app-muted)]">App card + Nested card</p>
                   <p className="mt-1 text-body-sm font-medium">
                     Custom system — src/components/Card.tsx
                   </p>
@@ -953,7 +966,7 @@ export default function DesignSystemPage() {
 
               <div className="rounded-lg bg-[linear-gradient(135deg,var(--brand-100),var(--brand-500))] p-6 lg:col-span-2">
                 <GlassCard className="p-6">
-                  <p className="text-overline text-[var(--app-muted)]">GLASSCARD</p>
+                  <p className="text-overline text-[var(--app-muted)]">Glass card</p>
                   <p className="mt-1 text-body-sm">
                     Frosted/translucent variant for surfaces over a photo or colored background
                     (shown here on a brand-gradient backdrop). Border-only, no shadow — same rule
@@ -1030,11 +1043,11 @@ export default function DesignSystemPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
                     <SelectionChip>
-                      <Pencil className="size-4" />
+                      <SquarePen className="size-4" />
                       Edit
                     </SelectionChip>
                     <SelectionChip selected>
-                      <Pencil className="size-4" />
+                      <SquarePen className="size-4" />
                       Edit
                     </SelectionChip>
                     <SelectionChip>

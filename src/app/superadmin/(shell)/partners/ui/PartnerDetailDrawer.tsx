@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, CheckCircle2, Pencil, X } from "lucide-react";
+import { Ban, CheckCircle2, SquarePen, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { KpiCard, KpiRow } from "@/components/dashboard/KpiCard";
@@ -49,41 +49,43 @@ export function PartnerDetailDrawer({
         showCloseButton={false}
         className="flex flex-col gap-0 overflow-hidden p-0"
       >
-        <SheetHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-end gap-2 space-y-0 border-b border-border py-4 pl-6 pr-4">
-          <SheetTitle className="sr-only">{partner.fullName}</SheetTitle>
-          <Button
-            size="sm"
-            variant={partner.status === "active" ? "destructive" : "default"}
-            onClick={() => onRequestStatusChange(partner)}
-          >
-            {partner.status === "active" ? (
-              <>
-                <Ban className="h-3.5 w-3.5" />
-                Deactivate
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Activate
-              </>
-            )}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              onOpenChange(false);
-              router.push(`/superadmin/partners/${partner.id}/edit`);
-            }}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-            Edit Partner
-          </Button>
-          <SheetClose asChild>
-            <Button size="sm" variant="ghost" className="size-8 shrink-0 p-0!" aria-label="Close">
-              <X className="h-4 w-4" />
+        <SheetHeader className="flex min-h-14 shrink-0 flex-row items-center justify-between gap-3 space-y-0 border-b border-border py-4 pl-6 pr-4">
+          <SheetTitle className="min-w-0 flex-1 truncate text-left">{partner.fullName}</SheetTitle>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              size="sm"
+              variant={partner.status === "active" ? "destructive" : "default"}
+              onClick={() => onRequestStatusChange(partner)}
+            >
+              {partner.status === "active" ? (
+                <>
+                  <Ban className="h-3.5 w-3.5" />
+                  Deactivate
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Activate
+                </>
+              )}
             </Button>
-          </SheetClose>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                onOpenChange(false);
+                router.push(`/superadmin/partners/${partner.id}/edit`);
+              }}
+            >
+              <SquarePen className="h-3.5 w-3.5" />
+              Edit
+            </Button>
+            <SheetClose asChild>
+              <Button size="sm" variant="ghost" className="size-8 shrink-0 p-0!" aria-label="Close">
+                <X className="h-4 w-4" />
+              </Button>
+            </SheetClose>
+          </div>
         </SheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">

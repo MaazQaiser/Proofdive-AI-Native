@@ -528,7 +528,7 @@ export function InterviewScreen() {
             className="w-full max-w-lg rounded-lg border border-border bg-card p-6 sm:p-8"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-overline text-text-secondary">SHORT SESSION</div>
+            <div className="text-overline text-text-secondary">Short session</div>
             <h2 id="pillar-pick-title" className="text-h5 mt-2 text-text-primary">
               Choose competency areas
             </h2>
@@ -550,7 +550,7 @@ export function InterviewScreen() {
                         : "border-border bg-card text-text-primary hover:bg-muted",
                     )}
                   >
-                    <span className="block text-overline uppercase text-current opacity-70">
+                    <span className="block text-overline text-current opacity-70">
                       {on ? "Selected" : "Tap to add"}
                     </span>
                     <span className="mt-2 flex items-center gap-2">

@@ -33,16 +33,21 @@ export function DetailField({
 
 export function DetailSection({
   title,
+  end,
   children,
   className,
 }: {
   title: string;
+  end?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <section className={cn("flex flex-col gap-4", className)}>
-      <h3 className="text-body font-semibold tracking-tight text-foreground">{title}</h3>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-body font-semibold tracking-tight text-foreground">{title}</h3>
+        {end ? <div className="shrink-0">{end}</div> : null}
+      </div>
       {children}
     </section>
   );

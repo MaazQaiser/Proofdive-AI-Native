@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, CheckCircle2, Pencil, X } from "lucide-react";
+import { Ban, CheckCircle2, SquarePen, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BILLING_CYCLE_LABEL,
   BUNDLE_STATUS_LABEL,
+  calculateBundleItemSubtotal,
   formatUsd,
   getMasterclassById,
+  moduleShare,
   type BundleStatus,
   type PaymentBundle,
 } from "@/lib/superAdminPaymentsData";
@@ -56,36 +58,38 @@ export function BundleDetailDrawer({
         showCloseButton={false}
         className="flex flex-col gap-0 overflow-hidden p-0"
       >
-        <SheetHeader className="flex min-h-14 shrink-0 flex-row flex-wrap items-center justify-end gap-2 space-y-0 border-b border-border py-4 pl-6 pr-4">
-          <SheetTitle className="sr-only">{bundle.name}</SheetTitle>
-          {bundle.status === "active" ? (
-            <Button size="sm" variant="destructive" onClick={() => onRequestDeactivate(bundle)}>
-              <Ban className="h-3.5 w-3.5" />
-              Deactivate
+        <SheetHeader className="flex min-h-14 shrink-0 flex-row items-center justify-between gap-3 space-y-0 border-b border-border py-4 pl-6 pr-4">
+          <SheetTitle className="min-w-0 flex-1 truncate text-left">{bundle.name}</SheetTitle>
+          <div className="flex shrink-0 items-center gap-2">
+            {bundle.status === "active" ? (
+              <Button size="sm" variant="destructive" onClick={() => onRequestDeactivate(bundle)}>
+                <Ban className="h-3.5 w-3.5" />
+                Deactivate
+              </Button>
+            ) : null}
+            {bundle.status === "inactive" ? (
+              <Button size="sm" onClick={() => onRequestReactivate(bundle)}>
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Reactivate
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                onOpenChange(false);
+                router.push(`/superadmin/payments/bundles/${bundle.id}?edit=1`);
+              }}
+            >
+              <SquarePen className="h-3.5 w-3.5" />
+              Edit
             </Button>
-          ) : null}
-          {bundle.status === "inactive" ? (
-            <Button size="sm" onClick={() => onRequestReactivate(bundle)}>
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Reactivate
-            </Button>
-          ) : null}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              onOpenChange(false);
-              router.push(`/superadmin/payments/bundles/${bundle.id}?edit=1`);
-            }}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-            Edit Bundle
-          </Button>
-          <SheetClose asChild>
-            <Button size="sm" variant="ghost" className="size-8 shrink-0 p-0!" aria-label="Close">
-              <X className="h-4 w-4" />
-            </Button>
-          </SheetClose>
+            <SheetClose asChild>
+              <Button size="sm" variant="ghost" className="size-8 shrink-0 p-0!" aria-label="Close">
+                <X className="h-4 w-4" />
+              </Button>
+            </SheetClose>
+          </div>
         </SheetHeader>
 
         <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col gap-0">
@@ -132,43 +136,73 @@ export function BundleDetailDrawer({
 
               <Separator />
 
-              <DetailSection title="Included items">
+              <DetailSection
+                title="Included items"
+                end={
+                  <p className="pr-4 text-right text-body-sm font-medium text-foreground tabular-nums">
+                    Total {formatUsd(calculateBundleItemSubtotal(bundle))}
+                  </p>
+                }
+              >
                 <div className="flex flex-col gap-3">
                   {bundle.mockInterview.included ? (
                     <Card className="gap-0 py-0">
                       <CardContent className="px-4 py-3.5">
-                        <p className="text-body-sm font-medium text-foreground">
-                          Mock Interview × {bundle.mockInterview.quantity}
-                        </p>
-                        <p className="mt-1 text-caption text-muted-foreground">
-                          {formatUsd(bundle.mockInterview.unitPrice)} each
-                        </p>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-body-sm font-medium text-foreground">Mock Interview</p>
+                            <p className="mt-1 text-caption text-muted-foreground">
+                              {formatUsd(bundle.mockInterview.unitPrice)} each
+                            </p>
+                          </div>
+                          <p className="shrink-0 text-caption text-muted-foreground">
+                            Qty: ×{bundle.mockInterview.quantity}
+                          </p>
+                          <p className="shrink-0 text-body-sm font-medium text-foreground tabular-nums">
+                            {formatUsd(
+                              bundle.mockInterview.quantity * bundle.mockInterview.unitPrice,
+                            )}
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
                   ) : null}
                   {bundle.storyboard.included ? (
                     <Card className="gap-0 py-0">
                       <CardContent className="px-4 py-3.5">
-                        <p className="text-body-sm font-medium text-foreground">
-                          Storyboard × {bundle.storyboard.quantity}
-                        </p>
-                        <p className="mt-1 text-caption text-muted-foreground">
-                          {formatUsd(bundle.storyboard.unitPrice)} each
-                        </p>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-body-sm font-medium text-foreground">Storyboard</p>
+                            <p className="mt-1 text-caption text-muted-foreground">
+                              {formatUsd(bundle.storyboard.unitPrice)} each
+                            </p>
+                          </div>
+                          <p className="shrink-0 text-caption text-muted-foreground">
+                            Qty: ×{bundle.storyboard.quantity}
+                          </p>
+                          <p className="shrink-0 text-body-sm font-medium text-foreground tabular-nums">
+                            {formatUsd(bundle.storyboard.quantity * bundle.storyboard.unitPrice)}
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
                   ) : null}
-                  {bundle.masterclass.included
-                    ? bundle.masterclass.selections.map((sel) => {
+                  {bundle.masterclass.included && bundle.masterclass.selections.length > 0 ? (
+                    <div className="flex flex-col gap-3">
+                      <h4 className="text-body-sm font-semibold tracking-tight text-foreground">
+                        Masterclass module(s) included
+                      </h4>
+                      {bundle.masterclass.selections.map((sel) => {
                         const mc = getMasterclassById(sel.masterclassId);
+                        const modulePrice = moduleShare(sel.price, sel.selectedModuleIds.length);
                         return (
                           <Card key={sel.masterclassId} className="gap-0 py-0">
                             <CardContent className="px-4 py-3.5">
                               <div className="flex items-start justify-between gap-3">
-                                <p className="text-body-sm font-medium text-foreground">
+                                <p className="min-w-0 flex-1 text-body-sm font-medium text-foreground">
                                   {mc?.name ?? sel.masterclassId}
                                 </p>
-                                <p className="shrink-0 text-body-sm font-medium text-foreground">
+                                <p className="shrink-0 text-body-sm font-medium text-foreground tabular-nums">
                                   {formatUsd(sel.price)}
                                 </p>
                               </div>
@@ -179,9 +213,14 @@ export function BundleDetailDrawer({
                                     return (
                                       <li
                                         key={id}
-                                        className="py-2 text-caption text-muted-foreground first:pt-3 last:pb-0"
+                                        className="flex items-center justify-between gap-3 py-2 first:pt-3 last:pb-0"
                                       >
-                                        {mod?.name ?? id}
+                                        <span className="text-caption text-muted-foreground">
+                                          {mod?.name ?? id}
+                                        </span>
+                                        <span className="shrink-0 text-caption font-medium text-foreground tabular-nums">
+                                          {formatUsd(modulePrice)}
+                                        </span>
                                       </li>
                                     );
                                   })}
@@ -190,8 +229,9 @@ export function BundleDetailDrawer({
                             </CardContent>
                           </Card>
                         );
-                      })
-                    : null}
+                      })}
+                    </div>
+                  ) : null}
                   {!bundle.mockInterview.included &&
                   !bundle.storyboard.included &&
                   !bundle.masterclass.included ? (

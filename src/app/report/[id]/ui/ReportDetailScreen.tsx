@@ -37,6 +37,8 @@ import {
   PersonStanding,
   PictureInPicture2,
   Play,
+  PencilSparkles,
+  Podium,
   RotateCcw,
   SkipBack,
   Sparkles,
@@ -178,9 +180,11 @@ function MetaChip({
   children: React.ReactNode;
 }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-[#b3effa] bg-white py-1.5 pl-1.5 pr-3">
+    <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-[#CADDE3] bg-[#eff5f7] py-0 pl-1 pr-2 text-[#122b34]">
       {icon}
-      <span className="text-overline leading-[18px] text-text-primary">{children}</span>
+      <span className="text-[11px] leading-4 font-medium tracking-[0.5px] text-[#122b34]">
+        {children}
+      </span>
     </span>
   );
 }
@@ -190,8 +194,8 @@ function HighlightChip({ prefix, text }: { prefix: string; text: string }) {
   const rest = match ? match[1].replace(/\s*·\s*$/, "").trim() : text.trim();
   const score = match ? Number.parseFloat(match[2]!) : null;
   return (
-    <span className="inline-flex items-center rounded-full border border-[#b3effa] bg-white py-1.5 px-3">
-      <span className="text-overline leading-[18px] text-text-primary">
+    <span className="inline-flex h-6 items-center rounded-full border border-[#CADDE3] bg-[#eff5f7] px-2 py-0">
+      <span className="text-[11px] leading-4 font-medium tracking-[0.5px] text-[#122b34]">
         {prefix}
         {rest ? ` ${rest}` : ""}
         {score != null ? (
@@ -314,6 +318,7 @@ function QuestionRow({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <SuccessDriverCompetencyPill
+                  variant="filled"
                   driver={q.driver as SuccessDriverId}
                   label={
                     <>
@@ -323,12 +328,12 @@ function QuestionRow({
                     </>
                   }
                 />
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#b3effa] bg-white py-1.5 pl-1.5 pr-3">
-                  <Clock3 className="size-4 shrink-0 text-text-secondary" aria-hidden />
-                  <span className="text-overline leading-[18px] text-text-primary">
+                <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-[#CADDE3] bg-[#eff5f7] py-0 pl-1 pr-2">
+                  <Clock3 className="size-3.5 shrink-0 text-[#122b34]" aria-hidden />
+                  <span className="text-[11px] leading-4 font-medium tracking-[0.5px] text-[#122b34]">
                     {fmtDuration(q.timeSeconds)}
                     {q.idealRangeSeconds ? (
-                      <span className="text-text-secondary">
+                      <span>
                         {" "}
                         · ideal {Math.floor(q.idealRangeSeconds[0] / 60)}–{Math.floor(q.idealRangeSeconds[1] / 60)}m
                       </span>
@@ -680,10 +685,10 @@ export function ReportDetailScreen({ reportId }: Props) {
             .
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <MetaChip icon={<Calendar className="size-5 shrink-0 text-text-secondary" aria-hidden />}>
+            <MetaChip icon={<Calendar className="size-3.5 shrink-0 text-[#122b34]" aria-hidden />}>
               {fmtDate(report.meta.createdAt)}
             </MetaChip>
-            <MetaChip icon={<Clock3 className="size-5 shrink-0 text-text-secondary" aria-hidden />}>
+            <MetaChip icon={<Clock3 className="size-3.5 shrink-0 text-[#122b34]" aria-hidden />}>
               {fmtDuration(report.meta.durationSeconds)}
             </MetaChip>
           </div>
@@ -763,16 +768,11 @@ export function ReportDetailScreen({ reportId }: Props) {
                 <summary className="cursor-pointer list-none">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-body-sm font-semibold text-text-primary">
-                      At a glance
+                      Competencies Assessment at a glance
                     </div>
                     <ChevronDown className="size-5 shrink-0 text-text-primary/60 transition-transform duration-200" aria-hidden />
                   </div>
                 </summary>
-
-                <div className="mt-4 text-caption leading-6 text-text-secondary">
-                  Each pillar has an overall score. The driver cards above show the top-level rating, and the breakdown
-                  shows per–sub-skill detail.
-                </div>
 
                 <div className="mt-6 grid gap-4 lg:grid-cols-2">
                   {report.drivers.map((d) => (
@@ -878,22 +878,22 @@ export function ReportDetailScreen({ reportId }: Props) {
                         Play
                       </Button>
                     </div>
-                    <span className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full border border-[#b3effa] bg-white py-1.5 pl-1.5 pr-3">
-                      <Clock3 className="size-4 shrink-0 text-text-secondary" aria-hidden />
-                      <span className="text-overline leading-[18px] text-text-primary">
+                    <span className="absolute bottom-3 left-3 inline-flex h-6 items-center gap-1.5 rounded-full border border-[#CADDE3] bg-[#eff5f7] py-0 pl-1 pr-2">
+                      <Clock3 className="size-3.5 shrink-0 text-[#122b34]" aria-hidden />
+                      <span className="text-[11px] leading-4 font-medium tracking-[0.5px] text-[#122b34]">
                         {fmtDuration(report.meta.durationSeconds)}
                       </span>
                     </span>
                   </div>
 
                   <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
-                    <MetaChip icon={<SkipBack className="size-5 shrink-0 text-text-secondary" aria-hidden />}>
+                    <MetaChip icon={<SkipBack className="size-3.5 shrink-0 text-[#122b34]" aria-hidden />}>
                       ±10s
                     </MetaChip>
-                    <MetaChip icon={<Gauge className="size-5 shrink-0 text-text-secondary" aria-hidden />}>
+                    <MetaChip icon={<Gauge className="size-3.5 shrink-0 text-[#122b34]" aria-hidden />}>
                       1×
                     </MetaChip>
-                    <MetaChip icon={<PictureInPicture2 className="size-5 shrink-0 text-text-secondary" aria-hidden />}>
+                    <MetaChip icon={<PictureInPicture2 className="size-3.5 shrink-0 text-[#122b34]" aria-hidden />}>
                       PiP
                     </MetaChip>
                   </div>
@@ -960,7 +960,7 @@ export function ReportDetailScreen({ reportId }: Props) {
               <div className="mt-6 rounded-lg border border-[#b3effa] bg-[#edf5f7] p-5">
                 <div className="flex items-start gap-3">
                   <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-                    <Sparkles className="size-4" aria-hidden />
+                    <Podium className="size-4" aria-hidden />
                   </span>
                   <div className="min-w-0">
                     <h3 className="text-body-sm font-semibold text-extended-cyan-green">
@@ -976,6 +976,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                   <div className="mt-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <SuccessDriverCompetencyPill
+                        variant="filled"
                         driver={spotlightQuestion.driver as SuccessDriverId}
                         label={
                           <>
@@ -1010,7 +1011,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                     </blockquote>
                   </div>
                   <div className="min-w-0">
-                    <PanelLabel icon={Sparkles}>Coach rewrite</PanelLabel>
+                    <PanelLabel icon={PencilSparkles}>Coach rewrite</PanelLabel>
                     <blockquote className="mt-3 whitespace-pre-line rounded-lg border border-[#b3effa] bg-white p-4 text-caption leading-relaxed text-text-primary">
                       {report.spotlight.coachRewrite}
                     </blockquote>
@@ -1022,9 +1023,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                   <ul className="mt-3 grid gap-2">
                     {report.spotlight.whyStronger.map((s) => (
                       <li key={s} className="flex gap-3 rounded-lg border border-[#dde7e9] bg-white p-3">
-                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-extended-light-cyan text-extended-cyan-green">
-                          <Check className="size-4" aria-hidden />
-                        </span>
+                        <Check className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
                         <span className="self-center text-caption leading-relaxed text-text-primary">{s}</span>
                       </li>
                     ))}
@@ -1135,12 +1134,6 @@ export function ReportDetailScreen({ reportId }: Props) {
                       )}
                     >
                       <div className="flex min-w-0 flex-1 items-start gap-4">
-                        <span
-                          aria-hidden
-                          className="flex shrink-0 self-stretch items-center font-gilroy text-[52px] font-normal leading-[52px] tracking-[-1.04px] tabular-nums text-brand-500"
-                        >
-                          {index + 1}
-                        </span>
                         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                           <div className="flex flex-wrap items-center gap-2">
                             <h3 className="text-[18px] font-medium leading-[27px] tracking-[-1.3px] text-text-primary">
@@ -1160,12 +1153,13 @@ export function ReportDetailScreen({ reportId }: Props) {
                             ) : null}
                             {driverId ? (
                               <SuccessDriverCompetencyPill
+                                variant="filled"
                                 driver={driverId}
                                 label={SUCCESS_DRIVERS[driverId].shortLabel}
                               />
                             ) : item.pillar ? (
-                              <span className="inline-flex items-center rounded-full border border-[#b3effa] bg-white py-1.5 px-3">
-                                <span className="text-overline leading-[18px] text-text-primary">
+                              <span className="inline-flex h-6 items-center rounded-full border border-[#CADDE3] bg-[#eff5f7] px-2 py-0">
+                                <span className="text-[11px] leading-4 font-medium tracking-[0.5px] text-[#122b34]">
                                   {item.pillar}
                                 </span>
                               </span>
@@ -1174,7 +1168,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                               <MetaChip
                                 icon={
                                   <Clock3
-                                    className="size-4 shrink-0 text-text-secondary"
+                                    className="size-3.5 shrink-0 text-[#122b34]"
                                     aria-hidden
                                   />
                                 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, Fragment, useMemo, useRef, useState } from "react";
-import { ChevronRight, Pencil, Trash2, UserRound } from "lucide-react";
+import { ChevronRight, SquarePen, Trash2, UserRound } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
@@ -351,7 +351,7 @@ export function ProfileScreen() {
                       aria-label="Change profile photo"
                       className="absolute -bottom-1 -right-1"
                     >
-                      <Pencil />
+                      <SquarePen />
                     </IconButton>
                   </div>
                   <div className="min-w-0 flex-1">
@@ -374,7 +374,7 @@ export function ProfileScreen() {
                     <CardTitle>Personal information</CardTitle>
                     {!isEditingPersonalInfo && (
                       <Button variant="outline" size="sm" onClick={startEditPersonalInfo}>
-                        <Pencil className="h-3.5 w-3.5" />
+                        <SquarePen className="h-3.5 w-3.5" />
                         Edit
                       </Button>
                     )}
