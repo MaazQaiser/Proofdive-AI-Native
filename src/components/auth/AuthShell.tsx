@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -14,11 +15,14 @@ export function AuthShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-white">
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/brand/login-signup%20assets/login%20sign%20up%20bg%20image.png"
+        <Image
+          src="/brand/auth-bg.webp"
           alt=""
-          className="absolute inset-0 size-full object-cover"
+          fill
+          priority
+          sizes="100vw"
+          quality={80}
+          className="object-cover"
         />
       </div>
 

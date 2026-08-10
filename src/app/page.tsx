@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,14 @@ export default function Home() {
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/brand/Start%20page%20image.png"
+        <Image
+          src="/brand/start-page-hero.webp"
           alt=""
-          className="absolute inset-0 size-full object-cover motion-safe:animate-landing-fade"
+          fill
+          priority
+          sizes="100vw"
+          quality={80}
+          className="object-cover motion-safe:animate-landing-fade"
         />
       </div>
 
