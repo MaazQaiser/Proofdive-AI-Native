@@ -37,6 +37,13 @@ import {
   SuccessDriverMark,
 } from "@/components/ui/success-driver-card";
 import { buildEmptyCraftingDive } from "@/app/storyboard/crafting/mockCraftingDraft";
+import {
+  buildSoftwareEngineerDive4,
+  buildSoftwareEngineerDive4Experiences,
+  SOFTWARE_ENGINEER_DIVE4_ID,
+  SOFTWARE_ENGINEER_DIVE4_ROLE,
+  softwareEngineerDive4RoleProfile,
+} from "@/app/storyboard/crafting/softwareEngineerDive4Fixture";
 import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
 import { CoreFourSelectionPanel } from "@/app/onboarding/ui/CoreFourSelectionPanel";
 import { computeCandidateUsage, isFreePlan } from "@/lib/candidateUsage";
@@ -344,6 +351,41 @@ export function StoryboardAgent() {
       setIntakeMode(false);
     }
   }, [searchParams]);
+
+  // Seed Software Engineer Dive 4 data from the PDF fixture whenever the role
+  // is Software Engineer and no experiences have been captured yet.
+  useEffect(() => {
+    if (!diveHydrated) return;
+    const currentRole = roleProfile?.targetRole?.trim() ?? "";
+    if (currentRole !== SOFTWARE_ENGINEER_DIVE4_ROLE) return;
+
+    setExperiences((prev) => {
+      const hasSeeded = prev.some((e) => e.id.startsWith("exp-se-dive4-"));
+      if (hasSeeded) return prev;
+      const seededExps = buildSoftwareEngineerDive4Experiences();
+      const others = prev.filter((e) => e.role !== SOFTWARE_ENGINEER_DIVE4_ROLE);
+      return [...others, ...seededExps];
+    });
+
+    setDiveStore((prev) => {
+      const bank = prev.byRole[SOFTWARE_ENGINEER_DIVE4_ROLE];
+      const existing = bank?.dives.find((d) => d.id === SOFTWARE_ENGINEER_DIVE4_ID);
+      if (existing?.intro.text.trim()) return prev;
+      const fixture = buildSoftwareEngineerDive4();
+      const otherDives = (bank?.dives ?? []).filter((d) => d.id !== SOFTWARE_ENGINEER_DIVE4_ID);
+      return {
+        ...prev,
+        byRole: {
+          ...prev.byRole,
+          [SOFTWARE_ENGINEER_DIVE4_ROLE]: { dives: [...otherDives, fixture] },
+        },
+      };
+    });
+
+    setRoleProfile((prev) =>
+      prev ? softwareEngineerDive4RoleProfile(prev) : prev,
+    );
+  }, [diveHydrated, roleProfile?.targetRole, setExperiences, setDiveStore, setRoleProfile]);
 
   useEffect(() => {
     const wantNew = (searchParams.get("new") ?? "").trim();

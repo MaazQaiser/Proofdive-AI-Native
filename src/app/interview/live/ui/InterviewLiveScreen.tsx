@@ -17,6 +17,10 @@ import type {
   RoleProfile,
 } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
+import {
+  SOFTWARE_ENGINEER_DIVE4_ROLE,
+  softwareEngineerDive4Stories,
+} from "@/app/storyboard/crafting/softwareEngineerDive4Fixture";
 
 type InterviewSessionPrefs = {
   cancelRecording?: boolean;
@@ -137,11 +141,77 @@ function buildMockReport(args: {
   heroVariant: "first_start" | "improving";
 }): InterviewReport {
   const firstStart = args.heroVariant === "first_start";
+  const isSoftwareEngineer = args.roleTitle.trim() === SOFTWARE_ENGINEER_DIVE4_ROLE;
+
+  // For Software Engineer, use actual Dive 4 pillar scores from the PDF instead of placeholder data.
+  const se4Stories = isSoftwareEngineer ? softwareEngineerDive4Stories() : [];
+  const se4ByPillar: Record<string, number[]> = {};
+  for (const s of se4Stories) {
+    const pillar = s.competencyId.split("-")[0] ?? "thinking";
+    if (!se4ByPillar[pillar]) se4ByPillar[pillar] = [];
+    se4ByPillar[pillar].push(Number(s.assessment.score));
+  }
+  function pillarAvg(pillar: string, fallback: number): number {
+    const scores = se4ByPillar[pillar];
+    if (!scores?.length) return fallback;
+    return scores.reduce((a, b) => a + b, 0) / scores.length;
+  }
 
   const driversBase: Array<
     Pick<InterviewReportDriver, "id" | "shortTitle" | "fullTitle" | "accent" | "icon" | "subSkills">
   > = firstStart
     ? buildFirstStartDriversBase()
+    : isSoftwareEngineer
+    ? [
+        {
+          id: "thinking",
+          shortTitle: "Thinking",
+          fullTitle: "Power of Thinking",
+          accent: "teal",
+          icon: "brain",
+          subSkills: [
+            { name: "Analytical Thinking", score: 4.0 },
+            { name: "Prioritization", score: 4.5 },
+            { name: "Decision-Making Agility", score: 4.0 },
+          ],
+        },
+        {
+          id: "action",
+          shortTitle: "Action",
+          fullTitle: "Power of Action",
+          accent: "amber",
+          icon: "bolt",
+          subSkills: [
+            { name: "Ownership & Drive", score: 4.0 },
+            { name: "Initiative & Follow-through", score: clampScore(pillarAvg("action", 3.5)) },
+            { name: "Embraces Change", score: clampScore(pillarAvg("action", 3.5)) },
+          ],
+        },
+        {
+          id: "people",
+          shortTitle: "People",
+          fullTitle: "Power of People",
+          accent: "emerald",
+          icon: "users",
+          subSkills: [
+            { name: "Communicates with Impact", score: 3.5 },
+            { name: "Collaboration & Inclusion", score: clampScore(pillarAvg("people", 3.5)) },
+            { name: "Grows Capability", score: clampScore(pillarAvg("people", 3.5)) },
+          ],
+        },
+        {
+          id: "mastery",
+          shortTitle: "Mastery",
+          fullTitle: "Power of Mastery",
+          accent: "violet",
+          icon: "target",
+          subSkills: [
+            { name: "Functional Knowledge", score: 4.0 },
+            { name: "Technical Application", score: 3.5 },
+            { name: "Innovation", score: clampScore(pillarAvg("mastery", 3.8)) },
+          ],
+        },
+      ]
     : [
         {
           id: "thinking",
@@ -215,8 +285,12 @@ function buildMockReport(args: {
 
   const facets = driversBase.flatMap((d) => d.subSkills.map((s) => ({ driver: d.id, name: s.name })));
 
+  // For Software Engineer, pull question text + answers directly from PDF stories.
+  const seStories = isSoftwareEngineer && !firstStart ? softwareEngineerDive4Stories() : [];
+
   const questions = Array.from({ length: args.questionCount }).map((_, idx) => {
     const facet = facets[idx % facets.length]!;
+    const story = seStories[idx % (seStories.length || 1)];
     const qScore = firstStart
       ? (() => {
           const pillar = driversBase.find((d) => d.id === facet.driver);
@@ -225,6 +299,8 @@ function buildMockReport(args: {
             : FIRST_START_OVERALL;
           return clampScore(pillarAvg + ((idx % 5) - 2) * 0.05);
         })()
+      : isSoftwareEngineer && story
+      ? clampScore(Number(story.assessment.score))
       : clampScore(
           facet.driver === "people"
             ? 3.6 - (idx % 3) * 0.2
@@ -233,54 +309,91 @@ function buildMockReport(args: {
               : 3.0 - (idx % 4) * 0.15,
         );
     const timeSeconds = 90 + (idx % 4) * 22;
+    const questionText =
+      isSoftwareEngineer && story
+        ? story.interviewQuestion
+        : idx % 2 === 0
+          ? "Tell me about a time you influenced a stakeholder without authority."
+          : "Walk me through a difficult trade-off you made under time pressure.";
+    const answerText =
+      isSoftwareEngineer && story
+        ? [story.car.context, story.car.action, story.car.result].join(" ")
+        : "I started by clarifying the goal and constraints, then aligned the team on a plan. I communicated progress and adjusted based on feedback. In the end, we delivered and learned from the outcome.";
     return {
       id: `q${idx + 1}`,
       index: idx + 1,
-      text:
-        idx % 2 === 0
-          ? "Tell me about a time you influenced a stakeholder without authority."
-          : "Walk me through a difficult trade-off you made under time pressure.",
+      text: questionText,
       driver: facet.driver,
       facet: facet.name,
       score: qScore,
       status: readinessForScore(qScore),
       timeSeconds,
       idealRangeSeconds: [180, 240] as [number, number],
-      answer:
-        "I started by clarifying the goal and constraints, then aligned the team on a plan. I communicated progress and adjusted based on feedback. In the end, we delivered and learned from the outcome.",
-      improvements: [
-        { title: "Quantify the outcome", detail: "Add one metric (time saved, revenue, cost, adoption)." },
-        { title: "Use more “I” language", detail: "Call out your specific decisions and trade-offs." },
-        { title: "Tighten structure", detail: "Use CAR: Context → Action → Result, 2–3 sentences each." },
-      ],
+      answer: answerText,
+      improvements:
+        isSoftwareEngineer && story
+          ? [
+              { title: "Missing strengths", detail: story.assessment.missingStrengths.slice(0, 160) },
+              { title: "Development tip", detail: story.assessment.development.slice(0, 160) },
+              { title: "Tighten structure", detail: "Use CAR: Context \u2192 Action \u2192 Result, 2\u20133 sentences each." },
+            ]
+          : [
+              { title: "Quantify the outcome", detail: "Add one metric (time saved, revenue, cost, adoption)." },
+              { title: "Use more \u201cI\u201d language", detail: "Call out your specific decisions and trade-offs." },
+              { title: "Tighten structure", detail: "Use CAR: Context \u2192 Action \u2192 Result, 2\u20133 sentences each." },
+            ],
     };
   });
 
   const spotlight = questions.reduce((min, q) => (q.score < min.score ? q : min), questions[0]!);
 
-  const transcript: InterviewTranscriptLine[] = [
-    {
-      speaker: "Interviewer",
-      timeSeconds: 0,
-      text: "Welcome. Let’s start with a stakeholder influence example.",
-    },
-    {
-      speaker: "Candidate",
-      timeSeconds: 8,
-      text: "Sure. The context was a cross-team dependency where we didn’t have direct authority…",
-      flag: "Result too vague",
-    },
-    {
-      speaker: "Interviewer",
-      timeSeconds: 62,
-      text: "What trade-off did you make and why?",
-    },
-    {
-      speaker: "Candidate",
-      timeSeconds: 72,
-      text: "I prioritized speed over scope, but I should have been clearer on the metric impact…",
-    },
-  ];
+  const transcript: InterviewTranscriptLine[] =
+    isSoftwareEngineer && seStories[0]
+      ? [
+          {
+            speaker: "Interviewer",
+            timeSeconds: 0,
+            text: seStories[0].interviewQuestion,
+          },
+          {
+            speaker: "Candidate",
+            timeSeconds: 8,
+            text: seStories[0].car.context.slice(0, 160) + "…",
+          },
+          {
+            speaker: "Interviewer",
+            timeSeconds: 62,
+            text: "What trade-off did you make and why?",
+          },
+          {
+            speaker: "Candidate",
+            timeSeconds: 72,
+            text: seStories[0].car.action.slice(0, 160) + "…",
+          },
+        ]
+      : [
+          {
+            speaker: "Interviewer",
+            timeSeconds: 0,
+            text: "Welcome. Let’s start with a stakeholder influence example.",
+          },
+          {
+            speaker: "Candidate",
+            timeSeconds: 8,
+            text: "Sure. The context was a cross-team dependency where we didn’t have direct authority…",
+            flag: "Result too vague",
+          },
+          {
+            speaker: "Interviewer",
+            timeSeconds: 62,
+            text: "What trade-off did you make and why?",
+          },
+          {
+            speaker: "Candidate",
+            timeSeconds: 72,
+            text: "I prioritized speed over scope, but I should have been clearer on the metric impact…",
+          },
+        ];
 
   return {
     meta: {

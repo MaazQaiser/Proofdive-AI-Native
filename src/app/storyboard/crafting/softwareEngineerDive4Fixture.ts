@@ -3,6 +3,7 @@
  * Used to seed the crafting review page for Software Engineer.
  */
 
+import type { Experience, RoleProfile } from "@/lib/proofdiveTypes";
 import {
   COMPETENCY_SPECS,
   emptyCompetencySection,
@@ -17,7 +18,73 @@ export const SOFTWARE_ENGINEER_DIVE4_ID = "cdde93f0-0dac-4fda-9660-ed2141675dde"
 export const SOFTWARE_ENGINEER_DIVE4_ROLE = "Software Engineer";
 export const SOFTWARE_ENGINEER_DIVE4_CANDIDATE = "Haisam Tayyab";
 
-const INTRO_TEXT = `I'm a software engineer who has been taking on hands-on backend and system design problems, with a strong focus on building reliable applications and making practical decisions when systems are under pressure. A big part of my experience has been working through real production and delivery challenges, then turning them into clearer, more scalable solutions. One example was analyzing a recurring application failure by reviewing service behavior, infrastructure capacity, CPU usage, and load patterns to narrow the issue down to the database layer. From there, I helped stabilize the system with a bigger database instance as the immediate fix, and then improved longer-term scalability through sharding and indexing. In another project, I took ownership of separating an AI processing service from a Django-based backend so it could scale independently instead of forcing the whole server to scale together. I've also worked closely with clients and stakeholders to prioritize the right work, especially when timelines were tight, by clarifying trade-offs and focusing teams on the highest-impact deliverables first. That combination of troubleshooting, scalable thinking, API/service integration, and communication is what draws me to this Software Engineer role. I'm excited about opportunities where I can write solid software, solve performance issues, and contribute thoughtfully to systems as they grow.`;
+export const SOFTWARE_ENGINEER_DIVE4_INTRO = `I'm a software engineer who has been taking on hands-on backend and system design problems, with a strong focus on building reliable applications and making practical decisions when systems are under pressure. A big part of my experience has been working through real production and delivery challenges, then turning them into clearer, more scalable solutions. One example was analyzing a recurring application failure by reviewing service behavior, infrastructure capacity, CPU usage, and load patterns to narrow the issue down to the database layer. From there, I helped stabilize the system with a bigger database instance as the immediate fix, and then improved longer-term scalability through sharding and indexing. In another project, I took ownership of separating an AI processing service from a Django-based backend so it could scale independently instead of forcing the whole server to scale together. I've also worked closely with clients and stakeholders to prioritize the right work, especially when timelines were tight, by clarifying trade-offs and focusing teams on the highest-impact deliverables first. That combination of troubleshooting, scalable thinking, API/service integration, and communication is what draws me to this Software Engineer role. I'm excited about opportunities where I can write solid software, solve performance issues, and contribute thoughtfully to systems as they grow.`;
+
+const INTRO_TEXT = SOFTWARE_ENGINEER_DIVE4_INTRO;
+
+export const SOFTWARE_ENGINEER_DIVE4_FOCUS_IDS: CompetencyId[] = [
+  "thinking-analytical",
+  "thinking-prioritization",
+  "thinking-decision",
+  "action-ownership",
+  "people-influence",
+  "mastery-functional",
+  "mastery-execution",
+];
+
+const STORY_META: Record<
+  CompetencyId,
+  { title: string; interviewQuestion: string }
+> = {
+  "thinking-analytical": {
+    title: "Recurring application failures",
+    interviewQuestion: "Tell me about a time you diagnosed a difficult system issue.",
+  },
+  "thinking-prioritization": {
+    title: "Competing release requests",
+    interviewQuestion: "Tell me about a time you had to choose between competing priorities.",
+  },
+  "thinking-decision": {
+    title: "Quick call under pressure",
+    interviewQuestion: "Tell me about a time you had to make a quick decision with limited information.",
+  },
+  "action-ownership": {
+    title: "Splitting the AI service",
+    interviewQuestion: "Tell me about a time you improved a system by making a hard architectural decision.",
+  },
+  "action-initiative": {
+    title: "Initiative story",
+    interviewQuestion: "Describe a time you took initiative to solve a problem before it got worse.",
+  },
+  "action-change": {
+    title: "Change story",
+    interviewQuestion: "Tell me about a time you had to adapt when circumstances changed.",
+  },
+  "people-influence": {
+    title: "Innova migration scope",
+    interviewQuestion: "Describe a time you aligned a client around a difficult decision.",
+  },
+  "people-collaboration": {
+    title: "Collaboration story",
+    interviewQuestion: "Tell me about a time you worked through disagreement to a shared outcome.",
+  },
+  "people-capability": {
+    title: "Capability story",
+    interviewQuestion: "Tell me about a time you helped someone else grow through the work.",
+  },
+  "mastery-functional": {
+    title: "Production database bottleneck",
+    interviewQuestion: "Tell me about a time you diagnosed a complex production issue.",
+  },
+  "mastery-execution": {
+    title: "Weekly campaign reporting",
+    interviewQuestion: "Tell me about a time you turned messy data into a clear recommendation.",
+  },
+  "mastery-innovation": {
+    title: "Innovation story",
+    interviewQuestion: "Tell me about a time you improved a process or technical approach.",
+  },
+};
 
 function assessed(
   car: { context: string; action: string; result: string },
@@ -294,4 +361,74 @@ export function buildSoftwareEngineerDive4(): StoryboardDive {
       mastery: 0,
     },
   });
+}
+
+export type SoftwareEngineerDive4Story = {
+  competencyId: CompetencyId;
+  title: string;
+  interviewQuestion: string;
+  car: { context: string; action: string; result: string };
+  assessment: CompetencyAssessment;
+  secondaryCompetencies: CompetencyId[];
+};
+
+export function softwareEngineerDive4Stories(): SoftwareEngineerDive4Story[] {
+  return SOFTWARE_ENGINEER_DIVE4_FOCUS_IDS.flatMap((id) => {
+    const section = BY_ID[id];
+    const meta = STORY_META[id];
+    if (!section?.assessment) return [];
+    return [
+      {
+        competencyId: id,
+        title: meta.title,
+        interviewQuestion: meta.interviewQuestion,
+        car: section.car,
+        assessment: section.assessment,
+        secondaryCompetencies: section.secondaryCompetencies,
+      },
+    ];
+  });
+}
+
+export function buildSoftwareEngineerDive4Experiences(): Experience[] {
+  return softwareEngineerDive4Stories().map((story) => ({
+    id: `exp-se-dive4-${story.competencyId}`,
+    role: SOFTWARE_ENGINEER_DIVE4_ROLE,
+    title: story.title,
+    raw: [story.car.context, story.car.action, story.car.result].join("\n\n"),
+    createdAt: "2026-08-11T17:58:00.000Z",
+    competencyId: story.competencyId,
+    car: { ...story.car },
+    consultantAnswers: [
+      {
+        id: `exp-se-dive4-${story.competencyId}-q1`,
+        question: "What trade-offs or risks did you weigh before settling on your approach?",
+        answer: story.assessment.classificationRationale,
+      },
+      {
+        id: `exp-se-dive4-${story.competencyId}-q2`,
+        question: "What would you strengthen if you told this story again?",
+        answer: story.assessment.development,
+      },
+    ],
+  }));
+}
+
+export function softwareEngineerDive4RoleProfile(
+  existing?: RoleProfile | null,
+): RoleProfile {
+  return {
+    ...(existing ?? {}),
+    name: existing?.name?.trim() || SOFTWARE_ENGINEER_DIVE4_CANDIDATE,
+    targetRole: SOFTWARE_ENGINEER_DIVE4_ROLE,
+    aboutYouAnswer: SOFTWARE_ENGINEER_DIVE4_INTRO,
+    storyboardFocusCompetencies: [...SOFTWARE_ENGINEER_DIVE4_FOCUS_IDS],
+    coreFourCompetencies: [
+      "thinking-analytical",
+      "action-ownership",
+      "people-influence",
+      "mastery-execution",
+    ],
+    createdAt: existing?.createdAt ?? "2026-08-11T17:58:00.000Z",
+  };
 }
