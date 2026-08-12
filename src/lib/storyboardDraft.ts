@@ -49,14 +49,14 @@ export const COMPETENCY_SPECS: { id: CompetencyId; pillar: PillarId; title: stri
   { id: "thinking-analytical", pillar: "thinking", title: "Analytical Thinking" },
   { id: "thinking-prioritization", pillar: "thinking", title: "Prioritization" },
   { id: "thinking-decision", pillar: "thinking", title: "Decision-Making Agility" },
-  { id: "action-ownership", pillar: "action", title: "Ownership" },
+  { id: "action-ownership", pillar: "action", title: "Ownership & Drive" },
   { id: "action-initiative", pillar: "action", title: "Initiative & Follow-through" },
   { id: "action-change", pillar: "action", title: "Embraces Change" },
-  { id: "people-influence", pillar: "people", title: "Influence" },
+  { id: "people-influence", pillar: "people", title: "Communicates with Impact" },
   { id: "people-collaboration", pillar: "people", title: "Collaboration & Inclusion" },
   { id: "people-capability", pillar: "people", title: "Grows Capability" },
   { id: "mastery-functional", pillar: "mastery", title: "Functional Knowledge" },
-  { id: "mastery-execution", pillar: "mastery", title: "Execution" },
+  { id: "mastery-execution", pillar: "mastery", title: "Technical Application" },
   { id: "mastery-innovation", pillar: "mastery", title: "Innovation" },
 ];
 
@@ -65,6 +65,21 @@ export type IntroSection = {
   /** How many quick-regenerations have been used on the intro in this Dive. */
   regenCount: number;
   text: string;
+};
+
+/** Rich assessment copy shown on review/print (matches storyboard PDF layout). */
+export type CompetencyAssessment = {
+  levelLabel: string;
+  evidence: string;
+  classificationRationale: string;
+  missingStrengths: string;
+  development: string;
+  masterclass: string;
+  aiCoach: string;
+  relatedCompetenciesNarrative: string;
+  relatedQuestionTypes: string;
+  /** Fixed strength score from assessment (overrides heuristic CAR scoring). */
+  score: SectionScore;
 };
 
 export type CompetencySection = {
@@ -80,6 +95,8 @@ export type CompetencySection = {
   /** Classification: other competencies this experience also evidences. */
   secondaryCompetencies: CompetencyId[];
   developmentRecommendation: string;
+  /** Optional full assessment narrative (Dive review / PDF export). */
+  assessment?: CompetencyAssessment | null;
 };
 
 export type StoryboardDive = {
@@ -140,6 +157,7 @@ export function emptyCompetencySection(): CompetencySection {
     missingNextLevelSignals: [],
     secondaryCompetencies: [],
     developmentRecommendation: "",
+    assessment: null,
   };
 }
 
@@ -196,6 +214,7 @@ export function normalizeDive(d: StoryboardDive): StoryboardDive {
         ) as CompetencyId[])
       : [],
     developmentRecommendation: s?.developmentRecommendation ?? "",
+    assessment: s?.assessment ?? null,
   }));
   const diveNumber =
     Number.isFinite(d.diveNumber) && d.diveNumber >= 1 ? Math.floor(d.diveNumber) : 1;
@@ -254,19 +273,30 @@ export function introStrengthScore(text: string): SectionScore {
   return 5;
 }
 
+function competencyHasEvidence(s: CompetencySection | undefined): boolean {
+  if (!s) return false;
+  return Boolean(
+    s.car.context.trim() || s.car.action.trim() || s.car.result.trim() || Number(s.score) > 0,
+  );
+}
+
 export function computePillarScores(dive: StoryboardDive): Record<PillarId, number> {
   const out = emptyPillarScores();
   for (const pillar of Object.keys(out) as PillarId[]) {
-    const idxs = COMPETENCY_SPECS.map((s, i) => (s.pillar === pillar ? i : -1)).filter(
-      (i) => i >= 0,
-    );
-    out[pillar] = mean(idxs.map((i) => Number(dive.competencies[i]?.score ?? 0)));
+    const scores = COMPETENCY_SPECS.map((spec, i) => ({ spec, section: dive.competencies[i] }))
+      .filter(({ spec, section }) => spec.pillar === pillar && competencyHasEvidence(section))
+      .map(({ section }) => Number(section?.score ?? 0));
+    out[pillar] = mean(scores);
   }
   return out;
 }
 
 export function computeOverallScore(dive: StoryboardDive): number {
-  return mean(dive.competencies.map((s) => Number(s.score ?? 0)));
+  return mean(
+    dive.competencies
+      .filter((s) => competencyHasEvidence(s))
+      .map((s) => Number(s.score ?? 0)),
+  );
 }
 
 /**
@@ -307,9 +337,34 @@ export function recomputeDiveScores(dive: StoryboardDive): StoryboardDive {
   const competencies = dive.competencies.map((s, i) => {
     const title = COMPETENCY_SPECS[i]?.title ?? "This competency";
     const primaryId = COMPETENCY_SPECS[i]?.id;
-    const score = strengthScore(s.car);
+    const assessment = s.assessment ?? null;
     const hasContent =
       s.car.context.trim() || s.car.action.trim() || s.car.result.trim();
+
+    // Preserve rich assessment narratives + fixed scores from review/PDF fixtures.
+    if (assessment) {
+      return {
+        ...s,
+        assessment,
+        score: assessment.score,
+        matchedSignals: assessment.evidence.trim()
+          ? [assessment.evidence.trim()]
+          : s.matchedSignals,
+        missingNextLevelSignals: assessment.missingStrengths.trim()
+          ? [assessment.missingStrengths.trim()]
+          : s.missingNextLevelSignals,
+        developmentRecommendation:
+          assessment.development.trim() || s.developmentRecommendation,
+        secondaryCompetencies:
+          s.secondaryCompetencies?.length && primaryId
+            ? s.secondaryCompetencies
+            : primaryId
+              ? classifySecondaryCompetencies(primaryId, s.car)
+              : [],
+      };
+    }
+
+    const score = strengthScore(s.car);
     const matchedSignals: string[] = [];
     const missingNextLevelSignals: string[] = [];
     let developmentRecommendation = s.developmentRecommendation;
@@ -338,6 +393,7 @@ export function recomputeDiveScores(dive: StoryboardDive): StoryboardDive {
 
     return {
       ...s,
+      assessment: null,
       score,
       matchedSignals,
       missingNextLevelSignals,
@@ -550,6 +606,7 @@ export function migrateLegacyDraftStore(
           missingNextLevelSignals: [],
           secondaryCompetencies: [],
           developmentRecommendation: "",
+          assessment: null,
         };
       }),
     };

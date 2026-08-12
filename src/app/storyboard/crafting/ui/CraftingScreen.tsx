@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ArrowLeft, ArrowRight, ArrowUp, CircleDashed, Download, FileCheck, Lock, SquarePen, Plus, Save, Tags, Unlock, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUp, ChevronDown, CircleDashed, Download, FileCheck, Gauge, GraduationCap, Lock, MessageCircleQuestion, Bot, Network, Scale, SquarePen, Plus, Save, Tags, Unlock, X } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
@@ -70,6 +70,13 @@ import {
   useCandidateSubscription,
 } from "@/lib/useSubscriberPayments";
 import { cn } from "@/lib/utils";
+import {
+  buildSoftwareEngineerDive4,
+  SOFTWARE_ENGINEER_DIVE4_CANDIDATE,
+  SOFTWARE_ENGINEER_DIVE4_ID,
+  SOFTWARE_ENGINEER_DIVE4_ROLE,
+} from "@/app/storyboard/crafting/softwareEngineerDive4Fixture";
+import type { CompetencyAssessment } from "@/lib/storyboardDraft";
 
 const PILLAR_ORDER = SUCCESS_DRIVER_ORDER;
 
@@ -186,7 +193,7 @@ export function CraftingScreen() {
   const [printRequest, setPrintRequest] = useState<{ stamp: string; id: number } | null>(
     null,
   );
-  const [roleProfile] = useLocalStorageState<RoleProfile | null>(
+  const [roleProfile, setRoleProfile] = useLocalStorageState<RoleProfile | null>(
     StorageKeys.roleProfile,
     null,
   );
@@ -237,11 +244,64 @@ export function CraftingScreen() {
   const diveParam = (searchParams.get("dive") ?? "").trim();
   const fromPreviousDive = searchParams.get("from") === "previous";
 
-  const activeDive = useMemo(() => {
-    if (!role || !diveHydrated) return null;
-    if (diveParam) {
-      return diveById(diveStore, role, diveParam);
+  // Seed Software Engineer Dive 4 from the PDF fixture when opening that dive URL
+  // (or when the role bank is empty for Software Engineer).
+  useEffect(() => {
+    if (!diveHydrated) return;
+
+    if (diveParam === SOFTWARE_ENGINEER_DIVE4_ID) {
+      const currentRole = roleProfile?.targetRole?.trim() ?? "";
+      if (currentRole !== SOFTWARE_ENGINEER_DIVE4_ROLE) {
+        setRoleProfile({
+          ...(roleProfile ?? {}),
+          name: roleProfile?.name?.trim() || SOFTWARE_ENGINEER_DIVE4_CANDIDATE,
+          targetRole: SOFTWARE_ENGINEER_DIVE4_ROLE,
+          createdAt: roleProfile?.createdAt ?? new Date().toISOString(),
+        });
+      }
     }
+
+    const activeRole = roleProfile?.targetRole?.trim() ?? "";
+    const wantsFixture =
+      diveParam === SOFTWARE_ENGINEER_DIVE4_ID ||
+      (!diveParam && activeRole === SOFTWARE_ENGINEER_DIVE4_ROLE);
+
+    if (!wantsFixture && activeRole !== SOFTWARE_ENGINEER_DIVE4_ROLE) return;
+
+    setDiveStore((prev) => {
+      const bank = prev.byRole[SOFTWARE_ENGINEER_DIVE4_ROLE];
+      const existing = bank?.dives.find((d) => d.id === SOFTWARE_ENGINEER_DIVE4_ID);
+      if (existing?.intro.text.trim() && existing.competencies.some((c) => c.assessment)) {
+        return prev;
+      }
+      const fixture = buildSoftwareEngineerDive4();
+      const otherDives = (bank?.dives ?? []).filter((d) => d.id !== SOFTWARE_ENGINEER_DIVE4_ID);
+      return {
+        ...prev,
+        byRole: {
+          ...prev.byRole,
+          [SOFTWARE_ENGINEER_DIVE4_ROLE]: {
+            dives: [...otherDives, fixture],
+          },
+        },
+      };
+    });
+  }, [diveHydrated, diveParam, roleProfile, setDiveStore, setRoleProfile]);
+
+  const activeDive = useMemo(() => {
+    if (!diveHydrated) return null;
+    if (diveParam) {
+      if (role) {
+        const inRole = diveById(diveStore, role, diveParam);
+        if (inRole) return inRole;
+      }
+      for (const r of Object.keys(diveStore.byRole)) {
+        const found = diveById(diveStore, r, diveParam);
+        if (found) return found;
+      }
+      return null;
+    }
+    if (!role) return null;
     return editingDiveForRole(diveStore, role) ?? latestSavedDive(diveStore, role);
   }, [role, diveHydrated, diveParam, diveStore]);
 
@@ -405,7 +465,7 @@ export function CraftingScreen() {
         pillar: spec.pillar,
         score,
       };
-    });
+    }).filter((row) => row.score > 0);
   }, [activeDive]);
 
   if (!role) {
@@ -736,7 +796,7 @@ export function CraftingScreen() {
           <section className="print:mt-5 print:border-b print:border-border">
             <DraftSectionCard
               pillarLabel="Introduction"
-              displayTitle="My Introduction"
+              displayTitle="Core Introduction"
               score={introStrengthScore(activeDive.intro.text)}
               locked={activeDive.intro.locked || readOnly}
               showEditLock
@@ -792,9 +852,22 @@ export function CraftingScreen() {
               spec,
               globalIndex,
             })).filter((x) => x.spec.pillar === pillar);
+            const visibleRows = readOnly
+              ? rows.filter(({ globalIndex }) => {
+                  const s = activeDive.competencies[globalIndex];
+                  return Boolean(
+                    s &&
+                      (s.car.context.trim() ||
+                        s.car.action.trim() ||
+                        s.car.result.trim() ||
+                        s.assessment),
+                  );
+                })
+              : rows;
+            if (!visibleRows.length) return null;
             return (
               <section key={pillar} className="space-y-4 print:space-y-0">
-                {rows.map(({ spec, globalIndex: index }) => {
+                {visibleRows.map(({ spec, globalIndex: index }) => {
                   const s = activeDive.competencies[index]!;
                   return (
                     <div key={spec.id} className="print:border-b print:border-border">
@@ -823,6 +896,7 @@ export function CraftingScreen() {
                       {(sectionLocked) => (
                         <div className="space-y-4">
                           <CompetencyClassificationDetails
+                            assessment={s.assessment}
                             matchedSignals={s.matchedSignals}
                             missingNextLevelSignals={s.missingNextLevelSignals}
                             secondaryCompetencies={
@@ -943,14 +1017,98 @@ export function CraftingScreen() {
 }
 
 function CompetencyClassificationDetails({
+  assessment,
   matchedSignals,
   missingNextLevelSignals,
   secondaryCompetencies,
 }: {
+  assessment?: CompetencyAssessment | null;
   matchedSignals: string[];
   missingNextLevelSignals: string[];
   secondaryCompetencies: CompetencyId[];
 }) {
+  if (assessment) {
+    return (
+      <div className="space-y-2 rounded-lg bg-primary/10 px-3.5 py-3 print:space-y-3 print:rounded-none print:border print:border-border print:bg-white">
+        {/* Level stays visible — it's the only short, scannable signal. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 text-[14px] font-medium text-text-primary">
+            <Gauge className="size-4 shrink-0 text-primary" aria-hidden />
+            Level
+          </div>
+          <span className="rounded-full bg-card px-2.5 py-0.5 text-[13px] font-medium text-text-primary ring-1 ring-border">
+            {assessment.levelLabel}
+          </span>
+        </div>
+
+        <AssessmentAccordion
+          items={[
+            {
+              id: "assessment",
+              title: "Assessment",
+              subtitle: "Evidence & classification rationale",
+              defaultOpen: true,
+              content: (
+                <div className="space-y-3">
+                  <AssessmentBlock icon={FileCheck} title="Evidence">
+                    {assessment.evidence}
+                  </AssessmentBlock>
+                  <AssessmentBlock icon={Scale} title="Classification Rationale">
+                    {assessment.classificationRationale}
+                  </AssessmentBlock>
+                </div>
+              ),
+            },
+            {
+              id: "growth",
+              title: "Growth next steps",
+              subtitle: "Missing strengths & how to level up",
+              defaultOpen: false,
+              content: (
+                <div className="space-y-3">
+                  <AssessmentBlock icon={CircleDashed} title="Missing Strengths">
+                    {assessment.missingStrengths}
+                  </AssessmentBlock>
+                  <div className="space-y-2.5">
+                    <div className="flex items-center gap-1.5 text-[14px] font-medium text-text-primary">
+                      <Network className="size-4 shrink-0 text-primary" aria-hidden />
+                      Developmental Insights
+                    </div>
+                    <AssessmentBlock icon={Network} title="Development" nested>
+                      {assessment.development}
+                    </AssessmentBlock>
+                    <AssessmentBlock icon={GraduationCap} title="Masterclass" nested>
+                      {assessment.masterclass}
+                    </AssessmentBlock>
+                    <AssessmentBlock icon={Bot} title="AI Coach" nested>
+                      {assessment.aiCoach}
+                    </AssessmentBlock>
+                  </div>
+                </div>
+              ),
+            },
+            {
+              id: "interview",
+              title: "Interview use",
+              subtitle: "Related competencies & question types",
+              defaultOpen: false,
+              content: (
+                <div className="space-y-3">
+                  <AssessmentBlock icon={Tags} title="Related Competencies">
+                    {assessment.relatedCompetenciesNarrative}
+                  </AssessmentBlock>
+                  <AssessmentBlock icon={MessageCircleQuestion} title="Related Question Types">
+                    {assessment.relatedQuestionTypes}
+                  </AssessmentBlock>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
+    );
+  }
+
   const evidenceText = matchedSignals.map((s) => s.trim()).filter(Boolean);
   const missing = missingNextLevelSignals.map((s) => s.trim()).filter(Boolean);
   const related = secondaryCompetencies.filter((id) =>
@@ -1008,6 +1166,85 @@ function CompetencyClassificationDetails({
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function AssessmentAccordion({
+  items,
+}: {
+  items: {
+    id: string;
+    title: string;
+    subtitle: string;
+    defaultOpen?: boolean;
+    content: ReactNode;
+  }[];
+}) {
+  const [openId, setOpenId] = useState<string | null>(
+    () => items.find((item) => item.defaultOpen)?.id ?? items[0]?.id ?? null,
+  );
+
+  return (
+    <div className="space-y-1.5">
+      {items.map((item) => {
+        const open = openId === item.id;
+        return (
+          <div
+            key={item.id}
+            className="overflow-hidden rounded-md bg-card/70 ring-1 ring-border/70 print:bg-transparent print:ring-0"
+          >
+            <button
+              type="button"
+              aria-expanded={open}
+              className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 print:pointer-events-none"
+              onClick={() => setOpenId((prev) => (prev === item.id ? null : item.id))}
+            >
+              <div className="min-w-0">
+                <div className="text-[14px] font-medium text-text-primary">{item.title}</div>
+                <div className="text-[12px] leading-4 text-text-secondary">{item.subtitle}</div>
+              </div>
+              <ChevronDown
+                className={cn(
+                  "size-4 shrink-0 text-text-secondary transition print:hidden",
+                  open && "rotate-180",
+                )}
+                aria-hidden
+              />
+            </button>
+            <div
+              className={cn(
+                "border-t border-border/70 px-3 py-3",
+                open ? "block" : "hidden print:block",
+              )}
+            >
+              {item.content}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function AssessmentBlock({
+  icon: Icon,
+  title,
+  children,
+  nested = false,
+}: {
+  icon: typeof FileCheck;
+  title: string;
+  children: ReactNode;
+  nested?: boolean;
+}) {
+  return (
+    <div className={cn("space-y-1.5", nested && "pl-1")}>
+      <div className="flex items-center gap-1.5 text-[14px] font-medium text-text-primary">
+        <Icon className="size-4 shrink-0 text-primary" aria-hidden />
+        {title}
+      </div>
+      <p className="text-[14px] leading-6 text-text-secondary">{children}</p>
     </div>
   );
 }
