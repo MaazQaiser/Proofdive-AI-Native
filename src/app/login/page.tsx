@@ -1,55 +1,91 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { AuthShell } from "@/components/auth/AuthShell";
-import { GoogleIcon, LinkedInIcon } from "@/components/icons/SocialIcons";
+import { AuthDivider, SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import { StorageKeys } from "@/lib/proofdiveStorageKeys";
-import { readJson } from "@/lib/storage";
+import { PasswordInput } from "@/components/ui/password-input";
 import { cn } from "@/lib/utils";
 
 const fieldClassName =
   "h-11 rounded-md border-border bg-white px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
-const socialClassName =
-  "flex h-11 w-full items-center justify-center gap-2.5 rounded-md border border-border bg-white px-4 text-body-sm font-medium text-foreground hover:bg-muted";
+
+/** Proof-record teaser + bar chart for the visual panel. Decorative
+ * marketing content — the chart carries no data, so it's aria-hidden. */
+const PROOF_BARS = [
+  { height: "h-10", color: "bg-brand-900" },
+  { height: "h-16", color: "bg-brand-600" },
+  { height: "h-12", color: "bg-brand-800" },
+  { height: "h-20", color: "bg-brand-400" },
+  { height: "h-28", color: "bg-brand-100" },
+];
+
+/** Right-panel content: the proof-record teaser card. */
+function LoginAside() {
+  return (
+    <div className="w-full max-w-[360px] rounded-2xl bg-card p-6 shadow-[0_16px_40px_-24px_rgba(4,32,39,0.35)]">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-h5 font-medium text-foreground">Your proof record</h2>
+        <span className="inline-flex shrink-0 items-center rounded-full bg-secondary px-2.5 py-1 text-overline font-medium text-secondary-foreground">
+          ↑ trending
+        </span>
+      </div>
+      <div aria-hidden className="mt-6 flex h-28 items-end gap-2">
+        {PROOF_BARS.map((bar, i) => (
+          <span key={i} className={cn("flex-1 rounded-md", bar.height, bar.color)} />
+        ))}
+      </div>
+      <p className="mt-5 text-caption text-text-secondary">
+        Candidates who practice twice a week reach interview-ready scores{" "}
+        <strong className="font-semibold text-foreground">3× faster</strong>.
+      </p>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
 
-  function goOrgAdminDemo() {
-    if (readJson<boolean>(StorageKeys.orgAdminAccountActivated) === true) {
-      router.push("/orgadmin/overview");
-      return;
-    }
-    router.push("/orgadmin/accept-invite");
-  }
-
-  function goPartnerDemo() {
-    if (readJson<boolean>(StorageKeys.partnerAccountActivated) === true) {
-      router.push("/partner/overview");
-      return;
-    }
-    router.push("/partner/accept-invite");
+  /** Design-comparison routing (testing): LinkedIn and the email form open
+   * onboarding v1; Google opens the v2 copy so both designs are viewable. */
+  function continueToApp(destination = "/onboarding") {
+    if (submitting) return;
+    setSubmitting(true);
+    router.push(destination);
   }
 
   return (
-    <AuthShell>
-      <div className="flex w-full max-w-[400px] flex-col items-stretch gap-5">
-        <div className="flex flex-col items-center gap-1.5 text-center">
-          <h1 className="text-h4 font-medium text-extended-dark-cyan">Sign in</h1>
-          <p className="text-body-sm text-muted-foreground">Enter your email to continue</p>
+    <AuthShell aside={<LoginAside />}>
+      <div className="flex w-full flex-col items-stretch gap-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-[#033B4F]">
+            Welcome back
+          </h1>
+          <p className="text-body-sm text-muted-foreground">
+            Sign in to pick up where you left off.
+          </p>
         </div>
+
+        <SocialAuthButtons
+          onLinkedIn={() => continueToApp("/onboarding")}
+          onGoogle={() => continueToApp("/onboarding-v2")}
+          disabled={submitting}
+        />
+
+        <AuthDivider />
 
         <form
           className="flex w-full flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
-            router.push("/onboarding");
+            continueToApp("/onboarding");
           }}
         >
           <div className="flex w-full flex-col gap-3">
@@ -62,7 +98,7 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 autoComplete="email"
-                placeholder="Enter your email"
+                placeholder="you@example.com"
                 className={fieldClassName}
                 required
               />
@@ -73,7 +109,7 @@ export default function LoginPage() {
                   Password
                 </Label>
                 <Link href="/forgot-password" className="text-caption font-medium text-primary hover:underline">
-                  Forgot Password?
+                  Forgot password?
                 </Link>
               </div>
               <PasswordInput
@@ -86,60 +122,29 @@ export default function LoginPage() {
               />
             </div>
           </div>
-          <Button type="submit" className="h-11 w-full rounded-md text-body-sm font-medium">
-            Sign in
+          <Button
+            type="submit"
+            disabled={submitting}
+            aria-busy={submitting}
+            className="h-11 w-full rounded-md text-body-sm font-medium"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+                Signing in…
+              </>
+            ) : (
+              "Sign in"
+            )}
           </Button>
         </form>
 
-        <div className="flex w-full flex-col gap-2.5">
-          <button
-            type="button"
-            onClick={() => router.push("/onboarding")}
-            className={socialClassName}
-          >
-            <GoogleIcon />
-            Continue with Google
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push("/onboarding")}
-            className={socialClassName}
-          >
-            <LinkedInIcon />
-            Continue with LinkedIn
-          </button>
-        </div>
-
         <p className="text-center text-body-sm">
-          <span className="text-muted-foreground">Do not have an account? </span>
+          <span className="text-muted-foreground">Don&apos;t have an account? </span>
           <Link href="/signup" className="font-medium text-primary hover:underline">
             Sign up
           </Link>
         </p>
-
-        <div className="flex w-full flex-col items-center gap-1.5 pt-1">
-          <button
-            type="button"
-            onClick={() => router.push("/superadmin/overview")}
-            className="text-caption text-muted-foreground/70 hover:text-foreground hover:underline"
-          >
-            Super Admin login →
-          </button>
-          <button
-            type="button"
-            onClick={goOrgAdminDemo}
-            className="text-caption text-muted-foreground/70 hover:text-foreground hover:underline"
-          >
-            Organization Admin login →
-          </button>
-          <button
-            type="button"
-            onClick={goPartnerDemo}
-            className="text-caption text-muted-foreground/70 hover:text-foreground hover:underline"
-          >
-            Partner login →
-          </button>
-        </div>
       </div>
     </AuthShell>
   );

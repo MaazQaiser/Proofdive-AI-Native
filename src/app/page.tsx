@@ -27,7 +27,7 @@ export default function Home() {
         <div className="motion-safe:animate-landing-rise flex w-full flex-col items-start">
           <Logo size="lg" />
           <h1 className="mt-8 w-full font-gilroy text-[clamp(2.25rem,4.2vw,3.25rem)] font-bold leading-[1.12] tracking-[-0.04em]">
-            <span className="block text-[#033B4F]">Turn your experience into</span>
+            <span className="block text-[#033B4F]">Turn your experience into{" "}</span>
             <span className="block text-[#0E9AB5]">interview-ready proof.</span>
           </h1>
           <p className="mt-5 max-w-[28rem] text-body-lg leading-7 text-text-secondary">
@@ -40,7 +40,7 @@ export default function Home() {
               size="lg"
                 className="h-12 rounded-md px-7 text-base font-medium"
             >
-              <Link href="/login">Start with your story</Link>
+              <Link href="/signup">Start with your story</Link>
             </Button>
           </div>
         </div>

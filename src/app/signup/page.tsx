@@ -1,52 +1,120 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { AuthShell } from "@/components/auth/AuthShell";
-import { GoogleIcon, LinkedInIcon } from "@/components/icons/SocialIcons";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import { AuthDivider, SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
+import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { writeJson } from "@/lib/storage";
+import {
+  SUCCESS_DRIVERS,
+  SUCCESS_DRIVER_ORDER,
+  type SuccessDriverId,
+} from "@/lib/successDrivers";
 import { cn } from "@/lib/utils";
 
 const fieldClassName =
   "h-11 rounded-md border-border bg-white px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
-const socialClassName =
-  "flex h-11 w-full items-center justify-center gap-2.5 rounded-md border border-border bg-white px-4 text-body-sm font-medium text-foreground hover:bg-muted";
+
+/** Right-panel pitch: the four Success Drivers — the product's fixed
+ * assessment standard and its core differentiator. One line of benefit per
+ * pillar; the framework sells itself without reading like an ad. */
+const PILLAR_PITCH: Record<SuccessDriverId, string> = {
+  thinking: "Structured judgment under pressure",
+  action: "Ownership that delivers outcomes",
+  people: "Communication that moves decisions",
+  mastery: "Craft depth you can demonstrate",
+};
+
+function SignupAside() {
+  return (
+    <div className="w-full max-w-[380px]">
+      <h2 className="font-gilroy text-h3 font-bold tracking-[-0.02em] text-[#033B4F]">
+        Interviews come down to four things.
+      </h2>
+      <p className="mt-3 text-body-sm text-text-secondary">
+        ProofDive scores every answer against them — so you walk in with
+        proof, not a feeling.
+      </p>
+      <ul className="mt-7 flex flex-col gap-4">
+        {SUCCESS_DRIVER_ORDER.map((id) => (
+          <li key={id} className="flex items-center gap-3.5">
+            <span
+              aria-hidden
+              className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-extended-green-blue"
+            >
+              <SuccessDriverIcon driver={id} className="size-4.5 text-white" />
+            </span>
+            <div>
+              <h3 className="text-body-sm font-semibold text-foreground">
+                {SUCCESS_DRIVERS[id].label}
+              </h3>
+              <p className="text-caption text-text-secondary">
+                {PILLAR_PITCH[id]}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-7 text-caption text-text-secondary">
+        Your first session scores all four — and ends with your first proof
+        report.
+      </p>
+    </div>
+  );
+}
 
 export default function SignupPage() {
   const router = useRouter();
-  const [agreed, setAgreed] = useState(false);
-  const [showAgreeError, setShowAgreeError] = useState(false);
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function guardConsent(): boolean {
-    if (!agreed) {
-      setShowAgreeError(true);
-      return false;
-    }
+  /** Consent is implicit — proceeding past the "By signing up you agree…"
+   * notice records it, no checkbox friction.
+   * Design-comparison routing (testing): LinkedIn and the email form open
+   * onboarding v1; Google opens the v2 copy so both designs are viewable. */
+  function continueToApp(destination = "/onboarding") {
+    if (submitting) return;
+    setSubmitting(true);
     writeJson(StorageKeys.termsConsent, true);
-    return true;
+    router.push(destination);
   }
 
   return (
-    <AuthShell>
-      <div className="flex w-full max-w-[400px] flex-col items-stretch gap-5">
-        <div className="flex flex-col items-center gap-1.5 text-center">
-          <h1 className="text-h4 font-medium text-extended-dark-cyan">Sign up</h1>
-          <p className="text-body-sm text-muted-foreground">Enter your email to get started</p>
+    <AuthShell aside={<SignupAside />}>
+      <div className="flex w-full flex-col items-stretch gap-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-[#033B4F]">
+            Create your account
+          </h1>
+          <p className="text-body-sm text-muted-foreground">
+            Your first practice session is about 10 minutes away.
+          </p>
         </div>
+
+        <SocialAuthButtons
+          onLinkedIn={() => continueToApp("/onboarding")}
+          onGoogle={() => continueToApp("/onboarding-v2")}
+          linkedInBadge="imports your experience"
+          disabled={submitting}
+        />
+
+        <AuthDivider />
 
         <form
           className="flex w-full flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!guardConsent()) return;
-            router.push("/onboarding");
+            continueToApp("/onboarding");
           }}
         >
           <div className="flex w-full flex-col gap-3">
@@ -59,7 +127,7 @@ export default function SignupPage() {
                 name="email"
                 type="email"
                 autoComplete="email"
-                placeholder="Enter your email"
+                placeholder="you@example.com"
                 className={fieldClassName}
                 required
               />
@@ -74,79 +142,59 @@ export default function SignupPage() {
                 autoComplete="new-password"
                 placeholder="Create a password"
                 className={cn(fieldClassName, "pl-3")}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
               />
+              {password.length > 0 ? <PasswordStrengthMeter password={password} /> : null}
             </div>
-
-            <label className="flex w-full cursor-pointer items-start gap-2 text-caption text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={(e) => {
-                  setAgreed(e.target.checked);
-                  if (e.target.checked) setShowAgreeError(false);
-                }}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-primary"
-              />
-              <span>
-                By signing up, I agree to the{" "}
-                <Link
-                  href="/terms"
-                  target="_blank"
-                  onClick={(e) => e.stopPropagation()}
-                  className="font-semibold text-foreground underline-offset-2 hover:underline"
-                >
-                  terms and conditions
-                </Link>{" "}
-                and{" "}
-                <Link
-                  href="/privacy"
-                  target="_blank"
-                  onClick={(e) => e.stopPropagation()}
-                  className="font-semibold text-foreground underline-offset-2 hover:underline"
-                >
-                  privacy policy
-                </Link>
-                .
-              </span>
-            </label>
-            {showAgreeError ? (
-              <p className="text-left text-overline text-destructive" role="alert">
-                Please agree to the terms and conditions and privacy policy to continue.
-              </p>
-            ) : null}
           </div>
-          <Button type="submit" className="h-11 w-full rounded-md text-body-sm font-medium">
-            Create account
+          <Button
+            type="submit"
+            disabled={submitting}
+            aria-busy={submitting}
+            className="h-11 w-full rounded-md text-body-sm font-medium"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+                Creating account…
+              </>
+            ) : (
+              "Create account"
+            )}
           </Button>
         </form>
 
-        <div className="flex w-full flex-col gap-2.5">
-          <button
-            type="button"
-            onClick={() => guardConsent() && router.push("/onboarding")}
-            className={socialClassName}
-          >
-            <GoogleIcon />
-            Continue with Google
-          </button>
-          <button
-            type="button"
-            onClick={() => guardConsent() && router.push("/onboarding")}
-            className={socialClassName}
-          >
-            <LinkedInIcon />
-            Continue with LinkedIn
-          </button>
-        </div>
+        <div className="flex flex-col gap-4">
+          <p className="text-center text-caption text-muted-foreground">
+            By signing up you agree to the{" "}
+            <Link
+              href="/terms"
+              target="_blank"
+              className="font-medium text-primary hover:underline"
+            >
+              terms
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="/privacy"
+              target="_blank"
+              className="font-medium text-primary hover:underline"
+            >
+              privacy policy
+            </Link>
+            .
+          </p>
 
-        <p className="text-center text-body-sm">
-          <span className="text-muted-foreground">Already have an account? </span>
-          <Link href="/login" className="font-medium text-primary hover:underline">
-            Sign in
-          </Link>
-        </p>
+          <p className="text-center text-body-sm">
+            <span className="text-muted-foreground">Already have an account? </span>
+            <Link href="/login" className="font-medium text-primary hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
     </AuthShell>
   );

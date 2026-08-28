@@ -31,9 +31,10 @@ import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
 import { Logo } from "@/components/ui/logo";
 import { SelectionChip } from "@/components/ui/selection-chip";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
-import { AssessmentPlanPanel } from "@/app/onboarding/ui/AssessmentPlanPanel";
-import { GeneratedJdPanel } from "@/app/onboarding/ui/GeneratedJdPanel";
-import { OnboardingProgressHeader } from "@/app/onboarding/ui/OnboardingProgressHeader";
+import { AssessmentPlanPanel } from "@/app/onboarding-v2/ui/AssessmentPlanPanel";
+import { GeneratedJdPanel } from "@/app/onboarding-v2/ui/GeneratedJdPanel";
+import { OnboardingProgressHeader } from "@/app/onboarding-v2/ui/OnboardingProgressHeader";
+import { QuestionCard } from "@/app/onboarding-v2/ui/QuestionCard";
 import { reportCountForRole, upsertSavedRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type { RoleProfile } from "@/lib/proofdiveTypes";
@@ -825,13 +826,13 @@ function OnboardingAgentInner({
           : stage === "bgConfirm"
             ? `Here's what I read — look right?\n\n${confirmNote ?? "Confirm it and the questionnaire is done."}`
             : stage === "bgRole"
-              ? "What role fits you best?\n\nYour questions are built around it — tap one, or type your own below."
+              ? "Let's build your background.\n\nThree quick taps — your questions are built around them."
               : stage === "bgExp"
-                ? `How far along are you?\n\n${manualRole.trim() ? `${manualRole.trim()} — noted. ` : ""}This sets the level your session is pitched at.`
+                ? `${manualRole.trim() || "Got it"} — noted.\n\nThis sets the level your session is pitched at.`
                 : stage === "bgIndustry"
-                  ? "Last one — any industry flavor?\n\nOptional. It sharpens your scenario wording; skip if nothing fits."
+                  ? "Last one.\n\nIndustry is optional — it sharpens your scenario wording."
                   : stage === "targetRole"
-                    ? "What are you preparing for?\n\nYour sessions are built and scored against this target — tap a role, or type your own below."
+                    ? "Now, your target.\n\nYour sessions are built and scored against it."
                     : stage === "targetJd"
                       ? isGeneratingJd
                         ? "Drafting a posting from your background…"
@@ -858,6 +859,14 @@ function OnboardingAgentInner({
             : stage === "targetJd"
               ? { index: 1, total: 2 }
               : null;
+
+  /** Stages rendered as a contained question card (the question lives in
+   * the card header, Claude-widget style) instead of the agent prompt. */
+  const isCardStage =
+    stage === "bgRole" ||
+    stage === "bgExp" ||
+    stage === "bgIndustry" ||
+    stage === "targetRole";
 
   const composerDisabled = stage === "bgParsing" || stage === "plan" || isEditingJd;
   const showUpload =
@@ -931,10 +940,10 @@ function OnboardingAgentInner({
           />
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-32">
+        <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain", isCardStage ? "pb-[30rem]" : "pb-32")}>
           <div className="flex min-h-full items-center justify-center py-10">
             <div className="w-full">
-              {microStep ? (
+              {microStep && !isCardStage ? (
                 <div className="mb-3 text-overline font-medium uppercase tracking-wide text-text-secondary">
                   Question {microStep.index + 1} of {microStep.total}
                 </div>
@@ -1022,68 +1031,6 @@ function OnboardingAgentInner({
                 />
               ) : null}
 
-              {stage === "bgRole" ? (
-                <ManualQuestion
-                  chipsLabel="Popular roles"
-                  chips={roleChips}
-                  selectedLabel={manualRole}
-                  onPick={chooseRole}
-                  trailing={
-                    <span className="inline-flex h-9 items-center rounded-full border border-dashed border-[#adddda] px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
-                      Type any role below ↓
-                    </span>
-                  }
-                />
-              ) : null}
-
-              {stage === "bgExp" ? (
-                <ManualQuestion
-                  chipsLabel="Select one"
-                  chips={EXPERIENCE_OPTIONS.map((o) => o.label)}
-                  selectedLabel={
-                    EXPERIENCE_OPTIONS.find((o) => o.id === manualExp)?.label ?? ""
-                  }
-                  onPick={(label) => {
-                    const opt = EXPERIENCE_OPTIONS.find((o) => o.label === label);
-                    if (opt) chooseExperience(opt.id);
-                  }}
-                />
-              ) : null}
-
-              {stage === "bgIndustry" ? (
-                <ManualQuestion
-                  chipsLabel="Optional — pick one or skip"
-                  chips={INDUSTRY_OPTIONS}
-                  selectedLabel={industrySkipped ? "" : manualIndustry}
-                  onPick={(label) => chooseIndustry(label, false)}
-                  trailing={
-                    <SelectionChip
-                      selected={industrySkipped}
-                      onClick={() => chooseIndustry("", true)}
-                    >
-                      Skip
-                    </SelectionChip>
-                  }
-                />
-              ) : null}
-
-              {stage === "targetRole" ? (
-                <ManualQuestion
-                  chipsLabel="Popular roles"
-                  chips={targetRoleChips}
-                  selectedLabel={draft.targetRole}
-                  onPick={(r) => {
-                    setDraft((d) => ({ ...d, targetRole: r }));
-                    setStage("targetJd");
-                  }}
-                  trailing={
-                    <span className="inline-flex h-9 items-center rounded-full border border-dashed border-[#adddda] px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
-                      Type any role below ↓
-                    </span>
-                  }
-                />
-              ) : null}
-
               {stage === "targetJd" ? (
                 <div className="mt-6 flex w-full flex-col gap-6">
                   {!isGeneratingJd && !generatedJdDraft ? (
@@ -1153,6 +1100,67 @@ function OnboardingAgentInner({
 
         <div className="fixed bottom-0 left-0 right-0 z-40 w-full">
           <div className="mx-auto flex w-full max-w-[800px] flex-col gap-2 px-6 py-5">
+              {stage === "bgRole" ? (
+                <QuestionCard
+                  title="What role fits you best?"
+                  step={{ index: 0, total: 3 }}
+                  options={roleChips.map((r) => ({ id: r, label: r }))}
+                  selectedId={
+                    roleChips.find(
+                      (r) => r.toLowerCase() === manualRole.trim().toLowerCase(),
+                    ) ?? undefined
+                  }
+                  onPick={chooseRole}
+                  onCustom={chooseRole}
+                  customPlaceholder='Something else — "senior UX designer"'
+                />
+              ) : null}
+              {stage === "bgExp" ? (
+                <QuestionCard
+                  title="How far along are you?"
+                  step={{ index: 1, total: 3 }}
+                  options={EXPERIENCE_OPTIONS.map((o) => ({ id: o.id, label: o.label }))}
+                  selectedId={manualExp || undefined}
+                  onPick={(id) => chooseExperience(id as ExperienceId)}
+                  onCustom={(text) => applyManualText(text)}
+                  customPlaceholder='Something else — "6 years"'
+                />
+              ) : null}
+              {stage === "bgIndustry" ? (
+                <QuestionCard
+                  title="Any industry flavor?"
+                  step={{ index: 2, total: 3 }}
+                  options={INDUSTRY_OPTIONS.map((o) => ({ id: o, label: o }))}
+                  selectedId={industrySkipped ? undefined : manualIndustry || undefined}
+                  onPick={(id) => chooseIndustry(id, false)}
+                  onCustom={(text) => chooseIndustry(text, false)}
+                  customPlaceholder='Something else — "fintech"'
+                  onSkip={() => chooseIndustry("", true)}
+                />
+              ) : null}
+              {stage === "targetRole" ? (
+                <QuestionCard
+                  title="What are you preparing for?"
+                  step={{ index: 0, total: 2 }}
+                  options={targetRoleChips.map((r) => ({ id: r, label: r }))}
+                  selectedId={
+                    targetRoleChips.find(
+                      (r) =>
+                        r.toLowerCase() === draft.targetRole.trim().toLowerCase(),
+                    ) ?? undefined
+                  }
+                  onPick={(r) => {
+                    setDraft((d) => ({ ...d, targetRole: r }));
+                    setStage("targetJd");
+                  }}
+                  onCustom={(r) => {
+                    setDraft((d) => ({ ...d, targetRole: r }));
+                    setStage("targetJd");
+                  }}
+                  customPlaceholder='Something else — "senior UX designer"'
+                />
+              ) : null}
+
             {composerGuidesUpload && !uploadHintDismissed ? (
               <div className="flex justify-end pr-16">
                 <div
@@ -1179,6 +1187,7 @@ function OnboardingAgentInner({
                 </div>
               </div>
             ) : null}
+            {isCardStage ? null : (
             <ChatComposer
               key={stage}
               placeholder={composerPlaceholder}
@@ -1216,6 +1225,7 @@ function OnboardingAgentInner({
               }
               threadHeaderTitle="AI Assistant"
             />
+            )}
           </div>
         </div>
       </div>
@@ -1438,43 +1448,6 @@ function ParsedConfirmCard({
   );
 }
 
-/** One micro-question — a short chips-context label (the question itself is
- * the heading above), one chip row, and optional trailing affordance
- * (type-your-own hint, Skip). Tapping a chip answers and advances; there is
- * no Continue button. */
-function ManualQuestion({
-  chipsLabel,
-  chips,
-  selectedLabel,
-  onPick,
-  trailing,
-}: {
-  chipsLabel: string;
-  chips: string[];
-  selectedLabel: string;
-  onPick: (label: string) => void;
-  trailing?: React.ReactNode;
-}) {
-  return (
-    <div className="mt-8 flex w-full flex-col gap-2">
-      <div className="text-body-sm font-semibold text-text-secondary">
-        {chipsLabel}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {chips.map((label) => (
-          <SelectionChip
-            key={label}
-            selected={label.toLowerCase() === selectedLabel.trim().toLowerCase()}
-            onClick={() => onPick(label)}
-          >
-            {label}
-          </SelectionChip>
-        ))}
-        {trailing}
-      </div>
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Step 4 — session contract

@@ -77,6 +77,28 @@ const COMPETENCY_REASONING: Record<CompetencyId, (role: string) => string> = {
     `This ${role} needs someone who spots improvement opportunities, tests better approaches, and raises quality or efficiency over time.`,
 };
 
+/** The actual words in the role/JD text that drove a competency's suggestion —
+ * real evidence for "why this pick", surfaced in the assessment-plan UI.
+ * Recovers whole words from the text (the keyword list holds stems), deduped,
+ * capped at 3. Empty when the pick was a pillar fallback with no signal. */
+export function matchedSignalsFor(
+  competencyId: CompetencyId,
+  input: { targetRole: string; jobDescription: string },
+): string[] {
+  const text = `${input.targetRole} ${input.jobDescription}`;
+  const found: string[] = [];
+  for (const kw of COMPETENCY_KEYWORDS[competencyId]) {
+    const stem = kw.replace(/[^a-z\- ]/gi, "");
+    if (!stem) continue;
+    const match = text.match(new RegExp(`[A-Za-z\\-]*${stem}[A-Za-z\\-]*`, "i"));
+    if (match?.[0]) {
+      const word = match[0].toLowerCase();
+      if (!found.includes(word)) found.push(word);
+    }
+  }
+  return found.slice(0, 3);
+}
+
 /** Plain-language explanation of why a competency was suggested for this role. */
 export function suggestionReasoningFor(
   competencyId: CompetencyId,

@@ -40,6 +40,7 @@ export function ChatComposer({
   quickPromptChips,
   onQuickPromptChipSelect,
   showUploadButton = true,
+  uploadLabel,
   modeToggle,
   /** Renders above the text field, inside the white composer card (e.g. in-thread chat). */
   thread,
@@ -55,6 +56,8 @@ export function ChatComposer({
   uploadMultiple?: boolean;
   /** Hides the attachment control when the host handles uploads in context (e.g. a later step). */
   showUploadButton?: boolean;
+  /** Labels the upload control (e.g. "Upload resume") when the attachment is the step's primary action. */
+  uploadLabel?: string;
   /** When set, the field is read-only and send/voice are inactive (e.g. end-of-flow choices). */
   disabled?: boolean;
   /** Initial value; parent can remount the composer (e.g. with `key={stepId}`) to reset. */
@@ -425,6 +428,7 @@ export function ChatComposer({
         placeholder={placeholder}
         disabled={disabled}
         showUploadAction={showUploadButton}
+        uploadLabel={uploadLabel}
         onUploadClick={() => fileInputRef.current?.click()}
         attachedFiles={pendingUploads.map((file) => ({
           id: `${file.name}-${file.lastModified}`,

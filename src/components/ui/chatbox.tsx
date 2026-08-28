@@ -40,6 +40,12 @@ type ChatboxProps = {
   /** Hides the upload affordance for steps that don't accept attachments. */
   showUploadAction?: boolean;
   /**
+   * Labels the upload control (e.g. "Upload resume") instead of the bare
+   * paperclip — for steps where the attachment IS the primary action and an
+   * icon alone undersells it.
+   */
+  uploadLabel?: string;
+  /**
    * Ask / FAQ control. Icon-only when idle (same in compact + expanded);
    * when `isActive`, matches Figma State=Asking (pill with label + X).
    */
@@ -80,6 +86,7 @@ function Chatbox({
   isListening = false,
   disabled,
   showUploadAction = true,
+  uploadLabel,
   askAction,
   leading,
   status,
@@ -187,15 +194,29 @@ function Chatbox({
   );
 
   const compactUpload = showUpload ? (
-    <IconButton
-      variant="ghost"
-      onClick={onUploadClick}
-      disabled={disabled}
-      aria-label="Upload"
-      className="text-primary"
-    >
-      <Paperclip />
-    </IconButton>
+    uploadLabel ? (
+      <button
+        type="button"
+        onClick={onUploadClick}
+        disabled={disabled}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-brand-700 bg-brand-1000 py-1 pl-2.5 pr-3 text-primary transition hover:bg-brand-900 disabled:pointer-events-none disabled:opacity-50"
+      >
+        <Paperclip className="size-4 shrink-0" aria-hidden />
+        <span className="text-overline font-medium leading-6 whitespace-nowrap">
+          {uploadLabel}
+        </span>
+      </button>
+    ) : (
+      <IconButton
+        variant="ghost"
+        onClick={onUploadClick}
+        disabled={disabled}
+        aria-label="Upload"
+        className="text-primary"
+      >
+        <Paperclip />
+      </IconButton>
+    )
   ) : null;
 
   const expandedUpload = showUpload ? (
@@ -203,10 +224,15 @@ function Chatbox({
       type="button"
       onClick={onUploadClick}
       disabled={disabled}
-      className="inline-flex min-w-16 shrink-0 items-center justify-center gap-0 rounded-full px-2 py-0.5 text-primary transition hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+      className={cn(
+        "inline-flex min-w-16 shrink-0 items-center justify-center gap-0 rounded-full px-2 py-0.5 text-primary transition hover:bg-muted disabled:pointer-events-none disabled:opacity-50",
+        uploadLabel && "border border-brand-700 bg-brand-1000 hover:bg-brand-900",
+      )}
     >
       <Paperclip className="size-4 shrink-0" aria-hidden />
-      <span className="px-1 text-overline font-medium leading-6 whitespace-nowrap">Upload</span>
+      <span className="px-1 text-overline font-medium leading-6 whitespace-nowrap">
+        {uploadLabel ?? "Upload"}
+      </span>
     </button>
   ) : null;
 

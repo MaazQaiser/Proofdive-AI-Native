@@ -1,52 +1,49 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { AuthVisualPanel } from "@/components/auth/AuthVisualPanel";
 import { Logo } from "@/components/ui/logo";
 
 /**
- * Shared chrome for Login / Signup / Accept-invite pages.
- * Figma login frame (node 265:1533): full-bleed brand bg, logo header,
- * left headline panel, right form column (731px), bottom-right gradient.
- * Pass the existing form block as children — do not alter form contents here.
+ * Shared chrome for Login / Signup / Forgot-password / Accept-invite pages.
+ * Full-bleed split screen — form column left, brand-teal visual panel right
+ * (hidden below lg) — matching the edge-to-edge layout language of the rest
+ * of the product (landing, onboarding). The panel is pure CSS — tokens and
+ * gradients, no raster assets — so auth pages carry no LCP image cost.
+ *
+ * `aside` renders inside the visual panel (e.g. the proof-record card on
+ * login, the "What happens next" steps on signup). Omit it for a purely
+ * decorative panel.
  */
-export function AuthShell({ children }: { children: ReactNode }) {
+export function AuthShell({
+  children,
+  aside,
+}: {
+  children: ReactNode;
+  aside?: ReactNode;
+}) {
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-white">
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <Image
-          src="/brand/auth-bg.webp"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          quality={80}
-          className="object-cover"
-        />
-      </div>
-
-      <header className="relative z-10 flex h-20 shrink-0 items-center px-8 sm:px-12">
-        <Link href="/">
-          <Logo size="xxs" />
-        </Link>
-      </header>
-
-      <div className="relative z-10 flex flex-1 overflow-hidden">
-        <AuthVisualPanel />
-
-        <div className="flex w-full items-center justify-center px-6 py-10 lg:w-[731px] lg:shrink-0 lg:px-12">
+    <div className="flex min-h-dvh w-full items-stretch bg-background">
+      {/* Form column */}
+      <div className="flex w-full flex-col justify-center px-6 py-12 sm:px-12 lg:w-[52%] lg:shrink-0 lg:px-16">
+        <div className="mx-auto flex w-full max-w-[420px] flex-col">
+          <Link href="/" className="mb-10 self-start" aria-label="ProofDive home">
+            <Logo size="xs" />
+          </Link>
           {children}
         </div>
       </div>
 
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/brand/login-signup%20assets/Background%20gradient.png"
-        alt=""
-        aria-hidden
-        className="pointer-events-none absolute right-0 bottom-0 w-[1276px] max-w-none opacity-60"
-      />
+      {/* Visual panel — brand gradient + soft shapes, all CSS */}
+      <aside className="relative hidden flex-1 overflow-hidden bg-[linear-gradient(160deg,var(--brand-1000),var(--brand-800))] lg:flex">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -right-16 -top-16 h-64 w-64 rounded-[48px] bg-brand-700/50" />
+          <div className="absolute -bottom-24 left-10 h-72 w-64 rounded-[48px] bg-white/30" />
+          <div className="absolute right-24 bottom-40 h-40 w-40 rounded-[40px] bg-brand-900/60" />
+        </div>
+        <div className="relative z-10 flex w-full flex-col items-center justify-center gap-6 px-10 py-16 xl:px-16">
+          {aside}
+        </div>
+      </aside>
     </div>
   );
 }
