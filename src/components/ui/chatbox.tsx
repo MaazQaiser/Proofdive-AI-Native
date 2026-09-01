@@ -54,6 +54,18 @@ type ChatboxProps = {
     label?: string;
     onToggle: () => void;
   };
+  /**
+   * Ambient AI glow (opt-in): a slow brand-cyan light pass around the shell's
+   * rim plus a soft outer halo — brighter on focus, receding while the user
+   * types. Visuals live in `globals.css` under `chatbox-ai-glow`.
+   */
+  aiGlow?: boolean;
+  /**
+   * Fades the glow out while keeping it mounted — used when another ambient
+   * visual (the AI orb) takes over the AI's presence. Unmounting instead
+   * would pop; this cross-fades.
+   */
+  aiGlowMuted?: boolean;
   /** Optional content above attachments/textarea (e.g. FAQ / coach thread). */
   leading?: React.ReactNode;
   /** Status / helper copy below the toolbar (voice errors, unsupported browser). */
@@ -88,6 +100,8 @@ function Chatbox({
   showUploadAction = true,
   uploadLabel,
   askAction,
+  aiGlow = false,
+  aiGlowMuted = false,
   leading,
   status,
   textareaProps,
@@ -199,7 +213,7 @@ function Chatbox({
         type="button"
         onClick={onUploadClick}
         disabled={disabled}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-brand-700 bg-brand-1000 py-1 pl-2.5 pr-3 text-primary transition hover:bg-brand-900 disabled:pointer-events-none disabled:opacity-50"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand-1000 py-1 pl-2.5 pr-3 text-primary transition hover:bg-brand-900 disabled:pointer-events-none disabled:opacity-50"
       >
         <Paperclip className="size-4 shrink-0" aria-hidden />
         <span className="text-overline font-medium leading-6 whitespace-nowrap">
@@ -226,7 +240,7 @@ function Chatbox({
       disabled={disabled}
       className={cn(
         "inline-flex min-w-16 shrink-0 items-center justify-center gap-0 rounded-full px-2 py-0.5 text-primary transition hover:bg-muted disabled:pointer-events-none disabled:opacity-50",
-        uploadLabel && "border border-brand-700 bg-brand-1000 hover:bg-brand-900",
+        uploadLabel && "bg-brand-1000 hover:bg-brand-900",
       )}
     >
       <Paperclip className="size-4 shrink-0" aria-hidden />
@@ -249,6 +263,13 @@ function Chatbox({
       data-slot="chatbox"
       data-variant={variant}
       data-thread={hasLeading ? "true" : undefined}
+      data-ai-glow={aiGlow ? "" : undefined}
+      data-ai-glow-muted={aiGlow && aiGlowMuted ? "" : undefined}
+      // Glow recedes while the user types (their words take the stage) and
+      // while the composer is disabled (nothing to invite).
+      data-ai-glow-quiet={
+        aiGlow && (disabled || value.trim().length > 0) ? "" : undefined
+      }
       className={cn(
         "relative w-full max-w-[800px]",
         isCompact ? "rounded-full" : "rounded-[20px]",
@@ -256,6 +277,12 @@ function Chatbox({
         className,
       )}
     >
+      {aiGlow ? (
+        <>
+          <div aria-hidden data-slot="chatbox-ai-glow-halo" />
+          <div aria-hidden data-slot="chatbox-ai-glow-rim" />
+        </>
+      ) : null}
       <div
         data-slot="chatbox-surface"
         className={cn(

@@ -8,7 +8,10 @@ import {
 } from "@/components/ui/glass-blur-symbol";
 import { cn } from "@/lib/utils";
 
-type CardButtonProps = React.ComponentProps<"button"> & {
+// `title` is omitted from the native button props: this component takes a
+// ReactNode title, which the intersection with the DOM `title?: string`
+// attribute would otherwise narrow back to a string.
+type CardButtonProps = Omit<React.ComponentProps<"button">, "title"> & {
   variant?: "primary" | "gray";
   icon: React.ReactNode;
   title: React.ReactNode;

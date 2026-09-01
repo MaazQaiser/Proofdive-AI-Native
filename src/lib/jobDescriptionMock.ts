@@ -38,7 +38,7 @@ const REQUIREMENT_VARIANTS: string[][] = [
   [
     "Strong analytical and problem-solving skills, with the ability to structure ambiguous problems.",
     "Clear written and verbal communication, especially with non-technical stakeholders.",
-    "A bias toward ownership — comfortable driving work forward without heavy oversight.",
+    "A bias toward ownership, and comfort driving work forward without heavy oversight.",
   ],
   [
     "Demonstrated ability to prioritize competing demands and make sound trade-offs under uncertainty.",

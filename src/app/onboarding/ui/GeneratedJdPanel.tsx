@@ -139,57 +139,34 @@ export function GeneratedJdPanel({
     <Card className="mt-6 gap-0 py-5">
       <CardContent className="flex flex-col gap-4 px-5">
         {/* Provenance header — what this is, where it came from */}
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
-            <span
-              aria-hidden
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-1000 text-primary"
-            >
-              <Sparkles className="size-4.5" />
-            </span>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-h5 font-medium text-heading-teal">
-                  Your assessment spec
-                </h2>
-                <span className="inline-flex shrink-0 items-center rounded-full bg-secondary px-2 py-0.5 text-overline font-medium text-secondary-foreground">
-                  AI draft{variant > 0 ? ` · v${variant + 1}` : ""}
-                </span>
-              </div>
-              <p className="mt-0.5 text-caption text-text-secondary">
-                Your interview questions and scoring come from this. Review it
-                like an interviewer would.
-              </p>
+        <div className="flex min-w-0 items-start gap-3">
+          <span
+            aria-hidden
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-1000 text-primary"
+          >
+            <Sparkles className="size-4.5" />
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-h5 font-medium text-heading-teal">
+                Your assessment spec
+              </h2>
+              <span className="inline-flex shrink-0 items-center rounded-full bg-secondary px-2 py-0.5 text-overline font-medium text-secondary-foreground">
+                AI draft{variant > 0 ? ` · v${variant + 1}` : ""}
+              </span>
             </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <SelectionChip
-              selected={isEditing}
-              onClick={handleEditToggle}
-              aria-pressed={isEditing}
-            >
-              {isEditing ? (
-                <>
-                  <Check className="size-4" />
-                  Done
-                </>
-              ) : (
-                <>
-                  <SquarePen className="size-4" />
-                  Edit
-                </>
-              )}
-            </SelectionChip>
-            <SelectionChip onClick={onRegenerate} disabled={isEditing}>
-              <RefreshCcw className="size-4" />
-              Regenerate
-            </SelectionChip>
+            <p className="mt-0.5 text-caption text-text-secondary">
+              Your interview questions and scoring come from this. Review it
+              like an interviewer would.
+            </p>
           </div>
         </div>
 
-        {/* What the draft was built from */}
+        {/* What the draft was built from. Extra top margin (2× the card's
+            base gap) so the header reads as its own block and the
+            provenance row doesn't crowd the description line. */}
         {targetingChips.length ? (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+          <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5">
             <span className="text-overline font-medium uppercase tracking-wide text-text-secondary">
               Built from
             </span>
@@ -204,33 +181,71 @@ export function GeneratedJdPanel({
           </div>
         ) : null}
 
-        {/* The document itself — an inset well, editable in place */}
+        {/* The document itself — an inset well, editable in place. Its own
+            footer carries the document-level actions (edit / regenerate), so
+            the header stays a clean statement of what this artifact is and
+            the card footer stays the single place you move forward from. */}
         <div
           className={cn(
-            "rounded-xl border bg-background/60 px-5 py-4 transition-shadow",
+            "overflow-hidden rounded-xl border bg-background/60 transition-shadow",
             isEditing
               ? "border-ring ring-[3px] ring-ring/20"
               : "border-border/70",
           )}
         >
-          <div
-            ref={editorRef}
-            data-slot="jd-editor"
-            className={proseClasses}
-            contentEditable={isEditing}
-            suppressContentEditableWarning
-            role={isEditing ? "textbox" : undefined}
-            aria-multiline={isEditing ? true : undefined}
-            aria-label="Assessment spec draft"
-            onInput={isEditing ? handleInput : undefined}
-          />
+          <div className="px-5 py-4">
+            <div
+              ref={editorRef}
+              data-slot="jd-editor"
+              className={proseClasses}
+              contentEditable={isEditing}
+              suppressContentEditableWarning
+              role={isEditing ? "textbox" : undefined}
+              aria-multiline={isEditing ? true : undefined}
+              aria-label="Assessment spec draft"
+              onInput={isEditing ? handleInput : undefined}
+            />
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border/70 bg-brand-1000/25 px-4 py-2.5">
+            <div className="flex shrink-0 items-center gap-1.5">
+              <SelectionChip
+                selected={isEditing}
+                onClick={handleEditToggle}
+                aria-pressed={isEditing}
+              >
+                {isEditing ? (
+                  <>
+                    <Check className="size-4" />
+                    Done
+                  </>
+                ) : (
+                  <>
+                    <SquarePen className="size-4" />
+                    Edit
+                  </>
+                )}
+              </SelectionChip>
+              <SelectionChip onClick={onRegenerate} disabled={isEditing}>
+                <RefreshCcw className="size-4" />
+                Regenerate
+              </SelectionChip>
+            </div>
+            <p
+              aria-live="polite"
+              className="min-w-0 text-overline text-text-secondary"
+            >
+              {isEditing
+                ? "Editing in place. Done saves your changes."
+                : "Anything off? Edit it, or regenerate for a different angle."}
+            </p>
+          </div>
         </div>
 
         {/* Actions — draft path and real-posting path, side by side */}
         {showPaste ? (
           <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-background/60 p-4">
             <p className="text-caption text-text-secondary">
-              Paste the posting you&apos;re actually targeting — it replaces the
+              Paste the posting you&apos;re actually targeting. It replaces the
               draft and becomes your assessment spec.
             </p>
             <Textarea
@@ -279,7 +294,7 @@ export function GeneratedJdPanel({
           </div>
         )}
         <p className="text-overline text-text-secondary">
-          A real posting always beats a draft — you can swap it in later from
+          A real posting always beats a draft. You can swap one in later from
           your profile, too.
         </p>
       </CardContent>

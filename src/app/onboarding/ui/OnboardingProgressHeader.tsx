@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export const ONBOARDING_STEP_LABELS = [
   "Your background",
   "Target",
-  "Assessment plan",
+  "Focus areas",
   "First session",
 ] as const;
 

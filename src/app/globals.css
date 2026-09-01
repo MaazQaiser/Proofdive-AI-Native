@@ -481,6 +481,286 @@
   height: var(--chatbox-send-icon);
 }
 
+/* ---------------------------------------------------------------------------
+   Chatbox AI ambient glow — opt-in via <Chatbox aiGlow> (data-ai-glow).
+
+   Two layers spin in lockstep so they read as one light source: a 1px rim
+   highlight riding the shell's existing gradient stroke, and a blurred halo
+   just outside the shell. The conic gradient is mostly transparent with two
+   soft brand-cyan arcs, so at any moment only a stretch of the edge is lit —
+   a slow light pass, not a spinning ring. One constant 8s cycle; states
+   change intensity (opacity), never speed, so shifts are smooth and the
+   motion stays calm.
+
+   States (driven by attributes/pseudo-classes on [data-slot="chatbox"]):
+     idle           → level .55  (barely there, ambient)
+     hover          → level .8   (the surface acknowledges you)
+     focus-within   → level 1    (the AI is attending)
+     quiet          → level .4   (typing or disabled — glow recedes, never
+                                  competes with the user's own words)
+   Reduced motion: the sweep stops; a faint static arc keeps the identity. */
+@keyframes chatbox-ai-glow-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0turn);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(1turn);
+  }
+}
+
+[data-slot="chatbox"][data-ai-glow] {
+  --chatbox-ai-glow-level: 0.6;
+}
+[data-slot="chatbox"][data-ai-glow]:hover {
+  --chatbox-ai-glow-level: 0.72;
+}
+[data-slot="chatbox"][data-ai-glow]:focus-within {
+  --chatbox-ai-glow-level: 0.8;
+}
+[data-slot="chatbox"][data-ai-glow][data-ai-glow-quiet],
+[data-slot="chatbox"][data-ai-glow][data-ai-glow-quiet]:hover,
+[data-slot="chatbox"][data-ai-glow][data-ai-glow-quiet]:focus-within {
+  --chatbox-ai-glow-level: 0.4;
+}
+/* Handover: the AI orb is taking over as the ambient signal, so the rim
+   light fades out (it stays mounted, so this cross-fades instead of
+   popping). Wins over every level above. */
+[data-slot="chatbox"][data-ai-glow][data-ai-glow-muted],
+[data-slot="chatbox"][data-ai-glow][data-ai-glow-muted]:hover,
+[data-slot="chatbox"][data-ai-glow][data-ai-glow-muted]:focus-within {
+  --chatbox-ai-glow-level: 0;
+}
+
+[data-slot="chatbox-ai-glow-rim"],
+[data-slot="chatbox-ai-glow-halo"] {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: var(--chatbox-ai-glow-level);
+  transition: opacity 480ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Rim: exactly the shell's 1px stroke area (same xor ring mask as cards),
+   painted over the static gradient stroke so the arc tints it in passing. */
+[data-slot="chatbox-ai-glow-rim"] {
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+/* Halo: soft light just outside the shell. Sits behind the in-flow surface
+   (z -1), so the opaque white pill masks its center for free. */
+[data-slot="chatbox-ai-glow-halo"] {
+  inset: -20px;
+  z-index: -1;
+  border-radius: 40px;
+  filter: blur(16px);
+}
+[data-slot="chatbox"][data-variant="compact"] [data-slot="chatbox-ai-glow-halo"] {
+  border-radius: 9999px;
+}
+
+/* The shared light source: an oversized square spinning behind both masks. */
+[data-slot="chatbox-ai-glow-rim"]::before,
+[data-slot="chatbox-ai-glow-halo"]::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(260%, 400px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  animation: chatbox-ai-glow-spin 8s linear infinite;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(14, 154, 181, 0.95) 42deg,
+    rgba(86, 184, 203, 0.55) 72deg,
+    transparent 118deg,
+    transparent 180deg,
+    rgba(0, 168, 185, 0.65) 224deg,
+    rgba(110, 194, 211, 0.35) 256deg,
+    transparent 300deg
+  );
+}
+[data-slot="chatbox-ai-glow-halo"]::before {
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="chatbox-ai-glow-rim"]::before,
+  [data-slot="chatbox-ai-glow-halo"]::before {
+    animation: none;
+  }
+  [data-slot="chatbox-ai-glow-rim"],
+  [data-slot="chatbox-ai-glow-halo"] {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   AI orb — the product's AI presence behind the chat bar (AiOrb.tsx).
+
+   A liquid-glass sphere rises behind the composer: the material (fluid
+   silhouette, drifting light, fresnel rim, inner currents) is shaded in
+   WebGL; this block owns composition and presence. The sphere's center
+   sits below the page fold, so its crown arcs up behind the chat bar and
+   its color field bleeds full-width to the bottom edge — the bar floats
+   on it. States change ONLY presence (opacity + lift); the surface itself
+   morphs in-shader, so nothing ever snaps:
+
+     idle       .85 — present and ready
+     attentive  .92 + 6px lift — the input has focus, it's listening
+     typing     .96 + 8px lift — acknowledging input
+     thinking    1  + 12px lift — processing (fast inner currents in-shader)
+     error      .92 — cyan halo recedes, a warm halo fades in
+
+   Reduced motion: the canvas draws one static frame (handled in JS);
+   presence transitions are disabled below. */
+.ai-orb {
+  position: absolute;
+  /* Pinned 20px below the fold: the state lifts (max 18px) never expose a
+     white strip under the sphere — its base always overshoots the viewport. */
+  bottom: -20px;
+  left: 50%;
+  z-index: -1;
+  /* Aspect ratio must match the canvas drawing buffer (AiOrb.tsx, 1240:460)
+     or the sphere distorts. */
+  width: 1240px;
+  height: 460px;
+  /* Composed from parts so the state lift and the handover scale never
+     overwrite each other. */
+  --orb-lift: 0px;
+  --orb-scale: 1;
+  transform: translateX(-50%) translateY(var(--orb-lift)) scale(var(--orb-scale));
+  /* Grows out of the chat bar rather than from its own middle. */
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  opacity: 0.85;
+  transition:
+    opacity 520ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Handed back to the composer's rim glow: the sphere settles down into the
+   bar and dissolves, so glow → sphere → glow reads as one continuous light
+   rather than two visuals swapping. */
+.ai-orb[data-visible="false"] {
+  opacity: 0;
+  --orb-scale: 0.9;
+  --orb-lift: 26px;
+}
+.ai-orb[data-state="attentive"] {
+  --orb-lift: -8px;
+  opacity: 0.95;
+}
+.ai-orb[data-state="typing"] {
+  --orb-lift: -12px;
+  opacity: 1;
+}
+.ai-orb[data-state="thinking"] {
+  --orb-lift: -18px;
+  opacity: 1;
+}
+.ai-orb[data-state="error"] {
+  opacity: 0.92;
+}
+
+/* No CSS filter here: a blur on a WebGL canvas composites unreliably (frames
+   drop to a stale/faint snapshot). Edge softness lives in the shader — the
+   feathered silhouette and in-body haze band (AiOrb.tsx). */
+.ai-orb-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Ambient bloom hugging the crown — soft room light, not an outline. The
+   ellipse extends past the canvas bottom (offscreen) so the glow reads as
+   coming from the sphere's submerged body. Warm layer cross-fades in for
+   the error state. */
+.ai-orb-halo,
+.ai-orb-halo-warm {
+  position: absolute;
+  inset: 18% 10% -45% 10%;
+  border-radius: 50%;
+  filter: blur(36px);
+  transition: opacity 700ms ease;
+}
+.ai-orb-halo {
+  /* Figma-light bloom: #BCEEF5-based, never the deeper brand cyan — the
+     reference blob's surroundings stay barely tinted. */
+  background: radial-gradient(
+    closest-side,
+    rgb(188 238 245 / 0.4),
+    rgb(188 238 245 / 0.16) 55%,
+    transparent 78%
+  );
+}
+.ai-orb-halo-warm {
+  background: radial-gradient(
+    closest-side,
+    rgb(203 58 49 / 0.14),
+    rgb(233 161 59 / 0.07) 55%,
+    transparent 78%
+  );
+  opacity: 0;
+}
+.ai-orb[data-state="error"] .ai-orb-halo {
+  opacity: 0.25;
+}
+.ai-orb[data-state="error"] .ai-orb-halo-warm {
+  opacity: 1;
+}
+
+/* No WebGL (or context lost): a static glass crown keeps the composition. */
+.ai-orb-fallback {
+  display: none;
+  position: absolute;
+  inset: 22% 14% -120% 14%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 18%,
+    rgb(234 251 253 / 0.9),
+    rgb(185 239 244 / 0.6) 30%,
+    rgb(110 194 211 / 0.5) 55%,
+    rgb(14 154 181 / 0.55) 80%,
+    rgb(0 111 143 / 0.6) 100%
+  );
+}
+.ai-orb[data-fallback="true"] .ai-orb-canvas {
+  display: none;
+}
+.ai-orb[data-fallback="true"] .ai-orb-fallback {
+  display: block;
+}
+
+/* Shorter laptops: scale the sphere down so its crown never crowds the copy
+   block. Same 1240:460 aspect, so the canvas scales uniformly. */
+@media (max-height: 760px) {
+  .ai-orb {
+    width: 1020px;
+    height: 378px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-orb,
+  .ai-orb-halo,
+  .ai-orb-halo-warm {
+    transition: none;
+  }
+}
+
 /* Chat composer mic — thin waveform scrolls while SpeechRecognition listens. */
 @keyframes voice-wave-scroll {
   from {
@@ -951,6 +1231,14 @@ body {
     rgb(14 154 181 / 0.3) 0%,
     rgb(255 255 255 / 1) 100%
   );
+}
+
+/* Plain variant — solid white, no wash and no blur motif. For screens where
+   an AI visual (the orb) owns all the ambience and the canvas must stay
+   clean and minimal. Keeps `.app-canvas`'s vars and white base. */
+.app-canvas--plain::before,
+.app-canvas--plain::after {
+  content: none;
 }
 
 /*

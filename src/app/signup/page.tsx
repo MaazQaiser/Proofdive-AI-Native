@@ -14,6 +14,12 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
+import {
+  MOCK_SOCIAL_IDENTITY,
+  nameFromEmail,
+  writeAuthIdentity,
+  type AuthIdentity,
+} from "@/lib/authIdentity";
 import { writeJson } from "@/lib/storage";
 import {
   SUCCESS_DRIVERS,
@@ -42,8 +48,8 @@ function SignupAside() {
         Interviews come down to four things.
       </h2>
       <p className="mt-3 text-body-sm text-text-secondary">
-        ProofDive scores every answer against them — so you walk in with
-        proof, not a feeling.
+        ProofDive scores every answer against them, so you walk in with proof
+        instead of a feeling.
       </p>
       <ul className="mt-7 flex flex-col gap-4">
         {SUCCESS_DRIVER_ORDER.map((id) => (
@@ -66,7 +72,7 @@ function SignupAside() {
         ))}
       </ul>
       <p className="mt-7 text-caption text-text-secondary">
-        Your first session scores all four — and ends with your first proof
+        Your first session scores all four, and it ends with your first proof
         report.
       </p>
     </div>
@@ -79,13 +85,17 @@ export default function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
 
   /** Consent is implicit — proceeding past the "By signing up you agree…"
-   * notice records it, no checkbox friction.
-   * Design-comparison routing (testing): LinkedIn and the email form open
-   * onboarding v1; Google opens the v2 copy so both designs are viewable. */
-  function continueToApp(destination = "/onboarding") {
+   * notice records it, no checkbox friction. Every path opens the same
+   * onboarding flow (the second design variant was retired). */
+  function continueToApp(
+    destination = "/onboarding",
+    identity?: AuthIdentity,
+  ) {
     if (submitting) return;
     setSubmitting(true);
     writeJson(StorageKeys.termsConsent, true);
+    // Onboarding greets the user by name when the provider gave us one.
+    if (identity) writeAuthIdentity(identity);
     router.push(destination);
   }
 
@@ -102,8 +112,18 @@ export default function SignupPage() {
         </div>
 
         <SocialAuthButtons
-          onLinkedIn={() => continueToApp("/onboarding")}
-          onGoogle={() => continueToApp("/onboarding-v2")}
+          onLinkedIn={() =>
+            continueToApp("/onboarding", {
+              ...MOCK_SOCIAL_IDENTITY,
+              provider: "linkedin",
+            })
+          }
+          onGoogle={() =>
+            continueToApp("/onboarding", {
+              ...MOCK_SOCIAL_IDENTITY,
+              provider: "google",
+            })
+          }
           linkedInBadge="imports your experience"
           disabled={submitting}
         />
@@ -114,7 +134,16 @@ export default function SignupPage() {
           className="flex w-full flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
-            continueToApp("/onboarding");
+            // No provider profile on this path — the best we have is the
+            // address, so derive a name from it (empty stays generic).
+            const email = String(
+              new FormData(e.currentTarget).get("email") ?? "",
+            );
+            continueToApp("/onboarding", {
+              name: nameFromEmail(email),
+              email,
+              provider: "email",
+            });
           }}
         >
           <div className="flex w-full flex-col gap-3">

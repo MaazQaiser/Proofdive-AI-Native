@@ -72,7 +72,7 @@ const COMPETENCY_REASONING: Record<CompetencyId, (role: string) => string> = {
   "mastery-functional": (role) =>
     `This ${role} needs strong functional knowledge of the concepts, tools, and standards that matter day to day in the work.`,
   "mastery-execution": (role) =>
-    `This ${role} needs someone who can turn knowledge into well-structured delivery — choosing the right methods and producing sound outcomes.`,
+    `This ${role} needs someone who can turn knowledge into well-structured delivery, choosing the right methods and producing sound outcomes.`,
   "mastery-innovation": (role) =>
     `This ${role} needs someone who spots improvement opportunities, tests better approaches, and raises quality or efficiency over time.`,
 };

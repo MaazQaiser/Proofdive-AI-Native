@@ -48,6 +48,8 @@ export function ChatComposer({
   threadHeaderTitle = "AI Coach",
   /** Onboarding keeps the full wash; other candidate pages default to a softer glow. */
   backgroundGlowIntensity = "soft",
+  aiGlow = false,
+  aiGlowMuted = false,
 }: {
   placeholder?: string;
   onSend: (text: string) => void;
@@ -76,6 +78,10 @@ export function ChatComposer({
   onThreadClose?: () => void;
   threadHeaderTitle?: string;
   backgroundGlowIntensity?: BackgroundGlowIntensity;
+  /** Ambient AI glow on the input shell — see `Chatbox` `aiGlow`. */
+  aiGlow?: boolean;
+  /** Fades that glow out while another AI visual takes over — see `Chatbox`. */
+  aiGlowMuted?: boolean;
 }) {
   const [text, setText] = useState(prefill);
   const [quickPromptsOpen, setQuickPromptsOpen] = useState(false);
@@ -427,6 +433,8 @@ export function ChatComposer({
         onSend={send}
         placeholder={placeholder}
         disabled={disabled}
+        aiGlow={aiGlow}
+        aiGlowMuted={aiGlowMuted}
         showUploadAction={showUploadButton}
         uploadLabel={uploadLabel}
         onUploadClick={() => fileInputRef.current?.click()}

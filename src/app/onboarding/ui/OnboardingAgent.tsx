@@ -15,27 +15,32 @@ import {
   BookOpen,
   Check,
   FileText,
+  GraduationCap,
   MessageCircleQuestion,
   Mic,
   PauseCircle,
-  Timer,
-  UploadCloud,
   UserCheck,
   X,
 } from "lucide-react";
 
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
+import { AiOrb, type AiOrbState } from "@/components/chat/AiOrb";
 import { ChatComposer } from "@/components/chat/ChatComposer";
+import { Button } from "@/components/ui/button";
 import { CardButton } from "@/components/ui/card-button";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
 import { Logo } from "@/components/ui/logo";
 import { SelectionChip } from "@/components/ui/selection-chip";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
-import { AssessmentPlanPanel } from "@/app/onboarding/ui/AssessmentPlanPanel";
+import {
+  AssessmentPlanPanel,
+  SuccessDriversGuideCard,
+} from "@/app/onboarding/ui/AssessmentPlanPanel";
 import { GeneratedJdPanel } from "@/app/onboarding/ui/GeneratedJdPanel";
 import { OnboardingProgressHeader } from "@/app/onboarding/ui/OnboardingProgressHeader";
 import { reportCountForRole, upsertSavedRole } from "@/lib/proofdiveLogic";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
+import { firstNameOf, readAuthIdentity } from "@/lib/authIdentity";
 import type { RoleProfile } from "@/lib/proofdiveTypes";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 import {
@@ -49,36 +54,39 @@ import { COMPETENCY_SPECS, type CompetencyId } from "@/lib/storyboardDraft";
 /**
  * Onboarding flow — four named steps, import-first:
  *
- *   1. Your background — resume drop (parse → confirm) or three quick taps.
+ *   1. Your background — resume drop (parse → confirm) or skip; no substitute questionnaire.
  *      Import demotes the old questionnaire: the resume answers role, stage,
  *      years, employer, and industry in one gesture.
  *   2. Target — what they're preparing for + the job posting (paste the real
  *      one; generation is an explained fallback).
- *   3. Assessment plan — inferred Core Four with reasoning, swap-any.
+ *   3. Focus areas — inferred Core Four with reasoning, swap-any.
  *   4. First session — the session contract, then straight into value.
  */
 type Stage =
+  | "welcome"
   | "bgEntry"
   | "bgParsing"
   | "bgFailed"
   | "bgConfirm"
-  | "bgRole"
   | "bgExp"
-  | "bgIndustry"
+  | "bgStudy"
   | "targetRole"
+  | "targetIndustry"
   | "targetJd"
   | "plan"
   | "session";
 
 const STAGE_STEP: Record<Stage, number> = {
+  // `welcome` sits before the numbered steps; its header is hidden.
+  welcome: 0,
   bgEntry: 0,
   bgParsing: 0,
   bgFailed: 0,
   bgConfirm: 0,
-  bgRole: 0,
   bgExp: 0,
-  bgIndustry: 0,
+  bgStudy: 0,
   targetRole: 1,
+  targetIndustry: 1,
   targetJd: 1,
   plan: 2,
   session: 3,
@@ -119,6 +127,18 @@ const SUGGESTED_ROLES = [
 ];
 
 const INDUSTRY_OPTIONS = ["Technology", "Finance", "Healthcare", "Retail"];
+
+/** Fields of study for the student / new-grad path. A degree is the background
+ * signal they actually have; asking them to name a role here would force a
+ * decision they may not have made yet, and the Target step asks for it anyway. */
+const FIELD_OF_STUDY_OPTIONS = [
+  "Computer Science",
+  "Software Engineering",
+  "Business",
+  "Design",
+  "Engineering",
+  "Data Science",
+];
 
 const EXPERIENCE_OPTIONS = [
   { id: "student", label: "Student" },
@@ -247,9 +267,9 @@ function initialStage(
   isNewRoleMode: boolean,
 ): Stage {
   if (isNewRoleMode) return "targetRole";
-  if (isEditMode) return "bgRole";
+  if (isEditMode) return "bgExp";
   if (profile?.targetRole?.trim()) return "session";
-  return "bgEntry";
+  return "welcome";
 }
 
 function initialDraft(
@@ -319,6 +339,16 @@ function OnboardingAgentInner({
 }) {
   const faq = useFaqAssistant();
 
+  /** First name from the saved profile or the sign-up identity (social
+   * providers hand us one; the email form derives it). Read after mount so
+   * the server and first client render agree. */
+  const [greetingName, setGreetingName] = useState("");
+  useEffect(() => {
+    setGreetingName(
+      firstNameOf(roleProfile?.name ?? readAuthIdentity()?.name ?? ""),
+    );
+  }, [roleProfile?.name]);
+
   /** The role title being edited, captured before any in-flow rename, so the
    * matching `savedRoles` entry gets replaced in place rather than duplicated. */
   const originalTitleRef = useRef(roleProfile?.targetRole ?? "");
@@ -334,8 +364,16 @@ function OnboardingAgentInner({
   /** Testing-only A/B for the entry screen's upload affordance: 1 = mid-canvas
    * drop card, 2 = guided upload strip docked above the composer. Switched via
    * the tiny "view option" links; not production UI. */
-  const [entryVariant, setEntryVariant] = useState<1 | 2>(1);
   const [uploadHintDismissed, setUploadHintDismissed] = useState(false);
+  // Orb inputs — the composer's focus/text are read via capture events on
+  // the dock (no changes to the shared composer). Step-1 screens only.
+  const [composerFocused, setComposerFocused] = useState(false);
+  const [composerHasText, setComposerHasText] = useState(false);
+  /** Bumped on every composer input event; the orb's animation loop reads it
+   * each frame and turns the bump RATE into wave energy. A ref, never state:
+   * re-rendering mid-keystroke re-commits the controlled input and drops the
+   * character (see the composer capture-handler note below). */
+  const composerPulseRef = useRef(0);
   const [parsed, setParsed] = useState<ParsedResume | null>(null);
   const [parsePhase, setParsePhase] = useState(0);
   const [parseFile, setParseFile] = useState<{ name: string; sizeKb: number } | null>(null);
@@ -345,6 +383,11 @@ function OnboardingAgentInner({
   );
   const [manualExp, setManualExp] = useState<ExperienceId | "">(
     isEditMode ? experienceIdFromProfile(roleProfile) : "",
+  );
+  /** The background answer: field of study for students / new grads, most
+   * recent employer for experienced users. */
+  const [manualStudy, setManualStudy] = useState(
+    isEditMode ? (roleProfile?.education ?? roleProfile?.lastWorkedAt ?? "") : "",
   );
   const [manualIndustry, setManualIndustry] = useState(
     isEditMode ? (roleProfile?.industryVertical ?? "") : "",
@@ -362,6 +405,15 @@ function OnboardingAgentInner({
 
   // --- Step 3 state ---------------------------------------------------
   const [coreFourError, setCoreFourError] = useState<string | null>(null);
+
+  // Stage changes remount the composer, so stale focus/text signals must
+  // clear with it (render-time adjust, per React's derived-state pattern).
+  const [orbStage, setOrbStage] = useState(stage);
+  if (orbStage !== stage) {
+    setOrbStage(stage);
+    setComposerFocused(false);
+    setComposerHasText(false);
+  }
 
   function clearTimers() {
     for (const t of timersRef.current) window.clearTimeout(t);
@@ -424,7 +476,7 @@ function OnboardingAgentInner({
       targetRole: next.targetRole.trim() || parsed.role,
       lastWorkedAt: parsed.employer,
       industryVertical: parsed.industry,
-      background: `${parsed.role} at ${parsed.employer} — ${parsed.years} years. Highlights: ${parsed.skills.join(", ")}.`,
+      background: `${parsed.role} at ${parsed.employer}, ${parsed.years} years. Highlights: ${parsed.skills.join(", ")}.`,
       resume: parseFile ? `📎 ${parseFile.name}` : next.resume,
     };
     setDraft(next);
@@ -467,11 +519,11 @@ function OnboardingAgentInner({
         ...d,
         background: d.background ? `${d.background}\n${cleaned}` : cleaned,
       }));
-      setConfirmNote("Noted — I've added that to your background.");
+      setConfirmNote("Noted. I've added that to your background.");
       return;
     }
     setParsed(next);
-    setConfirmNote("Updated — anything else?");
+    setConfirmNote("Updated. Anything else?");
   }
 
   // --- Step 1: manual path — one question per screen ----------------------
@@ -479,17 +531,25 @@ function OnboardingAgentInner({
   /** Finishes the manual path from explicit values (state setters are async,
    * so auto-advance handlers pass what they just chose). */
   function finishManual(
-    role: string,
-    expId: ExperienceId,
+    expId: ExperienceId | "",
+    study: string,
     industry: string,
     skipped: boolean,
   ) {
-    let next = applyExperienceId(draft, expId);
+    const studying = expId === "student" || expId === "new_grad";
+    const detail = study.trim();
+    // No experience answer (free text that never mentioned one) leaves the
+    // draft's own values alone rather than guessing a seniority.
+    let next = expId ? applyExperienceId(draft, expId) : draft;
     next = {
       ...next,
-      targetRole: next.targetRole.trim() || role.trim(),
+      // The role belongs to the Target step; anything parsed out of the
+      // free-text shortcut only pre-fills it.
+      targetRole: next.targetRole.trim() || manualRole.trim(),
+      education: studying ? detail : next.education,
+      lastWorkedAt: studying ? next.lastWorkedAt : detail,
       industryVertical: skipped ? "" : industry,
-      background: `${role.trim()}${industry && !skipped ? ` · ${industry}` : ""}`,
+      background: [detail, skipped ? "" : industry].filter(Boolean).join(" · "),
     };
     setDraft(next);
     setStage("targetRole");
@@ -498,10 +558,11 @@ function OnboardingAgentInner({
   /** Free-text shortcut — "senior UX designer, 6 years, fintech" fills every
    * question it can answer and lands on the first one still open (or straight
    * through when nothing is left to ask). */
-  function applyManualText(text: string) {
+  function applyManualText(text: string, finishNow = false) {
     const parsedText = parseBackgroundText(text);
     const role = parsedText.role || manualRole;
     const expId = parsedText.expId || manualExp;
+    const study = manualStudy;
     const industry = parsedText.industry || manualIndustry;
     const skipped = parsedText.industry ? false : industrySkipped;
 
@@ -512,47 +573,52 @@ function OnboardingAgentInner({
       setIndustrySkipped(false);
     }
 
-    if (role.trim().length < 2) {
-      setStage("bgRole");
+    // From the entry screen there is no questionnaire to fall into: keep
+    // whatever the sentence gave us and move to the target.
+    if (finishNow) {
+      finishManual(expId, study, industry, skipped);
       return;
     }
     if (!expId) {
       setStage("bgExp");
       return;
     }
-    if (!industry && !skipped) {
-      setStage("bgIndustry");
+    if (study.trim().length < 2) {
+      setStage("bgStudy");
       return;
     }
-    finishManual(role, expId as ExperienceId, industry, skipped);
-  }
-
-  function chooseRole(role: string) {
-    setManualRole(role);
-    setStage("bgExp");
+    finishManual(expId as ExperienceId, study, industry, skipped);
   }
 
   function chooseExperience(expId: ExperienceId) {
     setManualExp(expId);
-    setStage("bgIndustry");
+    setStage("bgStudy");
   }
 
+  function chooseStudy(value: string) {
+    setManualStudy(value);
+    finishManual(manualExp as ExperienceId, value, manualIndustry, industrySkipped);
+  }
+
+  /** Industry now belongs to the target step — it describes the job being
+   * prepared for, not the user's history. */
   function chooseIndustry(industry: string, skipped: boolean) {
     setManualIndustry(skipped ? "" : industry);
     setIndustrySkipped(skipped);
-    finishManual(manualRole, manualExp as ExperienceId, skipped ? "" : industry, skipped);
+    setDraft((d) => ({ ...d, industryVertical: skipped ? "" : industry }));
+    setStage("targetJd");
   }
 
-  /** Role chips for the manual path — suggestions plus any custom value the
-   * user already typed or that came from a parsed resume. */
-  const roleChips = useMemo(() => {
-    const chips = [...SUGGESTED_ROLES];
-    const current = manualRole.trim();
+  /** Study chips for the student / new-grad path — suggested fields plus any
+   * custom value the user already typed or that came from a parsed resume. */
+  const studyChips = useMemo(() => {
+    const chips = [...FIELD_OF_STUDY_OPTIONS];
+    const current = manualStudy.trim();
     if (current && !chips.some((c) => c.toLowerCase() === current.toLowerCase())) {
       chips.unshift(current);
     }
     return chips.slice(0, 6);
-  }, [manualRole]);
+  }, [manualStudy]);
 
   // --- Step 2: target + job posting --------------------------------------
 
@@ -702,17 +768,19 @@ function OnboardingAgentInner({
       case "bgFailed":
       case "bgConfirm":
         return "bgEntry";
-      case "bgRole":
-        return isEditMode ? null : "bgEntry";
+      case "bgEntry":
+        return "welcome";
       case "bgExp":
-        return "bgRole";
-      case "bgIndustry":
+        return isEditMode ? null : "bgEntry";
+      case "bgStudy":
         return "bgExp";
       case "targetRole":
         if (isNewRoleMode) return null;
-        return parsed ? "bgConfirm" : "bgIndustry";
-      case "targetJd":
+        return parsed ? "bgConfirm" : "bgStudy";
+      case "targetIndustry":
         return "targetRole";
+      case "targetJd":
+        return "targetIndustry";
       case "plan":
         return "targetJd";
       case "session":
@@ -742,13 +810,19 @@ function OnboardingAgentInner({
     switch (stage) {
       case "bgEntry":
       case "bgFailed":
-      case "bgRole":
+        applyManualText(cleaned, true);
+        return;
       case "bgExp":
-      case "bgIndustry":
         applyManualText(cleaned);
+        return;
+      case "bgStudy":
+        chooseStudy(cleaned);
         return;
       case "bgConfirm":
         applyCorrection(cleaned);
+        return;
+      case "targetIndustry":
+        chooseIndustry(cleaned, false);
         return;
       case "targetRole": {
         // A long or multi-line answer is a pasted posting (power shortcut —
@@ -757,7 +831,7 @@ function OnboardingAgentInner({
           acceptJobDescription(cleaned, "user");
         } else {
           setDraft((d) => ({ ...d, targetRole: cleaned }));
-          setStage("targetJd");
+          setStage("targetIndustry");
         }
         return;
       }
@@ -788,83 +862,120 @@ function OnboardingAgentInner({
     startParsing(file);
   }
 
+  /** Students / new grads answer with a field of study; everyone else with
+   * where they have been working. Drives the background question's copy. */
+  const studyingPath = manualExp === "student" || manualExp === "new_grad";
+
   const composerPlaceholder: string =
     stage === "bgEntry"
-      ? 'Or just tell me — "senior UX designer, 6 years, fintech"…'
+      ? 'Or just tell me: "senior UX designer, 6 years, fintech"…'
       : stage === "bgParsing"
         ? "One moment…"
         : stage === "bgFailed"
           ? "Or describe your background in a sentence…"
           : stage === "bgConfirm"
-            ? 'Anything to correct? Just type it — "actually 7 years"…'
-            : stage === "bgRole"
-              ? 'Or type your role — "senior UX designer"…'
-              : stage === "bgExp"
-                ? 'Or tell me — "6 years"…'
-                : stage === "bgIndustry"
-                  ? 'Or type your industry — "fintech"…'
-                  : stage === "targetRole"
-                    ? 'Or type your target role — "senior UX designer"…'
+            ? 'Anything to correct? Just type it: "actually 7 years"…'
+            : stage === "bgExp"
+              ? 'Or tell me: "6 years"…'
+              : stage === "bgStudy"
+                ? studyingPath
+                  ? 'Or type your field: "Computer Science"…'
+                  : 'Type your company: "Acme"…'
+                : stage === "targetRole"
+                  ? 'Or type your target role: "senior UX designer"…'
+                  : stage === "targetIndustry"
+                    ? 'Or type the industry: "fintech"…'
                     : stage === "targetJd"
                       ? generatedJdDraft
-                        ? "Paste the real posting here — it replaces the draft…"
+                        ? "Paste the real posting here to replace the draft…"
                         : "Paste the job posting here…"
                       : stage === "plan"
                   ? "Confirm your selection above to continue"
                   : faq.isFaqMode
-                    ? "I am here to help you!"
-                    : "Questions? Ask away";
+                    ? "I'm here to help."
+                    : "Questions? Ask anytime";
 
   const prompt: string =
-    stage === "bgEntry"
-      ? "Welcome to ProofDive.\n\nDrop your resume and skip the questionnaire — I'll read your background, and you'll confirm everything before it sticks."
-      : stage === "bgParsing"
-        ? "Reading your resume…"
-        : stage === "bgFailed"
-          ? "Hmm — I couldn't read that file.\n\nScanned or image-based resumes trip me up. A text-based PDF or DOCX works best — or skip the file entirely."
-          : stage === "bgConfirm"
-            ? `Here's what I read — look right?\n\n${confirmNote ?? "Confirm it and the questionnaire is done."}`
-            : stage === "bgRole"
-              ? "What role fits you best?\n\nYour questions are built around it — tap one, or type your own below."
-              : stage === "bgExp"
-                ? `How far along are you?\n\n${manualRole.trim() ? `${manualRole.trim()} — noted. ` : ""}This sets the level your session is pitched at.`
-                : stage === "bgIndustry"
-                  ? "Last one — any industry flavor?\n\nOptional. It sharpens your scenario wording; skip if nothing fits."
-                  : stage === "targetRole"
-                    ? "What are you preparing for?\n\nYour sessions are built and scored against this target — tap a role, or type your own below."
+    stage === "welcome"
+      ? `${greetingName ? `Welcome, ${greetingName}.` : "Welcome to ProofDive."}\n\nProofDive turns your real experience into interview-ready proof: you practice, and every answer is scored against the four Success Drivers so you can see exactly what to improve. Setting up takes about a minute.`
+      : stage === "bgEntry"
+        ? "Let's start with your resume.\n\nI'll read your role, experience, and industry from it, so everything ahead is built on your real background instead of guesswork. You'll review and confirm it all before it's saved."
+        : stage === "bgParsing"
+          ? "Reading your resume…"
+          : stage === "bgFailed"
+            ? "I couldn't read that file.\n\nScanned or image-based resumes are hard to read. A text-based PDF or DOCX works best, or skip this step."
+            : stage === "bgConfirm"
+            ? `Here's what I read. Does this look correct?\n\n${confirmNote ?? "Confirm it and the questionnaire is done."}`
+            : stage === "bgExp"
+              ? "How far along are you?\n\nThis sets the level your session is pitched at, so select the one that fits."
+              : stage === "bgStudy"
+                ? studyingPath
+                  ? "What did you study?\n\nYour field gives me context for the examples I ask about, so select one or type your own below."
+                  : "Where have you been working?\n\nYour most recent company gives me context for the examples I ask about. Type it below."
+                : stage === "targetRole"
+                  ? "What are you preparing for?\n\nYour sessions are built and scored against this target, so select a role or type your own below."
+                  : stage === "targetIndustry"
+                    ? "Which industry are you targeting?\n\nIt sharpens the scenarios and the wording of your questions. Skip if nothing fits."
                     : stage === "targetJd"
                       ? isGeneratingJd
                         ? "Drafting a posting from your background…"
                         : generatedJdDraft
-                          ? "Here's a draft to work from.\n\nReview it like an interviewer would — swap in the real posting whenever you have it."
-                          : `${draft.targetRole.trim() || "That role"} — locked in.\n\nHave the job posting? Paste it below — it shapes the questions and how the evidence is assessed.`
+                          ? "Here's a draft to work from.\n\nReview it as an interviewer would, and replace it with the real posting whenever you have one."
+                          : `Target set: ${draft.targetRole.trim() || "your role"}.\n\nDo you have the job posting? Paste it below. It shapes the questions and how the evidence is assessed.`
                       : stage === "plan"
-                  ? "Your assessment plan.\n\nFour competencies from your role and posting — enough to keep your first Storyboard focused. Swap any before you confirm."
-                  : `You're set${draft.name.trim() ? `, ${draft.name.trim()}` : ""}.\n\nHere's how your first session works — no surprises.`;
+                  ? "Here's the plan I'd start with.\n\nFour competencies, one per Success Driver, selected from your role and posting to keep your first Storyboard focused. You can change any before you confirm."
+                  : `You're set${greetingName ? `, ${greetingName}` : ""}.\n\nHere's your path to a strong ${draft.targetRole.trim() ? `${draft.targetRole.trim()} interview` : "interview"}. Prepare at your own pace, or begin your first session now.`;
 
   const promptKey = `${stage}-${stage === "targetJd" ? (generatedJdDraft ? "ready" : isGeneratingJd ? "gen" : "ask") : ""}-${confirmNote ?? ""}`;
 
   /** Sub-question position within the current step, shown above the heading
    * so the user always knows where they are inside a multi-question step. */
   const microStep: { index: number; total: number } | null =
-    stage === "bgRole"
-      ? { index: 0, total: 3 }
-      : stage === "bgExp"
-        ? { index: 1, total: 3 }
-        : stage === "bgIndustry"
-          ? { index: 2, total: 3 }
-          : stage === "targetRole"
-            ? { index: 0, total: 2 }
+    stage === "bgExp"
+      ? { index: 0, total: 2 }
+      : stage === "bgStudy"
+        ? { index: 1, total: 2 }
+        : stage === "targetRole"
+          ? { index: 0, total: 3 }
+          : stage === "targetIndustry"
+            ? { index: 1, total: 3 }
             : stage === "targetJd"
-              ? { index: 1, total: 2 }
+              ? { index: 2, total: 3 }
               : null;
 
   const composerDisabled = stage === "bgParsing" || stage === "plan" || isEditingJd;
   const showUpload =
     (stage === "bgEntry" || stage === "bgFailed" || stage === "targetRole" || stage === "targetJd") && !isEditingJd;
 
-  const pageDropActive = stage === "bgEntry" && entryVariant === 2;
-  const composerGuidesUpload = stage === "bgEntry" && entryVariant === 2;
+  // The composer's labeled attach control is the upload path, with
+  // page-wide drop while on the entry screen.
+  const pageDropActive = stage === "bgEntry";
+  const composerGuidesUpload = stage === "bgEntry";
+
+  /* AI orb (step 1 only): the liquid-glass sphere behind the chat
+   * bar reflects what the AI is doing — parsing a resume reads as thinking,
+   * an unreadable file as error; otherwise it mirrors the user's engagement
+   * with the composer. Later steps keep the plain composer for comparison. */
+  const showOrb =
+    stage === "bgEntry" || stage === "bgParsing" || stage === "bgFailed";
+  /* Ambient AI signal, handed between two visuals so there is only ever one:
+   * at rest the composer's rim glow travels around the chat bar; the moment
+   * the user engages the chat (focus, or text still in it) the glow fades and
+   * the orb rises out of the bar in its place. Parsing / failure own the orb
+   * outright. The welcome moment carries neither — it stays clean. */
+  const composerEngaged = composerFocused || composerHasText;
+  const orbVisible =
+    stage === "bgParsing" || stage === "bgFailed" || composerEngaged;
+  const orbState: AiOrbState =
+    stage === "bgParsing"
+      ? "thinking"
+      : stage === "bgFailed"
+        ? "error"
+        : composerHasText
+          ? "typing"
+          : composerFocused
+            ? "attentive"
+            : "idle";
 
   /** "Role · seniority · industry" provenance chips, shared by the generated
    * spec panel (Built from) and the assessment plan (Plan matched to). */
@@ -882,7 +993,7 @@ function OnboardingAgentInner({
 
   return (
     <div
-      className="app-canvas app-canvas--motif relative flex h-dvh w-full flex-col overflow-hidden"
+      className="app-canvas app-canvas--plain relative flex h-dvh w-full flex-col overflow-hidden"
       onDragOver={
         pageDropActive
           ? (e) => {
@@ -923,8 +1034,23 @@ function OnboardingAgentInner({
         }}
       />
 
+      {/* Guide video, plan step only: parked in the bottom-left corner of the
+          viewport so it stays put while the plan scrolls — present for the
+          whole decision without touching the reading path. Below min-[1360px]
+          the in-flow header-row card takes over. */}
+      {stage === "plan" ? (
+        <div className="fixed bottom-10 left-6 z-20 hidden w-[232px] min-[1360px]:block">
+          <SuccessDriversGuideCard />
+        </div>
+      ) : null}
+
       <div className="relative z-[2] mx-auto flex min-h-0 w-[800px] max-w-full flex-1 flex-col px-6">
-        <div className="shrink-0 bg-transparent pt-4">
+        <div
+          className={cn(
+            "shrink-0 bg-transparent pt-4",
+            stage === "welcome" && "invisible",
+          )}
+        >
           <OnboardingProgressHeader
             currentIndex={STAGE_STEP[stage]}
             onBack={backTarget ? goBack : undefined}
@@ -939,40 +1065,62 @@ function OnboardingAgentInner({
                   Question {microStep.index + 1} of {microStep.total}
                 </div>
               ) : null}
-              <AgentPrompt
-                key={promptKey}
-                promptKey={promptKey}
-                prompt={prompt}
-                ariaLabel="Onboarding prompt"
-                headingClassName="text-agent-heading text-heading-teal"
-                subtextClassName="mt-3 text-agent-question text-text-primary"
-                mode="word"
-              />
+              {/* On the plan step the guide sits beside the heading —
+                  offered where the decision starts, without a full-width
+                  banner above the cards. */}
+              <div
+                className={cn(
+                  stage === "plan" &&
+                    "flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-10",
+                )}
+              >
+                <div className={cn(stage === "plan" && "min-w-0 flex-1")}>
+                  <AgentPrompt
+                    key={promptKey}
+                    promptKey={promptKey}
+                    prompt={prompt}
+                    ariaLabel="Onboarding prompt"
+                    headingClassName="text-agent-heading text-heading-teal"
+                    subtextClassName="mt-3 text-agent-question text-text-primary"
+                    mode="word"
+                  />
+                </div>
+                {stage === "plan" ? (
+                  <SuccessDriversGuideCard className="w-full max-w-[280px] shrink-0 sm:mt-1 sm:w-[232px] min-[1360px]:hidden" />
+                ) : null}
+              </div>
 
+              {stage === "welcome" ? (
+                <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <Button
+                    type="button"
+                    size="lg"
+                    onClick={() => setStage("bgEntry")}
+                    className="h-11 gap-2 rounded-md px-5 text-body-sm font-medium"
+                  >
+                    Let&apos;s get started
+                    <ArrowRight className="size-4" aria-hidden />
+                  </Button>
+                  <span className="text-caption text-text-secondary">
+                    About a minute · you can change anything later
+                  </span>
+                </div>
+              ) : null}
+
+              {/* No resume, no substitute questionnaire: the only alternative
+                  is to skip, using the same chip control the flow's other
+                  optional question uses. */}
               {stage === "bgEntry" ? (
-                entryVariant === 1 ? (
-                  <>
-                    <BackgroundEntry
-                      onPickFile={() => fileInputRef.current?.click()}
-                      onDropFile={startParsing}
-                      onManual={() => setStage("bgRole")}
-                    />
-                    <EntryVariantToggle other={2} onSwitch={() => setEntryVariant(2)} />
-                  </>
-                ) : (
-                  <>
-                    <div className="mt-8">
-                      <button
-                        type="button"
-                        onClick={() => setStage("bgRole")}
-                        className="text-body-sm font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                      >
-                        No resume handy? Answer 3 quick questions instead →
-                      </button>
-                    </div>
-                    <EntryVariantToggle other={1} onSwitch={() => setEntryVariant(1)} />
-                  </>
-                )
+                <div className="mt-8 flex flex-col gap-2">
+                  <span className="text-body-sm font-semibold text-text-secondary">
+                    No resume?
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    <SelectionChip onClick={() => setStage("targetRole")}>
+                      Skip
+                    </SelectionChip>
+                  </div>
+                </div>
               ) : null}
 
               {stage === "bgParsing" && parseFile ? (
@@ -995,14 +1143,14 @@ function OnboardingAgentInner({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setStage("bgRole")}
+                    onClick={() => setStage("targetRole")}
                     className="rounded-xl border border-border bg-card p-5 text-left transition hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                   >
                     <span className="block text-h5 font-medium text-foreground">
-                      Answer 3 quick questions
+                      Skip
                     </span>
                     <span className="mt-1 block text-caption text-text-secondary">
-                      Role, experience, industry — under a minute
+                      Continue without a resume
                     </span>
                   </button>
                 </div>
@@ -1015,24 +1163,11 @@ function OnboardingAgentInner({
                   onEdit={() => {
                     setManualRole(parsed.role);
                     setManualExp(experienceIdFromYears(parsed.years));
+                    setManualStudy(parsed.employer);
                     setManualIndustry(parsed.industry);
                     setIndustrySkipped(false);
-                    setStage("bgRole");
+                    setStage("bgExp");
                   }}
-                />
-              ) : null}
-
-              {stage === "bgRole" ? (
-                <ManualQuestion
-                  chipsLabel="Popular roles"
-                  chips={roleChips}
-                  selectedLabel={manualRole}
-                  onPick={chooseRole}
-                  trailing={
-                    <span className="inline-flex h-9 items-center rounded-full border border-dashed border-[#adddda] px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
-                      Type any role below ↓
-                    </span>
-                  }
                 />
               ) : null}
 
@@ -1050,9 +1185,37 @@ function OnboardingAgentInner({
                 />
               ) : null}
 
-              {stage === "bgIndustry" ? (
+              {stage === "bgStudy" ? (
+                studyingPath ? (
+                  <ManualQuestion
+                    chipsLabel="Popular fields"
+                    chips={studyChips}
+                    selectedLabel={manualStudy}
+                    onPick={chooseStudy}
+                    trailing={
+                      <span className="inline-flex h-9 items-center rounded-full border border-dashed border-[#adddda] px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
+                        Type any field below ↓
+                      </span>
+                    }
+                  />
+                ) : (
+                  <ManualQuestion
+                    chipsLabel="Type your most recent company"
+                    chips={[]}
+                    selectedLabel={manualStudy}
+                    onPick={chooseStudy}
+                    trailing={
+                      <span className="inline-flex h-9 items-center rounded-full border border-dashed border-[#adddda] px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
+                        Type it below ↓
+                      </span>
+                    }
+                  />
+                )
+              ) : null}
+
+              {stage === "targetIndustry" ? (
                 <ManualQuestion
-                  chipsLabel="Optional — pick one or skip"
+                  chipsLabel="Optional: pick one or skip"
                   chips={INDUSTRY_OPTIONS}
                   selectedLabel={industrySkipped ? "" : manualIndustry}
                   onPick={(label) => chooseIndustry(label, false)}
@@ -1074,7 +1237,7 @@ function OnboardingAgentInner({
                   selectedLabel={draft.targetRole}
                   onPick={(r) => {
                     setDraft((d) => ({ ...d, targetRole: r }));
-                    setStage("targetJd");
+                    setStage("targetIndustry");
                   }}
                   trailing={
                     <span className="inline-flex h-9 items-center rounded-full border border-dashed border-[#adddda] px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
@@ -1100,7 +1263,7 @@ function OnboardingAgentInner({
                           onClick={handleGenerateJd}
                           className="inline-flex items-center gap-1 text-body-sm font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                         >
-                          No posting handy? Draft one from your background
+                          Don't have the posting? Draft one from your background
                           <ArrowRight className="size-[0.8em] shrink-0 text-primary" aria-hidden />
                         </button>
                       </div>
@@ -1145,23 +1308,70 @@ function OnboardingAgentInner({
               ) : null}
 
               {stage === "session" ? (
-                <SessionContract homeHref={homeHref} />
+                <SessionContract
+                  homeHref={homeHref}
+                  targetRole={draft.targetRole}
+                  focusTitles={draft.coreFourCompetencies
+                    .map(
+                      (id) =>
+                        COMPETENCY_SPECS.find((s) => s.id === id)?.title ?? "",
+                    )
+                    .filter(Boolean)}
+                />
               ) : null}
             </div>
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 z-40 w-full">
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40 w-full"
+          // These capture handlers only feed the ambient orb (focus / has-text).
+          // They MUST be deferred out of the event: a synchronous re-render
+          // during a keystroke re-commits the controlled input's `value` while
+          // its onChange is still in flight, resetting React's value tracker and
+          // dropping the character (the first keystroke, or many when typing
+          // fast). Deferring lets the composer commit its own onChange first.
+          onFocusCapture={(e) => {
+            if ((e.target as HTMLElement).matches?.("input, textarea")) {
+              setTimeout(() => setComposerFocused(true), 0);
+            }
+          }}
+          onBlurCapture={(e) => {
+            if ((e.target as HTMLElement).matches?.("input, textarea")) {
+              setTimeout(() => setComposerFocused(false), 0);
+            }
+          }}
+          onInputCapture={(e) => {
+            const t = e.target as HTMLInputElement;
+            if (t.matches?.("input, textarea")) {
+              // Ref bump = no re-render, safe to run synchronously.
+              composerPulseRef.current += 1;
+              const hasText = Boolean(t.value?.trim());
+              setTimeout(() => setComposerHasText(hasText), 0);
+            }
+          }}
+        >
+          {showOrb ? (
+            <AiOrb
+              state={orbState}
+              visible={orbVisible}
+              pulseRef={composerPulseRef}
+            />
+          ) : null}
           <div className="mx-auto flex w-full max-w-[800px] flex-col gap-2 px-6 py-5">
             {composerGuidesUpload && !uploadHintDismissed ? (
-              <div className="flex justify-end pr-16">
+              /* Coach mark centered over the "Upload resume" pill, arrow at
+                 the bubble's own center — one straight line from bubble to
+                 arrow to pill. The 34px inset = (pill center from the
+                 composer's right edge, 162px) − half the 256px bubble. */
+              <div className="flex justify-end pr-[34px]">
                 <div
                   role="status"
                   className="relative w-64 rounded-xl border border-border bg-card p-3 pr-8 shadow-[0_12px_32px_-16px_rgba(4,32,39,0.35)]"
                 >
                   <p className="text-caption leading-snug text-text-primary">
-                    <strong className="font-semibold">Add your resume here</strong>{" "}
-                    — PDF or DOCX, up to 10 MB. Or drop it anywhere on this
+                    <strong className="font-semibold">Add your resume here.</strong>{" "}
+                    PDF or DOCX, up to 10 MB. Or drop it anywhere on this
                     page.
                   </p>
                   <button
@@ -1174,11 +1384,13 @@ function OnboardingAgentInner({
                   </button>
                   <span
                     aria-hidden
-                    className="absolute -bottom-1 right-8 size-2 rotate-45 border-b border-r border-border bg-card"
+                    className="absolute -bottom-1 left-1/2 size-2 -translate-x-1/2 rotate-45 border-b border-r border-border bg-card"
                   />
                 </div>
               </div>
             ) : null}
+            {/* The welcome moment is a single CTA — no input to type into. */}
+            {stage === "welcome" ? null : (
             <ChatComposer
               key={stage}
               placeholder={composerPlaceholder}
@@ -1188,6 +1400,11 @@ function OnboardingAgentInner({
               onUpload={handleUpload}
               showUploadButton={showUpload}
               uploadLabel={composerGuidesUpload ? "Upload resume" : undefined}
+              // One ambient AI signal per screen. The rim glow is the resting
+              // state everywhere; on the orb screens it fades out as the orb
+              // takes over (see `orbVisible`), so the two never run together.
+              aiGlow
+              aiGlowMuted={showOrb && orbVisible}
               backgroundGlowIntensity="full"
               modeToggle={
                 stage === "session"
@@ -1216,6 +1433,7 @@ function OnboardingAgentInner({
               }
               threadHeaderTitle="AI Assistant"
             />
+            )}
           </div>
         </div>
       </div>
@@ -1226,93 +1444,6 @@ function OnboardingAgentInner({
 // ---------------------------------------------------------------------------
 // Step 1 pieces
 // ---------------------------------------------------------------------------
-
-function BackgroundEntry({
-  onPickFile,
-  onDropFile,
-  onManual,
-}: {
-  onPickFile: () => void;
-  onDropFile: (file: File) => void;
-  onManual: () => void;
-}) {
-  const [isDragging, setIsDragging] = useState(false);
-
-  return (
-    <div className="mt-8 flex w-full flex-col gap-4">
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label="Upload your resume — PDF or DOCX, up to 10 megabytes"
-        onClick={onPickFile}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onPickFile();
-          }
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setIsDragging(false);
-          const file = e.dataTransfer.files?.[0];
-          if (file) onDropFile(file);
-        }}
-        className={cn(
-          "flex cursor-pointer items-center gap-4 rounded-xl border-2 border-dashed px-5 py-4 transition focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-          isDragging
-            ? "border-primary bg-brand-1000"
-            : "border-brand-400 bg-card/60 hover:bg-card",
-        )}
-      >
-        <UploadCloud className="size-6 shrink-0 text-primary" aria-hidden />
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-body-sm font-medium text-foreground">
-            Drop your resume here, or click to browse
-          </span>
-          <span className="text-caption text-text-secondary">
-            PDF or DOCX, up to 10 MB · stays private, used only to tailor your
-            questions
-          </span>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={onManual}
-        className="self-start text-body-sm font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-      >
-        No resume handy? Answer 3 quick questions instead →
-      </button>
-    </div>
-  );
-}
-
-/** Testing-only switch between the two entry-screen upload treatments —
- * styled like the other testing scaffolding, not production UI. */
-function EntryVariantToggle({
-  other,
-  onSwitch,
-}: {
-  other: 1 | 2;
-  onSwitch: () => void;
-}) {
-  return (
-    <div className="mt-6">
-      <button
-        type="button"
-        onClick={onSwitch}
-        className="text-overline text-gray-500 underline decoration-black/30 underline-offset-4 transition hover:text-gray-600"
-      >
-        Testing: view upload option {other} →
-      </button>
-    </div>
-  );
-}
 
 function ParsingProgress({
   file,
@@ -1384,8 +1515,8 @@ function ParsingProgress({
           />
         </div>
         <p className="text-caption text-text-secondary">
-          Usually under 20 seconds — you&apos;ll confirm everything before it
-          sticks.
+          Usually under 20 seconds. You&apos;ll confirm everything before it
+          is saved.
         </p>
       </div>
     </div>
@@ -1480,55 +1611,119 @@ function ManualQuestion({
 // Step 4 — session contract
 // ---------------------------------------------------------------------------
 
-const CONTRACT_ITEMS = [
-  {
-    icon: Timer,
-    text: "3 questions, about 8 minutes — built around your background",
-  },
-  {
-    icon: PauseCircle,
-    text: "Pause anytime; skip or retry any question — you won't lose progress",
-  },
-  {
-    icon: Mic,
-    text: "Voice or text — your choice when the session starts",
-  },
-  {
-    icon: FileText,
-    text: "Ends with your first proof report: a score, one strength, one fix",
-  },
+/** Cross-cutting promises that hold in every module — the "no surprises"
+ * reassurance the original contract card carried, kept as a compact strip so
+ * it supports the cards instead of competing with them. */
+const SESSION_PROMISES = [
+  { icon: PauseCircle, text: "Pause anytime; skip or retry without losing progress" },
+  { icon: Mic, text: "Voice or text, your choice" },
+  { icon: FileText, text: "Every session ends with a proof report" },
 ];
 
-function SessionContract({ homeHref }: { homeHref: string }) {
+/**
+ * The three modules as module CTAs, in the order the product recommends them
+ * (see `pickRecommendedNextStep`): learn the standard, build the evidence,
+ * then perform. Each card carries only what is glanceable — a step label, a
+ * short title, and one line of "what this costs / what you get" — so the
+ * screen teaches the journey without a wall of copy. The session stays the
+ * filled teal hero it has always been.
+ */
+function journeyCards(targetRole: string, focusTitles: string[]) {
+  const role = targetRole.trim();
+  const focus =
+    focusTitles.length > 0
+      ? `${focusTitles[0]}${
+          focusTitles.length > 1 ? ` +${focusTitles.length - 1} more` : ""
+        }`
+      : "Your focus areas";
+  return [
+    {
+      href: "/training",
+      step: "Step 1",
+      icon: <GraduationCap />,
+      title: "Learn the standard",
+      subtitle: "4 Success Driver guides · ~10 min each",
+      illustrationSrc: "/brand/illustration-2.svg",
+      variant: "gray" as const,
+      wide: false,
+    },
+    {
+      href: "/storyboard",
+      step: "Step 2",
+      icon: <BookOpen />,
+      title: "Build your storyboard",
+      subtitle: `${focus} · ~15 min each`,
+      illustrationSrc: "/brand/illustration-1.svg",
+      variant: "gray" as const,
+      wide: false,
+    },
+    {
+      href: "/interview",
+      step: "Step 3",
+      icon: <UserCheck />,
+      title: "Start your first session",
+      subtitle: role
+        ? `${role} · 3 questions · ~8 minutes`
+        : "3 questions · ~8 minutes",
+      illustrationSrc: "/brand/illustration-4.svg",
+      variant: "primary" as const,
+      wide: true,
+    },
+  ];
+}
+
+function SessionContract({
+  homeHref,
+  targetRole,
+  focusTitles,
+}: {
+  homeHref: string;
+  targetRole: string;
+  focusTitles: string[];
+}) {
+  const cards = journeyCards(targetRole, focusTitles);
   return (
     <>
-      <ul className="mt-6 flex w-full flex-col gap-3 rounded-xl border border-border bg-card p-5 shadow-sm">
-        {CONTRACT_ITEMS.map(({ icon: Icon, text }) => (
-          <li key={text} className="flex items-start gap-3 text-body-sm text-foreground">
-            <Icon className="mt-0.5 size-4.5 shrink-0 text-primary" aria-hidden />
+      <div className="mt-6 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+        {cards.map((card) => (
+          <CardButton
+            key={card.href}
+            href={card.href}
+            variant={card.variant}
+            icon={card.icon}
+            title={
+              <>
+                <span
+                  className={cn(
+                    "mb-1 block text-overline font-medium tracking-[0.5px] uppercase",
+                    card.variant === "primary"
+                      ? "text-primary-foreground/75"
+                      : "text-text-secondary",
+                  )}
+                >
+                  {card.step}
+                </span>
+                {card.title}
+              </>
+            }
+            subtitle={card.subtitle}
+            illustrationSrc={card.illustrationSrc}
+            className={cn(card.wide && "sm:col-span-2")}
+          />
+        ))}
+      </div>
+
+      <ul className="mt-4 flex w-full flex-col gap-2">
+        {SESSION_PROMISES.map(({ icon: Icon, text }) => (
+          <li
+            key={text}
+            className="flex items-center gap-2 text-caption text-text-secondary"
+          >
+            <Icon className="size-4 shrink-0 text-primary" aria-hidden />
             {text}
           </li>
         ))}
       </ul>
-
-      <div className="mt-6 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
-        <CardButton
-          href="/interview"
-          variant="primary"
-          icon={<UserCheck />}
-          title="Start your first session"
-          subtitle="3 questions · ~8 minutes"
-          illustrationSrc="/brand/illustration-4.svg"
-        />
-        <CardButton
-          href="/storyboard"
-          variant="gray"
-          icon={<BookOpen />}
-          title="Build your storyboard"
-          subtitle="Turn experience into evidence first"
-          illustrationSrc="/brand/illustration-1.svg"
-        />
-      </div>
 
       <p className="mt-6 text-agent-question text-text-primary">
         Prefer to look around?{" "}

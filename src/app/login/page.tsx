@@ -75,7 +75,7 @@ export default function LoginPage() {
 
         <SocialAuthButtons
           onLinkedIn={() => continueToApp("/onboarding")}
-          onGoogle={() => continueToApp("/onboarding-v2")}
+          onGoogle={() => continueToApp("/onboarding")}
           disabled={submitting}
         />
 
