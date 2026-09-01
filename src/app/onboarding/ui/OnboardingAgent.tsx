@@ -12,6 +12,7 @@ import {
 } from "react";
 import {
   ArrowRight,
+  ArrowUpRight,
   BookOpen,
   Check,
   FileText,
@@ -19,6 +20,7 @@ import {
   MessageCircleQuestion,
   Mic,
   PauseCircle,
+  Sparkles,
   UserCheck,
   X,
 } from "lucide-react";
@@ -27,7 +29,6 @@ import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { AiOrb, type AiOrbState } from "@/components/chat/AiOrb";
 import { ChatComposer } from "@/components/chat/ChatComposer";
 import { Button } from "@/components/ui/button";
-import { CardButton } from "@/components/ui/card-button";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
 import { Logo } from "@/components/ui/logo";
 import { SelectionChip } from "@/components/ui/selection-chip";
@@ -924,7 +925,7 @@ function OnboardingAgentInner({
                           : `Target set: ${draft.targetRole.trim() || "your role"}.\n\nDo you have the job posting? Paste it below. It shapes the questions and how the evidence is assessed.`
                       : stage === "plan"
                   ? "Here's the plan I'd start with.\n\nFour competencies, one per Success Driver, selected from your role and posting to keep your first Storyboard focused. You can change any before you confirm."
-                  : `You're set${greetingName ? `, ${greetingName}` : ""}.\n\nHere's your path to a strong ${draft.targetRole.trim() ? `${draft.targetRole.trim()} interview` : "interview"}. Prepare at your own pace, or begin your first session now.`;
+                  : `You're set${greetingName ? `, ${greetingName}` : ""}.\n\nHere's a roadmap to get you started, put together from the details you shared${draft.targetRole.trim() ? ` and your ${draft.targetRole.trim()} target` : ""}. Take it in order, or start wherever you like.`;
 
   const promptKey = `${stage}-${stage === "targetJd" ? (generatedJdDraft ? "ready" : isGeneratingJd ? "gen" : "ask") : ""}-${confirmNote ?? ""}`;
 
@@ -1091,19 +1092,18 @@ function OnboardingAgentInner({
               </div>
 
               {stage === "welcome" ? (
-                <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+                <div className="mt-8">
+                  {/* Padding follows the product's trailing-arrow CTA (see the
+                      plan step's Confirm): more room on the left so the arrow
+                      does not make the right side look heavy. */}
                   <Button
                     type="button"
-                    size="lg"
                     onClick={() => setStage("bgEntry")}
-                    className="h-11 gap-2 rounded-md px-5 text-body-sm font-medium"
+                    className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium"
                   >
                     Let&apos;s get started
-                    <ArrowRight className="size-4" aria-hidden />
+                    <ArrowRight />
                   </Button>
-                  <span className="text-caption text-text-secondary">
-                    About a minute · you can change anything later
-                  </span>
                 </div>
               ) : null}
 
@@ -1621,14 +1621,13 @@ const SESSION_PROMISES = [
 ];
 
 /**
- * The three modules as module CTAs, in the order the product recommends them
- * (see `pickRecommendedNextStep`): learn the standard, build the evidence,
- * then perform. Each card carries only what is glanceable — a step label, a
- * short title, and one line of "what this costs / what you get" — so the
- * screen teaches the journey without a wall of copy. The session stays the
- * filled teal hero it has always been.
+ * The three modules as one timeline, in the order the product recommends
+ * them (see `pickRecommendedNextStep`): learn the standard, build the
+ * evidence, then perform. The rail carries the sequence, so the rows need
+ * no "Step 1/2/3" labels — and every node is entered directly, because the
+ * user is free to start anywhere.
  */
-function journeyCards(targetRole: string, focusTitles: string[]) {
+function journeySteps(targetRole: string, focusTitles: string[]) {
   const role = targetRole.trim();
   const focus =
     focusTitles.length > 0
@@ -1639,37 +1638,95 @@ function journeyCards(targetRole: string, focusTitles: string[]) {
   return [
     {
       href: "/training",
-      step: "Step 1",
-      icon: <GraduationCap />,
+      icon: GraduationCap,
       title: "Learn the standard",
-      subtitle: "4 Success Driver guides · ~10 min each",
-      illustrationSrc: "/brand/illustration-2.svg",
-      variant: "gray" as const,
-      wide: false,
+      // One glance line per node — what it costs and what it covers. The
+      // longer explanation is deliberately gone: on this screen the user is
+      // choosing where to go, not reading about it.
+      meta: "4 Success Driver guides · ~10 min each",
+      cta: "Start learning",
     },
     {
       href: "/storyboard",
-      step: "Step 2",
-      icon: <BookOpen />,
+      icon: BookOpen,
       title: "Build your storyboard",
-      subtitle: `${focus} · ~15 min each`,
-      illustrationSrc: "/brand/illustration-1.svg",
-      variant: "gray" as const,
-      wide: false,
+      meta: `${focus} · ~15 min each`,
+      cta: "Start crafting",
     },
     {
       href: "/interview",
-      step: "Step 3",
-      icon: <UserCheck />,
-      title: "Start your first session",
-      subtitle: role
-        ? `${role} · 3 questions · ~8 minutes`
-        : "3 questions · ~8 minutes",
-      illustrationSrc: "/brand/illustration-4.svg",
-      variant: "primary" as const,
-      wide: true,
+      icon: UserCheck,
+      title: "Take your first session",
+      meta: role
+        ? `${role} · 3 questions · ~8 min`
+        : "3 questions · ~8 min",
+      cta: "Start session",
     },
   ];
+}
+
+/** One node on the path. The whole row is the link, so any step can be
+ * entered directly; the labelled arrow on the right says so out loud, and
+ * the rail's connector is drawn on the row so it stretches with the copy. */
+function JourneyNode({
+  step,
+  isLast,
+}: {
+  step: ReturnType<typeof journeySteps>[number];
+  isLast: boolean;
+}) {
+  const Icon = step.icon;
+  return (
+    <li className="relative">
+      {!isLast ? (
+        <span
+          aria-hidden
+          // Runs a touch past the row so the breathing room above and below
+          // the line matches (the next row's own top padding sits in between).
+          className="absolute left-5 top-[58px] -bottom-[10px] w-px bg-border"
+        />
+      ) : null}
+      <Link
+        href={step.href}
+        className={cn(
+          "group grid grid-cols-[auto_1fr_auto] items-center gap-x-4 rounded-lg px-2 -mx-2 transition-colors",
+          "hover:bg-brand-1000/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+          isLast ? "py-3.5" : "pt-3.5 pb-9",
+        )}
+      >
+        {/* Every node looks the same: the path is a sequence, not a ranking,
+            and the user may start at any of them. */}
+        <span
+          className={cn(
+            "grid size-10 shrink-0 place-items-center self-start rounded-full transition-colors",
+            "border border-dashed border-brand-400/70 bg-card text-primary",
+            "group-hover:border-primary group-hover:bg-brand-1000",
+          )}
+          aria-hidden
+        >
+          <Icon className="size-4" />
+        </span>
+
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="text-body-sm font-semibold leading-snug text-text-primary transition-colors group-hover:text-extended-blue">
+            {step.title}
+          </span>
+          <span className="text-caption leading-snug text-text-secondary">
+            {step.meta}
+          </span>
+        </span>
+
+        {/* Says the row is a door, without waiting for a hover to say it. */}
+        <span className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-caption font-medium text-extended-dark-cyan/70 transition-colors group-hover:text-extended-dark-cyan">
+          {step.cta}
+          <ArrowUpRight
+            aria-hidden
+            className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transition-none"
+          />
+        </span>
+      </Link>
+    </li>
+  );
 }
 
 function SessionContract({
@@ -1681,36 +1738,38 @@ function SessionContract({
   targetRole: string;
   focusTitles: string[];
 }) {
-  const cards = journeyCards(targetRole, focusTitles);
+  const steps = journeySteps(targetRole, focusTitles);
   return (
     <>
-      <div className="mt-6 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
-        {cards.map((card) => (
-          <CardButton
-            key={card.href}
-            href={card.href}
-            variant={card.variant}
-            icon={card.icon}
-            title={
-              <>
-                <span
-                  className={cn(
-                    "mb-1 block text-overline font-medium tracking-[0.5px] uppercase",
-                    card.variant === "primary"
-                      ? "text-primary-foreground/75"
-                      : "text-text-secondary",
-                  )}
-                >
-                  {card.step}
-                </span>
-                {card.title}
-              </>
-            }
-            subtitle={card.subtitle}
-            illustrationSrc={card.illustrationSrc}
-            className={cn(card.wide && "sm:col-span-2")}
-          />
-        ))}
+      <div
+        className={cn(
+          "mt-6 w-full rounded-xl border-[0.5px] border-solid border-[#dde7e9] px-4 pb-3 pt-4",
+          "bg-[linear-gradient(121.89deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+        )}
+      >
+        {/* Header echoes the timeline language: what this is on the left, and
+            the one thing worth knowing about it on the right — the path is a
+            recommendation, not a lock. */}
+        <div className="flex items-center gap-3">
+          <span className="flex shrink-0 items-center gap-1.5 text-overline font-medium uppercase tracking-wide text-text-secondary">
+            <Sparkles className="size-3 text-primary" aria-hidden />
+            Suggested by AI coach
+          </span>
+          <span aria-hidden className="h-px flex-1 border-t border-dashed border-border" />
+          <span className="shrink-0 rounded-full bg-secondary/60 px-2.5 py-0.5 text-overline font-normal text-secondary-foreground/90">
+            Start anywhere
+          </span>
+        </div>
+
+        <ol className="mt-1 flex w-full flex-col">
+          {steps.map((step, i) => (
+            <JourneyNode
+              key={step.href}
+              step={step}
+              isLast={i === steps.length - 1}
+            />
+          ))}
+        </ol>
       </div>
 
       <ul className="mt-4 flex w-full flex-col gap-2">
