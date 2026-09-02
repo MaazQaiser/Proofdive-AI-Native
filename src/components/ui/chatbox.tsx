@@ -65,7 +65,6 @@ type ChatboxProps = {
    * visual (the AI orb) takes over the AI's presence. Unmounting instead
    * would pop; this cross-fades.
    */
-  aiGlowMuted?: boolean;
   /** Optional content above attachments/textarea (e.g. FAQ / coach thread). */
   leading?: React.ReactNode;
   /** Status / helper copy below the toolbar (voice errors, unsupported browser). */
@@ -101,7 +100,6 @@ function Chatbox({
   uploadLabel,
   askAction,
   aiGlow = false,
-  aiGlowMuted = false,
   leading,
   status,
   textareaProps,
@@ -154,7 +152,7 @@ function Chatbox({
         type="button"
         onClick={askAction.onToggle}
         aria-label={`Close ${askAction.label ?? "Ask"}`}
-        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full bg-[#f5f5f3] px-2 py-1 text-primary"
+        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-1 text-primary"
       >
         <MessageCircleQuestion className="size-[13px] shrink-0" aria-hidden />
         <span className="text-[12px] leading-[1.25] whitespace-nowrap">
@@ -201,7 +199,7 @@ function Chatbox({
       disabled={!canSend}
       aria-label="Send reply"
       data-slot="chatbox-send"
-      className="disabled:bg-primary disabled:text-primary-foreground disabled:opacity-50"
+      className="disabled:bg-primary disabled:text-primary-foreground disabled:opacity-(--disabled-opacity)"
     >
       <ArrowUp />
     </IconButton>
@@ -213,7 +211,7 @@ function Chatbox({
         type="button"
         onClick={onUploadClick}
         disabled={disabled}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand-1000 py-1 pl-2.5 pr-3 text-primary transition hover:bg-brand-900 disabled:pointer-events-none disabled:opacity-50"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand-1000 py-1 pl-2.5 pr-3 text-primary transition hover:bg-brand-900 disabled:pointer-events-none disabled:opacity-(--disabled-opacity)"
       >
         <Paperclip className="size-4 shrink-0" aria-hidden />
         <span className="text-overline font-medium leading-6 whitespace-nowrap">
@@ -239,7 +237,7 @@ function Chatbox({
       onClick={onUploadClick}
       disabled={disabled}
       className={cn(
-        "inline-flex min-w-16 shrink-0 items-center justify-center gap-0 rounded-full px-2 py-0.5 text-primary transition hover:bg-muted disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex min-w-16 shrink-0 items-center justify-center gap-0 rounded-full px-2 py-0.5 text-primary transition hover:bg-muted disabled:pointer-events-none disabled:opacity-(--disabled-opacity)",
         uploadLabel && "bg-brand-1000 hover:bg-brand-900",
       )}
     >
@@ -252,7 +250,7 @@ function Chatbox({
 
   const textareaClass = cn(
     "w-full resize-none bg-transparent text-text-primary outline-none",
-    "placeholder:text-text-secondary disabled:cursor-not-allowed disabled:opacity-50",
+    "placeholder:text-text-secondary disabled:cursor-not-allowed disabled:opacity-(--disabled-opacity)",
     isCompact
       ? "block h-7 min-h-7 overflow-hidden whitespace-nowrap py-0 text-body-sm leading-7"
       : "min-h-0 flex-1 text-body-sm leading-[1.25]",
@@ -264,7 +262,6 @@ function Chatbox({
       data-variant={variant}
       data-thread={hasLeading ? "true" : undefined}
       data-ai-glow={aiGlow ? "" : undefined}
-      data-ai-glow-muted={aiGlow && aiGlowMuted ? "" : undefined}
       // Glow recedes while the user types (their words take the stage) and
       // while the composer is disabled (nothing to invite).
       data-ai-glow-quiet={
@@ -313,7 +310,7 @@ function Chatbox({
                 onChange={(e) => onValueChange(e.target.value)}
                 placeholder={isListening ? "Speak now…" : placeholder}
                 disabled={disabled}
-                className="h-7 min-w-0 flex-1 bg-transparent py-0 text-body-sm leading-7 text-text-primary outline-none placeholder:text-text-secondary disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-7 min-w-0 flex-1 bg-transparent py-0 text-body-sm leading-7 text-text-primary outline-none placeholder:text-text-secondary disabled:cursor-not-allowed disabled:opacity-(--disabled-opacity)"
                 onFocus={textareaProps?.onFocus as React.FocusEventHandler<HTMLInputElement> | undefined}
                 onBlur={textareaProps?.onBlur as React.FocusEventHandler<HTMLInputElement> | undefined}
                 onKeyDown={textareaProps?.onKeyDown as React.KeyboardEventHandler<HTMLInputElement> | undefined}

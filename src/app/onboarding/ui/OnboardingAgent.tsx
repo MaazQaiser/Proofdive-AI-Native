@@ -30,6 +30,8 @@ import { AiOrb, type AiOrbState } from "@/components/chat/AiOrb";
 import { ChatComposer } from "@/components/chat/ChatComposer";
 import { Button } from "@/components/ui/button";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
+import { WelcomeAmbience } from "@/components/onboarding/WelcomeAmbience";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/ui/logo";
 import { SelectionChip } from "@/components/ui/selection-chip";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
@@ -959,14 +961,16 @@ function OnboardingAgentInner({
    * with the composer. Later steps keep the plain composer for comparison. */
   const showOrb =
     stage === "bgEntry" || stage === "bgParsing" || stage === "bgFailed";
-  /* Ambient AI signal, handed between two visuals so there is only ever one:
-   * at rest the composer's rim glow travels around the chat bar; the moment
-   * the user engages the chat (focus, or text still in it) the glow fades and
-   * the orb rises out of the bar in its place. Parsing / failure own the orb
-   * outright. The welcome moment carries neither — it stays clean. */
-  const composerEngaged = composerFocused || composerHasText;
-  const orbVisible =
-    stage === "bgParsing" || stage === "bgFailed" || composerEngaged;
+  /* One ambient AI signal, and it is one object: while the orb is mounted its
+   * shader draws BOTH the resting light traveling around the chat bar and the
+   * sphere that light condenses into, morphing between them (so the composer's
+   * own CSS rim glow steps aside entirely — see `aiGlow` below). Engagement
+   * with the chat drives the morph; parsing / failure hold the sphere. */
+  const orbEngaged =
+    stage === "bgParsing" ||
+    stage === "bgFailed" ||
+    composerFocused ||
+    composerHasText;
   const orbState: AiOrbState =
     stage === "bgParsing"
       ? "thinking"
@@ -1012,13 +1016,29 @@ function OnboardingAgentInner({
           : undefined
       }
     >
-      <header className="relative z-30 flex h-14 w-full shrink-0 items-center border-b border-border bg-background/75 px-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+      {/* The welcome moment's ambient AI light — the entry screen is the only
+          stage that carries it, because it is the only one with no input of
+          its own to answer. From step 1 onward the AI's presence is the chat
+          bar's own glow instead, so there are never two of them at once. */}
+      {stage === "welcome" ? <WelcomeAmbience /> : null}
+
+      {/* App-level chrome. The theme switch belongs HERE rather than beside
+          the flow's own controls: "Back" and "Step 2 of 4" describe progress
+          through the questions, while the theme is a property of the app the
+          questions happen to live in. Keeping the two on separate rows means
+          the switch never reads as part of answering, it sits outside the
+          800px reading column so it cannot compete with the prompt, and it is
+          present on every stage including the welcome screen (where only the
+          progress row is hidden). Far right also puts it where users already
+          reach for account-level controls. */}
+      <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-border bg-background/75 px-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
         <Link
           href="/"
           className="flex h-full shrink-0 items-center border-r border-border pr-6"
         >
           <Logo size="xxs" />
         </Link>
+        <ThemeToggle className="-mr-1.5" />
       </header>
 
       <input
@@ -1099,7 +1119,13 @@ function OnboardingAgentInner({
                   <Button
                     type="button"
                     onClick={() => setStage("bgEntry")}
-                    className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium"
+                    /* A brand-tinted lift, welcome screen only. The CTA sits
+                       on the ambience plate rather than on a flat page, and in
+                       light mode its fill measures 3.04:1 against that wash —
+                       a pass, but with no margin. The shadow makes the button's
+                       edge independent of whatever the plate is doing behind
+                       it, and reads as elevation rather than an added border. */
+                    className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium shadow-[0_4px_16px_-4px_rgba(14,154,181,0.55)] dark:shadow-[0_6px_20px_-6px_rgba(0,0,0,0.75)]"
                   >
                     Let&apos;s get started
                     <ArrowRight />
@@ -1193,7 +1219,7 @@ function OnboardingAgentInner({
                     selectedLabel={manualStudy}
                     onPick={chooseStudy}
                     trailing={
-                      <span className="inline-flex h-9 items-center rounded-full border border-dashed border-[#adddda] px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
+                      <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
                         Type any field below ↓
                       </span>
                     }
@@ -1205,7 +1231,7 @@ function OnboardingAgentInner({
                     selectedLabel={manualStudy}
                     onPick={chooseStudy}
                     trailing={
-                      <span className="inline-flex h-9 items-center rounded-full border border-dashed border-[#adddda] px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
+                      <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
                         Type it below ↓
                       </span>
                     }
@@ -1240,7 +1266,7 @@ function OnboardingAgentInner({
                     setStage("targetIndustry");
                   }}
                   trailing={
-                    <span className="inline-flex h-9 items-center rounded-full border border-dashed border-[#adddda] px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
+                    <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
                       Type any role below ↓
                     </span>
                   }
@@ -1261,7 +1287,7 @@ function OnboardingAgentInner({
                         <button
                           type="button"
                           onClick={handleGenerateJd}
-                          className="inline-flex items-center gap-1 text-body-sm font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                          className="inline-flex items-center gap-1 text-body-sm font-medium text-link underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                         >
                           Don't have the posting? Draft one from your background
                           <ArrowRight className="size-[0.8em] shrink-0 text-primary" aria-hidden />
@@ -1354,7 +1380,7 @@ function OnboardingAgentInner({
           {showOrb ? (
             <AiOrb
               state={orbState}
-              visible={orbVisible}
+              engaged={orbEngaged}
               pulseRef={composerPulseRef}
             />
           ) : null}
@@ -1367,7 +1393,7 @@ function OnboardingAgentInner({
               <div className="flex justify-end pr-[34px]">
                 <div
                   role="status"
-                  className="relative w-64 rounded-xl border border-border bg-card p-3 pr-8 shadow-[0_12px_32px_-16px_rgba(4,32,39,0.35)]"
+                  className="relative w-64 rounded-xl border border-border bg-card p-3 pr-8 shadow-[var(--elevation-card)]"
                 >
                   <p className="text-caption leading-snug text-text-primary">
                     <strong className="font-semibold">Add your resume here.</strong>{" "}
@@ -1400,11 +1426,11 @@ function OnboardingAgentInner({
               onUpload={handleUpload}
               showUploadButton={showUpload}
               uploadLabel={composerGuidesUpload ? "Upload resume" : undefined}
-              // One ambient AI signal per screen. The rim glow is the resting
-              // state everywhere; on the orb screens it fades out as the orb
-              // takes over (see `orbVisible`), so the two never run together.
-              aiGlow
-              aiGlowMuted={showOrb && orbVisible}
+              // One ambient AI signal per screen. The CSS rim glow is the
+              // resting state on every other step; where the orb is mounted the
+              // orb's own shader draws that same traveling light and morphs it
+              // into the sphere, so this one stands down rather than competing.
+              aiGlow={!showOrb}
               backgroundGlowIntensity="full"
               modeToggle={
                 stage === "session"
@@ -1560,7 +1586,7 @@ function ParsedConfirmCard({
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex h-11 items-center rounded-md border border-border bg-white px-6 text-body-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          className="inline-flex h-11 items-center rounded-md border border-input bg-card px-6 text-body-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
           Edit details
         </button>
@@ -1743,8 +1769,8 @@ function SessionContract({
     <>
       <div
         className={cn(
-          "mt-6 w-full rounded-xl border-[0.5px] border-solid border-[#dde7e9] px-4 pb-3 pt-4",
-          "bg-[linear-gradient(121.89deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+          "mt-6 w-full rounded-xl border-[0.5px] border-solid border-border px-4 pb-3 pt-4",
+          "bg-[linear-gradient(121.89deg,var(--glass-from)_0%,var(--glass-to)_98.96%)]",
         )}
       >
         {/* Header echoes the timeline language: what this is on the left, and
@@ -1788,7 +1814,7 @@ function SessionContract({
         Prefer to look around?{" "}
         <Link
           href={homeHref}
-          className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          className="inline-flex items-center gap-1 font-medium text-link underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
         >
           go to home
           <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />

@@ -33,6 +33,8 @@ export const StorageKeys = {
   termsConsent: "proofdive.termsConsent.v1",
   /** Name / email / provider captured at sign-up, used to greet the user by name. */
   authIdentity: "proofdive.authIdentity.v1",
+  /** `light` | `dark` — an explicit theme choice. Absent means "follow the OS". */
+  theme: "proofdive.theme.v1",
   /** Selected Daily/Weekly/Monthly granularity on the Super Admin dashboard. */
   superAdminDashboardDateRange: "proofdive.superAdmin.dashboardDateRange.v1",
   /** Selected Daily/Weekly/Monthly granularity on the Org Admin dashboard. */

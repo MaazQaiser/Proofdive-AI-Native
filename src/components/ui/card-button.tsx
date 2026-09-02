@@ -59,7 +59,7 @@ function CardButton({
           className={cn(
             "grid size-8 shrink-0 place-items-center rounded-full backdrop-blur-sm [&_svg]:size-4",
             isPrimary
-              ? "bg-white/20 text-primary-foreground"
+              ? "bg-[var(--glass-chip)] text-primary-foreground"
               : "bg-brand-1000/80 text-primary",
           )}
           aria-hidden
@@ -69,7 +69,7 @@ function CardButton({
         <div
           className={cn(
             "flex min-w-0 flex-col gap-0.5",
-            isPrimary && "[text-shadow:0_1px_2px_rgba(7,62,76,0.28)]",
+            isPrimary && "[text-shadow:0_1px_2px_var(--card-button-text-shadow)]",
           )}
         >
           <p

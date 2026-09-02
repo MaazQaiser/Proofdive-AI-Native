@@ -5,6 +5,7 @@ import "./globals.css";
 import { IconDefaultsProvider } from "@/components/IconDefaultsProvider";
 import { ResetFlowCta } from "@/components/ResetFlowCta";
 import { Toaster } from "@/components/ui/sonner";
+import { THEME_BOOTSTRAP } from "@/lib/theme";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -36,7 +37,17 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} h-full antialiased`}
+      // The bootstrap below sets `class`, `style.colorScheme` and
+      // `data-theme` on this element before React hydrates, which is exactly
+      // the mismatch React would otherwise warn about.
+      suppressHydrationWarning
     >
+      <head>
+        {/* Blocking, before first paint: without it the page renders in the
+            default theme and then snaps, which is the one theme bug users
+            always notice. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <IconDefaultsProvider>
           {children}

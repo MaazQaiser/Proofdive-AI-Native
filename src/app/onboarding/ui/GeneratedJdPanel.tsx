@@ -254,7 +254,7 @@ export function GeneratedJdPanel({
               placeholder="Paste the job posting here…"
               rows={6}
               autoFocus
-              className="bg-white text-body-sm"
+              className="bg-card text-body-sm"
             />
             <div className="flex flex-wrap items-center gap-3">
               <Button
@@ -286,7 +286,7 @@ export function GeneratedJdPanel({
             <button
               type="button"
               onClick={() => setShowPaste(true)}
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-white px-4 text-body-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-4 text-body-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             >
               <ClipboardPaste className="size-4 text-primary" aria-hidden />
               Paste the real posting instead
