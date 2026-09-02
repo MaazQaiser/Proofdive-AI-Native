@@ -8,18 +8,22 @@ import { cn } from "@/lib/utils";
  * than a flat fill — "focused" in that component is the chosen/active
  * look, which is what this app uses for `selected`.
  *
- * Default (unselected) stroke is a solid `#adddda` border over a white
- * fill. Hover swaps to a light-cyan fill with a flat `#f2f2f2` border. */
+ * Default (unselected) is a solid `--chip-border` stroke over a
+ * `--chip-surface` fill; hover swaps to the light-cyan surface with the
+ * flatter `--chip-border-hover` stroke. Those three are tokens rather than
+ * literals because the chip's stroke is an AFFORDANCE: on dark surfaces it
+ * has to be pushed past 3:1 to stay findable, where the same value would be
+ * a shouty outline on white. */
 const selectionChipVariants = cva(
   // Text-only: 16px both sides. Leading icon: 8px left / 16px right.
   // Trailing icon: 16px left / 8px right. (Figma action-chip padding.)
   // Use pl/pr (not px) so icon overrides win the cascade cleanly.
-  "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border pl-4 pr-4 text-[16px] font-medium leading-[1.3] backdrop-blur-[9px] transition-colors outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 has-[>svg:first-child]:pl-2 has-[>svg:last-child]:pr-2",
+  "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border pl-4 pr-4 text-[16px] font-medium leading-[1.3] backdrop-blur-[9px] transition-colors outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-(--disabled-opacity) has-[>svg:first-child]:pl-2 has-[>svg:last-child]:pr-2",
   {
     variants: {
       selected: {
         false:
-          "border-[#adddda] bg-white text-extended-cyan hover:border-[#f2f2f2] hover:bg-extended-light-cyan hover:text-extended-blue",
+          "border-chip-border bg-chip-surface text-extended-cyan hover:border-chip-border-hover hover:bg-extended-light-cyan hover:text-extended-blue",
         true: "border-brand-200 bg-primary text-brand-1000",
       },
     },

@@ -116,7 +116,7 @@ export function CoreFourSelectionPanel({
                           "flex h-8 items-center gap-2.5 rounded-md px-1 py-1 text-body-sm leading-6 transition",
                           isLocked
                             ? "cursor-not-allowed opacity-70"
-                            : "cursor-pointer hover:bg-white/40",
+                            : "cursor-pointer hover:bg-[var(--hover-veil)]",
                           isOn
                             ? "font-medium text-text-primary"
                             : "text-text-primary",
@@ -126,7 +126,7 @@ export function CoreFourSelectionPanel({
                           <span
                             aria-hidden
                             className={cn(
-                              "grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] border-[#56b8cb] bg-white",
+                              "grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] border-brand-400 bg-card",
                               isOn && "border-primary",
                             )}
                           >
@@ -144,7 +144,7 @@ export function CoreFourSelectionPanel({
                             onCheckedChange={() => {
                               if (!isLocked) onToggle(spec.id);
                             }}
-                            className="size-4 border-[1.5px] border-[#56b8cb] bg-white shadow-none data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                            className="size-4 border-[1.5px] border-brand-400 bg-card shadow-none data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                           />
                         )}
                         <span className="min-w-0">
@@ -181,14 +181,14 @@ export function CoreFourSelectionPanel({
                         current === pillar ? null : pillar,
                       )
                     }
-                    className="grid size-8 place-items-center rounded-full text-text-secondary transition hover:bg-white/70 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                    className="grid size-8 place-items-center rounded-full text-text-secondary transition hover:bg-[var(--hover-veil-strong)] hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                   >
                     <CircleHelp className="size-4" strokeWidth={2} aria-hidden />
                   </button>
                   {reasoningOpen ? (
                     <div
                       role="tooltip"
-                      className="absolute top-[calc(100%+8px)] right-0 w-[min(18rem,calc(100vw-3rem))] rounded-lg border border-border bg-white p-3 text-left text-caption leading-snug text-text-primary shadow-[0_8px_20px_rgba(14,154,181,0.12)]"
+                      className="absolute top-[calc(100%+8px)] right-0 w-[min(18rem,calc(100vw-3rem))] rounded-lg border border-border bg-popover p-3 text-left text-caption leading-snug text-text-primary shadow-[var(--elevation-tooltip)]"
                     >
                       <p className="mb-1 font-medium text-extended-cyan-green">
                         Why we suggested {suggestedSpec?.title}

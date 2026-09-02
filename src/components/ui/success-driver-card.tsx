@@ -35,7 +35,7 @@ type SuccessDriverInfoTipProps = {
   className?: string;
 };
 
-/** Lucide `Info` — 16px, #6B7280, tooltip on hover/focus. */
+/** Lucide `Info` — 16px, --text-secondary, tooltip on hover/focus. */
 function SuccessDriverInfoTip({ driver, className }: SuccessDriverInfoTipProps) {
   const meta = SUCCESS_DRIVERS[driver];
 
@@ -43,7 +43,7 @@ function SuccessDriverInfoTip({ driver, className }: SuccessDriverInfoTipProps) 
     <button
       type="button"
       className={cn(
-        "group relative inline-flex size-4 shrink-0 items-center justify-center text-[#6B7280] transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+        "group relative inline-flex size-4 shrink-0 items-center justify-center text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
         className,
       )}
       aria-label={`About ${meta.label}`}
@@ -99,9 +99,13 @@ type SuccessDriverCardProps = {
 };
 
 /**
- * Success Driver surface — Figma Competency Selection Cards (332:3921):
- * translucent white diagonal fill, shared `--app-stroke` (Chatbox stroke),
+ * Success Driver surface — Figma Competency Selection Cards (332:3921): a
+ * translucent diagonal glass fill, shared `--app-stroke` (Chatbox stroke),
  * soft glow clipped into the bottom-right, plus film-grain noise.
+ *
+ * The fill and the lit top edge come from `--glass-*` tokens, not literal
+ * whites: on a dark surface the same effect is a ~5% light veil, and the
+ * grain has to switch blend mode to survive (see globals.css).
  */
 function SuccessDriverCard({
   driver,
@@ -115,14 +119,14 @@ function SuccessDriverCard({
       data-driver={driver}
       className={cn(
         "relative flex flex-col overflow-hidden rounded-[16px] transition",
-        "shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]",
+        "shadow-[inset_0_1px_0_var(--glass-inset)]",
         className,
       )}
     >
       {/* Fill sits under the glow so the decorative mark reads above the bg. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[linear-gradient(127.57deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]"
+        className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[linear-gradient(127.57deg,var(--glass-from)_0%,var(--glass-to)_98.96%)]"
       />
       <div
         className="pointer-events-none absolute -right-[24px] -bottom-[24px] z-[1] size-[256px] select-none"
@@ -138,7 +142,7 @@ function SuccessDriverCard({
       <div className="success-driver-noise absolute inset-0 z-[1]" aria-hidden />
       <div className="relative z-10 flex min-h-0 flex-1 flex-col gap-2.5 p-6">
         {badge ? (
-          <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/70 bg-white/90 px-2.5 py-1 text-overline font-medium text-text-primary shadow-sm backdrop-blur-sm">
+          <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[var(--glass-chip-border)] bg-[var(--glass-chip)] px-2.5 py-1 text-overline font-medium text-text-primary shadow-sm backdrop-blur-sm">
             <span
               className="size-1.5 shrink-0 rounded-full bg-extended-cyan-green"
               aria-hidden
@@ -157,11 +161,11 @@ type SuccessDriverCompetencyPillProps = {
   /** e.g. "Thinking · Analytical Thinking" */
   label: ReactNode;
   className?: string;
-  /** `filled` = report-style chip (#eff5f7 / #122b34). Default keeps outlined Figma chip. */
+  /** `filled` = report-style chip (--pill-surface / --pill-foreground). Default keeps the outlined Figma chip. */
   variant?: "outline" | "filled";
 };
 
-/** Compact competency chip — Figma node 332:4299 (white fill, #b3effa stroke). */
+/** Compact competency chip — Figma node 332:4299 (card fill, --pill-outline-border stroke). */
 function SuccessDriverCompetencyPill({
   driver,
   label,
@@ -174,19 +178,19 @@ function SuccessDriverCompetencyPill({
       className={cn(
         "inline-flex items-center rounded-full",
         filled
-          ? "h-6 gap-1.5 border border-[#CADDE3] bg-[#eff5f7] py-0 pl-1 pr-2"
-          : "gap-2 border border-[#b3effa] bg-white py-1.5 pl-1.5 pr-3",
+          ? "h-6 gap-1.5 border border-pill-border bg-pill-surface py-0 pl-1 pr-2"
+          : "gap-2 border border-pill-outline-border bg-card py-1.5 pl-1.5 pr-3",
         className,
       )}
     >
       <SuccessDriverIcon
         driver={driver}
-        className={cn(filled ? "size-3.5 text-[#122b34]" : "size-4")}
+        className={cn(filled ? "size-3.5 text-pill-foreground" : "size-4")}
       />
       <span
         className={cn(
           filled
-            ? "text-[11px] leading-4 font-medium tracking-[0.5px] text-[#122b34]"
+            ? "text-[11px] leading-4 font-medium tracking-[0.5px] text-pill-foreground"
             : "text-overline leading-[18px] text-text-primary",
         )}
       >

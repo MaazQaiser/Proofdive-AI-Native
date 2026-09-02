@@ -66,7 +66,7 @@ function UserBubble({ children }: { children: ReactNode }) {
         className={cn(
           "max-w-[min(100%,32rem)] rounded-[1.25rem] rounded-br-md px-4 py-2.5",
           "bg-primary text-body-sm leading-6 text-primary-foreground",
-          "shadow-[0_6px_18px_rgba(14,154,181,0.22)]",
+          "shadow-[var(--bubble-shadow)]",
           "[word-break:break-word]",
         )}
       >
@@ -94,7 +94,7 @@ function AssistantText({ children }: { children: ReactNode }) {
 
 function AnswerVideo({ src }: { src: string }) {
   return (
-    <div className="w-full overflow-hidden rounded-[12px] border border-[#dfe7e9] bg-black">
+    <div className="w-full overflow-hidden rounded-[12px] border border-border bg-black">
       {/* eslint-disable-next-line jsx-a11y/media-has-caption -- explainer asset; no captions file yet */}
       <video
         className="mx-auto max-h-[min(42vh,320px)] w-full object-contain"
@@ -125,7 +125,7 @@ function SuggestionList({
 }) {
   return (
     <div
-      className="flex w-full flex-col divide-y divide-[#dfe7e9]"
+      className="flex w-full flex-col divide-y divide-border"
       role="group"
       aria-label={label}
     >

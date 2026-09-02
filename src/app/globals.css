@@ -144,66 +144,383 @@
   --app-fg: var(--foreground);
 }
 
+/* ==========================================================
+   Semantic surface / affordance tokens
+
+   These name the ROLES that were previously hardcoded at the call site
+   (chip strokes, glass fills, link color, elevation, hover veils). Light
+   values are byte-identical to the colors those call sites used, so light
+   mode is unchanged; dark mode redefines the role rather than inverting a
+   hex. That distinction is the whole point: on dark surfaces a "white 80%
+   glass fill" is not a dark 80% fill, it is a 5% light veil, and a drop
+   shadow stops reading as elevation at all.
+   ========================================================== */
+:root {
+  /* Selection chip — the flow's primary answer control, so its stroke is
+     an AFFORDANCE, not a hairline. Kept deliberately stronger than
+     --border (see the dark block's two-tier note). */
+  /* App canvas — the page plate the flow sits on. Light mode deliberately
+     runs WHITER than --background (#F5F5F3) so the wash reads; dark mode
+     keeps it equal to the page so nothing floats on a lighter rectangle. */
+  /* Ambient AI light. Levels are intensities for the composer's rim glow;
+     the arcs are the shared light source it and the halo spin behind. */
+  --ai-glow-idle: 0.6;
+  --ai-glow-hover: 0.72;
+  --ai-glow-focus: 0.8;
+  --ai-glow-quiet: 0.4;
+  --chatbox-ai-glow-arcs: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(14, 154, 181, 0.95) 42deg,
+    rgba(86, 184, 203, 0.55) 72deg,
+    transparent 118deg,
+    transparent 180deg,
+    rgba(0, 168, 185, 0.65) 224deg,
+    rgba(110, 194, 211, 0.35) 256deg,
+    transparent 300deg
+  );
+  /* Orb bloom — Figma-light, #BCEEF5-based, never the deeper brand cyan. */
+  --orb-halo: radial-gradient(
+    closest-side,
+    rgb(188 238 245 / 0.4),
+    rgb(188 238 245 / 0.16) 55%,
+    transparent 78%
+  );
+  --orb-halo-warm: radial-gradient(
+    closest-side,
+    rgb(203 58 49 / 0.14),
+    rgb(233 161 59 / 0.07) 55%,
+    transparent 78%
+  );
+  --orb-fallback: radial-gradient(
+    circle at 50% 18%,
+    rgb(234 251 253 / 0.9),
+    rgb(185 239 244 / 0.6) 30%,
+    rgb(110 194 211 / 0.5) 55%,
+    rgb(14 154 181 / 0.55) 80%,
+    rgb(0 111 143 / 0.6) 100%
+  );
+
+  --canvas: #ffffff;
+  --canvas-wash: linear-gradient(
+    to top right,
+    rgb(14 154 181 / 0.3) 0%,
+    rgb(255 255 255 / 1) 100%
+  );
+  --canvas-wash-opacity: 0.2;
+
+  --chip-surface: #ffffff;
+  --chip-border: #adddda;
+  --chip-border-hover: #f2f2f2;
+
+  /* Interactive text — inline links and text actions. */
+  --link: #095b73;
+
+  /* Glass card language (SuccessDriverCard, the roadmap panel): a diagonal
+     translucent fill, a lit top edge, and translucent badges riding on it. */
+  --glass-from: rgba(255, 255, 255, 0.8);
+  --glass-to: rgba(255, 255, 255, 0.5);
+  --glass-inset: rgba(255, 255, 255, 0.72);
+  --glass-chip: rgba(255, 255, 255, 0.9);
+  --glass-chip-border: rgba(255, 255, 255, 0.7);
+
+  /* Row hover on a glass surface — a veil, not a fill, so the card's own
+     gradient still shows through. */
+  --hover-veil: rgba(255, 255, 255, 0.4);
+  --hover-veil-strong: rgba(255, 255, 255, 0.7);
+
+  /* Competency pills (Success Drivers / Focus areas). */
+  /* Label shadow on a filled brand CardButton — near-white text on brand
+     teal needs a dark lift in light mode. */
+  /* Wordmark ink — the asset's own flat fill, so light mode is unchanged. */
+  /* Video / campaign thumbnails (PixelMedia).
+
+     These used to borrow --heading-teal, which happens to be a dark ink in
+     light mode but is a LIGHT text color in dark — so the backdrop and the
+     veil both flipped and washed the image out. They are their own roles.
+
+     The play plate is deliberately NOT inverted: it is a light glass disc in
+     both themes, because it sits on arbitrary photography rather than on a
+     theme surface. Its glyph therefore stays dark in both — the plate is the
+     surface, so the plate decides. */
+  --media-backdrop: #094149;
+  --media-veil: rgba(9, 65, 73, 0.1);
+  --media-play-surface: rgba(255, 255, 255, 0.9);
+  --media-play-foreground: #0e0e0e;
+
+  /* Disabled affordances. */
+  --disabled-opacity: 0.5;
+
+  --logo-ink: #062c35;
+
+  --card-button-text-shadow: rgba(7, 62, 76, 0.28);
+
+  /* Brand tint at the foot of the composer's thread header. */
+  --thread-header-tint: rgba(14, 154, 181, 0.1);
+  /* The user's own chat bubble — a brand-tinted cast shadow. */
+  --bubble-shadow: 0 6px 18px rgba(14, 154, 181, 0.22);
+
+  --pill-surface: #eff5f7;
+  --pill-border: #cadde3;
+  --pill-foreground: #122b34;
+  --pill-outline-border: #b3effa;
+
+  /* Quiet divider — softer than --border, used inside the composer thread. */
+  --divider-soft: #d4d4d2;
+
+  /* Scrim behind the expanded composer. */
+  --overlay: rgba(0, 0, 0, 0.3);
+
+  /* Elevation. Light mode reads depth from a soft cast shadow; the dark
+     block swaps in a lit top edge + a deeper, tighter shadow, because a
+     black shadow on a near-black page communicates nothing. */
+  --elevation-card: 0 12px 32px -16px rgba(4, 32, 39, 0.35);
+  --elevation-media: 0 16px 40px -28px rgba(4, 32, 39, 0.45);
+  --elevation-media-hover: 0 24px 56px -24px rgba(4, 32, 39, 0.5);
+  --elevation-pop: 0 24px 80px -24px rgba(7, 62, 76, 0.35);
+  --elevation-tooltip: 0 8px 20px rgba(14, 154, 181, 0.12);
+}
+
 .dark {
-  --background: #0E0E0E;
-  --foreground: #F5F5F5;
-  --card: #01161B;
-  --card-foreground: #22D3EE;
-  --popover: #042027;
-  --popover-foreground: #22D3EE;
-  /* Primary button color — brand teal (matches --ring/--brand-100 in dark
-     mode). Unlike light mode, text stays near-black here: dark mode's primary
-     is brighter (#22D3EE), so white text only reaches ~1.66:1 contrast
-     (fails badly) while black text reaches ~10.7:1. */
-  --primary: #22D3EE;
-  --primary-foreground: #0E0E0E;
-  --secondary: #042027;
-  --secondary-foreground: #22D3EE;
-  --muted: #01161B;
-  --muted-foreground: #9CA3AF;
-  --accent: #00A8B9;
-  --accent-foreground: #F5F5F5;
-  --destructive: #CB3A31;
-  --destructive-foreground: #F5F5F5;
-  --border: #2A2A2A;
-  --input: #2A2A2A;
-  --ring: #22D3EE;
-  --placeholder: #9CA3AF;
-  --base: #0E0E0E;
-  --surface: #1A1A1A;
-  --text-primary: #F5F5F5;
-  --text-secondary: #9CA3AF;
-  --extended-light-cyan: #B9EFF4;
-  --extended-cyan: #00A8B9;
-  --extended-blue: #006F8F;
-  --extended-green: #C7DCD5;
-  --extended-green-blue: #073E4C;
-  --extended-cyan-green: #062C35;
-  --extended-dark-cyan-green: #042027;
-  --extended-dark-cyan: #01161B;
-  --heading-teal: #094149;
-  --brand-100: #22D3EE;
-  --brand-200: #1FBED6;
-  --brand-300: #1BA9BE;
-  --brand-400: #1894A7;
-  --brand-500: #147F8F;
-  --brand-600: #116A77;
-  --brand-700: #0E545F;
-  --brand-800: #0A3F47;
-  --brand-900: #072A30;
-  --brand-1000: #031518;
-  --scoring-red: #CB3A31;
-  --scoring-yellow: #E9A13B;
-  --scoring-green: #16A34A;
-  --scoring-cyan: #22D3EE;
-  /* On dark surfaces the brand fills already clear AA, so fg aliases them. */
-  --scoring-red-fg: #F87171;
-  --scoring-yellow-fg: #FBBF24;
-  --scoring-green-fg: #4ADE80;
-  --scoring-cyan-fg: #22D3EE;
-  /* KPI trend text — tuned for ≥4.5:1 contrast on dark --card (#01161B). */
-  --trend-up: #4ADE80;
-  --trend-down: #FCA5A5;
+  /* ==========================================================
+     ProofDive dark — designed, not inverted.
+
+     Principles this palette is built on:
+
+     1. SURFACES RISE. The page is the darkest thing on screen; every
+        surface above it is lighter, exactly as in light mode (page #F5F5F3
+        -> card #FFFFFF). Direction of elevation is preserved, so the
+        existing hierarchy and every `bg-card` call site keeps its meaning.
+     2. COOL GRAPHITE, NOT BLACK. Neutrals carry a slight teal undertone
+        (hue ~197, very low sat) so the brand cyan reads as native to the
+        surface instead of pasted on. Nothing is #000: pure black crushes
+        the elevation ramp and smears on OLED.
+     3. TWO-TIER STROKES. Dark mode compresses lightness discrimination, so
+        one border value cannot serve both jobs. Hairlines that merely
+        divide (--border, --divider-soft) stay quiet at ~1.3-1.5:1;
+        boundaries that ARE the affordance (--input, --chip-border) are
+        pushed past 3:1 so controls stay immediately findable.
+     4. LIGHT IS EMITTED, NOT CAST. Elevation switches from a drop shadow
+        (invisible here) to a lit top edge plus a deeper, tighter shadow.
+        Glass fills invert their logic: an 80% white fill becomes a ~5%
+        light veil.
+     5. NO HARSH WHITE. Body text tops out at #E8EFF1 (~14.9:1 on card),
+        comfortable for long sessions, where #FFFFFF would glare.
+     6. BRIGHT FILL, DARK LABEL. Brand and destructive fills are bright
+        enough to be visible on a dark page, so their labels go dark — the
+        opposite of light mode, and the only way both stay AA.
+     ========================================================== */
+
+  /* --- surface ramp (page -> popover), each step ~1.1-1.2:1 ------------- */
+  --background: #0a1013;
+  --card: #121c21;
+  --popover: #16232a;
+  --surface: #18252b;
+  --muted: #1c2c33;
+  --base: #0a1013;
+
+  /* --- type ------------------------------------------------------------- */
+  --foreground: #e8eff1;
+  --card-foreground: #e8eff1;
+  --popover-foreground: #e8eff1;
+  --text-primary: #e8eff1;
+  --text-secondary: #94a6ac;
+  --muted-foreground: #94a6ac;
+  --placeholder: #778b91;
+
+  /* --- strokes: quiet hairlines, loud affordances ----------------------- */
+  --border: #273b43;
+  --input: #456c78;
+  --ring: #3ec8df;
+  --divider-soft: #22333a;
+
+  /* --- brand ------------------------------------------------------------ */
+  /* Fill is bright enough to read on the page (7.6:1); the label therefore
+     goes near-black (6.0:1 on the fill). White would land at ~2.3:1. */
+  --primary: #22b2cc;
+  --primary-foreground: #03171c;
+  --secondary: #123842;
+  --secondary-foreground: #a9e4ef;
+  --accent: #3ec8df;
+  --accent-foreground: #03171c;
+
+  /* Destructive follows the same bright-fill/dark-label rule, so one token
+     serves text (6.7:1 on page), border, ring and fill. */
+  --destructive: #f0736a;
+  --destructive-foreground: #2a0b08;
+
+  /* --- extended brand: role-preserving, not hue-inverted ---------------
+     Light mode uses some of these as pale SURFACES and others as dark
+     TEXT. Each one keeps its role here — surfaces become deep tints, text
+     becomes light — which is why the values are not a simple flip. */
+  --extended-light-cyan: #123039; /* surface: chip hover fill */
+  --extended-cyan: #3ec8df; /* text */
+  --extended-blue: #7fd4e6; /* text */
+  --extended-green: #9fbfb8; /* text + row divider */
+  --extended-green-blue: #a9e4ef; /* text */
+  --extended-cyan-green: #8fd9e8; /* text + small dot fills */
+  --extended-dark-cyan-green: #b6e8f1;
+  --extended-dark-cyan: #d3f1f6; /* text */
+  /* The agent's greeting headline — the largest type in the flow. Brand
+     tinted rather than white so the voice stays warm (13.2:1 on page). */
+  --heading-teal: #a9dfeb;
+
+  /* Brand ramp keeps its light-mode GRADIENT DIRECTION of use: 100 is the
+     accent end, 1000 the quiet-surface end. On dark that means 100 is the
+     brightest and 1000 is a deep tint — so `bg-brand-1000` stays a quiet
+     surface and `hover:bg-brand-900` still steps toward the light. */
+  --brand-100: #5bd6ea;
+  --brand-200: #3fc3da;
+  --brand-300: #2faec6;
+  --brand-400: #2898b0;
+  --brand-500: #22829a;
+  --brand-600: #1d6d83;
+  --brand-700: #18596d;
+  --brand-800: #144857;
+  --brand-900: #103743;
+  --brand-1000: #0c2932;
+
+  /* --- semantic affordance tokens (see the light block for the roles) --- */
+  /* Canvas matches the page: on dark there is no "whiter than white" to
+     reach for, and a lifted plate would make the header/composer look like
+     they sit in a hole. The wash becomes light EMITTED from the lower left
+     into darkness rather than a white sheen. */
+  /* Ambient AI light on dark. Levels come DOWN ~25%: the same arc that was
+     a whisper on white is genuinely luminous against a dark bar, and the
+     brief was premium, not neon. The arcs themselves flip from "deep brand
+     ink laid on white" to "brand light emitted into darkness". */
+  --ai-glow-idle: 0.45;
+  --ai-glow-hover: 0.56;
+  --ai-glow-focus: 0.66;
+  --ai-glow-quiet: 0.28;
+  --chatbox-ai-glow-arcs: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(91, 214, 234, 0.9) 42deg,
+    rgba(62, 200, 223, 0.5) 72deg,
+    transparent 118deg,
+    transparent 180deg,
+    rgba(63, 195, 218, 0.6) 224deg,
+    rgba(40, 152, 176, 0.34) 256deg,
+    transparent 300deg
+  );
+  --orb-halo: radial-gradient(
+    closest-side,
+    rgb(62 200 223 / 0.2),
+    rgb(40 152 176 / 0.09) 55%,
+    transparent 78%
+  );
+  --orb-halo-warm: radial-gradient(
+    closest-side,
+    rgb(240 115 106 / 0.17),
+    rgb(233 161 59 / 0.08) 55%,
+    transparent 78%
+  );
+  --orb-fallback: radial-gradient(
+    circle at 50% 18%,
+    rgb(168 232 244 / 0.72),
+    rgb(62 200 223 / 0.42) 30%,
+    rgb(34 130 154 / 0.4) 55%,
+    rgb(18 72 87 / 0.5) 80%,
+    rgb(10 32 40 / 0.6) 100%
+  );
+
+  --canvas: #0a1013;
+  --canvas-wash: linear-gradient(
+    to top right,
+    rgb(62 200 223 / 0.22) 0%,
+    rgb(10 16 19 / 0) 62%
+  );
+  --canvas-wash-opacity: 0.5;
+
+  --chip-surface: #131f24;
+  --chip-border: #446e79;
+  --chip-border-hover: #4c7a84;
+  --link: #7fd4e6;
+
+  /* Glass inverts: a light veil over the surface, not a white fill. */
+  --glass-from: rgba(255, 255, 255, 0.055);
+  --glass-to: rgba(255, 255, 255, 0.022);
+  --glass-inset: rgba(255, 255, 255, 0.07);
+  --glass-chip: rgba(255, 255, 255, 0.075);
+  --glass-chip-border: rgba(255, 255, 255, 0.12);
+  --hover-veil: rgba(255, 255, 255, 0.05);
+  --hover-veil-strong: rgba(255, 255, 255, 0.085);
+
+  /* None on dark: the label is already near-black on a bright fill, so a
+     dark shadow would only smear it. */
+  /* Not pure white: the wordmark reads as brand-tinted metal rather than a
+     glaring cutout, and it stays a step quieter than body text (which is
+     right for chrome that is always on screen). */
+  /* Deep ink so a bright thumbnail sits ON darkness rather than glowing out
+     of it, and a stronger veil so the image is knocked back enough for the
+     light play plate to read. The plate and its glyph keep their light-mode
+     values on purpose (see the light block). */
+  --media-backdrop: #04171c;
+  --media-veil: rgba(3, 18, 23, 0.3);
+  --media-play-surface: rgba(238, 248, 251, 0.9);
+  --media-play-foreground: #02161b;
+
+  /* A bright brand fill at 50% over a near-black surface is still the
+     lightest thing in its neighbourhood, so it goes on reading as an active
+     control — where the same 50% over white already reads as inert. A deeper
+     fade restores the intent instead of changing the convention. */
+  --disabled-opacity: 0.4;
+
+  --logo-ink: #cfe3e8;
+
+  --card-button-text-shadow: transparent;
+
+  --thread-header-tint: rgba(62, 200, 223, 0.13);
+  /* Bubbles sit on a dark surface, so the shadow stops separating them and
+     a lit top edge does the work instead. */
+  --bubble-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+    0 8px 20px -8px rgba(0, 0, 0, 0.7);
+
+  --pill-surface: #16262c;
+  --pill-border: #2c4550;
+  --pill-foreground: #bfe6f0;
+  --pill-outline-border: #305d6b;
+
+  /* Deeper scrim: the page behind it is already dark, so 30% would not
+     separate the expanded composer from it. */
+  --overlay: rgba(0, 0, 0, 0.62);
+
+  /* Elevation = lit top edge + deep tight shadow (principle 4). */
+  --elevation-card: inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+    0 14px 34px -14px rgba(0, 0, 0, 0.72);
+  --elevation-media: inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+    0 16px 40px -24px rgba(0, 0, 0, 0.75);
+  --elevation-media-hover: inset 0 1px 0 0 rgba(255, 255, 255, 0.09),
+    0 26px 56px -22px rgba(0, 0, 0, 0.85);
+  --elevation-pop: inset 0 1px 0 0 rgba(255, 255, 255, 0.07),
+    0 30px 90px -26px rgba(0, 0, 0, 0.9);
+  --elevation-tooltip: inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+    0 10px 26px -10px rgba(0, 0, 0, 0.8);
+
+  /* --- status ----------------------------------------------------------- */
+  --scoring-red: #f0736a;
+  --scoring-yellow: #e9a13b;
+  --scoring-green: #34c76a;
+  --scoring-cyan: #3ec8df;
+  --scoring-red-fg: #ffa39b;
+  --scoring-yellow-fg: #f5c168;
+  --scoring-green-fg: #6fe09b;
+  --scoring-cyan-fg: #6fdaee;
+  --trend-up: #6fe09b;
+  --trend-down: #ffa39b;
+
+  /* --- legacy page aliases --------------------------------------------- */
+  --app-surface: #121c21;
+  --app-surface-nested: #18252b;
+  --app-muted: rgba(232, 239, 241, 0.66);
+  --app-hairline: rgba(255, 255, 255, 0.1);
+  --app-hairline-strong: rgba(255, 255, 255, 0.16);
+  /* --app-stroke / --chatbox-surface / --chatbox-shadow are overridden in a
+     second .dark block further down — they are (re)declared by a :root that
+     comes AFTER this one, and a later :root beats an earlier .dark on equal
+     specificity. Keeping the override next to those declarations is the only
+     thing that makes it stick. */
 }
 
 /* Typography & logo scale (mode-independent).
@@ -340,6 +657,16 @@
   --color-scoring-cyan-fg: var(--scoring-cyan-fg);
   --color-trend-up: var(--trend-up);
   --color-trend-down: var(--trend-down);
+  --color-chip-surface: var(--chip-surface);
+  --color-chip-border: var(--chip-border);
+  --color-chip-border-hover: var(--chip-border-hover);
+  --color-link: var(--link);
+  --color-pill-surface: var(--pill-surface);
+  --color-pill-border: var(--pill-border);
+  --color-pill-foreground: var(--pill-foreground);
+  --color-pill-outline-border: var(--pill-outline-border);
+  --color-divider-soft: var(--divider-soft);
+  --color-logo-ink: var(--logo-ink);
 
   --radius-sm: 0.375rem; /* 6px — tight nested controls */
   --radius-md: 0.5rem; /* 8px — buttons, inputs, CTAs */
@@ -397,6 +724,26 @@
   --chatbox-blur: 21px;
   --chatbox-send-size: 36px;
   --chatbox-send-icon: 20px;
+}
+
+/* Must live here, after the :root above: CSS resolves these two by source
+   order (both are one class/pseudo-class of specificity), so the same
+   declarations inside the main .dark block near the top of this file would
+   silently lose to the light values. */
+.dark {
+  /* The shared 1px gradient stroke, re-aimed: a cool graphite start easing
+     into a lit brand edge, so cards and the chat bar read as catching light
+     rather than being outlined. */
+  --app-stroke: linear-gradient(
+    93.54deg,
+    #263a42 0.3%,
+    rgba(62, 200, 223, 0.34) 99.76%
+  );
+  --chatbox-surface: #111b20;
+  /* Elevation as a lit top edge plus a deep, tight shadow — a soft grey cast
+     shadow says nothing against a near-black page. */
+  --chatbox-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+    0 18px 48px -14px rgba(0, 0, 0, 0.8);
 }
 
 [data-slot="chatbox"] {
@@ -509,28 +856,19 @@
 }
 
 [data-slot="chatbox"][data-ai-glow] {
-  --chatbox-ai-glow-level: 0.6;
+  --chatbox-ai-glow-level: var(--ai-glow-idle);
 }
 [data-slot="chatbox"][data-ai-glow]:hover {
-  --chatbox-ai-glow-level: 0.72;
+  --chatbox-ai-glow-level: var(--ai-glow-hover);
 }
 [data-slot="chatbox"][data-ai-glow]:focus-within {
-  --chatbox-ai-glow-level: 0.8;
+  --chatbox-ai-glow-level: var(--ai-glow-focus);
 }
 [data-slot="chatbox"][data-ai-glow][data-ai-glow-quiet],
 [data-slot="chatbox"][data-ai-glow][data-ai-glow-quiet]:hover,
 [data-slot="chatbox"][data-ai-glow][data-ai-glow-quiet]:focus-within {
-  --chatbox-ai-glow-level: 0.4;
+  --chatbox-ai-glow-level: var(--ai-glow-quiet);
 }
-/* Handover: the AI orb is taking over as the ambient signal, so the rim
-   light fades out (it stays mounted, so this cross-fades instead of
-   popping). Wins over every level above. */
-[data-slot="chatbox"][data-ai-glow][data-ai-glow-muted],
-[data-slot="chatbox"][data-ai-glow][data-ai-glow-muted]:hover,
-[data-slot="chatbox"][data-ai-glow][data-ai-glow-muted]:focus-within {
-  --chatbox-ai-glow-level: 0;
-}
-
 [data-slot="chatbox-ai-glow-rim"],
 [data-slot="chatbox-ai-glow-halo"] {
   position: absolute;
@@ -579,17 +917,7 @@
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   animation: chatbox-ai-glow-spin 8s linear infinite;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    rgba(14, 154, 181, 0.95) 42deg,
-    rgba(86, 184, 203, 0.55) 72deg,
-    transparent 118deg,
-    transparent 180deg,
-    rgba(0, 168, 185, 0.65) 224deg,
-    rgba(110, 194, 211, 0.35) 256deg,
-    transparent 300deg
-  );
+  background: var(--chatbox-ai-glow-arcs);
 }
 [data-slot="chatbox-ai-glow-halo"]::before {
   opacity: 0.85;
@@ -623,12 +951,17 @@
      thinking    1  + 12px lift — processing (fast inner currents in-shader)
      error      .92 — cyan halo recedes, a warm halo fades in
 
-   Reduced motion: the canvas draws one static frame (handled in JS);
-   presence transitions are disabled below. */
+   Reduced motion: the canvas draws one static frame (handled in JS).
+
+   NOTE: this element carries no state-driven transform or opacity. The rim
+   → sphere transition is a morph inside the shader, and the resting rim has
+   to land exactly on the chat bar's outline — which the component measures
+   from this box. A CSS transform would slide that geometry out from under
+   the glow, so presence lives entirely in the shader. */
 .ai-orb {
   position: absolute;
-  /* Pinned 20px below the fold: the state lifts (max 18px) never expose a
-     white strip under the sphere — its base always overshoots the viewport. */
+  /* Pinned 20px below the fold, so the sphere's base always overshoots the
+     viewport and never exposes a white strip underneath. */
   bottom: -20px;
   left: 50%;
   z-index: -1;
@@ -636,42 +969,14 @@
      or the sphere distorts. */
   width: 1240px;
   height: 460px;
-  /* Composed from parts so the state lift and the handover scale never
-     overwrite each other. */
-  --orb-lift: 0px;
-  --orb-scale: 1;
-  transform: translateX(-50%) translateY(var(--orb-lift)) scale(var(--orb-scale));
-  /* Grows out of the chat bar rather than from its own middle. */
-  transform-origin: 50% 100%;
+  /* Centering only — a pure translate leaves the measured box's size exact. */
+  transform: translateX(-50%);
   pointer-events: none;
-  opacity: 0.85;
-  transition:
-    opacity 520ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* Handed back to the composer's rim glow: the sphere settles down into the
-   bar and dissolves, so glow → sphere → glow reads as one continuous light
-   rather than two visuals swapping. */
-.ai-orb[data-visible="false"] {
-  opacity: 0;
-  --orb-scale: 0.9;
-  --orb-lift: 26px;
-}
-.ai-orb[data-state="attentive"] {
-  --orb-lift: -8px;
-  opacity: 0.95;
-}
-.ai-orb[data-state="typing"] {
-  --orb-lift: -12px;
+  /* Full strength: the formed sphere's density is the shader's own alpha
+     (0.95), the value the Figma palette was tuned against. The resting rim
+     is dialed down in-shader instead, so one constant here serves both ends
+     of the morph. */
   opacity: 1;
-}
-.ai-orb[data-state="thinking"] {
-  --orb-lift: -18px;
-  opacity: 1;
-}
-.ai-orb[data-state="error"] {
-  opacity: 0.92;
 }
 
 /* No CSS filter here: a blur on a WebGL canvas composites unreliably (frames
@@ -686,35 +991,29 @@
 
 /* Ambient bloom hugging the crown — soft room light, not an outline. The
    ellipse extends past the canvas bottom (offscreen) so the glow reads as
-   coming from the sphere's submerged body. Warm layer cross-fades in for
-   the error state. */
+   coming from the sphere's submerged body. There is no submerged body until
+   the light has condensed into one, so this arrives with the morph (the
+   shader's own bloom carries the resting rim). Warm layer cross-fades in
+   for the error state. */
 .ai-orb-halo,
 .ai-orb-halo-warm {
   position: absolute;
   inset: 18% 10% -45% 10%;
   border-radius: 50%;
   filter: blur(36px);
-  transition: opacity 700ms ease;
+  opacity: 0;
+  transition: opacity 700ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ai-orb[data-engaged="true"] .ai-orb-halo {
+  opacity: 1;
 }
 .ai-orb-halo {
-  /* Figma-light bloom: #BCEEF5-based, never the deeper brand cyan — the
-     reference blob's surroundings stay barely tinted. */
-  background: radial-gradient(
-    closest-side,
-    rgb(188 238 245 / 0.4),
-    rgb(188 238 245 / 0.16) 55%,
-    transparent 78%
-  );
+  background: var(--orb-halo);
 }
 .ai-orb-halo-warm {
-  background: radial-gradient(
-    closest-side,
-    rgb(203 58 49 / 0.14),
-    rgb(233 161 59 / 0.07) 55%,
-    transparent 78%
-  );
-  opacity: 0;
+  background: var(--orb-halo-warm);
 }
+/* Same specificity as the engaged rules above, so order decides: error wins. */
 .ai-orb[data-state="error"] .ai-orb-halo {
   opacity: 0.25;
 }
@@ -728,14 +1027,7 @@
   position: absolute;
   inset: 22% 14% -120% 14%;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 18%,
-    rgb(234 251 253 / 0.9),
-    rgb(185 239 244 / 0.6) 30%,
-    rgb(110 194 211 / 0.5) 55%,
-    rgb(14 154 181 / 0.55) 80%,
-    rgb(0 111 143 / 0.6) 100%
-  );
+  background: var(--orb-fallback);
 }
 .ai-orb[data-fallback="true"] .ai-orb-canvas {
   display: none;
@@ -754,7 +1046,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ai-orb,
   .ai-orb-halo,
   .ai-orb-halo-warm {
     transition: none;
@@ -1174,6 +1465,55 @@
   mix-blend-mode: overlay;
 }
 
+/* Theme switch — a brief, one-off crossfade.
+
+   Applied to <html> only for the ~220ms of a switch and then removed, rather
+   than living permanently on the elements: a standing color transition makes
+   every hover and focus feel a beat late, which is a real cost paid all day
+   for a moment that happens twice. Limited to the paint properties that
+   actually change (no `all`, which would animate layout-adjacent properties
+   too). Honours reduced motion by simply not applying. */
+html.theme-switching,
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition:
+    background-color 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    fill 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 220ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition-delay: 0ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-switching,
+  html.theme-switching *,
+  html.theme-switching *::before,
+  html.theme-switching *::after {
+    transition: none !important;
+  }
+}
+
+/* The Success Driver cards' decorative brand mark is a pale PNG, authored to
+   sit almost invisibly on a white card. On a dark card it is LIGHTER than its
+   surroundings, so at full strength it stops reading as ambient glow and
+   starts reading as a pasted graphic. Half strength puts it back where it
+   belongs: felt, not looked at. */
+.dark [data-slot="success-driver-card"] img {
+  opacity: 0.46;
+}
+
+/* Grain on dark: `overlay` pivots around mid-grey, so on a near-black card
+   it only ever darkens and the texture disappears into mud. `soft-light`
+   keeps the tooth visible, and the opacity comes down because noise reads
+   far louder against a dark field. */
+.dark .success-driver-noise {
+  opacity: 0.16;
+  mix-blend-mode: soft-light;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -1202,11 +1542,11 @@ body {
 */
 .app-canvas,
 .candidate-app-bg {
-  --background: #ffffff;
-  --app-bg: #ffffff;
+  --background: var(--canvas);
+  --app-bg: var(--canvas);
   position: relative;
   isolation: isolate;
-  background-color: #ffffff;
+  background-color: var(--canvas);
 }
 
 .app-canvas::before,
@@ -1225,12 +1565,8 @@ body {
 .candidate-app-bg::before {
   position: absolute;
   inset: 0;
-  opacity: 0.2;
-  background-image: linear-gradient(
-    to top right,
-    rgb(14 154 181 / 0.3) 0%,
-    rgb(255 255 255 / 1) 100%
-  );
+  opacity: var(--canvas-wash-opacity);
+  background-image: var(--canvas-wash);
 }
 
 /* Plain variant — solid white, no wash and no blur motif. For screens where
@@ -1247,10 +1583,10 @@ body {
   `.app-canvas::before`; z-index -1 keeps content above without wrappers.
 */
 .app-canvas-wash {
-  --background: #ffffff;
-  --app-bg: #ffffff;
+  --background: var(--canvas);
+  --app-bg: var(--canvas);
   isolation: isolate;
-  background-color: #ffffff;
+  background-color: var(--canvas);
 }
 
 .app-canvas-wash::before {
@@ -1259,12 +1595,8 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
-  opacity: 0.2;
-  background-image: linear-gradient(
-    to top right,
-    rgb(14 154 181 / 0.3) 0%,
-    rgb(255 255 255 / 1) 100%
-  );
+  opacity: var(--canvas-wash-opacity);
+  background-image: var(--canvas-wash);
 }
 
 /* Blur motif — fixed to the viewport so it stays put while content scrolls. */

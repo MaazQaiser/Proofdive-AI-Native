@@ -55,14 +55,14 @@ export function SuccessDriversGuideCard({
       aria-label="Play the two-minute guide to the four Success Drivers"
       className={cn(
         "group block w-full cursor-pointer overflow-hidden rounded-xl border border-border bg-card text-left",
-        "shadow-[0_16px_40px_-28px_rgba(4,32,39,0.45)]",
+        "shadow-[var(--elevation-media)]",
         // Hover: gentle lift + deeper shadow, the classic "this plays" cue,
         // kept small so it invites without shouting. Motion-reduce users get
         // the color/shadow change only.
         "transition-all duration-300 ease-out",
-        "hover:-translate-y-1 hover:border-brand-400 hover:shadow-[0_24px_56px_-24px_rgba(4,32,39,0.5)]",
+        "hover:-translate-y-1 hover:border-brand-400 hover:shadow-[var(--elevation-media-hover)]",
         "focus-visible:outline-none focus-visible:-translate-y-1 focus-visible:ring-[3px] focus-visible:ring-ring/50",
-        "active:translate-y-0 active:shadow-[0_16px_40px_-28px_rgba(4,32,39,0.45)]",
+        "active:translate-y-0 active:shadow-[var(--elevation-media)]",
         "motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-visible:translate-y-0",
         className,
       )}
@@ -155,14 +155,14 @@ export function AssessmentPlanPanel({
                         onClick={() => onSelect(spec.id)}
                         className={cn(
                           "flex h-9 w-full items-center gap-2.5 rounded-md px-1 py-1 text-left text-body-sm leading-6 text-text-primary transition",
-                          "hover:bg-white/40 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                          "hover:bg-[var(--hover-veil)] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                           isOn && "font-medium",
                         )}
                       >
                         <span
                           aria-hidden
                           className={cn(
-                            "grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] border-[#56b8cb] bg-white",
+                            "grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] border-brand-400 bg-card",
                             isOn && "border-primary",
                           )}
                         >
@@ -203,7 +203,7 @@ export function AssessmentPlanPanel({
                         )}
                       >
                         <div className="overflow-hidden">
-                          <div className="mt-0.5 mb-1 ml-[11px] border-l-[1.5px] border-[#56b8cb]/50 pl-[19px] pr-2">
+                          <div className="mt-0.5 mb-1 ml-[11px] border-l-[1.5px] border-brand-400/50 pl-[19px] pr-2">
                             <p className="text-caption leading-snug text-text-secondary">
                               {suggestionReasoningFor(spec.id, { targetRole })}
                             </p>

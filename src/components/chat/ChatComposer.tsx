@@ -49,7 +49,6 @@ export function ChatComposer({
   /** Onboarding keeps the full wash; other candidate pages default to a softer glow. */
   backgroundGlowIntensity = "soft",
   aiGlow = false,
-  aiGlowMuted = false,
 }: {
   placeholder?: string;
   onSend: (text: string) => void;
@@ -81,7 +80,6 @@ export function ChatComposer({
   /** Ambient AI glow on the input shell — see `Chatbox` `aiGlow`. */
   aiGlow?: boolean;
   /** Fades that glow out while another AI visual takes over — see `Chatbox`. */
-  aiGlowMuted?: boolean;
 }) {
   const [text, setText] = useState(prefill);
   const [quickPromptsOpen, setQuickPromptsOpen] = useState(false);
@@ -351,7 +349,7 @@ export function ChatComposer({
         data-slot="chatbox-thread-header"
         className={cn(
           "relative flex w-full shrink-0 items-center justify-between gap-3 p-3",
-          "bg-[linear-gradient(189.44deg,rgba(255,255,255,0.2)_50.11%,rgba(14,154,181,0.1)_110.8%),linear-gradient(#fff,#fff)]",
+          "bg-[linear-gradient(189.44deg,var(--glass-from)_50.11%,var(--thread-header-tint)_110.8%),linear-gradient(var(--chatbox-surface),var(--chatbox-surface))]",
         )}
         role="group"
         aria-label={`${threadHeaderTitle} header`}
@@ -390,7 +388,7 @@ export function ChatComposer({
       <div
         data-slot="chatbox-thread-log"
         className={cn(
-          "flex min-h-0 w-full flex-1 flex-col border-b border-[#d4d4d2]",
+          "flex min-h-0 w-full flex-1 flex-col border-b border-divider-soft",
           !fullscreen && "max-h-[min(380px,42dvh)]",
         )}
       >
@@ -434,7 +432,6 @@ export function ChatComposer({
         placeholder={placeholder}
         disabled={disabled}
         aiGlow={aiGlow}
-        aiGlowMuted={aiGlowMuted}
         showUploadAction={showUploadButton}
         uploadLabel={uploadLabel}
         onUploadClick={() => fileInputRef.current?.click()}
@@ -598,7 +595,7 @@ export function ChatComposer({
               <div
                 aria-hidden
                 className={cn(
-                  "absolute inset-0 bg-black/30 backdrop-blur-md transition-opacity duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+                  "absolute inset-0 bg-[var(--overlay)] backdrop-blur-md transition-opacity duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
                   expandSettled ? "opacity-100" : "opacity-0",
                 )}
                 onClick={exitFullscreen}
@@ -607,7 +604,7 @@ export function ChatComposer({
               <div
                 ref={chatboxShellRef}
                 onTransitionEnd={handleExpandTransitionEnd}
-                className="pointer-events-auto flex flex-col overflow-hidden rounded-[20px] shadow-[0_24px_80px_-24px_rgba(7,62,76,0.35)]"
+                className="pointer-events-auto flex flex-col overflow-hidden rounded-[20px] shadow-[var(--elevation-pop)]"
                 style={expandStyle}
               >
                 {renderChatbox({
