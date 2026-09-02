@@ -900,7 +900,11 @@ function OnboardingAgentInner({
 
   const prompt: string =
     stage === "welcome"
-      ? `${greetingName ? `Welcome, ${greetingName}.` : "Welcome to ProofDive."}\n\nProofDive turns your real experience into interview-ready proof: you practice, and every answer is scored against the four Success Drivers so you can see exactly what to improve. Setting up takes about a minute.`
+      ? // The welcome stage does not go through AgentPrompt at all — it is the
+        // one screen that asks nothing, so it is composed directly below.
+        // Kept as an empty branch rather than deleted so welcome cannot fall
+        // through to the closing "You're set…" template.
+        ""
       : stage === "bgEntry"
         ? "Let's start with your resume.\n\nI'll read your role, experience, and industry from it, so everything ahead is built on your real background instead of guesswork. You'll review and confirm it all before it's saved."
         : stage === "bgParsing"
@@ -1031,14 +1035,27 @@ function OnboardingAgentInner({
           present on every stage including the welcome screen (where only the
           progress row is hidden). Far right also puts it where users already
           reach for account-level controls. */}
-      <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-border bg-background/75 px-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-        <Link
-          href="/"
-          className="flex h-full shrink-0 items-center border-r border-border pr-6"
-        >
-          <Logo size="xxs" />
-        </Link>
-        <ThemeToggle className="-mr-1.5" />
+      <header
+        className={cn(
+          "relative z-30 flex h-14 w-full shrink-0 items-center justify-between px-6",
+          /* On the welcome stage the mark is the hero below, so the header
+             carries nothing but the switch — and the rule and glass would
+             only draw a line across the ambience for no content. From step 1
+             the chrome returns and the mark settles into its corner. */
+          stage === "welcome"
+            ? "bg-transparent"
+            : "border-b border-border bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60",
+        )}
+      >
+        {stage === "welcome" ? null : (
+          <Link
+            href="/"
+            className="flex h-full shrink-0 items-center border-r border-border pr-6"
+          >
+            <Logo size="xxs" />
+          </Link>
+        )}
+        <ThemeToggle className="-mr-1.5 ml-auto" />
       </header>
 
       <input
@@ -1086,52 +1103,106 @@ function OnboardingAgentInner({
                   Question {microStep.index + 1} of {microStep.total}
                 </div>
               ) : null}
-              {/* On the plan step the guide sits beside the heading —
-                  offered where the decision starts, without a full-width
-                  banner above the cards. */}
-              <div
-                className={cn(
-                  stage === "plan" &&
-                    "flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-10",
-                )}
-              >
-                <div className={cn(stage === "plan" && "min-w-0 flex-1")}>
-                  <AgentPrompt
-                    key={promptKey}
-                    promptKey={promptKey}
-                    prompt={prompt}
-                    ariaLabel="Onboarding prompt"
-                    headingClassName="text-agent-heading text-heading-teal"
-                    subtextClassName="mt-3 text-agent-question text-text-primary"
-                    mode="word"
-                  />
-                </div>
-                {stage === "plan" ? (
-                  <SuccessDriversGuideCard className="w-full max-w-[280px] shrink-0 sm:mt-1 sm:w-[232px] min-[1360px]:hidden" />
-                ) : null}
-              </div>
-
               {stage === "welcome" ? (
-                <div className="mt-8">
-                  {/* Padding follows the product's trailing-arrow CTA (see the
-                      plan step's Confirm): more room on the left so the arrow
-                      does not make the right side look heavy. */}
-                  <Button
-                    type="button"
-                    onClick={() => setStage("bgEntry")}
-                    /* A brand-tinted lift, welcome screen only. The CTA sits
-                       on the ambience plate rather than on a flat page, and in
-                       light mode its fill measures 3.04:1 against that wash —
-                       a pass, but with no margin. The shadow makes the button's
-                       edge independent of whatever the plate is doing behind
-                       it, and reads as elevation rather than an added border. */
-                    className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium shadow-[0_4px_16px_-4px_rgba(14,154,181,0.55)] dark:shadow-[0_6px_20px_-6px_rgba(0,0,0,0.75)]"
-                  >
-                    Let&apos;s get started
-                    <ArrowRight />
-                  </Button>
+                /* The welcome stage is composed here rather than through
+                   AgentPrompt, because it is the only stage that asks nothing.
+                   Typing is the agent's speaking voice — from step 1 on, every
+                   prompt is a question, so the effect earns itself. Spending it
+                   on a fixed sentence nobody was asked is the exact texture we
+                   are trying to get rid of, and AgentPrompt can only carry a
+                   heading/subtext pair anyway, not a mark, a display line and a
+                   control. One wrapper, one entrance: the composition arrives
+                   as a single object, using the same rise the landing hero uses
+                   (globals.css --animate-landing-rise), so the screen behind
+                   sign-in arrives the way the screen in front of it did. */
+                <div className="motion-safe:animate-landing-rise flex w-full flex-col items-start">
+                  {/* `sm` (48px) is sized against the headline, not chosen off
+                      the ladder. The asset is an icon (89.6% of the box) plus
+                      the wordmark, and the icon is the densest ink here — at
+                      48px it renders 43px against the headline's 33.6px caps,
+                      so the mark reads as a signature above the line rather
+                      than competing with it. At the previous `xxl` the icon was
+                      2.13x the cap height and the mark filled 60% of the
+                      column; this is a 40% cut on both. */}
+                  <Logo size="sm" className="max-w-full" />
+
+                  {/* One ink, not the landing's two-tone: measured on this
+                      plate the second tone falls to 1.16:1 against the first in
+                      dark, and a flat two-colour split is the non-gradient
+                      version of the gradient-headline tic. Authority comes from
+                      the family instead — Gilroy Bold against the flow's Inter
+                      Medium — which is also why 48px can outrank step 1's 40px
+                      without the jump reading as an accident.
+                      6vw (not the landing's 4.2vw) because this column is fixed
+                      at 800px rather than fluid, so the headline pins at 48px
+                      exactly where the column stops being fixed and scales only
+                      below it. Broken by hand on the full stop so the line
+                      break is a syntactic hinge, not wherever 752px ran out.
+                      `cap-baseline` trims Gilroy's ~6px of shoulder and ~14px
+                      of descent space so the authored 32/20 gaps are the gaps
+                      the eye actually sees; `-ml-[0.065em]` cancels the 'E's
+                      left sidebearing, since the logo's first tile has none. */}
+                  <h1 className="mt-8 -ml-[0.065em] w-full whitespace-pre-line cap-baseline font-gilroy text-[clamp(2rem,6vw,3rem)] font-bold leading-[1.12] tracking-[-0.04em] text-heading-teal">
+                    {"Every answer is scored.\nSee exactly what to improve."}
+                  </h1>
+
+                  {/* 28rem, the landing's own measure: ~62 characters, against
+                      the 752px column the old paragraph ran to. Demoting this
+                      from 28px to 20px is the change that creates a second read
+                      where there was none. */}
+                  <p className="mt-5 max-w-[30rem] text-body-lg leading-7 text-text-primary/80">
+                    You bring the real experience. The four Success{"\u00A0"}Drivers
+                    are the standard your answers are held to.
+                  </p>
+
+                  {/* The reassurance belongs beside the control it reassures
+                      about, not stacked above it as a third rank of type. */}
+                  <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3 motion-safe:animate-landing-cta">
+                    <Button
+                      type="button"
+                      onClick={() => setStage("bgEntry")}
+                      /* A brand-tinted lift, welcome screen only. The CTA sits
+                         on the ambience plate rather than on a flat page, and in
+                         light mode its fill measures 3.04:1 against that wash —
+                         a pass, but with no margin. The shadow makes the button's
+                         edge independent of whatever the plate is doing behind
+                         it, and reads as elevation rather than an added border. */
+                      className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium shadow-[0_4px_16px_-4px_rgba(14,154,181,0.55)] dark:shadow-[0_6px_20px_-6px_rgba(0,0,0,0.75)]"
+                    >
+                      Let&apos;s get started
+                      <ArrowRight />
+                    </Button>
+                    <span className="text-caption text-text-primary/80">
+                      Setting up takes about a minute.
+                    </span>
+                  </div>
                 </div>
-              ) : null}
+              ) : (
+                /* On the plan step the guide sits beside the heading —
+                   offered where the decision starts, without a full-width
+                   banner above the cards. */
+                <div
+                  className={cn(
+                    stage === "plan" &&
+                      "flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-10",
+                  )}
+                >
+                  <div className={cn(stage === "plan" && "min-w-0 flex-1")}>
+                    <AgentPrompt
+                      key={promptKey}
+                      promptKey={promptKey}
+                      prompt={prompt}
+                      ariaLabel="Onboarding prompt"
+                      headingClassName="text-agent-heading text-heading-teal"
+                      subtextClassName="mt-3 text-agent-question text-text-primary"
+                      mode="word"
+                    />
+                  </div>
+                  {stage === "plan" ? (
+                    <SuccessDriversGuideCard className="w-full max-w-[280px] shrink-0 sm:mt-1 sm:w-[232px] min-[1360px]:hidden" />
+                  ) : null}
+                </div>
+              )}
 
               {/* No resume, no substitute questionnaire: the only alternative
                   is to skip, using the same chip control the flow's other
