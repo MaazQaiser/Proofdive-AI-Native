@@ -99,6 +99,7 @@ function assessed(
     matchedSignals: [assessment.evidence],
     missingNextLevelSignals: [assessment.missingStrengths],
     secondaryCompetencies: secondary,
+    consultantNotes: [],
     developmentRecommendation: assessment.development,
     assessment,
   };

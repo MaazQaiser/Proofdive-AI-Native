@@ -99,7 +99,7 @@ export const FAQ_ROOT_ITEMS: FaqRootItem[] = [
     id: "storyboard",
     menuLabel: "Storyboard Info",
     getAnswer: () => ({
-      text: "The Storyboard Module helps you turn your real experiences into structured, interview-ready stories for your target role. Add your experiences, and get a competency-scored story built using the CAR (Cause, Action, Result) framework.",
+      text: "The Storyboard Module helps you turn your real experiences into structured, interview-ready stories for your target role. Add your experiences, and get a competency-scored story built using the CAR (Context, Action, Result) framework.",
       cta: STORYBOARD_CTA,
       followups: [
         {

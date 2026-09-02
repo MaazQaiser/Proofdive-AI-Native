@@ -48,6 +48,9 @@ import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
 import { CoreFourSelectionPanel } from "@/app/onboarding/ui/CoreFourSelectionPanel";
 import { computeCandidateUsage, isFreePlan } from "@/lib/candidateUsage";
 import {
+  CAR_FIELD_GUIDANCE,
+  COMPETENCY_GUIDANCE,
+  CONSULTANT_INTRO,
   DEMO_CONSULTANT_QUESTION_COUNT,
   competencySpec,
   completedCompetencyIds,
@@ -65,6 +68,7 @@ import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type { Experience, InterviewReport, RoleProfile, TrainingJourneyProgress } from "@/lib/proofdiveTypes";
 import { scoringBandForScore } from "@/lib/scoringPalette";
 import {
+  COMPETENCY_SPECS,
   MAX_DIVES_PER_ROLE,
   type CloneDiveUnlock,
   type CompetencyId,
@@ -76,7 +80,7 @@ import {
   remainingDives,
   savedDivesForRole,
   upsertEditingDive,
-  commitSavedDive,
+  strengthScore,
 } from "@/lib/storyboardDraft";
 import { writeJson } from "@/lib/storage";
 import {
@@ -109,12 +113,9 @@ type CapturePhase =
   | { kind: "aboutYou" }
   | { kind: "closing" };
 
-const ABOUT_YOU_PROMPT = `Is there anything you have missed, or do you want to add?
+const ABOUT_YOU_PROMPT = `Tell me about yourself.
 
-We want to know you better, tell us more about yourself: what are your passions, achievements, or something that makes you YOU.`;
-
-const ABOUT_YOU_PREFILL =
-  "I'm energized by turning messy operational problems into clear systems people actually use. Outside work I coach a weekend robotics club, and I'm proudest of a catalog migration that cut stockouts while giving teams one shared source of truth.";
+This becomes the opening of your Storyboard — the answer to “tell me about yourself”. Who you are, what you’re moving toward, and one or two things you’re proud of. Aim for 150–220 words.`;
 
 const CAR_FIELDS: CarField[] = ["context", "action", "result"];
 
@@ -129,25 +130,21 @@ function diveScoreTextClass(score: number | null | undefined): string {
   return `${type} text-scoring-red`;
 }
 
-const CAR_PROMPTS: Record<CarField, { prompt: string; helper: string; prefill: string }> = {
+/* Helper lines for the CAR fields (the rail's suggestion while answering).
+ * No prefilled answers: the audit found the composer arrived with a fabricated
+ * example already typed in as its VALUE, so one Send submitted invented
+ * evidence — the opposite of the product's guardrails. Examples now live in
+ * the placeholder as the SHAPE of a good answer (see CAR_FIELD_GUIDANCE). */
+const CAR_PROMPTS: Record<CarField, { helper: string }> = {
   context: {
-    prompt: "Context — what was the situation, challenge, goal, or constraint?",
     helper: "Give just enough background for someone to understand why the situation mattered.",
-    prefill:
-      "Inventory tracking was inconsistent across teams — no single source of truth for SKUs, and stockouts were rising.",
   },
   action: {
-    prompt: "Action — what did you personally do?",
     helper: "Focus on what you personally did. Avoid saying only what the team did.",
-    prefill:
-      "I mapped how each team tracked inventory, defined a shared SKU standard, redesigned the intake flow, and ran adoption reviews until teams switched over.",
   },
   result: {
-    prompt: "Result — what changed because of your actions?",
     helper:
       "Share measurable outcomes where possible. If no metric exists, describe observable change or impact.",
-    prefill:
-      "Inventory mismatch errors dropped ~40% in six weeks, and ops adopted the shared catalog as the default.",
   },
 };
 
@@ -245,7 +242,7 @@ export function StoryboardAgent() {
     StorageKeys.trainingProgress,
     {},
   );
-  const [storyboardGenerationCount, setStoryboardGenerationCount] = useLocalStorageState<number>(
+  const [storyboardGenerationCount] = useLocalStorageState<number>(
     StorageKeys.candidateStoryboardGenerations,
     0,
   );
@@ -313,6 +310,15 @@ export function StoryboardAgent() {
     () => completedCompetencyIds(allRoleExperiences),
     [allRoleExperiences],
   );
+  /** Onboarding confirmed four focus areas; the first Dive captures two. The
+   * other two come pre-ticked here so the user is not shown their own choices
+   * as if they had never made them. */
+  const initialAddSelection = useMemo(() => {
+    const chosen = (roleProfile?.coreFourCompetencies ?? []).filter((id) =>
+      COMPETENCY_SPECS.some((s) => s.id === id),
+    );
+    return Array.from(new Set([...lockedCompetencyIds, ...chosen]));
+  }, [lockedCompetencyIds, roleProfile?.coreFourCompetencies]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [statusLine, setStatusLine] = useState<string | null>(null);
@@ -389,19 +395,27 @@ export function StoryboardAgent() {
 
   useEffect(() => {
     const wantNew = (searchParams.get("new") ?? "").trim();
-    if (wantNew === "1" || wantNew.toLowerCase() === "true") {
-      setSelectedId(null);
-      setStatusLine(null);
-      setCraftUi("idle");
-      setGreetAcknowledged(false);
+    if (wantNew !== "1" && wantNew.toLowerCase() !== "true") return;
+    if (!diveHydrated) return;
+    setSelectedId(null);
+    setStatusLine(null);
+    setCraftUi("idle");
+    setGreetAcknowledged(false);
+    // Home's "Add competency" used to re-enter intake with nothing left to
+    // capture and land on the hub — a dead end. If every focus competency is
+    // already done and a Dive exists, "add" means the add-competency panel.
+    const allCaptured = nextOpenDemoCompetency(focusQueue, roleExperiences) === null;
+    if (allCaptured && savedDives.length > 0 && divesLeft > 0) {
+      setAddCompetencySelected(initialAddSelection);
+      setAddCompetencyError(null);
+      setAddCompetencyOpen(true);
+    } else {
       setAddCompetencyOpen(false);
       setIntakeMode(true);
-      setRoleProfile((prev) =>
-        prev?.aboutYouAnswer ? { ...prev, aboutYouAnswer: undefined } : prev,
-      );
-      router.replace("/storyboard");
     }
-  }, [searchParams, router, setRoleProfile]);
+    router.replace("/storyboard");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per ?new=1 arrival
+  }, [searchParams, router, diveHydrated]);
 
   useEffect(() => {
     const wantAdd = (searchParams.get("addCompetency") ?? "").trim();
@@ -411,11 +425,12 @@ export function StoryboardAgent() {
       router.replace("/storyboard");
       return;
     }
-    setAddCompetencySelected(lockedCompetencyIds);
+    setAddCompetencySelected(initialAddSelection);
     setAddCompetencyError(null);
     setAddCompetencyOpen(true);
     router.replace("/storyboard");
   }, [
+    initialAddSelection,
     searchParams,
     router,
     role,
@@ -425,6 +440,27 @@ export function StoryboardAgent() {
     maxDives,
     lockedCompetencyIds,
   ]);
+
+  /** A read-only Dive's "Edit in a new Dive" lands here with the section to unlock. */
+  useEffect(() => {
+    const raw = (searchParams.get("editSection") ?? "").trim();
+    if (!raw) return;
+    if (!role || !diveHydrated || !latestDive) return;
+    const unlock: CloneDiveUnlock =
+      raw === "intro"
+        ? { kind: "intro" }
+        : { kind: "competency", index: Math.max(0, Math.min(11, Number(raw) || 0)) };
+    router.replace("/storyboard");
+    if (divesLeft <= 0 || usage.isStoryboardAtLimit) {
+      setUpgradeModalOpen(true);
+      return;
+    }
+    setDiveConfirmAction("edit");
+    setDiveUnlock(unlock);
+    setPendingFocusIds(null);
+    setDiveConfirmOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per ?editSection arrival
+  }, [searchParams, role, diveHydrated, latestDive]);
 
   /** Resume an unfinished editing Dive after leave / browser close. */
   useEffect(() => {
@@ -497,18 +533,14 @@ export function StoryboardAgent() {
         // ignore
       }
       setIntakeMode(true);
+      // The Introduction answer carries forward: re-asking "tell me about
+      // yourself" on every Dive, and discarding the last answer, was pure
+      // repetition. The user can still edit it on the review screen.
       setRoleProfile((prev) =>
-        prev
-          ? {
-              ...prev,
-              storyboardFocusCompetencies: queue,
-              aboutYouAnswer: undefined,
-            }
-          : prev,
+        prev ? { ...prev, storyboardFocusCompetencies: queue } : prev,
       );
       router.push("/storyboard?new=1");
     } else {
-      setStoryboardGenerationCount((n) => n + 1);
       router.push("/storyboard/crafting");
     }
   }
@@ -552,14 +584,22 @@ export function StoryboardAgent() {
     requestNewDive("addCompetency", { kind: "all" }, nextFocus);
   }
 
-  const pillarScores = useMemo(
-    () =>
-      SUCCESS_DRIVER_ORDER.map((id) => ({
-        id,
-        score: latestDive?.pillarScores?.[id] ?? 0,
-      })),
-    [latestDive],
-  );
+  /* During capture the rail's Success Drivers used to read "—" until Craft,
+   * even though the spec calls for a live draft. Now each pillar reflects the
+   * Strength of what has been captured so far; on the hub the saved Dive's
+   * numbers stand. */
+  const pillarScores = useMemo(() => {
+    const capturing = intakeMode || savedDives.length === 0;
+    return SUCCESS_DRIVER_ORDER.map((id) => {
+      if (!capturing) return { id, score: latestDive?.pillarScores?.[id] ?? 0 };
+      const scores = roleExperiences
+        .filter((e) => e.competencyId && pillarForCompetency(e.competencyId) === id && e.car)
+        .map((e) => Number(strengthScore(e.car!)))
+        .filter((n) => n > 0);
+      const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+      return { id, score: Math.round(avg * 10) / 10 };
+    });
+  }, [latestDive, intakeMode, savedDives.length, roleExperiences]);
 
   const phase = useMemo(() => {
     const base = deriveCapturePhase(
@@ -587,6 +627,12 @@ export function StoryboardAgent() {
   }, [phase, selectedId, roleExperiences, focusQueue]);
 
   const selected = useMemo(() => {
+    // While a new competency is being titled there is no experience for it
+    // yet; showing the previous one here is what left the rail saying
+    // "Anchored to Analytical Thinking" on Competency 2.
+    if (phase.kind === "title") {
+      return experienceForCompetency(roleExperiences, phase.competencyId) ?? null;
+    }
     if (selectedId) {
       return roleExperiences.find((e) => e.id === selectedId) ?? null;
     }
@@ -594,31 +640,43 @@ export function StoryboardAgent() {
       return experienceForCompetency(roleExperiences, activeCompetencyId) ?? null;
     }
     return null;
-  }, [selectedId, roleExperiences, activeCompetencyId]);
+  }, [phase, selectedId, roleExperiences, activeCompetencyId]);
 
   const storyPrompt = useMemo(() => {
     if (phase.kind === "greet") {
       return `Hey ${firstName}, let's build interview-ready proof from real experience.`;
     }
+    // Heading = the question, in the agent's voice. Competency and progress
+    // already live in the pill and the rail, so the heading no longer repeats
+    // them. Subtext = why we ask, tied to this competency, plus what a strong
+    // answer contains — the same signals the Strength score is judged on.
     if (phase.kind === "title") {
       const spec = competencySpec(phase.competencyId);
-      const driver = SUCCESS_DRIVERS[spec.pillar];
-      return `Competency ${phase.index + 1} of ${focusQueue.length}: ${spec.title} (${driver.shortLabel}).
+      const guide = COMPETENCY_GUIDANCE[phase.competencyId];
+      return `Which experience best shows your ${spec.title}?
 
-What should this experience be called? (short title, up to ~15 words)`;
+${guide.why} Give it a short name so we can refer to it — you'll tell the story next.`;
     }
     if (phase.kind === "car") {
-      const meta = CAR_PROMPTS[phase.field];
-      return `${meta.prompt}\n\n${meta.helper}`;
+      const field = CAR_FIELD_GUIDANCE[phase.field];
+      const guide = COMPETENCY_GUIDANCE[phase.competencyId];
+      const cue = phase.field === "action" ? ` ${guide.good}` : "";
+      return `${field.question}
+
+${field.why}${cue}`;
     }
     if (phase.kind === "consultant") {
-      return phase.question;
+      const guide = COMPETENCY_GUIDANCE[phase.competencyId];
+      const intro = phase.qIndex === 0 ? `${CONSULTANT_INTRO} ` : "";
+      return `${phase.question}
+
+${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${guide.good}`;
     }
     if (phase.kind === "aboutYou") {
       return ABOUT_YOU_PROMPT;
     }
     return `This is coming together really well.`;
-  }, [phase, firstName, focusQueue.length]);
+  }, [phase, firstName]);
 
   const storyPromptKey = `${phase.kind}-${activeCompetencyId ?? "none"}-${
     phase.kind === "car"
@@ -632,34 +690,15 @@ What should this experience be called? (short title, up to ~15 words)`;
             : "x"
   }`;
 
-  const exampleReplyPrefill = useMemo(() => {
-    if (phase.kind === "greet") return "Let's start.";
-    if (phase.kind === "title") {
-      return phase.index === 0
-        ? "Inventory single source of truth"
-        : "Owned the inventory rollout end-to-end";
-    }
-    if (phase.kind === "car") return CAR_PROMPTS[phase.field].prefill;
-    if (phase.kind === "consultant") {
-      return phase.qIndex === 0
-        ? "I personally owned the analysis and the rollout plan — I didn't wait for a mandate."
-        : "We traded short-term dual systems for a cleaner long-term catalog; the risk was adoption, so I ran weekly reviews.";
-    }
-    if (phase.kind === "aboutYou") return ABOUT_YOU_PREFILL;
-    return "";
-  }, [phase]);
-
   const replyPrefillKey = storyPromptKey;
 
   const composerPlaceholder = useMemo(() => {
     if (phase.kind === "closing") return "Craft your story above when ready…";
-    if (phase.kind === "greet") return "Reply to start…";
-    if (phase.kind === "title") return "Experience title…";
-    if (phase.kind === "car") {
-      return `${phase.field[0]!.toUpperCase()}${phase.field.slice(1)} (type or voice)…`;
-    }
-    if (phase.kind === "aboutYou") return "Passions, achievements, what makes you you…";
-    return "Your answer (type or voice)…";
+    if (phase.kind === "greet") return "Say hi to begin, or press Let’s Start above";
+    if (phase.kind === "title") return "A short name for this experience, e.g. “Q3 launch turnaround”";
+    if (phase.kind === "car") return `${CAR_FIELD_GUIDANCE[phase.field].shape} Type or use voice.`;
+    if (phase.kind === "aboutYou") return "Who you are, where you’re headed, one thing you’re proud of…";
+    return "Be specific — the situation, your reasoning, the trade-off. Type or use voice.";
   }, [phase]);
 
   function upsertExperience(next: Experience) {
@@ -707,13 +746,19 @@ What should this experience be called? (short title, up to ~15 words)`;
       focusQueue,
       roleProfile?.aboutYouAnswer,
     );
-    const nextStore = commitSavedDive(diveStore, seeded);
+    // Craft opens the storyboard for REVIEW. Saving — and spending one of the
+    // three Dives — is the user's explicit act on that screen. Previously this
+    // committed the Dive as read-only before the user had seen a word of it.
+    const nextStore = upsertEditingDive(diveStore, seeded);
     writeJson(StorageKeys.storyboardDives, nextStore);
     setDiveStore(nextStore);
-    setStoryboardGenerationCount((n) => n + 1);
-    setCraftUi("idle");
-    setStatusLine(null);
-    router.replace("/storyboard");
+    // A short, honest beat: something is being made. Long enough to register,
+    // short enough not to feel like a spinner.
+    window.setTimeout(() => {
+      setCraftUi("idle");
+      setStatusLine(null);
+      router.push("/storyboard/crafting");
+    }, 1400);
   }
 
   function handleText(text: string) {
@@ -813,29 +858,42 @@ What should this experience be called? (short title, up to ~15 words)`;
   const storyQuick = useMemo<StoryQuick>(() => {
     if (phase.kind === "aboutYou") {
       return {
-        title: "One more thing",
-        body: "Share passions, achievements, or what makes you you — this feeds your opening story, not a single competency.",
-        suggestions: ["Aim for about 120–150 words — treat this like a consultant response."],
+        title: "Your introduction",
+        body: "This becomes the opening of your Storyboard — the first thing an interviewer hears. It isn't scored against a single competency.",
+        suggestions: ["Aim for 150–220 words. Who you are, where you’re headed, one thing you’re proud of."],
       };
     }
 
     if (!selected) {
+      const chosen = roleProfile?.coreFourCompetencies?.length ?? 0;
+      const scopeNote =
+        chosen > focusQueue.length
+          ? ` This Dive starts with ${focusQueue.length} of your ${chosen} focus areas; the rest can come in your next Dive.`
+          : "";
+      if (phase.kind === "title") {
+        const spec = competencySpec(phase.competencyId);
+        return {
+          title: `Competency ${phase.index + 1} of ${focusQueue.length}`,
+          body: `${spec.title}. Name the experience first, then we'll take the situation, what you did, and what changed.`,
+          suggestions: [COMPETENCY_GUIDANCE[phase.competencyId].good],
+        };
+      }
       return {
         title: "Ready when you are",
-        body: `We'll capture one experience for each of ${focusQueue.length} competencies, then craft your storyboard.`,
-        suggestions: [
-          <span key="start">
-            Reply in chat to begin <span className="font-extrabold">Competency 1</span>.
-          </span>,
-        ],
+        body: `One experience for each of ${focusQueue.length} competencies, then we craft your storyboard.${scopeNote}`,
+        suggestions: ["Real experiences only — we never invent details, and neither should you."],
       };
     }
 
     const car = selected.car;
+    const notes = (selected.consultantAnswers ?? []).map((a) => a.answer).filter(Boolean);
     const bodyParts = [
       car?.context ? `Context: ${clampText(car.context, 160)}` : "",
       car?.action ? `Action: ${clampText(car.action, 200)}` : "",
       car?.result ? `Result: ${clampText(car.result, 140)}` : "",
+      // Follow-up answers land here the moment they are sent — the user can
+      // see the consultant's questions doing something.
+      ...notes.map((n) => `Follow-up: ${clampText(n, 140)}`),
     ].filter(Boolean);
 
     const suggestions: string[] = [];
@@ -843,7 +901,7 @@ What should this experience be called? (short title, up to ~15 words)`;
       suggestions.push(CAR_PROMPTS[phase.field].helper);
     } else if (phase.kind === "consultant") {
       suggestions.push(
-        "Be specific — personal ownership and trade-offs make the evidence defensible.",
+        `Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT}. Specifics beat summary — your answer is quoted back as evidence.`,
       );
     } else if (isDemoExperienceComplete(selected)) {
       suggestions.push("Add one crisp metric if you can (before → after).");
@@ -857,11 +915,10 @@ What should this experience be called? (short title, up to ~15 words)`;
       title: selected.title || "Untitled experience",
       body:
         bodyParts.join("\n\n") ||
-        clampText(selected.raw, 340) ||
-        "Add Context, Action, and Result to build this story.",
+        "Next: the situation — what was going on, and what was at stake.",
       suggestions: spec ? [`Anchored to ${spec.title}`, ...suggestions] : suggestions,
     };
-  }, [selected, phase, focusQueue.length]);
+  }, [selected, phase, focusQueue.length, roleProfile?.coreFourCompetencies?.length]);
 
   const activeSuggestion = useMemo(() => {
     const list = storyQuick.suggestions;
@@ -1172,19 +1229,23 @@ What should this experience be called? (short title, up to ~15 words)`;
                       </span>
                       <SuccessDriverInfoTip driver={id} />
                     </div>
-                    <div className="flex w-[88px] shrink-0 items-baseline justify-end gap-1 font-gilroy whitespace-nowrap">
-                      <span
-                        className={cn(
-                          "cap-baseline w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums",
-                          diveScoreTextClass(displayScore),
-                        )}
-                      >
-                        {displayScore != null ? displayScore.toFixed(1) : "—"}
-                      </span>
-                      <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2]">
-                        /5
-                      </span>
-                    </div>
+                    {displayScore != null ? (
+                      <div className="flex w-[88px] shrink-0 items-baseline justify-end gap-1 font-gilroy whitespace-nowrap">
+                        <span
+                          className={cn(
+                            "cap-baseline w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums",
+                            diveScoreTextClass(displayScore),
+                          )}
+                        >
+                          {displayScore.toFixed(1)}
+                        </span>
+                        <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2]">
+                          /5
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="shrink-0 text-caption text-text-secondary">Not yet covered</span>
+                    )}
                   </div>
                 );
               })}
@@ -1256,8 +1317,16 @@ What should this experience be called? (short title, up to ~15 words)`;
               </h2>
               <p className="text-left text-agent-question text-text-primary">
                 Structured from the evidence you provided for{" "}
-                <span className="rounded-sm bg-[#B9EFF4] px-1 text-[#095B73]">{role}</span>
+                <span className="rounded-sm bg-secondary px-1 text-secondary-foreground">{role}</span>
                 .
+              </p>
+              {/* The word "Dive" used to appear first as a card title and was
+                  defined only inside a dialog and the FAQ. One line, here. */}
+              <p className="text-left text-caption leading-6 text-text-secondary">
+                A Dive is a saved version of your Storyboard.{" "}
+                {divesLeft > 0
+                  ? `You have ${divesLeft} of ${maxDives} left — each new one builds on everything you've captured.`
+                  : `You've used all ${maxDives} for this role.`}
               </p>
             </div>
             {showNearLimitBanner ? (
@@ -1298,7 +1367,7 @@ What should this experience be called? (short title, up to ~15 words)`;
                       setUpgradeModalOpen(true);
                       return;
                     }
-                    setAddCompetencySelected(lockedCompetencyIds);
+                    setAddCompetencySelected(initialAddSelection);
                     setAddCompetencyError(null);
                     setAddCompetencyOpen(true);
                   }}
@@ -1359,7 +1428,8 @@ What should this experience be called? (short title, up to ~15 words)`;
 
             {phase.kind === "closing" ? (
               <p className="mt-3 text-agent-question text-text-primary">
-                Your experiences are ready to shape into interview-ready proof.{" "}
+                Your experiences are ready to shape into interview-ready proof — you&apos;ll
+                review it before it&apos;s saved.{" "}
                 <button
                   type="button"
                   onClick={startCrafting}
@@ -1388,8 +1458,9 @@ What should this experience be called? (short title, up to ~15 words)`;
           <DialogHeader>
             <DialogTitle>Start a new Dive?</DialogTitle>
             <DialogDescription>
-              This will start a new Dive, a deeper version of your storyboard built on everything
-              you&apos;ve captured so far. You have {divesLeft} of {maxDives} remaining.
+              A Dive is a saved version of your Storyboard. This one starts from everything
+              you&apos;ve captured so far and is saved when you finish reviewing it. You have{" "}
+              {divesLeft} of {maxDives} remaining.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -1421,21 +1492,21 @@ What should this experience be called? (short title, up to ~15 words)`;
           addCompetencyOpen
             ? "Select competencies above to continue…"
             : showDiveHome
-              ? "Storyboard ready — open View story to continue…"
-              : phase.kind === "greet"
-                ? "Use Let’s Start above…"
+              ? "Open a Dive above to read or add to it…"
               : composerPlaceholder
         }
         onSend={handleText}
         freeTextMode="host"
+        // On greet the bar is LIVE: typing anything begins, exactly as the
+        // rail promises. Only closing (where the action is Craft) and the hub
+        // disable it.
         disabled={
           addCompetencyOpen ||
           showDiveHome ||
-          phase.kind === "greet" ||
           phase.kind === "closing" ||
           craftUi === "crafting"
         }
-        prefill={showDiveHome || addCompetencyOpen ? "" : exampleReplyPrefill}
+        prefill=""
         prefillKey={
           addCompetencyOpen ? "add-competency" : showDiveHome ? "post-craft" : replyPrefillKey
         }

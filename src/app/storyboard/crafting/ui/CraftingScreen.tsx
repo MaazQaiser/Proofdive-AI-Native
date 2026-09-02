@@ -42,6 +42,8 @@ import {
   editingDiveForRole,
   introStrengthScore,
   latestSavedDive,
+  MAX_DIVES_PER_ROLE,
+  remainingDives,
   normalizeDive,
   recomputeDiveScores,
   strengthScore,
@@ -97,30 +99,34 @@ const TA =
 const COMPETENCY_REGEN_LIMIT = 2;
 
 /** Quick-action presets for the inline Edit / regenerate bar (craft + read-only). */
+/* Every action here preserves the evidence. The previous set ("More
+ * dramatic", "Executive polish") asked the AI to change tone, which sits
+ * badly against guardrails that forbid inventing or inflating — and read as
+ * a writing tool rather than a coach. These ask for what interviewers reward. */
 const STORYBOARD_IMPROVE_CHIPS = [
   {
-    id: "more-dramatic",
-    label: "More dramatic",
+    id: "tighten",
+    label: "Tighten",
     prompt:
-      "Heighten the stakes and tension so the challenge feels vivid and urgent, without inventing facts.",
+      "Remove filler and repetition so the story is shorter and clearer, keeping every fact exactly as stated.",
   },
   {
-    id: "richer-context",
-    label: "Richer context",
+    id: "clarify-context",
+    label: "Clarify the situation",
     prompt:
-      "Add clearer situation, constraints, and why it mattered so a listener can picture the setup quickly.",
+      "Make the setting, the constraint and what was at stake easier to picture in the first two sentences, using only details already given.",
   },
   {
-    id: "executive-polish",
-    label: "Executive polish",
+    id: "make-ownership-explicit",
+    label: "Make my role explicit",
     prompt:
-      "Tighten language for senior interviewers: crisp ownership, decisions, and trade-offs — less filler.",
+      "Rephrase so what I personally decided and did is unmistakable — “I” where it was me, “we” only where it truly was the team.",
   },
   {
-    id: "measurable-impact",
-    label: "Measurable impact",
+    id: "add-result",
+    label: "Sharpen the result",
     prompt:
-      "Strengthen outcomes with numbers where possible (%, $, time, adoption); if none exist, state the clearest qualitative business effect.",
+      "Lead the result with the clearest before → after change already described; do not add numbers that are not in the evidence.",
   },
 ] as const;
 
@@ -306,6 +312,11 @@ export function CraftingScreen() {
   }, [role, diveHydrated, diveParam, diveStore]);
 
   const readOnly = Boolean(activeDive && activeDive.status === "saved");
+  const maxDives = usage.storyboardLimit > 0 ? usage.storyboardLimit : MAX_DIVES_PER_ROLE;
+  const divesLeftAfterSave = Math.max(
+    0,
+    (role && diveHydrated ? remainingDives(diveStore, role, maxDives) : maxDives) - 1,
+  );
   const inProgressDive = Boolean(
     role && diveHydrated && editingDiveForRole(diveStore, role),
   );
@@ -436,8 +447,9 @@ export function CraftingScreen() {
   const handleSaveStoryboard = useCallback(() => {
     if (!role || !activeDive || activeDive.status === "saved") return;
     setDiveStore((prev) => commitSavedDive(prev, activeDive));
+    setStoryboardGenerationCount((n) => n + 1);
     router.push("/storyboard");
-  }, [role, activeDive, setDiveStore, router]);
+  }, [role, activeDive, setDiveStore, router, setStoryboardGenerationCount]);
 
   const handleDownload = useCallback(() => {
     if (!activeDive) return;
@@ -559,7 +571,7 @@ export function CraftingScreen() {
 
           <div className="print:hidden">
             <h1 className="text-h4 text-text-primary">
-              {readOnly ? "Your storyboard" : "Review Storyboard"}
+              {readOnly ? "Your storyboard" : "Review your storyboard"}
             </h1>
           </div>
 
@@ -685,19 +697,23 @@ export function CraftingScreen() {
                       </span>
                       <SuccessDriverInfoTip driver={id} />
                     </div>
-                    <div className="flex w-[88px] shrink-0 items-baseline justify-end gap-1 font-gilroy whitespace-nowrap">
-                      <span
-                        className={cn(
-                          "cap-baseline w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums",
-                          diveScoreTextClass(displayScore),
-                        )}
-                      >
-                        {displayScore != null ? displayScore.toFixed(1) : "—"}
-                      </span>
-                      <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2]">
-                        /5
-                      </span>
-                    </div>
+                    {displayScore != null ? (
+                      <div className="flex w-[88px] shrink-0 items-baseline justify-end gap-1 font-gilroy whitespace-nowrap">
+                        <span
+                          className={cn(
+                            "cap-baseline w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums",
+                            diveScoreTextClass(displayScore),
+                          )}
+                        >
+                          {displayScore.toFixed(1)}
+                        </span>
+                        <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2]">
+                          /5
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="shrink-0 text-caption text-text-secondary">Not yet covered</span>
+                    )}
                   </div>
                 );
               })}
@@ -799,8 +815,10 @@ export function CraftingScreen() {
               displayTitle="Core Introduction"
               score={introStrengthScore(activeDive.intro.text)}
               locked={activeDive.intro.locked || readOnly}
-              showEditLock
+              showEditLock={!readOnly}
               showLockToggle={!readOnly}
+              showDeepenEdit={readOnly && !addCompetencyDisabled}
+              onDeepenEdit={() => router.push("/storyboard?editSection=intro")}
               regenCount={activeDive.intro.regenCount ?? 0}
               regenLimit={COMPETENCY_REGEN_LIMIT}
               onRegenerate={handleIntroRegenerate}
@@ -877,8 +895,10 @@ export function CraftingScreen() {
                       displayTitle={spec.title}
                       score={s.score || strengthScore(s.car)}
                       locked={s.locked || readOnly}
-                      showEditLock
+                      showEditLock={!readOnly}
                       showLockToggle={!readOnly}
+                      showDeepenEdit={readOnly && !addCompetencyDisabled}
+                      onDeepenEdit={() => router.push(`/storyboard?editSection=${index}`)}
                       regenCount={s.regenCount ?? 0}
                       regenLimit={COMPETENCY_REGEN_LIMIT}
                       onRegenerate={(instruction) =>
@@ -996,7 +1016,9 @@ export function CraftingScreen() {
             <div className="space-y-3 border-t border-border pt-6 print:hidden">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-caption leading-6 text-text-secondary">
-                  Edits auto-save. Finalize to lock this Dive as read-only.
+                  Edits save as you go. When it reads right, save it as Dive{" "}
+                  {activeDive.diveNumber} — a saved Dive is read-only, and you have{" "}
+                  {divesLeftAfterSave} more after this one.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" onClick={handleSaveStoryboard}>
@@ -1125,7 +1147,15 @@ function CompetencyClassificationDetails({
             <FileCheck className="size-4 shrink-0 text-primary" aria-hidden />
             Evidence
           </div>
-          <p className="text-[14px] leading-6 text-text-secondary">{evidenceText.join(". ")}.</p>
+          {/* Quoted follow-up answers already carry their own punctuation, so
+              they are listed rather than run into one sentence. */}
+          <div className="space-y-1.5">
+            {evidenceText.map((line, i) => (
+              <p key={i} className="text-[14px] leading-6 text-text-secondary">
+                {/[.!?”"]$/.test(line) ? line : `${line}.`}
+              </p>
+            ))}
+          </div>
         </div>
       ) : null}
 
@@ -1395,10 +1425,10 @@ function DraftSectionCard({
                 size="sm"
                 className="text-extended-dark-cyan hover:text-extended-dark-cyan"
                 onClick={onDeepenEdit}
-                title="Edit this section in a new Dive"
+                title="A saved Dive is read-only — this starts a new Dive with only this section unlocked"
               >
                 <SquarePen />
-                Edit
+                Edit in a new Dive
               </Button>
             ) : null}
             {showEditLock ? (

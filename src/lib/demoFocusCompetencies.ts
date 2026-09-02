@@ -148,6 +148,88 @@ export function experienceForCompetency(
   return roleExperiences.find((e) => e.competencyId === competencyId);
 }
 
+/**
+ * Why each competency matters to an interviewer, and what a strong answer
+ * tends to contain — one line each, in plain words. Shown beneath the
+ * questions so the candidate always knows WHY they are being asked and what
+ * good looks like (the client's core requirement for the Storyboard). These
+ * are the same signals the Strength score is later judged against, so the
+ * candidate is never scored on criteria they were not shown.
+ */
+export const COMPETENCY_GUIDANCE: Record<CompetencyId, { why: string; good: string }> = {
+  "thinking-analytical": {
+    why: "Interviewers look for how you break a messy problem down and reason to a cause.",
+    good: "Name the steps or criteria you used, not just the conclusion you reached.",
+  },
+  "thinking-prioritization": {
+    why: "Interviewers look for how you decide what matters most when everything is urgent.",
+    good: "Say what you chose to delay or drop, and the reason it was safe to.",
+  },
+  "thinking-decision": {
+    why: "Interviewers look for how you decide with incomplete information and stand behind it.",
+    good: "Name the options you weighed and what made the call right at the time.",
+  },
+  "action-ownership": {
+    why: "Interviewers look for what you drove yourself, without waiting to be asked.",
+    good: "Use “I”. Name the obstacle you pushed through and how you knew it was done.",
+  },
+  "action-initiative": {
+    why: "Interviewers look for what you started that nobody had asked for, and whether you finished it.",
+    good: "Say what you began, why it mattered, and how you kept it moving.",
+  },
+  "action-change": {
+    why: "Interviewers look for how you handle change — diagnosing it, testing it, bringing people along.",
+    good: "Name what you changed, how you checked it worked, and who you had to convince.",
+  },
+  "people-influence": {
+    why: "Interviewers look for how you land a message with people who don’t report to you.",
+    good: "Say who you needed to move, how you adapted, and what shifted their view.",
+  },
+  "people-collaboration": {
+    why: "Interviewers look for how you get to a better outcome with others, including disagreement.",
+    good: "Name whose input changed the result and how you handled friction.",
+  },
+  "people-capability": {
+    why: "Interviewers look for how you make the people around you better.",
+    good: "Say who you grew, how, and what they did differently afterwards.",
+  },
+  "mastery-functional": {
+    why: "Interviewers look for the depth of knowledge your work actually rests on.",
+    good: "Name the concept, method or standard involved and how you knew you applied it soundly.",
+  },
+  "mastery-execution": {
+    why: "Interviewers look for how you apply your craft under real constraints, and check quality.",
+    good: "Name the method or tool, how you verified the result, and what you’d tighten next time.",
+  },
+  "mastery-innovation": {
+    why: "Interviewers look for improvements that outlast the one problem you fixed.",
+    good: "Say how you diagnosed the gap, validated the change, and made it repeatable.",
+  },
+};
+
+/** What each CAR field is for, in the candidate's terms. Shown as the question's subtext. */
+export const CAR_FIELD_GUIDANCE = {
+  context: {
+    question: "What was the situation?",
+    why: "Enough background that an interviewer understands why it mattered — the goal, the constraint, or what was at stake.",
+    shape: "Two or three sentences: the setting, the challenge, the constraint.",
+  },
+  action: {
+    question: "What did you personally do?",
+    why: "This is what the competency is scored on. Focus on your own decisions and moves, not the team’s.",
+    shape: "Your decisions and the steps you took, in the order you took them.",
+  },
+  result: {
+    question: "What changed because of what you did?",
+    why: "Outcomes make the story credible. A number is best; an observable change is fine — never invent a metric.",
+    shape: "Before → after, a number if you have one, or the change people could see.",
+  },
+} as const;
+
+/** One line the first time the consultant step appears, so the follow-ups read as finite and purposeful. */
+export const CONSULTANT_INTRO =
+  "Two short follow-ups to make this defensible — your answers are quoted back as evidence.";
+
 /** Consultant question copy keyed by competency (framework-inspired, demo-short). */
 export function consultantQuestionsFor(competencyId: CompetencyId): string[] {
   const byId: Partial<Record<CompetencyId, string[]>> = {
@@ -249,6 +331,11 @@ export function seedDiveFromDemoExperiences(
         action: exp.car.action,
         result: exp.car.result,
       },
+      // The candidate's follow-up answers ride along as quotable evidence.
+      // They are NOT folded into the CAR — that would be stitching.
+      consultantNotes: (exp.consultantAnswers ?? [])
+        .map((a) => a.answer.trim())
+        .filter(Boolean),
     };
   }
 

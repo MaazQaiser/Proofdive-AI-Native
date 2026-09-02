@@ -94,6 +94,14 @@ export type CompetencySection = {
   missingNextLevelSignals: string[];
   /** Classification: other competencies this experience also evidences. */
   secondaryCompetencies: CompetencyId[];
+  /**
+   * The candidate's own answers to the consultant follow-ups, verbatim. Kept
+   * on the section so the evidence block can QUOTE the user instead of
+   * paraphrasing them — the audit found these answers were captured and then
+   * never shown anywhere, which made the follow-up questions feel pointless.
+   * Never merged into the CAR (guardrail: no stitching).
+   */
+  consultantNotes: string[];
   developmentRecommendation: string;
   /** Optional full assessment narrative (Dive review / PDF export). */
   assessment?: CompetencyAssessment | null;
@@ -156,6 +164,7 @@ export function emptyCompetencySection(): CompetencySection {
     matchedSignals: [],
     missingNextLevelSignals: [],
     secondaryCompetencies: [],
+    consultantNotes: [],
     developmentRecommendation: "",
     assessment: null,
   };
@@ -212,6 +221,9 @@ export function normalizeDive(d: StoryboardDive): StoryboardDive {
       ? (s.secondaryCompetencies.filter((id) =>
           COMPETENCY_SPECS.some((spec) => spec.id === id),
         ) as CompetencyId[])
+      : [],
+    consultantNotes: Array.isArray(s?.consultantNotes)
+      ? s.consultantNotes.filter((x): x is string => typeof x === "string")
       : [],
     developmentRecommendation: s?.developmentRecommendation ?? "",
     assessment: s?.assessment ?? null,
@@ -332,6 +344,11 @@ export function classifySecondaryCompetencies(
   return MOCK_SECONDARY_COMPETENCIES[primaryId].filter((id) => id !== primaryId);
 }
 
+function listJoin(parts: string[]): string {
+  if (parts.length <= 1) return parts[0] ?? "";
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+}
+
 /** Re-derive live scores + classification signals from current section content. */
 export function recomputeDiveScores(dive: StoryboardDive): StoryboardDive {
   const competencies = dive.competencies.map((s, i) => {
@@ -370,20 +387,36 @@ export function recomputeDiveScores(dive: StoryboardDive): StoryboardDive {
     let developmentRecommendation = s.developmentRecommendation;
 
     if (hasContent) {
-      if (s.car.context.trim()) matchedSignals.push("Context / situation described");
-      if (s.car.action.trim()) matchedSignals.push("Personal action described");
-      if (s.car.result.trim()) matchedSignals.push("Outcome or change described");
-      // Keyword phrases for Missing Strengths (not full sentences).
-      if (score < 3) missingNextLevelSignals.push("Personal ownership");
-      if (score < 4) missingNextLevelSignals.push("Observable result");
-      if (score < 5) missingNextLevelSignals.push("Constraints-to-impact link");
+      // Evidence in plain language, and — where the candidate answered the
+      // consultant's follow-ups — their own words. Anything that merely
+      // restates the form ("Context described") tells the reader nothing.
+      const notes = (s.consultantNotes ?? []).map((n) => n.trim()).filter(Boolean);
+      if (notes.length) {
+        matchedSignals.push(...notes.map((n) => `You said: “${n}”`));
+      } else {
+        const parts: string[] = [];
+        if (s.car.context.trim()) parts.push("the situation");
+        if (s.car.action.trim()) parts.push("what you did");
+        if (s.car.result.trim()) parts.push("what changed");
+        if (parts.length) matchedSignals.push(`You covered ${listJoin(parts)}`);
+      }
+      // What would raise the score, as things a person can act on.
+      if (!s.car.result.trim()) {
+        missingNextLevelSignals.push("What changed because of you — a result, even a qualitative one");
+      } else if (!/\d/.test(s.car.result)) {
+        missingNextLevelSignals.push("A measurable result (before → after, %, time saved)");
+      }
+      if (!/\b(I|my|me)\b/.test(s.car.action)) {
+        missingNextLevelSignals.push("Your personal role — “I” rather than “we”");
+      }
+      if (score < 5 && !missingNextLevelSignals.length) {
+        missingNextLevelSignals.push("How the constraint shaped the outcome");
+      }
       if (!developmentRecommendation) {
-        developmentRecommendation = hasContent
-          ? `Strengthen ${title} with one concrete trade-off you owned and one observable outcome.`
-          : `Capture a real experience for ${title} before scoring higher.`;
+        developmentRecommendation = `Strengthen ${title} with one concrete trade-off you owned and one observable outcome.`;
       }
     } else {
-      missingNextLevelSignals.push("Baseline CAR");
+      missingNextLevelSignals.push("A real experience for this competency");
       developmentRecommendation = `No evidence yet for ${title}. Add one primary experience before treating this as interview-ready.`;
     }
 
@@ -605,6 +638,7 @@ export function migrateLegacyDraftStore(
           matchedSignals: [],
           missingNextLevelSignals: [],
           secondaryCompetencies: [],
+          consultantNotes: [],
           developmentRecommendation: "",
           assessment: null,
         };
