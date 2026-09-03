@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { AppShell } from "@/components/AppShell";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/components/cn";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
@@ -348,14 +349,9 @@ function QuestionRow({
             </div>
 
             <div className="flex shrink-0 items-center gap-2.5">
-              <div
-                className={cn(
-                  "inline-flex items-center rounded-full border px-2.5 py-1 text-overline",
-                  badgeClasses(q.status),
-                )}
-              >
+              <Badge variant="outline" className={badgeClasses(q.status)}>
                 {q.status}
-              </div>
+              </Badge>
               <ScoreLockup score={q.score} />
             </div>
           </div>
@@ -572,14 +568,9 @@ export function ReportDetailScreen({ reportId }: Props) {
               <div className={cn("text-caption font-semibold", scoreTextClasses(overall))}>
                 {overall.toFixed(1)} / 5.0
               </div>
-              <div
-                className={cn(
-                  "inline-flex items-center rounded-full border px-2.5 py-1 text-overline",
-                  scoringBadgeClass(overall),
-                )}
-              >
+              <Badge variant="outline" className={scoringBadgeClass(overall)}>
                 {scoringLabelForScore(overall)}
-              </div>
+              </Badge>
             </div>
             <div className="text-overline text-text-secondary">
               {report.meta.questionCount} questions · {fmtDuration(report.meta.durationSeconds)}
@@ -934,9 +925,12 @@ export function ReportDetailScreen({ reportId }: Props) {
                               {line.text}
                             </p>
                             {line.flag ? (
-                              <div className="mt-2 inline-flex items-center rounded-full border border-scoring-red/25 bg-scoring-red/15 px-2.5 py-1 text-overline text-scoring-red-fg">
+                              <Badge
+                                variant="outline"
+                                className="mt-2 border-scoring-red/25 bg-scoring-red/15 text-scoring-red-fg"
+                              >
                                 {line.flag}
-                              </div>
+                              </Badge>
                             ) : null}
                           </div>
                         );
@@ -986,15 +980,12 @@ export function ReportDetailScreen({ reportId }: Props) {
                           </>
                         }
                       />
-                      <span
-                        className={cn(
-                          "inline-flex items-center rounded-full border px-2.5 py-1 text-overline",
-                          badgeClasses(spotlightQuestion.status),
-                          "bg-white",
-                        )}
+                      <Badge
+                        variant="outline"
+                        className={cn(badgeClasses(spotlightQuestion.status), "bg-white")}
                       >
                         {spotlightQuestion.status}
-                      </span>
+                      </Badge>
                       <ScoreLockup score={spotlightQuestion.score} />
                     </div>
                     <p className="mt-3 text-body-sm font-semibold text-text-primary">

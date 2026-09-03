@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthDivider, SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,9 +33,7 @@ function LoginAside() {
     <div className="w-full max-w-[360px] rounded-2xl bg-card p-6 shadow-[0_16px_40px_-24px_rgba(4,32,39,0.35)]">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-h5 font-medium text-foreground">Your proof record</h2>
-        <span className="inline-flex shrink-0 items-center rounded-full bg-secondary px-2.5 py-1 text-overline font-medium text-secondary-foreground">
-          ↑ trending
-        </span>
+        <Badge>↑ trending</Badge>
       </div>
       <div aria-hidden className="mt-6 flex h-28 items-end gap-2">
         {PROOF_BARS.map((bar, i) => (
@@ -108,7 +107,7 @@ export default function LoginPage() {
                 <Label htmlFor="login-password" className="text-caption font-normal text-foreground">
                   Password
                 </Label>
-                <Link href="/forgot-password" className="text-caption font-medium text-primary hover:underline">
+                <Link href="/forgot-password" className="app-link text-caption font-medium">
                   Forgot password?
                 </Link>
               </div>
@@ -141,7 +140,7 @@ export default function LoginPage() {
 
         <p className="text-center text-body-sm">
           <span className="text-muted-foreground">Don&apos;t have an account? </span>
-          <Link href="/signup" className="font-medium text-primary hover:underline">
+          <Link href="/signup" className="app-link font-medium">
             Sign up
           </Link>
         </p>

@@ -32,7 +32,15 @@ const GRAIN_URL =
  * screen breathes instead of being wallpaper. Deliberately below the threshold
  * where you would notice it moving — the brief asked for energy, not motion.
  */
-export function WelcomeAmbience({ className }: { className?: string }) {
+export function WelcomeAmbience({
+  className,
+  /** Overrides the plate's own `bg-cover bg-center` — the dialog crops in on
+   *  the glow's core, because at card size the full plate is mostly falloff. */
+  plateClassName,
+}: {
+  className?: string;
+  plateClassName?: string;
+}) {
   const driftRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -79,13 +87,19 @@ export function WelcomeAmbience({ className }: { className?: string }) {
         style={{ transform: "scale(1.06)" }}
       >
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
+          className={cn(
+            "absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden",
+            plateClassName,
+          )}
           style={{
             backgroundImage: "url(/brand/welcome-ambience-light.webp)",
           }}
         />
         <div
-          className="absolute inset-0 hidden bg-cover bg-center bg-no-repeat dark:block"
+          className={cn(
+            "absolute inset-0 hidden bg-cover bg-center bg-no-repeat dark:block",
+            plateClassName,
+          )}
           style={{ backgroundImage: "url(/brand/welcome-ambience.webp)" }}
         />
       </div>

@@ -1433,6 +1433,42 @@
 /* Tight display metrics — box runs cap height → alphabetic baseline.
    Named without a `text-` prefix so tailwind-merge does not treat it as a
    font-size/color utility and drop it next to `text-[64px]` / `text-scoring-*`. */
+/* Inline text link.
+ *
+ * Underlined at rest, always. Colour alone does not carry it: measured on the
+ * real tokens, --link against body text is 2.53:1 in light and 1.45:1 in dark,
+ * both under the 3:1 that WCAG 1.4.1 requires before colour may be a link's
+ * only signal. A hover-only underline does not fix that — the user has to
+ * already suspect the text is a link to discover it is one.
+ *
+ * Kept to a 1px rule at a 3px offset so it reads as a link without shouting,
+ * and thickens to 2px on hover so the interaction still has somewhere to go.
+ * The focus ring is part of the utility because several call sites had none. */
+@utility app-link {
+  color: var(--link);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition:
+    text-decoration-thickness 150ms ease,
+    color 150ms ease;
+
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--ring) 60%, transparent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  &:disabled {
+    pointer-events: none;
+    opacity: var(--disabled-opacity);
+  }
+}
+
 @utility cap-baseline {
   text-box-trim: trim-both;
   text-box-edge: cap alphabetic;

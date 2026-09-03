@@ -1349,7 +1349,7 @@ What should this experience be called? (short title, up to ~15 words)`;
                 <button
                   type="button"
                   onClick={() => setGreetAcknowledged(true)}
-                  className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  className="app-link inline-flex items-center gap-1 font-medium"
                 >
                   Let&apos;s Start
                   <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />
@@ -1364,7 +1364,7 @@ What should this experience be called? (short title, up to ~15 words)`;
                   type="button"
                   onClick={startCrafting}
                   disabled={craftUi === "crafting"}
-                  className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-60"
+                  className="app-link inline-flex items-center gap-1 font-medium"
                 >
                   {craftUi === "crafting" ? "Crafting…" : "Craft my story"}
                   <ArrowRight

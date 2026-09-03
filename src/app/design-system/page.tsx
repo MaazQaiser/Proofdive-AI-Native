@@ -497,14 +497,12 @@ export default function DesignSystemPage() {
                       <p className={cn("text-h4 tabular-nums", scoringTextClass(entry.min))}>
                         {entry.range}
                       </p>
-                      <span
-                        className={cn(
-                          "mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-caption",
-                          scoringBadgeClass(entry.min),
-                        )}
+                      <Badge
+                        variant="outline"
+                        className={cn("mt-2", scoringBadgeClass(entry.min))}
                       >
                         {entry.label}
-                      </span>
+                      </Badge>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       <div
@@ -857,11 +855,15 @@ export default function DesignSystemPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Badges</CardTitle>
-                  <CardDescription>All variants</CardDescription>
+                  <CardDescription>
+                    One chrome for every label. `secondary` is the default and
+                    the house neutral; the others are for the rare badge that
+                    has to out-rank the one beside it.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap items-center gap-3">
-                  <Badge>Default</Badge>
-                  <Badge variant="secondary">Secondary</Badge>
+                  <Badge>Secondary (default)</Badge>
+                  <Badge variant="default">Default</Badge>
                   <Badge variant="outline">Outline</Badge>
                   <Badge variant="destructive">Destructive</Badge>
                 </CardContent>

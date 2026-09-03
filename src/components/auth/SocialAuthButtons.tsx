@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { GoogleIcon, LinkedInIcon } from "@/components/icons/SocialIcons";
 
 /**
@@ -30,9 +31,7 @@ export function SocialAuthButtons({
         <LinkedInIcon />
         Continue with LinkedIn
         {linkedInBadge ? (
-          <span className="hidden shrink-0 rounded-full bg-secondary px-2 py-0.5 text-overline font-medium text-secondary-foreground sm:inline-flex">
-            {linkedInBadge}
-          </span>
+          <Badge className="hidden sm:inline-flex">{linkedInBadge}</Badge>
         ) : null}
       </button>
       <button

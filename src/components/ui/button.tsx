@@ -18,7 +18,7 @@ const buttonVariants = cva(
         secondary:
           "bg-muted text-foreground hover:bg-muted/70",
         ghost: "hover:bg-muted hover:text-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "app-link",
       },
       // `has-[>svg:first-child]` only covers a LEADING icon (the dominant case
       // everywhere in the app). It can't also detect a trailing icon: when a

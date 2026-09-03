@@ -1510,7 +1510,7 @@ function DraftSectionCard({
                       {" "}
                       <a
                         href="/profile/billing?addon=storyboard"
-                        className="font-medium text-primary underline-offset-2 hover:underline"
+                        className="app-link font-medium"
                       >
                         Purchase Storyboard add-on
                       </a>

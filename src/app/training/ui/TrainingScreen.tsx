@@ -9,6 +9,7 @@ import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { COACH_HUB_CONTENT_TOP_CLASS } from "@/components/coachNavLayout";
 import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -483,18 +484,13 @@ export function TrainingScreen() {
                                 <div className="min-w-0 truncate text-[15px] font-semibold leading-tight tracking-tight text-text-primary">
                                   {pill.title}
                                 </div>
-                                <span
-                                  className={cn(
-                                    "inline-flex shrink-0 items-center gap-1 rounded-full border border-[#9FDFDA] bg-white/70 px-2 py-0.5 text-overline font-medium",
-                                    SUCCESS_DRIVER_SYMBOL_CLASS,
-                                  )}
-                                >
+                                <Badge className={SUCCESS_DRIVER_SYMBOL_CLASS}>
                                   <SuccessDriverIcon
                                     driver={pill.id}
-                                    className="size-3.5"
+                                    className="size-3.5!"
                                   />
                                   {pill.badge}
-                                </span>
+                                </Badge>
                               </div>
                               <p className="line-clamp-2 text-[12px] leading-tight text-text-secondary">
                                 {pill.summary}
