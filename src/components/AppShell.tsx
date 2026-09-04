@@ -38,7 +38,7 @@ export function AppShell({
           href="/"
           className="flex h-full shrink-0 items-center border-r border-[#dfe7e9] pr-6"
         >
-          <Logo size="xxs" />
+          <Logo size="xxs" className="text-primary" />
         </Link>
         <div className="ml-auto flex h-full shrink-0 items-center border-l border-[#dfe7e9] pl-6">
           <AppShellHeaderRoleSelector />
