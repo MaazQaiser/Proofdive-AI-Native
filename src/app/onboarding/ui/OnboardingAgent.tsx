@@ -127,15 +127,91 @@ type ParsedResume = {
   skills: string[];
 };
 
-const SUGGESTED_ROLES = [
-  "UX Designer",
-  "Product Manager",
-  "Software Engineer",
-  "Data Analyst",
-  "Project Manager",
-];
+/* Roles by seniority band. Forty options is far too many to show flat, so the
+ * question renders one band at a time (`ROLE_BANDS` below drives the group
+ * picker): the user says how senior they are, then reads ten roles instead of
+ * scanning forty. Typing still bypasses the whole thing. */
+const ROLE_BANDS = [
+  {
+    id: "internship",
+    label: "Internships",
+    roles: [
+      "HR Intern",
+      "Investment Banking Intern",
+      "Marketing Intern",
+      "Sales Intern",
+      "UX Design Intern",
+      "Software Engineering Intern",
+      "Data Analyst Intern",
+      "Product Management Intern",
+      "Finance Intern",
+      "Operations Intern",
+    ],
+  },
+  {
+    id: "entry",
+    label: "Entry-Level",
+    roles: [
+      "Talent Acquisition Specialist",
+      "UX Design Specialist",
+      "Business Analyst",
+      "Data Analyst",
+      "Software Engineer",
+      "Marketing Coordinator",
+      "Sales Development Representative",
+      "Financial Analyst",
+      "Customer Success Associate",
+      "Operations Analyst",
+    ],
+  },
+  {
+    id: "mid",
+    label: "Mid-Management",
+    roles: [
+      "HR Manager",
+      "UX Design Manager",
+      "Product Manager",
+      "Marketing Manager",
+      "Sales Manager",
+      "Finance Manager",
+      "Operations Manager",
+      "Customer Success Manager",
+      "Strategy Manager",
+      "Transformation Manager",
+    ],
+  },
+  {
+    id: "senior",
+    label: "Senior Management",
+    roles: [
+      "HR Director",
+      "Design Director",
+      "Product Director",
+      "Marketing Director",
+      "Sales Director",
+      "Finance Director",
+      "Operations Director",
+      "Customer Success Director",
+      "Strategy Director",
+      "Transformation Director",
+    ],
+  },
+] as const;
 
-const INDUSTRY_OPTIONS = ["Technology", "Finance", "Healthcare", "Retail"];
+type RoleBandId = (typeof ROLE_BANDS)[number]["id"];
+
+const INDUSTRY_OPTIONS = [
+  "Technology",
+  "Financial Services",
+  "Consulting",
+  "Advertising & Creative",
+  "Retail & Consumer",
+  "Healthcare",
+  "Government & Public Sector",
+  "Energy",
+  "Hospitality & Tourism",
+  "Education",
+];
 
 /** Fields of study for the student / new-grad path. A degree is the background
  * signal they actually have; asking them to name a role here would force a
@@ -714,14 +790,28 @@ function OnboardingAgentInner({
 
   // --- Step 2: target + job posting --------------------------------------
 
+  /* Which seniority band's roles are on screen. Defaults to whichever band
+   * already contains the drafted role (so Back lands on the list the answer
+   * came from), then to the one the background answer implies, then Entry. */
+  const [roleBand, setRoleBand] = useState<RoleBandId>(() => {
+    const current = (roleProfile?.targetRole ?? "").trim().toLowerCase();
+    const owning = ROLE_BANDS.find((b) =>
+      b.roles.some((r) => r.toLowerCase() === current),
+    );
+    return owning?.id ?? "entry";
+  });
+
   const targetRoleChips = useMemo(() => {
-    const chips = [...SUGGESTED_ROLES];
+    const band = ROLE_BANDS.find((b) => b.id === roleBand) ?? ROLE_BANDS[1];
+    const chips: string[] = [...band.roles];
+    // A typed role is kept at the head of whatever band is open, so it stays
+    // visibly selected instead of vanishing when the band changes.
     const current = draft.targetRole.trim();
     if (current && !chips.some((c) => c.toLowerCase() === current.toLowerCase())) {
       chips.unshift(current);
     }
-    return chips.slice(0, 6);
-  }, [draft.targetRole]);
+    return chips;
+  }, [draft.targetRole, roleBand]);
 
   function jdMockInput() {
     return {
@@ -993,13 +1083,13 @@ function OnboardingAgentInner({
                 : stage === "bgInterests"
                   ? 'Or type your own: "long-distance running, chess"…'
                 : stage === "targetRole"
-                  ? 'Or type your target role: "senior UX designer"…'
+                  ? 'Type your target role. Example: "Senior UX Designer."'
                   : stage === "targetIndustry"
-                    ? 'Or type the industry: "fintech"…'
+                    ? 'Type the industry. Example: "fintech."'
                     : stage === "targetJd"
                       ? generatedJdDraft
                         ? "Paste the real posting here to replace the draft…"
-                        : "Paste the job posting here…"
+                        : "Paste the Job Description here, or upload it."
                       : stage === "plan"
                   ? "Confirm your selection above to continue"
                   : faq.isFaqMode
@@ -1008,7 +1098,7 @@ function OnboardingAgentInner({
 
   const prompt: string =
     stage === "bgEntry"
-        ? "Let's start with your resume.\n\nI'll read your role, experience, and industry from it, so everything ahead is built on your real background instead of guesswork. You'll review and confirm it all before it's saved."
+        ? "Let's start with your background.\n\nUpload your resume so ProofDive can identify your roles, education, experience, and possible story anchors. You will review and confirm anything we use before it shapes your MyStoryBoard journey."
         : stage === "bgParsing"
           ? "Reading your resume…"
           : stage === "bgFailed"
@@ -1022,20 +1112,24 @@ function OnboardingAgentInner({
                 : stage === "bgInterests"
                   ? "What do you do outside work?\n\nInterests are where some of the strongest stories come from — teams you have run, things you have organised, skills you taught yourself. Select any or type your own."
                 : stage === "targetRole"
-                  ? "What are you preparing for?\n\nYour sessions are built and scored against this target, so select a role or type your own below."
+                  ? "What role are you preparing for?\n\nYour target role sets the direction for your preparation. ProofDive uses it to tailor your journey around the role you are preparing for."
                   : stage === "targetIndustry"
-                    ? "Which industry are you targeting?\n\nIt sharpens the scenarios and the wording of your questions. Skip if nothing fits."
+                    ? `Which industry is this ${draft.targetRole.trim() || "role"} role in?\n\nThe same role can carry different requirements across industries. Select the industry you are targeting so ProofDive can tailor your preparation to the right context.`
                     : stage === "targetJd"
                       ? isGeneratingJd
                         ? "Drafting a posting from your background…"
                         : generatedJdDraft
-                          ? "Here's a draft to work from.\n\nReview it as an interviewer would, and replace it with the real posting whenever you have one."
-                          : `Target set: ${draft.targetRole.trim() || "your role"}.\n\nDo you have the job posting? Paste it below. It shapes the questions and how the evidence is assessed.`
+                          ? `We've prepared a working draft for ${draft.targetRole.trim() || "your role"}${draft.industryVertical.trim() ? ` in ${draft.industryVertical.trim()}` : ""}.\n\nBased on your role and industry, this draft gives ProofDive a working view of the responsibilities and expectations relevant to your preparation. It is not an employer-authored Job Description, so review it before continuing.`
+                          : `Do you have the Job Description for the ${draft.targetRole.trim() || "target"} role?\n\nA Job Description gives ProofDive the clearest view of what this specific role requires. We use it to tailor your Core Four competencies, shape your questions, and where your preparation should focus.`
                       : stage === "plan"
                   ? planPhase !== null
                     ? "Working out where to start…"
-                    : "Here's the plan I'd start with.\n\nFour competencies, one per Success Driver, selected from your role and posting to keep your first Storyboard focused. You can change any before you confirm."
-                  : `You're set${greetingName ? `, ${greetingName}` : ""}.\n\nHere's a roadmap to get you started, put together from the details you shared${draft.targetRole.trim() ? ` and your ${draft.targetRole.trim()} target` : ""}. Take it in order, or start wherever you like.`;
+                    : `Your recommended Core Four\n\nBased on your ${draft.targetRole.trim() || "target"} role and the ${
+                        draft.jobDescriptionSource === "generated"
+                          ? "working draft you approved"
+                          : "Job Description you provided"
+                      }, ProofDive has identified the Core Four competencies most critical to your target role. They are the strongest starting point for building role-relevant interview examples. Review the recommendations and make any changes before continuing.`
+                  : `You're set${greetingName ? `, ${greetingName}` : ""}.\n\nYour preparation plan is ready, built around your background and the ${draft.targetRole.trim() || "target"} role. We recommend following the sequence below, but you can also jump straight into MyStoryBoard to develop your interview examples or go directly to Mock Studios to stress test your interviewing skills.`;
 
   /* Any flag that swaps the prompt text WITHOUT changing `stage` has to be in
    * this key, or TypingText keeps its old typed state and the two prompts read
@@ -1300,16 +1394,25 @@ function OnboardingAgentInner({
                         cancels the 'E's left sidebearing, since the logo's
                         first tile has none. */}
                     <h1 className="mt-8 -ml-[0.065em] w-full whitespace-pre-line cap-baseline font-gilroy text-[clamp(2rem,6vw,3rem)] font-bold leading-[1.12] tracking-[-0.04em] text-heading-teal">
-                      {"Every answer is scored.\nSee exactly what to improve."}
+                      {`Hi${greetingName ? ` ${greetingName}` : ""}, I'm your assigned\nProofDive Consultant.`}
                     </h1>
 
                     {/* 28rem, the landing's own measure: ~62 characters,
                         against the 752px column the old paragraph ran to.
                         Demoting this from 28px to 20px is the change that
                         creates a second read where there was none. */}
-                    <p className="mt-5 max-w-[30rem] text-body-lg leading-7 text-text-primary/80">
-                      You bring the real experience. The four Success{"\u00A0"}Drivers
-                      are the standard your answers are held to.
+                    {/* 42rem, not the 30rem it was: the headline runs the
+                        column's full 752px and a 480px paragraph under it read
+                        as a narrow inset rather than the same block. Measured
+                        on this string, 672px is 72 characters over 3 lines —
+                        the top of the 45-75 band that stays comfortable, and
+                        the widest it can go before the measure starts costing
+                        the reader. The full 752px would be 81. */}
+                    <p className="mt-5 max-w-[42rem] text-body-lg leading-7 text-text-primary/80">
+                      I will work with you through a guided experience to help you
+                      prepare for your target role. We will deep dive into your real
+                      experiences, develop interview ready examples, and stress test
+                      them under realistic interview conditions.
                     </p>
 
                     {/* "How it works" sits BEFORE the CTA because it answers a
@@ -1333,7 +1436,7 @@ function OnboardingAgentInner({
                         headline and the CTA are already carrying the teal, and
                         a third saturated element would flatten the hierarchy
                         the CTA depends on. */}
-                    <div className="mt-10 w-full max-w-[30rem]">
+                    <div className="mt-10 w-full max-w-[42rem]">
                       {/* Not text-secondary: over the light plate that ink
                           measures 3.20:1, and a 12px label needs 4.5. At 70%
                           the primary ink gives 5.98 light / 8.66 dark and still
@@ -1376,11 +1479,11 @@ function OnboardingAgentInner({
                            elevation rather than an added border. */
                         className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium shadow-[0_4px_16px_-4px_rgba(14,154,181,0.55)] dark:shadow-[0_6px_20px_-6px_rgba(0,0,0,0.75)]"
                       >
-                        Let&apos;s get started
+                        Begin
                         <ArrowRight />
                       </Button>
                       <span className="text-caption text-text-primary/80">
-                        Setting up takes about a minute.
+                        Let&apos;s take it one step at a time.
                       </span>
                     </div>
                   </div>
@@ -1560,20 +1663,50 @@ function OnboardingAgentInner({
                 ) : null}
 
                 {stage === "targetRole" ? (
-                  <ManualQuestion
-                    chipsLabel="Popular roles"
-                    chips={targetRoleChips}
-                    selectedLabel={draft.targetRole}
-                    onPick={(r) => {
-                      setDraft((d) => ({ ...d, targetRole: r }));
-                      setStage("targetIndustry");
-                    }}
-                    trailing={
+                  /* Forty roles across four seniority bands. Shown flat they
+                     would be a wall; the band row above narrows it to ten at a
+                     time, which is a list you read rather than search. The
+                     bands are a FILTER, not an answer — nothing is recorded by
+                     switching one, so there is no wrong turn to undo. */
+                  <div className="mt-8 flex w-full flex-col gap-4">
+                    <div className="flex flex-col gap-2">
+                      <div className="text-body-sm font-semibold text-text-secondary">
+                        Suggested roles
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {ROLE_BANDS.map((band) => (
+                          <SelectionChip
+                            key={band.id}
+                            selected={band.id === roleBand}
+                            onClick={() => setRoleBand(band.id)}
+                          >
+                            {band.label}
+                          </SelectionChip>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {targetRoleChips.map((label) => (
+                        <SelectionChip
+                          key={label}
+                          selected={
+                            label.toLowerCase() ===
+                            draft.targetRole.trim().toLowerCase()
+                          }
+                          onClick={() => {
+                            setDraft((d) => ({ ...d, targetRole: label }));
+                            setStage("targetIndustry");
+                          }}
+                        >
+                          {label}
+                        </SelectionChip>
+                      ))}
                       <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
-                        Type any role below ↓
+                        Enter your own role below ↓
                       </span>
-                    }
-                  />
+                    </div>
+                  </div>
                 ) : null}
 
                 {stage === "targetJd" ? (
@@ -1928,9 +2061,12 @@ function ManualQuestion({
  * reassurance the original contract card carried, kept as a compact strip so
  * it supports the cards instead of competing with them. */
 const SESSION_PROMISES = [
-  { icon: PauseCircle, text: "Pause anytime; skip or retry without losing progress" },
-  { icon: Mic, text: "Voice or text, your choice" },
-  { icon: FileText, text: "Every session ends with a proof report" },
+  { icon: PauseCircle, text: "Save and resume anytime — nothing is lost." },
+  { icon: Mic, text: "Use voice or text, whichever you prefer." },
+  {
+    icon: FileText,
+    text: "Anything we build from your experience stays grounded in what actually happened.",
+  },
 ];
 
 /**
@@ -1952,28 +2088,31 @@ function journeySteps(targetRole: string, focusTitles: string[]) {
     {
       href: "/training",
       icon: GraduationCap,
-      title: "Learn the standard",
-      // One glance line per node — what it costs and what it covers. The
-      // longer explanation is deliberately gone: on this screen the user is
-      // choosing where to go, not reading about it.
-      meta: "4 Success Driver guides · ~10 min each",
+      title: "Learn the Craft through our Master Classes",
+      badge: "Start here",
+      meta:
+        "Learn the interviewing essentials and the employer's perspective on what they listen for, what strong evidence looks like, and how the four Success Drivers shape that judgement.",
       cta: "Start learning",
     },
     {
       href: "/storyboard",
       icon: BookOpen,
-      title: "Build your storyboard",
-      meta: `${focus} · ~15 min each`,
-      cta: "Start crafting",
+      title: "Build your MyStoryBoard",
+      badge: null,
+      meta: `Turn your real experiences into structured, interview ready examples around the Core Four competencies prioritised for your role.${
+        focus !== "Your focus areas" ? ` Starting with ${focus}.` : ""
+      }`,
+      cta: "Build MyStoryBoard",
     },
     {
       href: "/interview",
       icon: UserCheck,
-      title: "Take your first session",
-      meta: role
-        ? `${role} · 3 questions · ~8 min`
-        : "3 questions · ~8 min",
-      cta: "Start session",
+      title: "Take a Mock Studios session",
+      badge: null,
+      meta: `Put your preparation into practice under realistic interview conditions and see how clearly your evidence comes through.${
+        role ? ` Pitched at your ${role} target.` : ""
+      }`,
+      cta: "Start Mock Studios",
     },
   ];
 }
@@ -2021,8 +2160,13 @@ function JourneyNode({
         </span>
 
         <span className="flex min-w-0 flex-col gap-1">
-          <span className="text-body-sm font-semibold leading-snug text-text-primary transition-colors group-hover:text-extended-blue">
-            {step.title}
+          {/* Title and its badge share a line: "Start here" qualifies the step,
+              so it belongs beside the name rather than floating above it. */}
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="text-body-sm font-semibold leading-snug text-text-primary transition-colors group-hover:text-extended-blue">
+              {step.title}
+            </span>
+            {step.badge ? <Badge>{step.badge}</Badge> : null}
           </span>
           <span className="text-caption leading-snug text-text-secondary">
             {step.meta}
@@ -2070,7 +2214,7 @@ function SessionContract({
               introduce an "AI coach" persona anywhere else. */}
           <span className="flex shrink-0 items-center gap-1.5 text-overline font-medium uppercase tracking-wide text-text-secondary">
             <Sparkles className="size-3 text-primary" aria-hidden />
-            Suggested for you
+            Your preparation plan
           </span>
           <span aria-hidden className="h-px flex-1 border-t border-dashed border-border" />
           <Badge>Start anywhere</Badge>
@@ -2100,12 +2244,12 @@ function SessionContract({
       </ul>
 
       <p className="mt-6 text-agent-question text-text-primary">
-        Prefer to look around?{" "}
+        Want to look around first?{" "}
         <Link
           href={homeHref}
           className="app-link inline-flex items-center gap-1 font-medium"
         >
-          go to home
+          Go to home
           <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />
         </Link>
       </p>

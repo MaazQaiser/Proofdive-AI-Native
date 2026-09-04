@@ -183,7 +183,7 @@ export function AssessmentPlanPanel({
                           // panel already uses ("Why we suggested …").
                           <Badge>
                             <Sparkles aria-hidden />
-                            Recommended
+                            Consultant Pick
                           </Badge>
                         ) : null}
                       </button>
@@ -206,7 +206,14 @@ export function AssessmentPlanPanel({
                       >
                         <div className="overflow-hidden">
                           <div className="mt-0.5 mb-1 ml-[11px] border-l-[1.5px] border-brand-400/50 pl-[19px] pr-2">
-                            <p className="text-caption leading-snug text-text-secondary">
+                            {/* Named, per the brief. The rail already ties the
+                                block to its option, but a label makes the
+                                block skimmable — you can tell what it is
+                                without reading the sentence. */}
+                            <p className="text-overline font-medium uppercase tracking-wide text-text-secondary">
+                              Why this was selected
+                            </p>
+                            <p className="mt-1 text-caption leading-snug text-text-secondary">
                               {suggestionReasoningFor(spec.id, { targetRole })}
                             </p>
                             {signals.length ? (
@@ -247,7 +254,7 @@ export function AssessmentPlanPanel({
           onClick={onConfirm}
           className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium"
         >
-          Confirm selection
+          Confirm your Core Four
           <ArrowRight />
         </Button>
         <p className="text-caption text-text-secondary">
