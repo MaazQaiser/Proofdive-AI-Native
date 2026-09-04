@@ -17,6 +17,8 @@ export const StorageKeys = {
    * competencies while Dive 1 is still editing (Add Competency from crafting).
    */
   preferStoryboardIntake: "proofdive.preferStoryboardIntake.v1",
+  /** Demo scaffolding: the Storyboard runs the pre-filled Finance persona. */
+  storyboardDemoMode: "proofdive.storyboardDemoMode.v1",
   /** `welcome` | `roadmap` (3 steps, empty readiness) | `journey` (3 steps, full readiness) | `final` (post-report home, pinned snapshot). */
   coachJourneyView: "proofdive.coachJourneyView.v1",
   /** When `coachJourneyView` is `final`, readiness uses this report id from `reports`. */

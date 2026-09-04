@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { MessageCircleQuestion } from "lucide-react";
 
 import { ChatComposer } from "@/components/chat/ChatComposer";
@@ -30,6 +30,12 @@ type Props = {
    * viewport edge so the composer centers in the main Q&A column.
    */
   rightPanelMaxWidth?: number;
+  /**
+   * One quiet guiding line above the composer — helper text for the answer
+   * being typed, so guidance sits where the typing happens instead of in a
+   * side rail. Hidden in Ask mode, which takes over the same space.
+   */
+  hint?: ReactNode;
 };
 
 export function CoachBottomChatBar({
@@ -41,6 +47,7 @@ export function CoachBottomChatBar({
   prefillKey,
   showUploadButton = false,
   rightPanelMaxWidth,
+  hint,
 }: Props = {}) {
   const faq = useFaqAssistant();
 
@@ -86,6 +93,38 @@ export function CoachBottomChatBar({
     />
   );
 
+  /* Field-helper position: aligned to the composer's own text inset (pl-6 =
+     the Chatbox's leading padding) so it reads as belonging to the input
+     rather than floating over the page. Clamped so a narrow column can never
+     let a helper line push the composer up the screen. */
+  /* The bar's own ground. The bar is fixed and the column now scrolls a full
+     transcript beneath it, so without a backdrop the hint line and whatever
+     turn is passing under it overprint each other. A solid block would work
+     but would hard-crop the passing content; the gradient fades it out over
+     the top 1.75rem instead — the same move every chat app makes at its
+     composer. `--app-ground` is the exact colour the canvas paints, so the
+     solid region is indistinguishable from the page it covers. */
+  const composerBlock = (
+    <div className="pt-7 pb-4 [background:linear-gradient(to_bottom,transparent,var(--app-ground)_1.75rem)]">
+      {hint && !faq.isFaqMode ? (
+        <div data-slot="coach-chat-hint" className="pb-2 pl-6 pr-4">
+          {/* The clamp sits inside the padding wrapper: on a -webkit-box,
+              padding-bottom leaks a sliver of the clipped line.
+
+              Ink is `--text-primary/75`, not `--text-secondary`: measured on
+              the real ground this line sits on (`--app-ground`, which
+              `.app-canvas` paints), `--text-secondary` #6B7280 on #F5F5F3 is
+              4.43:1 at `text-caption`'s 14px/400 — an AA fail by 0.07. /75
+              composites to #484847 for 8.39:1 light and 9.44:1 dark. */}
+          <div className="line-clamp-2 text-caption leading-5 text-text-primary/75">
+            {hint}
+          </div>
+        </div>
+      ) : null}
+      {composer}
+    </div>
+  );
+
   return (
     <div
       data-slot="coach-bottom-chat"
@@ -97,7 +136,7 @@ export function CoachBottomChatBar({
       {rightPanelMaxWidth ? (
         <div className={cn("flex w-full", COACH_NAV_CONTENT_INSET_CLASS)}>
           <div className="pointer-events-auto min-w-0 flex-1 pr-4 sm:pr-6">
-            <div className="mx-auto w-[800px] max-w-full pb-4">{composer}</div>
+            <div className="mx-auto w-[800px] max-w-full">{composerBlock}</div>
           </div>
           <div
             className="w-[min(var(--coach-right-panel),42vw)] max-w-[var(--coach-right-panel)] shrink-0"
@@ -116,7 +155,7 @@ export function CoachBottomChatBar({
             COACH_NAV_CONTENT_INSET_CLASS,
           )}
         >
-          <div className="mx-auto w-[800px] max-w-full pb-4">{composer}</div>
+          <div className="mx-auto w-[800px] max-w-full">{composerBlock}</div>
         </div>
       )}
     </div>

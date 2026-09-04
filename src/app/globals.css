@@ -202,13 +202,10 @@
   );
 
   --canvas: #ffffff;
-  --canvas-wash: linear-gradient(
-    to top right,
-    rgb(14 154 181 / 0.3) 0%,
-    rgb(255 255 255 / 1) 100%
-  );
-  --canvas-wash-opacity: 0.2;
-
+  /* The page ground, and ONLY that: the flat colour behind the app.
+     Separate from --canvas so the header, sheets and drawers keep their own
+     white surface. */
+  --app-ground: #F5F5F3;
   --chip-surface: #ffffff;
   --chip-border: #adddda;
   --chip-border-hover: #f2f2f2;
@@ -426,13 +423,7 @@
   );
 
   --canvas: #0a1013;
-  --canvas-wash: linear-gradient(
-    to top right,
-    rgb(62 200 223 / 0.22) 0%,
-    rgb(10 16 19 / 0) 62%
-  );
-  --canvas-wash-opacity: 0.5;
-
+  --app-ground: #0a1013;
   --chip-surface: #131f24;
   --chip-border: #446e79;
   --chip-border-hover: #4c7a84;
@@ -692,6 +683,13 @@
   --animate-report-blob-alt: report-blob-alt 20s ease-in-out infinite;
   --animate-report-blob-slow: report-blob-slow 24s ease-in-out infinite;
   --animate-report-status-rise: report-status-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Coach brief sentence swap (CoachBrief). Deliberately small and short: it
+     fires on ~10 of the 24 storyboard capture screens, and it must be at rest
+     before AgentPrompt's 420ms `startDelayMs` lets the question start typing —
+     the coach frames, then asks. 3px, not report-status-rise's 14px, for the
+     same reason: at this repeat count a real travel becomes the thing you
+     notice instead of the sentence. */
+  --animate-coach-brief-settle: coach-brief-settle 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes shimmer-sweep {
@@ -1175,6 +1173,17 @@
   }
 }
 
+@keyframes coach-brief-settle {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Report-loading overlay — explicit classes so motion isn't lost to
    utility/cascade conflicts (`.app-canvas` forces `position: relative`). */
 .report-loading-overlay {
@@ -1433,6 +1442,42 @@
 /* Tight display metrics — box runs cap height → alphabetic baseline.
    Named without a `text-` prefix so tailwind-merge does not treat it as a
    font-size/color utility and drop it next to `text-[64px]` / `text-scoring-*`. */
+/* Inline text link.
+ *
+ * Underlined at rest, always. Colour alone does not carry it: measured on the
+ * real tokens, --link against body text is 2.53:1 in light and 1.45:1 in dark,
+ * both under the 3:1 that WCAG 1.4.1 requires before colour may be a link's
+ * only signal. A hover-only underline does not fix that — the user has to
+ * already suspect the text is a link to discover it is one.
+ *
+ * Kept to a 1px rule at a 3px offset so it reads as a link without shouting,
+ * and thickens to 2px on hover so the interaction still has somewhere to go.
+ * The focus ring is part of the utility because several call sites had none. */
+@utility app-link {
+  color: var(--link);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition:
+    text-decoration-thickness 150ms ease,
+    color 150ms ease;
+
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--ring) 60%, transparent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  &:disabled {
+    pointer-events: none;
+    opacity: var(--disabled-opacity);
+  }
+}
+
 @utility cap-baseline {
   text-box-trim: trim-both;
   text-box-edge: cap alphabetic;
@@ -1522,23 +1567,22 @@ body {
 }
 
 /*
-  Product canvas — white fill + teal wash (+ optional blur motif).
+  Product canvas — one flat fill, `--app-ground` (#F5F5F3 light / #0a1013
+  dark). Only the page ground: `--canvas` still drives the surface colour the
+  canvas shadows onto `--background`, so the header, sheets and drawers keep
+  the white they had.
 
-  Used at full strength on candidate chrome (onboarding, coach, interview,
-  storyboard, training, profile). Superadmin / org / partner shells use the
-  wash everywhere; overview hubs also add `.app-canvas--motif-soft`. Auth
-  shells stay plain. Sheets/drawers use `.app-canvas-wash` (same gradient,
-  no `position: relative`).
+  It used to be a three-layer stack: the fill, a teal diagonal gradient at 20%,
+  and a blurred brand motif pinned under the content. All three are now one
+  colour. Everything the app draws — cards, the composer, badges — already
+  carries its own surface, so the wash was adding atmosphere the screens did
+  not need and the ambient AI visual (the welcome plate) had to compete with.
 
-  `.candidate-app-bg` is a backward-compatible alias for the full canvas
-  (wash + motif).
-
-  Figma “Onboarding - Background Update” fills (bottom → top):
-  1. Solid #FFFFFF @ 100%
-  2. Linear gradient @ 20% layer opacity, bottom-left → top-right
-     - 0%:   #0E9AB5 @ 30%
-     - 100%: #FFFFFF @ 100%
-  3. Blur motif at x:0 y:191
+  Used on candidate chrome (onboarding, coach, interview, storyboard, training,
+  profile) and on the admin shells. `.app-canvas-wash` is the same fill without
+  `position: relative`, for sheets and drawers where that would break layout.
+  `.candidate-app-bg`, `--motif`, `--motif-soft` and `--plain` are kept as
+  aliases / no-ops so existing call sites keep working.
 */
 .app-canvas,
 .candidate-app-bg {
@@ -1546,84 +1590,17 @@ body {
   --app-bg: var(--canvas);
   position: relative;
   isolation: isolate;
-  background-color: var(--canvas);
+  background-color: var(--app-ground);
 }
 
-.app-canvas::before,
-.app-canvas--motif::after,
-.app-canvas--motif-soft::after,
-.candidate-app-bg::before,
-.candidate-app-bg::after {
-  content: "";
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Gradient fill layer — overall opacity 20% (Figma fill stack).
-   Absolute so it still paints under tall / overflow-hidden shells. */
-.app-canvas::before,
-.candidate-app-bg::before {
-  position: absolute;
-  inset: 0;
-  opacity: var(--canvas-wash-opacity);
-  background-image: var(--canvas-wash);
-}
-
-/* Plain variant — solid white, no wash and no blur motif. For screens where
-   an AI visual (the orb) owns all the ambience and the canvas must stay
-   clean and minimal. Keeps `.app-canvas`'s vars and white base. */
-.app-canvas--plain::before,
-.app-canvas--plain::after {
-  content: none;
-}
-
-/*
-  Gradient wash only — for fixed/absolute surfaces (sheets, overlays) where
-  `.app-canvas`’s `position: relative` would break layout. Same teal fill as
-  `.app-canvas::before`; z-index -1 keeps content above without wrappers.
-*/
+/* The white surface colour, for fixed/absolute chrome (sheets, drawers,
+   sticky footers) that sits above the ground rather than being it — and
+   without `position: relative`, which would break those layouts. */
 .app-canvas-wash {
   --background: var(--canvas);
   --app-bg: var(--canvas);
   isolation: isolate;
   background-color: var(--canvas);
-}
-
-.app-canvas-wash::before {
-  content: "";
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  opacity: var(--canvas-wash-opacity);
-  background-image: var(--canvas-wash);
-}
-
-/* Blur motif — fixed to the viewport so it stays put while content scrolls. */
-.app-canvas--motif::after,
-.app-canvas--motif-soft::after,
-.candidate-app-bg::after {
-  position: fixed;
-  left: 0;
-  top: 191px;
-  width: min(1024px, 100%);
-  height: 894px;
-  background: url("/brand/candidate-bg-blur.png") left top / contain no-repeat;
-}
-
-.app-canvas--motif-soft::after {
-  opacity: 0.45;
-}
-
-@media print {
-  .app-canvas::before,
-  .app-canvas--motif::after,
-  .app-canvas--motif-soft::after,
-  .app-canvas-wash::before,
-  .candidate-app-bg::before,
-  .candidate-app-bg::after {
-    display: none !important;
-  }
 }
 
 ::selection {

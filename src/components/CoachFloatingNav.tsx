@@ -1,5 +1,8 @@
 "use client";
 
+import * as React from "react";
+import { useEffect, useState } from "react";
+
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -12,6 +15,10 @@ import {
   UserCheck,
 } from "lucide-react";
 
+import { seedFinanceDemoStorage } from "@/app/storyboard/crafting/financeFpaDemoFixture";
+import { StorageKeys } from "@/lib/proofdiveStorageKeys";
+import { readJson, writeJson } from "@/lib/storage";
+
 import { cn } from "@/components/cn";
 
 function coachHomeHref(_pathname: string | null) {
@@ -20,17 +27,63 @@ function coachHomeHref(_pathname: string | null) {
   return "/coach";
 }
 
+/** A nav slot that is a Link normally, and a button when selecting it has to
+ *  run something (seed the demo, flip the mode) before the navigation. */
+function NavTarget({
+  href,
+  onDemoSelect,
+  children,
+  ...rest
+}: React.ComponentProps<"button"> & { href: string; onDemoSelect?: () => void }) {
+  if (!onDemoSelect) {
+    const { className, "aria-label": ariaLabel } = rest;
+    return (
+      <Link href={href} aria-label={ariaLabel} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={onDemoSelect} {...rest}>
+      {children}
+    </button>
+  );
+}
+
 export function CoachFloatingNav() {
   const pathname = usePathname();
   const router = useRouter();
   const homeHref = coachHomeHref(pathname);
+  /* Read after mount so the server render and the first client render agree;
+   * the cost is one frame with neither Storyboard icon lit. */
+  const [demoMode, setDemoMode] = useState(false);
+  useEffect(() => {
+    setDemoMode(readJson<boolean>(StorageKeys.storyboardDemoMode) === true);
+  }, [pathname]);
+  /* Demo scaffolding: two Storyboard entries. The top one runs the pre-filled
+   * Finance persona (`?demo=1`), the bottom one is the product as any user
+   * gets it (`?demo=0` explicitly turns the demo back off, so the two icons
+   * are a real toggle rather than one of them being a trap door). */
   const items = [
-    { href: homeHref, label: "Home", icon: Home, base: "/coach" },
-    { href: "/training", label: "Training", icon: GraduationCap, base: "/training" },
-    { href: "/storyboard", label: "Storyboard", icon: BookOpen, base: "/storyboard" },
-    { href: "/interview", label: "Mock Interview", icon: UserCheck, base: "/interview" },
-    { href: "/profile", label: "Profile", icon: CircleUser, base: "/profile" },
-    { href: "/onboarding", label: "Add new role", icon: Plus, base: "/onboarding" },
+    { href: homeHref, label: "Home", icon: Home, base: "/coach", demo: undefined },
+    { href: "/training", label: "Training", icon: GraduationCap, base: "/training", demo: undefined },
+    {
+      href: "/storyboard",
+      label: "Storyboard — Finance demo",
+      icon: BookOpen,
+      base: "/storyboard",
+      demo: true,
+    },
+    {
+      href: "/storyboard",
+      label: "Storyboard",
+      icon: BookOpen,
+      base: "/storyboard",
+      demo: false,
+    },
+    { href: "/interview", label: "Mock Interview", icon: UserCheck, base: "/interview", demo: undefined },
+    { href: "/profile", label: "Profile", icon: CircleUser, base: "/profile", demo: undefined },
+    { href: "/onboarding", label: "Add new role", icon: Plus, base: "/onboarding", demo: undefined },
   ] as const;
 
   return (
@@ -42,17 +95,39 @@ export function CoachFloatingNav() {
       <div className="pointer-events-auto flex flex-col gap-2">
         {items.map((it) => {
           const Icon = it.icon;
-          const isActive =
+          const onBase =
             it.base === "/interview"
               ? pathname === "/interview" ||
                 Boolean(pathname?.startsWith("/interview/")) ||
                 pathname === "/report" ||
                 Boolean(pathname?.startsWith("/report/"))
               : pathname === it.base || Boolean(pathname?.startsWith(`${it.base}/`));
+          // Two entries share /storyboard, so which one is lit depends on the
+          // mode, not the path.
+          const isActive =
+            it.demo === undefined ? onBase : onBase && it.demo === demoMode;
           return (
-            <Link
-              key={it.href}
+            <NavTarget
+              key={it.label}
               href={it.href}
+              onDemoSelect={
+                it.demo === undefined
+                  ? undefined
+                  : () => {
+                      // Seed BEFORE navigating and from outside StoryboardAgent,
+                      // so the write is not undone by that component hydrating
+                      // its own copy of the same keys.
+                      //
+                      // Only when ENTERING the demo. This icon is the lit one
+                      // for the whole demo, so it is what a presenter clicks to
+                      // navigate back to the Storyboard — re-seeding there would
+                      // wipe the run they are in the middle of showing. The
+                      // deliberate restart is default icon → demo icon.
+                      if (it.demo && !demoMode) seedFinanceDemoStorage();
+                      writeJson(StorageKeys.storyboardDemoMode, it.demo === true);
+                      window.location.href = "/storyboard";
+                    }
+              }
               aria-label={it.label}
               className={cn(
                 "group relative grid size-11 place-items-center rounded-full p-1 transition-colors",
@@ -74,7 +149,7 @@ export function CoachFloatingNav() {
               >
                 {it.label}
               </span>
-            </Link>
+            </NavTarget>
           );
         })}
       </div>

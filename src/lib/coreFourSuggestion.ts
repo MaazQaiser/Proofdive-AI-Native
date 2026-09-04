@@ -52,7 +52,10 @@ export function suggestCoreFour(input: { targetRole: string; jobDescription: str
 /** Role-aware AI reasoning for why a competency was suggested for the Core Four. */
 const COMPETENCY_REASONING: Record<CompetencyId, (role: string) => string> = {
   "thinking-analytical": (role) =>
-    `This ${role} needs someone who can break down complex problems, debug production issues, and figure out what is causing unexpected model or pipeline behavior.`,
+    // Domain-neutral on purpose: this line renders for every role, and the
+    // previous wording ("debug production issues", "model or pipeline
+    // behavior") described an engineer to anyone who was not one.
+    `This ${role} needs someone who can break a messy problem into parts, work out what is actually causing it, and explain the reasoning rather than just the conclusion.`,
   "thinking-prioritization": (role) =>
     `This ${role} needs someone who can weigh urgency against impact, sequence competing work, and keep focus on the highest-value outcomes under pressure.`,
   "thinking-decision": (role) =>

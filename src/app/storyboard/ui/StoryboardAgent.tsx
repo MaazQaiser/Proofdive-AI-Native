@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState, type ReactElement } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
+  Check,
   Download,
   Plus,
   X,
@@ -13,9 +14,11 @@ import {
 
 import { AppShell } from "@/components/AppShell";
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
+import { CoachBrief } from "@/components/agents/CoachBrief";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { COACH_HUB_CONTENT_TOP_CLASS } from "@/components/coachNavLayout";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import {
@@ -32,7 +35,6 @@ import {
 } from "@/components/ui/dialog";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import {
-  SuccessDriverCompetencyPill,
   SuccessDriverInfoTip,
   SuccessDriverMark,
 } from "@/components/ui/success-driver-card";
@@ -44,14 +46,19 @@ import {
   SOFTWARE_ENGINEER_DIVE4_ROLE,
   softwareEngineerDive4RoleProfile,
 } from "@/app/storyboard/crafting/softwareEngineerDive4Fixture";
+import {
+  applyFinanceDemoAssessments,
+  financeDemoPrefill,
+} from "@/app/storyboard/crafting/financeFpaDemoFixture";
 import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
 import { CoreFourSelectionPanel } from "@/app/onboarding/ui/CoreFourSelectionPanel";
 import { computeCandidateUsage, isFreePlan } from "@/lib/candidateUsage";
 import {
   CAR_FIELD_GUIDANCE,
   COMPETENCY_GUIDANCE,
-  CONSULTANT_INTRO,
+  CONSULTANT_WHY,
   DEMO_CONSULTANT_QUESTION_COUNT,
+  carActionWhy,
   competencySpec,
   completedCompetencyIds,
   consultantQuestionsFor,
@@ -82,7 +89,7 @@ import {
   upsertEditingDive,
   strengthScore,
 } from "@/lib/storyboardDraft";
-import { writeJson } from "@/lib/storage";
+import { readJson, writeJson } from "@/lib/storage";
 import {
   SUCCESS_DRIVER_ORDER,
   SUCCESS_DRIVERS,
@@ -115,7 +122,7 @@ type CapturePhase =
 
 const ABOUT_YOU_PROMPT = `Tell me about yourself.
 
-This becomes the opening of your Storyboard — the answer to “tell me about yourself”. Who you are, what you’re moving toward, and one or two things you’re proud of. Aim for 150–220 words.`;
+This becomes the opening of your Storyboard — the answer to “tell me about yourself”. Who you are, what you’re moving toward, and one or two things you’re proud of.`;
 
 const CAR_FIELDS: CarField[] = ["context", "action", "result"];
 
@@ -130,42 +137,12 @@ function diveScoreTextClass(score: number | null | undefined): string {
   return `${type} text-scoring-red`;
 }
 
-/* Helper lines for the CAR fields (the rail's suggestion while answering).
- * No prefilled answers: the audit found the composer arrived with a fabricated
- * example already typed in as its VALUE, so one Send submitted invented
- * evidence — the opposite of the product's guardrails. Examples now live in
- * the placeholder as the SHAPE of a good answer (see CAR_FIELD_GUIDANCE). */
-const CAR_PROMPTS: Record<CarField, { helper: string }> = {
-  context: {
-    helper: "Give just enough background for someone to understand why the situation mattered.",
-  },
-  action: {
-    helper: "Focus on what you personally did. Avoid saying only what the team did.",
-  },
-  result: {
-    helper:
-      "Share measurable outcomes where possible. If no metric exists, describe observable change or impact.",
-  },
-};
-
 function clampText(text: string, maxChars: number) {
   const t = text.trim();
   if (t.length <= maxChars) return t;
   const cut = t.slice(0, maxChars);
   const lastSpace = cut.lastIndexOf(" ");
   return `${cut.slice(0, Math.max(0, lastSpace)).trim()}…`;
-}
-
-function emphasizeSuggestionText(s: string): ReactElement {
-  const words = s.split(/\s+/);
-  if (words.length <= 2) return <span className="font-extrabold">{s}</span>;
-  const head = words.slice(0, 2).join(" ");
-  const tail = words.slice(2).join(" ");
-  return (
-    <span>
-      <span className="font-extrabold">{head}</span> {tail}
-    </span>
-  );
 }
 
 /**
@@ -324,7 +301,6 @@ export function StoryboardAgent() {
   const [statusLine, setStatusLine] = useState<string | null>(null);
   const [craftUi, setCraftUi] = useState<"idle" | "crafting" | "ready">("idle");
   const [isDraftUpdating, setIsDraftUpdating] = useState(false);
-  const [suggestionCursor, setSuggestionCursor] = useState(0);
   const [greetAcknowledged, setGreetAcknowledged] = useState(false);
   const [diveConfirmOpen, setDiveConfirmOpen] = useState(false);
   const [diveConfirmAction, setDiveConfirmAction] = useState<"edit" | "addCompetency" | null>(
@@ -337,6 +313,16 @@ export function StoryboardAgent() {
   const [pendingFocusIds, setPendingFocusIds] = useState<CompetencyId[] | null>(null);
   /** True while capturing more competencies for a new Dive (skip post-craft home). */
   const [intakeMode, setIntakeMode] = useState(false);
+
+  /* Demo scaffolding: read-only here. Turning the mode on (and seeding the
+   * persona) happens in the nav, deliberately — `useLocalStorageState` writes
+   * its hydrated value back on mount, so seeding from inside this component
+   * races that write and loses. The DEFAULT Storyboard is untouched by all of
+   * this: the composer only ever arrives pre-filled when this is on. */
+  const [demoMode, setDemoMode] = useState(false);
+  useEffect(() => {
+    setDemoMode(readJson<boolean>(StorageKeys.storyboardDemoMode) === true);
+  }, []);
 
   const savedDives = useMemo(
     () => (role && diveHydrated ? savedDivesForRole(diveStore, role) : []),
@@ -642,41 +628,138 @@ export function StoryboardAgent() {
     return null;
   }, [phase, selectedId, roleExperiences, activeCompetencyId]);
 
+  /* THE QUESTION, AND NOTHING BUT THE QUESTION — on the three capture phases.
+   *
+   * The guidance used to ride in this same string after a `\n\n`, which
+   * `splitPrompt` turned into 28px subtext UNDER the question. It now lives
+   * above the question in `storyBrief`, so it must NOT be here as well: these
+   * three branches return one sentence with nothing after it, which
+   * `splitPrompt` (still used inside AgentPrompt) cannot split — its paragraph
+   * rule needs a `\n\n` and its sentence fallback needs trailing text — so
+   * AgentPrompt types one heading and renders no subtext. No change to
+   * AgentPrompt, TypingText or splitPrompt is required.
+   *
+   * Invariant to keep: every capture question stays a SINGLE sentence. Add a
+   * second sentence here and splitPrompt's fallback will silently demote it
+   * into the subtext slot.
+   *
+   * greet / aboutYou / closing keep their heading + subtext shape: they have
+   * no competency to file a brief under, so no brief renders on them and the
+   * subtext is still the right home for their second line. */
   const storyPrompt = useMemo(() => {
     if (phase.kind === "greet") {
       return `Hey ${firstName}, let's build interview-ready proof from real experience.`;
     }
-    // Heading = the question, in the agent's voice. Competency and progress
-    // already live in the pill and the rail, so the heading no longer repeats
-    // them. Subtext = why we ask, tied to this competency, plus what a strong
-    // answer contains — the same signals the Strength score is judged on.
     if (phase.kind === "title") {
-      const spec = competencySpec(phase.competencyId);
-      const guide = COMPETENCY_GUIDANCE[phase.competencyId];
-      return `Which experience best shows your ${spec.title}?
-
-${guide.why} Give it a short name so we can refer to it — you'll tell the story next.`;
+      return `Which experience best shows your ${competencySpec(phase.competencyId).title}?`;
     }
-    if (phase.kind === "car") {
-      const field = CAR_FIELD_GUIDANCE[phase.field];
-      const guide = COMPETENCY_GUIDANCE[phase.competencyId];
-      const cue = phase.field === "action" ? ` ${guide.good}` : "";
-      return `${field.question}
-
-${field.why}${cue}`;
-    }
-    if (phase.kind === "consultant") {
-      const guide = COMPETENCY_GUIDANCE[phase.competencyId];
-      const intro = phase.qIndex === 0 ? `${CONSULTANT_INTRO} ` : "";
-      return `${phase.question}
-
-${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${guide.good}`;
-    }
+    if (phase.kind === "car") return CAR_FIELD_GUIDANCE[phase.field].question;
+    if (phase.kind === "consultant") return phase.question;
     if (phase.kind === "aboutYou") {
       return ABOUT_YOU_PROMPT;
     }
     return `This is coming together really well.`;
   }, [phase, firstName]);
+
+  /* WHY THIS QUESTION EXISTS — the coach's brief, rendered above the question.
+   *
+   * This is now the ONLY guidance surface. There used to be a second one, a
+   * cue line against the composer carrying `COMPETENCY_GUIDANCE[id].good` —
+   * what a strong answer contains — and the split was WHY up here, HOW down
+   * there. That line has been removed, so this brief and `composerPlaceholder`
+   * carry everything between them: the brief says why the question is asked,
+   * the placeholder shows the shape of an answer. Worth knowing if the scoring
+   * standard ever needs a home again — `.good` is still in the data, unused.
+   *
+   * Two things that used to be welded onto the end of the guidance sentence
+   * are gone, because they were bottom-surface material:
+   *   - "Give it a short name so we can refer to it" — `composerPlaceholder`
+   *     already says exactly this, at the moment it applies.
+   *   - "Follow-up 1 of 2." — a progress fact. CONSULTANT_WHY now carries it
+   *     in prose ("Two short follow-ups now…", "Last one."), so the screen
+   *     does not grow a third counter next to the rail's two. */
+  const storyBrief = useMemo<string | null>(() => {
+    if (phase.kind === "title") return COMPETENCY_GUIDANCE[phase.competencyId].why;
+    if (phase.kind === "car") {
+      if (phase.field === "action") {
+        return carActionWhy(competencySpec(phase.competencyId).title);
+      }
+      return CAR_FIELD_GUIDANCE[phase.field].why;
+    }
+    if (phase.kind === "consultant") {
+      return (
+        CONSULTANT_WHY[phase.qIndex] ??
+        CONSULTANT_WHY[CONSULTANT_WHY.length - 1] ??
+        null
+      );
+    }
+    return null;
+  }, [phase]);
+
+  /* THE TRANSCRIPT, DERIVED — never stored. Every completed turn is already in
+   * `roleExperiences` (title, the three CAR fields, and each follow-up with its
+   * question) plus `aboutYouAnswer`, in exactly the order `deriveCapturePhase`
+   * walked them. Rebuilding the history from that store means it can never
+   * drift from the truth the way an appended message log could, costs no new
+   * state, and survives reloads for free. Each step carries the same guidance
+   * sentence the coach showed at the time, from the same constants the live
+   * brief reads — so the history shows what the user actually saw.
+   *
+   * Order inside a competency intentionally mirrors the phase machine: title,
+   * then CAR fields IN ORDER (stopping at the first empty one, since nothing
+   * past it can have been asked), then follow-ups. */
+  const capturedSteps = useMemo(() => {
+    type CapturedStep = {
+      key: string;
+      guidance: string | null;
+      question: string;
+      answer: string;
+    };
+    const steps: CapturedStep[] = [];
+    for (const compId of focusQueue) {
+      const exp = experienceForCompetency(roleExperiences, compId);
+      if (!exp?.title?.trim()) continue;
+      const spec = competencySpec(compId);
+      steps.push({
+        key: `${compId}-title`,
+        guidance: COMPETENCY_GUIDANCE[compId].why,
+        question: `Which experience best shows your ${spec.title}?`,
+        answer: exp.title.trim(),
+      });
+      for (const field of CAR_FIELDS) {
+        const val = exp.car?.[field]?.trim();
+        if (!val) break;
+        steps.push({
+          key: `${compId}-${field}`,
+          guidance:
+            field === "action"
+              ? carActionWhy(spec.title)
+              : CAR_FIELD_GUIDANCE[field].why,
+          question: CAR_FIELD_GUIDANCE[field].question,
+          answer: val,
+        });
+      }
+      (exp.consultantAnswers ?? []).forEach((ca, i) => {
+        if (!ca.answer?.trim()) return;
+        steps.push({
+          key: `${compId}-fu${i}`,
+          guidance: CONSULTANT_WHY[i] ?? CONSULTANT_WHY[CONSULTANT_WHY.length - 1] ?? null,
+          question: ca.question,
+          answer: ca.answer.trim(),
+        });
+      });
+    }
+    const about = roleProfile?.aboutYouAnswer?.trim();
+    if (about) {
+      steps.push({
+        key: "about-you",
+        guidance: ABOUT_YOU_PROMPT.split("\n\n")[1] ?? null,
+        question: ABOUT_YOU_PROMPT.split("\n\n")[0] ?? "Tell me about yourself.",
+        answer: about,
+      });
+    }
+    return steps;
+  }, [focusQueue, roleExperiences, roleProfile?.aboutYouAnswer]);
 
   const storyPromptKey = `${phase.kind}-${activeCompetencyId ?? "none"}-${
     phase.kind === "car"
@@ -692,6 +775,63 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
 
   const replyPrefillKey = storyPromptKey;
 
+  /* Keeps the DEFAULT view exactly what it was before the transcript existed:
+   * the live coach brief + question aligned to the top of the scroll viewport,
+   * with all history off-screen ABOVE it. Fired on every phase change (the
+   * prompt key) and again when hydration brings the stored history in under a
+   * mounted component (`capturedSteps.length`), or the first paint would land
+   * mid-transcript. First alignment is instant — it is layout, not an event;
+   * after that it glides, so a send visibly advances the timeline the way a
+   * chat does. Reduced-motion never glides. The user's own scrolling is never
+   * fought: nothing here runs on scroll, only on turn boundaries. */
+  const liveTurnRef = useRef<HTMLDivElement | null>(null);
+  const hasAlignedOnce = useRef(false);
+  useEffect(() => {
+    const el = liveTurnRef.current;
+    if (!el) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({
+      behavior: hasAlignedOnce.current && !reduced ? "smooth" : ("instant" as ScrollBehavior),
+      block: "start",
+    });
+    hasAlignedOnce.current = true;
+  }, [storyPromptKey, capturedSteps.length]);
+
+
+  /* The persona's answer for whatever is being asked right now. Computed from
+   * the same phase the question came from, so the two can never drift apart. */
+  const demoPrefill = useMemo(() => {
+    if (!demoMode) return "";
+    switch (phase.kind) {
+      case "greet":
+        return financeDemoPrefill({ kind: "greet" });
+      case "title":
+        return financeDemoPrefill({ kind: "title", competencyId: phase.competencyId });
+      case "car":
+        return financeDemoPrefill({
+          kind: "car",
+          competencyId: phase.competencyId,
+          field: phase.field,
+        });
+      case "consultant":
+        return financeDemoPrefill({
+          kind: "consultant",
+          competencyId: phase.competencyId,
+          qIndex: phase.qIndex,
+        });
+      case "aboutYou":
+        return financeDemoPrefill({ kind: "aboutYou" });
+      default:
+        return "";
+    }
+  }, [demoMode, phase]);
+
+  /* No prefilled answers: the audit found the composer arrived with a
+   * fabricated example already typed in as its VALUE, so one Send submitted
+   * invented evidence — the opposite of the product's guardrails. The example
+   * lives here instead, as the SHAPE of a good answer. (The competency's own
+   * scoring standard used to sit beside the composer as a cue line; that
+   * surface has been removed.) */
   const composerPlaceholder = useMemo(() => {
     if (phase.kind === "closing") return "Craft your story above when ready…";
     if (phase.kind === "greet") return "Say hi to begin, or press Let’s Start above";
@@ -740,12 +880,17 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
     const base =
       existingEditing ??
       buildEmptyCraftingDive(role, safeNumber);
-    const seeded = seedDiveFromDemoExperiences(
+    const seededRaw = seedDiveFromDemoExperiences(
       base,
       roleExperiences,
       focusQueue,
       roleProfile?.aboutYouAnswer,
     );
+    // In demo mode the judgement comes from the persona's fixture rather than
+    // the word-count heuristic, which scores these long answers at 4.9/5 —
+    // a number that contradicts the "here is what is missing" half of the
+    // product. Everything the user typed is kept as-is.
+    const seeded = demoMode ? applyFinanceDemoAssessments(seededRaw) : seededRaw;
     // Craft opens the storyboard for REVIEW. Saving — and spending one of the
     // three Dives — is the user's explicit act on that screen. Previously this
     // committed the Dive as read-only before the user had seen a word of it.
@@ -764,7 +909,6 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
   function handleText(text: string) {
     setStatusLine(null);
     setIsDraftUpdating(true);
-    setSuggestionCursor((v) => v + 1);
     window.setTimeout(() => setIsDraftUpdating(false), 450);
 
     const cleaned = normalizeWhitespace(text);
@@ -853,14 +997,13 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
     }
   }
 
-  type StoryQuick = { title: string; body: string; suggestions: Array<string | ReactElement> };
+  type StoryQuick = { title: string; body: string };
 
   const storyQuick = useMemo<StoryQuick>(() => {
     if (phase.kind === "aboutYou") {
       return {
         title: "Your introduction",
         body: "This becomes the opening of your Storyboard — the first thing an interviewer hears. It isn't scored against a single competency.",
-        suggestions: ["Aim for 150–220 words. Who you are, where you’re headed, one thing you’re proud of."],
       };
     }
 
@@ -875,13 +1018,11 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
         return {
           title: `Competency ${phase.index + 1} of ${focusQueue.length}`,
           body: `${spec.title}. Name the experience first, then we'll take the situation, what you did, and what changed.`,
-          suggestions: [COMPETENCY_GUIDANCE[phase.competencyId].good],
         };
       }
       return {
         title: "Ready when you are",
         body: `One experience for each of ${focusQueue.length} competencies, then we craft your storyboard.${scopeNote}`,
-        suggestions: ["Real experiences only — we never invent details, and neither should you."],
       };
     }
 
@@ -896,35 +1037,13 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
       ...notes.map((n) => `Follow-up: ${clampText(n, 140)}`),
     ].filter(Boolean);
 
-    const suggestions: string[] = [];
-    if (phase.kind === "car") {
-      suggestions.push(CAR_PROMPTS[phase.field].helper);
-    } else if (phase.kind === "consultant") {
-      suggestions.push(
-        `Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT}. Specifics beat summary — your answer is quoted back as evidence.`,
-      );
-    } else if (isDemoExperienceComplete(selected)) {
-      suggestions.push("Add one crisp metric if you can (before → after).");
-    } else {
-      suggestions.push("Keep going — finish Context, Action, and Result for this competency.");
-    }
-
-    const spec = selected.competencyId ? competencySpec(selected.competencyId) : null;
-
     return {
       title: selected.title || "Untitled experience",
       body:
         bodyParts.join("\n\n") ||
         "Next: the situation — what was going on, and what was at stake.",
-      suggestions: spec ? [`Anchored to ${spec.title}`, ...suggestions] : suggestions,
     };
   }, [selected, phase, focusQueue.length, roleProfile?.coreFourCompetencies?.length]);
-
-  const activeSuggestion = useMemo(() => {
-    const list = storyQuick.suggestions;
-    if (!list.length) return null;
-    return list[suggestionCursor % list.length] ?? null;
-  }, [storyQuick.suggestions, suggestionCursor]);
 
   if (!role) {
     return (
@@ -954,12 +1073,54 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
     );
   }
 
+  /* How many of this Dive's competencies are fully captured — the number the
+   * section heading shows. Not a hook: this sits after an early return. */
+  const capturedCount = focusQueue.filter((compId) =>
+    isDemoExperienceComplete(experienceForCompetency(roleExperiences, compId)),
+  ).length;
+
   const storyboardRightPanel = (
     <div className="space-y-3">
-      <div className="text-overline text-text-primary">Competencies</div>
+      {/* The draft leads. It is the thing being built — the competency list and
+          the scores are both readouts ABOUT it — so it should be the first
+          thing in the rail rather than the last, and it is the block that
+          changes on every answer. No `pt-2`: that padding existed to open a gap
+          under the card above, and there is nothing above it now. */}
+      <div className="text-overline text-text-primary">Your story draft</div>
+      <Card className="gap-0 py-0">
+        <CardContent className="space-y-3 p-5">
+          {isDraftUpdating ? (
+            <div className="space-y-3">
+              <div className="h-5 w-44 animate-pulse rounded-lg bg-muted" />
+              <div className="space-y-2">
+                <div className="h-4 w-full animate-pulse rounded-lg bg-muted" />
+                <div className="h-4 w-11/12 animate-pulse rounded-lg bg-muted" />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="text-body-sm font-semibold text-text-primary">{storyQuick.title}</div>
+              <div className="whitespace-pre-wrap text-caption leading-6 text-text-secondary">
+                {storyQuick.body}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* The count belongs to the SECTION, not to each card. On the cards it
+          read as "1/2" beside a pillar name, which looks like a score — the
+          one number a rail of Strength scores must not be ambiguous about.
+          Here it is unmistakably progress through the list. */}
+      <div className="flex items-center gap-2 pt-2 text-overline text-text-primary">
+        Competencies
+        <Badge className="ml-auto">
+          {capturedCount} of {focusQueue.length}
+        </Badge>
+      </div>
 
       <div className="space-y-2">
-        {focusQueue.map((compId, idx) => {
+        {focusQueue.map((compId) => {
           const exp = experienceForCompetency(roleExperiences, compId);
           const spec = competencySpec(compId);
           const driver = pillarForCompetency(compId);
@@ -991,18 +1152,47 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
                   !exp && "opacity-70",
                 )}
               >
-                <CardContent className="space-y-2 p-4">
-                  <div className="flex items-center gap-2">
-                    <SuccessDriverIcon driver={driver} className="size-4" />
-                    <span className="text-overline text-text-secondary">
-                      {SUCCESS_DRIVERS[driver].shortLabel} · {idx + 1}/{focusQueue.length}
+                {/* Two rows, not three. The competency is what the card is
+                    about, so it takes the top line; the pillar is a filing
+                    label, so it goes right, as a tag. That folds the old pillar
+                    row away and drops ~20px from every card — over four cards
+                    it is a whole card's worth of rail back.
+
+                    Done does not add a second tag beside the first. The pillar
+                    tag already sits where a status would go, so it carries the
+                    status instead: its leading mark swaps from the pillar glyph
+                    to a tick and the fill goes solid. One element, one
+                    footprint, and the pillar label survives either way. */}
+                <CardContent className="space-y-1 p-4">
+                  <div className="flex items-start gap-2">
+                    <span className="min-w-0 flex-1 truncate text-body-sm font-semibold text-text-primary">
+                      {spec.title}
                     </span>
-                    {done ? (
-                      <span className="ml-auto text-overline text-extended-cyan-green">Done</span>
-                    ) : null}
+                    {/* `default` fills with --primary, and its own token note
+                        warns why that is wrong here: --primary-foreground on
+                        #0E9AB5 measures 3.05:1, fine on an 18px button label
+                        and under the 4.5:1 this 12px tag needs. Measured on the
+                        card it came back at exactly 3.05. --extended-blue is
+                        the same teal a few steps deeper and takes the same
+                        light ink to 5.25:1 (11.4:1 in dark), so the captured
+                        tag can stay solid — which is what makes it findable in
+                        a rail of four — without shipping a failing label. */}
+                    <Badge
+                      variant={done ? "default" : "secondary"}
+                      className={cn("mt-px", done && "bg-extended-blue")}
+                    >
+                      {done ? (
+                        <Check aria-hidden strokeWidth={3} />
+                      ) : (
+                        <SuccessDriverIcon driver={driver} aria-hidden />
+                      )}
+                      {SUCCESS_DRIVERS[driver].shortLabel}
+                      <span className="sr-only">
+                        {done ? " — captured" : " — waiting for experience"}
+                      </span>
+                    </Badge>
                   </div>
-                  <div className="text-caption font-semibold text-text-primary">{spec.title}</div>
-                  <div className="text-caption text-text-secondary">
+                  <div className="truncate text-caption text-text-secondary">
                     {exp?.title?.trim() || "Waiting for experience…"}
                   </div>
                 </CardContent>
@@ -1033,104 +1223,11 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
         </CardContent>
       </Card>
 
-      <div className="pt-2 text-overline text-text-primary">Your story draft</div>
-      <Card className="gap-0 py-0">
-        <CardContent className="space-y-3 p-5">
-          {isDraftUpdating ? (
-            <div className="space-y-3">
-              <div className="h-5 w-44 animate-pulse rounded-lg bg-muted" />
-              <div className="space-y-2">
-                <div className="h-4 w-full animate-pulse rounded-lg bg-muted" />
-                <div className="h-4 w-11/12 animate-pulse rounded-lg bg-muted" />
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="text-body-sm font-semibold text-text-primary">{storyQuick.title}</div>
-              <div className="whitespace-pre-wrap text-caption leading-6 text-text-secondary">
-                {storyQuick.body}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="pt-2 text-overline text-text-primary">Suggestions</div>
-      <Card className="gap-0 py-0">
-        <CardContent className="space-y-3 p-5">
-          <div className="text-caption leading-6 text-text-primary">
-            {typeof activeSuggestion === "string"
-              ? emphasizeSuggestionText(activeSuggestion)
-              : activeSuggestion}
-          </div>
-        </CardContent>
-      </Card>
-
-      {savedDives.length > 0 ? (
-        <>
-          <div className="pt-2 text-overline text-text-primary">Previous dives</div>
-          <div className="space-y-2">
-            {[...savedDives]
-              .sort((a, b) => a.diveNumber - b.diveNumber)
-              .map((dive) => {
-                const score = dive.overallScore > 0 ? dive.overallScore : null;
-                return (
-                  <button
-                    key={dive.id}
-                    type="button"
-                    className="block w-full text-left"
-                    onClick={() =>
-                      router.push(
-                        `/storyboard/crafting?dive=${encodeURIComponent(dive.id)}&from=previous`,
-                      )
-                    }
-                    aria-label={`View Dive ${dive.diveNumber} story`}
-                  >
-                    <div
-                      data-slot="previous-dive-card"
-                      className={cn(
-                        "flex w-full items-center justify-between gap-3 rounded-[16px] border-[0.5px] border-solid border-[#dde7e9] p-4",
-                        "backdrop-blur-[42px]",
-                        "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
-                        "transition hover:ring-2 hover:ring-primary/10",
-                      )}
-                    >
-                      <div className="flex min-w-0 flex-1 items-center gap-3">
-                        <div className="flex shrink-0 items-baseline gap-0.5 font-gilroy whitespace-nowrap">
-                          <span
-                            className={cn(
-                              "cap-baseline text-[32px] font-normal leading-none tracking-[-1.6px] tabular-nums",
-                              diveScoreTextClass(score),
-                            )}
-                          >
-                            {score != null ? score.toFixed(1) : "—"}
-                          </span>
-                          <span className="cap-baseline text-[20px] font-normal leading-none tracking-[-1px] text-[#abadb2]">
-                            /5
-                          </span>
-                        </div>
-                        <div className="flex min-w-0 flex-col gap-0.5">
-                          <span className="text-[16px] font-medium tracking-[-0.5px] text-extended-blue">
-                            Dive {dive.diveNumber}
-                          </span>
-                          <span className="text-[12px] font-medium tracking-[-0.5px] text-text-primary">
-                            Overall story score
-                          </span>
-                        </div>
-                      </div>
-                      <span
-                        className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-400 text-white [&_svg]:size-4"
-                        aria-hidden
-                      >
-                        <ArrowUpRight />
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-          </div>
-        </>
-      ) : null}
+      {/* No "Previous dives" here. The other three blocks are all about
+          THIS Dive as it is being captured; a saved Dive is a different
+          scope, and its card navigates away — offering that beside a
+          half-answered question is a trap, not an affordance. Saved Dives
+          live on the hub, which is one click away. */}
     </div>
   );
 
@@ -1301,10 +1398,8 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
                 setAddCompetencyError(null);
               }}
               error={addCompetencyError}
-              hideSuggestionReasoning
               confirmLabel="Confirm selection"
               helperText="When you're happy with your selection, confirm to start the next Dive."
-              selectionMode="multi"
             />
           </div>
         ) : showDiveHome ? (
@@ -1388,19 +1483,113 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
           </div>
         ) : (
           <>
-            {showCaptureChrome ? (
-              <div className="mb-6 flex flex-wrap items-center gap-3">
-                <SuccessDriverCompetencyPill
-                  driver={pillarForCompetency(activeCompetencyId)}
-                  label={
-                    <>
-                      {SUCCESS_DRIVERS[pillarForCompetency(activeCompetencyId)].shortLabel}
-                      {" · "}
-                      {competencySpec(activeCompetencyId).title}
-                    </>
-                  }
-                />
-              </div>
+            {/* THE TRANSCRIPT. Every completed turn, oldest first, stacked
+                ABOVE the live question inside the shell's own scroll column —
+                so by default it sits off-screen (the alignment effect pins the
+                live turn to the viewport top) and scrolling up reveals it as a
+                continuous timeline, the way a chat's history does.
+
+                Each turn mirrors the live screen's own order — guidance, then
+                question, then the answer — but demoted a full rank: the
+                guidance drops to a muted caption, the question from 40px to
+                20px, and only the ANSWER keeps full ink and gains a card,
+                because the user's own words are what someone scrolls back to
+                re-read. Separators are the neutral `--border` hairline; the
+                live block below keeps the teal one — past turns file away in
+                grey, the coach's live rule stays the one brand-coloured line.
+
+                Static on purpose: no TypingText (a transcript retyping itself
+                would be absurd) and no per-item entrance animation — items are
+                revealed by the user's own scrolling, which needs no help. */}
+            {capturedSteps.length ? (
+              <section aria-label="Completed questions and answers">
+                <ol>
+                  {capturedSteps.map((step) => (
+                    <li
+                      key={step.key}
+                      /* py-12, twice the original rhythm: each turn owns 48px
+                         either side of its rule. The gaps INSIDE a turn
+                         (guidance 6px, question-to-answer 12px) stay small on
+                         purpose — scanning works off the contrast between the
+                         tight inside and the wide outside, so widening only
+                         the outside is what buys the grouping. */
+                      className="border-b border-border py-12 first:pt-4"
+                    >
+                      {step.guidance ? (
+                        /* /70, not text-secondary: the standing AA fix — the
+                           secondary ink is 4.43:1 on this ground, under the
+                           4.5 small text needs. */
+                        <p className="text-caption leading-5 text-text-primary/70">
+                          {step.guidance}
+                        </p>
+                      ) : null}
+                      <h3 className="mt-1.5 text-body-lg font-medium tracking-[-0.5px] text-heading-teal">
+                        {step.question}
+                      </h3>
+                      {/* The user's words, on the RIGHT — the coach speaks
+                          from the left margin, the user answers from the
+                          right, which is the geometry every chat has taught.
+                          `rounded-br-md` breaks one corner toward the
+                          composer the answer came from; alignment does the
+                          rest, so the card needs no other bubble costume. */}
+                      <div className="ml-auto mt-3 w-fit max-w-[62ch] rounded-xl rounded-br-md border border-border bg-card px-4 py-3">
+                        <p className="whitespace-pre-wrap text-body-sm leading-6 text-text-primary">
+                          {step.answer}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            ) : null}
+
+            {/* The LIVE turn. The ref is the transcript's anchor: the
+                alignment effect pins this block's top to the viewport top on
+                every turn boundary, which is exactly the screen the flow
+                showed before the transcript existed. `scroll-mt-3` matches the
+                scroll container's own pt-3, so the pinned position and the
+                no-history position are the same 12px below the header.
+
+                The min-height (viewport minus the 3.5rem header minus the
+                scroller's 8rem pb) is what makes the pin PHYSICALLY POSSIBLE:
+                scrollIntoView can only move as far as there is content below,
+                and after one answered question there is not a screenful of it —
+                without this, a short transcript would sit half-visible above
+                the live turn instead of off-screen. It also reproduces the old
+                screen exactly: question at the top, open space down to the
+                composer. Gated on the transcript existing so the greet screen
+                keeps its centred-hero layout, which has no history above it. */}
+            <div
+              ref={liveTurnRef}
+              className={cn(
+                "scroll-mt-3",
+                capturedSteps.length > 0 && "min-h-[calc(100vh-11.5rem)]",
+                /* The completion moment is a destination, not another turn in
+                   the queue, so it re-earns the centred hero the flow always
+                   gave it: the wrapper is a full viewport tall either way, and
+                   centring INSIDE it means the pin (which aligns the wrapper's
+                   top) lands the message mid-screen — transcript still one
+                   scroll above. Question turns stay top-pinned: they hold a
+                   composer conversation and belong at the reading line. */
+                /* The closing box reuses the ORIGINAL hero's own numbers
+                   (100vh - 3.5rem header - 10rem composer zone) rather than
+                   the pin calc: it is 2rem shorter than what perfect pinning
+                   needs, so the wrapper rests that little bit lower and the
+                   message lands where the pre-transcript hero always did. */
+                capturedSteps.length > 0 &&
+                  phase.kind === "closing" &&
+                  "flex min-h-[calc(100vh-3.5rem-10rem)] flex-col justify-center",
+              )}
+            >
+            {/* The brief REPLACES the free-floating competency pill that used
+                to sit here, and absorbs its content into its own byline row —
+                so the screen gains a container and loses a floater, and it
+                loses the 28px guidance subtext under the question too. Net
+                effect on column height is ~+18px, not a new block of chrome.
+                `showCaptureChrome` is the same gate the pill used, so this is
+                a straight swap on exactly the screens that had one. */}
+            {showCaptureChrome && storyBrief ? (
+              <CoachBrief note={storyBrief} />
             ) : null}
 
             <AgentPrompt
@@ -1418,10 +1607,10 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
                 <button
                   type="button"
                   onClick={() => setGreetAcknowledged(true)}
-                  className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  className="app-link inline-flex items-center gap-1 font-semibold"
                 >
                   Let&apos;s Start
-                  <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />
+                  <ArrowRight className="size-[0.7em] shrink-0" aria-hidden />
                 </button>
               </p>
             ) : null}
@@ -1434,11 +1623,11 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
                   type="button"
                   onClick={startCrafting}
                   disabled={craftUi === "crafting"}
-                  className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-60"
+                  className="app-link inline-flex items-center gap-1 font-semibold"
                 >
                   {craftUi === "crafting" ? "Crafting…" : "Craft my story"}
                   <ArrowRight
-                    className="size-[1.15em] shrink-0 text-primary"
+                    className="size-[1.15em] shrink-0"
                     strokeWidth={2}
                     aria-hidden
                   />
@@ -1449,6 +1638,7 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
             {statusLine ? (
               <p className="mt-6 text-caption leading-6 text-text-secondary">{statusLine}</p>
             ) : null}
+            </div>
           </>
         )}
       </div>
@@ -1506,11 +1696,16 @@ ${intro}Follow-up ${phase.qIndex + 1} of ${DEMO_CONSULTANT_QUESTION_COUNT} · ${
           phase.kind === "closing" ||
           craftUi === "crafting"
         }
-        prefill=""
+        /* Demo only. The product ships with an empty composer on purpose —
+           a prefilled answer means one Send submits invented evidence — so
+           this is gated on demoMode and nothing else can reach it. */
+        prefill={demoMode ? demoPrefill : ""}
         prefillKey={
           addCompetencyOpen ? "add-competency" : showDiveHome ? "post-craft" : replyPrefillKey
         }
         showUploadButton={false}
+        // Guidance rides with the composer, and only while the composer is the
+        // thing to use: the hub and the competency picker offer buttons.
         rightPanelMaxWidth={showDiveHome || addCompetencyOpen ? undefined : 400}
       />
     </AppShell>

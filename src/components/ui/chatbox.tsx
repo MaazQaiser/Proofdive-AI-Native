@@ -81,6 +81,53 @@ type ChatboxProps = {
  * Compact: pill, single-line row. Expanded: rounded-20 multi-line with footer actions.
  * Shell stroke / padding / surface / shadow / send size: `globals.css` `[data-slot="chatbox"]`.
  */
+
+/** Line box for the expanded composer, so every height is a whole number of
+ *  lines — a box sized to 2.6 lines is what slices the third one in half. */
+const CHATBOX_LINE = 20;
+const CHATBOX_MIN_LINES = 2;
+const CHATBOX_MAX_LINES = 8;
+
+function mergeRefs<T>(...refs: (React.Ref<T> | undefined)[]) {
+  return (node: T | null) => {
+    for (const ref of refs) {
+      if (!ref) continue;
+      if (typeof ref === "function") ref(node);
+      else (ref as React.MutableRefObject<T | null>).current = node;
+    }
+  };
+}
+
+/**
+ * Grow the composer with the answer.
+ *
+ * It used to live in a fixed 88px box, so a pasted or dictated answer of any
+ * length scrolled inside roughly two and a half lines and the third line was
+ * cut through the middle — which reads as broken rather than as "there is more
+ * below". Now it sizes to its content up to eight lines and only then scrolls,
+ * and every height it takes is a whole number of lines, so a half-line never
+ * shows. It is bottom-anchored, so the growth pushes the box upward and the
+ * caret stays where the user is looking.
+ */
+function useAutosizeTextarea(value: string, disabled: boolean) {
+  const ref = React.useRef<HTMLTextAreaElement | null>(null);
+
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || disabled) return;
+    el.style.height = "auto";
+    const lines = Math.round(el.scrollHeight / CHATBOX_LINE);
+    const clamped = Math.min(
+      Math.max(lines, CHATBOX_MIN_LINES),
+      CHATBOX_MAX_LINES,
+    );
+    el.style.height = `${clamped * CHATBOX_LINE}px`;
+    el.style.overflowY = lines > CHATBOX_MAX_LINES ? "auto" : "hidden";
+  }, [value, disabled]);
+
+  return ref;
+}
+
 function Chatbox({
   className,
   value,
@@ -112,6 +159,7 @@ function Chatbox({
       : []);
 
   const isCompact = variant === "compact";
+  const autosizeRef = useAutosizeTextarea(value, isCompact);
   const isAsking = Boolean(askAction?.isActive);
   const canSend = !disabled && (value.trim().length > 0 || files.length > 0);
   const hasLeading = Boolean(leading);
@@ -253,7 +301,10 @@ function Chatbox({
     "placeholder:text-text-secondary disabled:cursor-not-allowed disabled:opacity-(--disabled-opacity)",
     isCompact
       ? "block h-7 min-h-7 overflow-hidden whitespace-nowrap py-0 text-body-sm leading-7"
-      : "min-h-0 flex-1 text-body-sm leading-[1.25]",
+      : // 16px text at leading-[1.25] = the 20px line box the autosize hook
+        // measures in. Height is set inline by that hook, so no flex-1 here —
+        // a flex-grow would fight the measured value.
+        "min-h-10 text-body-sm leading-[1.25] [scrollbar-width:thin]",
   );
 
   return (
@@ -323,9 +374,9 @@ function Chatbox({
               </div>
             </div>
           ) : (
-            <div className="flex h-[88px] w-full flex-col justify-between">
+            <div className="flex min-h-[88px] w-full flex-col justify-between">
               <textarea
-                ref={textareaRef as React.Ref<HTMLTextAreaElement>}
+                ref={mergeRefs(autosizeRef, textareaRef)}
                 value={value}
                 onChange={(e) => onValueChange(e.target.value)}
                 placeholder={isListening ? "Speak now…" : placeholder}

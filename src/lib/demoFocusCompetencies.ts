@@ -216,6 +216,17 @@ export const CAR_FIELD_GUIDANCE = {
   },
   action: {
     question: "What did you personally do?",
+    /**
+     * Generic fallback only. These `why` strings are competency-independent,
+     * so on competencies 2-4 the coach's brief would repeat word for word —
+     * the real repetition risk in this flow is the copy, not the container.
+     * `action` is the field the competency is actually scored on, so it is the
+     * one that must name it: the screen renders
+     * `carActionWhy(competencySpec(id).title)` instead of this string, which
+     * also fixes the vague referent ("the competency" — which one?).
+     * `context` and `result` stay generic on purpose: they are generic truths,
+     * and inventing per-competency copy for them would be padding.
+     */
     why: "This is what the competency is scored on. Focus on your own decisions and moves, not the team’s.",
     shape: "Your decisions and the steps you took, in the order you took them.",
   },
@@ -226,9 +237,33 @@ export const CAR_FIELD_GUIDANCE = {
   },
 } as const;
 
-/** One line the first time the consultant step appears, so the follow-ups read as finite and purposeful. */
-export const CONSULTANT_INTRO =
-  "Two short follow-ups to make this defensible — your answers are quoted back as evidence.";
+/**
+ * Why the follow-ups exist — the coach's brief above the follow-up question.
+ *
+ * One entry per follow-up, indexed by `qIndex`, for two reasons. It carries
+ * the progress fact ("two short follow-ups", "last one") in prose, so the
+ * screen does not need a third counter beside the rail's two. And it means the
+ * coach never says the identical sentence on two consecutive screens — which
+ * was the only literal back-to-back repeat in the whole capture flow.
+ *
+ * Keep this array `DEMO_CONSULTANT_QUESTION_COUNT` long.
+ */
+export const CONSULTANT_WHY: readonly string[] = [
+  "Two short follow-ups now — this is where an interviewer would push, and the story has to hold under it.",
+  "Last one. This is the detail that separates a story an interviewer believes from one they only hear.",
+];
+
+/**
+ * The `action` field's brief, named for the competency being captured. See the
+ * note on `CAR_FIELD_GUIDANCE.action.why`.
+ */
+export function carActionWhy(competencyTitle: string): string {
+  return `This is the part ${competencyTitle} is scored on — your own decisions and moves, not the team’s.`;
+}
+
+/** What a strong follow-up contains — shown beside the composer. */
+export const CONSULTANT_CUE =
+  "Specifics beat summary — your answer is quoted back as evidence.";
 
 /** Consultant question copy keyed by competency (framework-inspired, demo-short). */
 export function consultantQuestionsFor(competencyId: CompetencyId): string[] {

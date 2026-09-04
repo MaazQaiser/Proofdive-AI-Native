@@ -35,6 +35,11 @@ export function ResetFlowCta() {
     removeKey(StorageKeys.candidatePostInterviewUpgradeNudgeSeen);
     removeKey(StorageKeys.orgAdminAccountActivated);
     removeKey(StorageKeys.partnerAccountActivated);
+    // Without these two, "Reset flow" leaves the demo running: the flag is
+    // sticky, so the next "fresh" user gets a composer pre-filled with the
+    // demo persona's answers, and savedRoles still lists her role.
+    removeKey(StorageKeys.storyboardDemoMode);
+    removeKey(StorageKeys.savedRoles);
 
     // Hard reload guarantees a full remount so onboarding state re-reads the
     // now-cleared storage — a client-side push to the same route wouldn't.

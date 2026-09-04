@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowRight, CircleHelp } from "lucide-react";
+import { useMemo } from "react";
+import { ArrowRight, Check, Sparkles } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   SuccessDriverCard,
   SuccessDriverMark,
 } from "@/components/ui/success-driver-card";
 import {
+  matchedSignalsFor,
   suggestCoreFour,
   suggestionReasoningFor,
 } from "@/lib/coreFourSuggestion";
@@ -21,6 +22,11 @@ import {
 } from "@/lib/storyboardDraft";
 import { cn } from "@/lib/utils";
 
+/** Shared footer-button metrics — matches the plan step's Confirm, which is
+ *  this screen's reference. Padding differs per button (a trailing arrow needs
+ *  less room on the right), so only the size lives here. */
+const FOOTER_BUTTON = "h-11 rounded-md text-body-sm font-medium";
+
 type CoreFourSelectionPanelProps = {
   selected: CompetencyId[];
   targetRole: string;
@@ -30,15 +36,28 @@ type CoreFourSelectionPanelProps = {
   error: string | null;
   /** Already-captured competencies — checked and not toggleable. */
   lockedIds?: readonly CompetencyId[];
-  /** Hide onboarding suggestion tooltips (Add Competency flow). */
-  hideSuggestionReasoning?: boolean;
   confirmLabel?: string;
   helperText?: string;
-  selectionMode?: "singlePerPillar" | "multi";
   onCancel?: () => void;
   cancelLabel?: string;
 };
 
+/**
+ * Add competencies — the onboarding plan step's card pattern, with checkboxes.
+ *
+ * The plan step (AssessmentPlanPanel) had the better anatomy and this screen
+ * was diverging from it: same Success Driver cards, but the "why" was hidden
+ * behind a help icon in the card's corner, so the reasoning that should drive
+ * the choice was a click away from the choice. Here it works the way the plan
+ * step works — the reasoning, and the words matched from the user's own
+ * posting, sit inline under a checked option, attached to it by a short rail.
+ *
+ * The one deliberate difference is selection: the plan step takes one
+ * competency per pillar (a radiogroup), this takes any number (checkboxes),
+ * because it is adding to a Dive rather than composing the Core Four. That is
+ * also why several reasoning blocks can be open at once — each belongs to a
+ * row the user has actually chosen, so they open and close with it.
+ */
 export function CoreFourSelectionPanel({
   selected,
   targetRole,
@@ -47,173 +66,179 @@ export function CoreFourSelectionPanel({
   onConfirm,
   error,
   lockedIds = [],
-  hideSuggestionReasoning = false,
   confirmLabel = "Confirm selection",
   helperText = "Confirm when your selection matches the work you are targeting.",
-  selectionMode = "singlePerPillar",
   onCancel,
   cancelLabel = "Cancel",
 }: CoreFourSelectionPanelProps) {
   const lockedSet = useMemo(() => new Set(lockedIds), [lockedIds]);
 
-  const suggested = useMemo(
-    () => suggestCoreFour({ targetRole, jobDescription }),
-    [targetRole, jobDescription],
-  );
-
   const suggestedByPillar = useMemo(() => {
     const map = {} as Record<PillarId, CompetencyId>;
-    for (const id of suggested) {
+    for (const id of suggestCoreFour({ targetRole, jobDescription })) {
       const spec = COMPETENCY_SPECS.find((s) => s.id === id);
       if (spec) map[spec.pillar] = id;
     }
     return map;
-  }, [suggested]);
-
-  const [openReasoningPillar, setOpenReasoningPillar] = useState<PillarId | null>(
-    null,
-  );
+  }, [targetRole, jobDescription]);
 
   return (
-    <div className="mt-6 flex w-full flex-col gap-3">
+    <div className="mt-6 flex w-full flex-col gap-5">
       <div className="flex w-full flex-col gap-3">
         {SUCCESS_DRIVER_ORDER.map((pillar) => {
           const meta = SUCCESS_DRIVERS[pillar];
+          const specs = COMPETENCY_SPECS.filter((s) => s.pillar === pillar);
           const suggestedId = suggestedByPillar[pillar];
-          const suggestedSpec = COMPETENCY_SPECS.find((s) => s.id === suggestedId);
-          const reasoning =
-            !hideSuggestionReasoning && suggestedId
-              ? suggestionReasoningFor(suggestedId, { targetRole })
-              : null;
-          const reasoningOpen = openReasoningPillar === pillar;
 
           return (
-            <SuccessDriverCard
-              key={pillar}
-              driver={pillar}
-              className="min-h-[216px]"
-            >
-              <div className="flex h-6 flex-wrap items-center gap-2 pr-8">
+            <SuccessDriverCard key={pillar} driver={pillar}>
+              <div className="flex h-6 flex-wrap items-center gap-2 pr-10">
                 <SuccessDriverMark
                   driver={pillar}
                   className="text-body-sm leading-6"
                   iconClassName="size-5"
                 />
               </div>
-              <p className="pr-8 text-caption leading-[19.25px] text-text-secondary">
+              <p className="pr-10 text-caption leading-[19.25px] text-text-secondary">
                 {meta.description}
               </p>
-              <div className="flex flex-col gap-1 pr-8">
-                {COMPETENCY_SPECS.filter((spec) => spec.pillar === pillar).map(
-                  (spec) => {
-                    const isLocked = lockedSet.has(spec.id);
-                    const isOn = selected.includes(spec.id) || isLocked;
-                    const isSingle = selectionMode === "singlePerPillar";
-                    return (
-                      <label
-                        key={spec.id}
+
+              <div
+                role="group"
+                aria-label={`${meta.label} competencies`}
+                className="flex flex-col gap-1 pr-10"
+              >
+                {specs.map((spec) => {
+                  const isLocked = lockedSet.has(spec.id);
+                  const isOn = isLocked || selected.includes(spec.id);
+                  const isSuggested = spec.id === suggestedId;
+                  const signals = matchedSignalsFor(spec.id, {
+                    targetRole,
+                    jobDescription,
+                  });
+
+                  return (
+                    <div key={spec.id}>
+                      {/* One control per row, exactly as the plan step does it
+                          — the whole row is the target, so the label and the
+                          box can never disagree about what was clicked. */}
+                      <button
+                        type="button"
+                        role="checkbox"
+                        aria-checked={isOn}
+                        aria-disabled={isLocked}
+                        onClick={() => {
+                          if (!isLocked) onToggle(spec.id);
+                        }}
                         className={cn(
-                          "flex h-8 items-center gap-2.5 rounded-md px-1 py-1 text-body-sm leading-6 transition",
+                          "flex h-9 w-full items-center gap-2.5 rounded-md px-1 py-1 text-left text-body-sm leading-6 text-text-primary transition",
+                          "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                           isLocked
                             ? "cursor-not-allowed opacity-70"
-                            : "cursor-pointer hover:bg-[var(--hover-veil)]",
-                          isOn
-                            ? "font-medium text-text-primary"
-                            : "text-text-primary",
+                            : "hover:bg-[var(--hover-veil)]",
+                          isOn && "font-medium",
                         )}
                       >
-                        {isSingle ? (
-                          <span
-                            aria-hidden
+                        {/* The plan step's dot, squared off: same size, same
+                            stroke, same fill token — a checkbox rather than a
+                            radio because more than one can be on. */}
+                        <span
+                          aria-hidden
+                          className={cn(
+                            "grid size-4 shrink-0 place-items-center rounded-[5px] border-[1.5px] border-brand-400 bg-card transition",
+                            isOn && "border-primary bg-primary",
+                          )}
+                        >
+                          <Check
                             className={cn(
-                              "grid size-4 shrink-0 place-items-center rounded-full border-[1.5px] border-brand-400 bg-card",
-                              isOn && "border-primary",
+                              "size-3 text-primary-foreground transition",
+                              isOn ? "opacity-100" : "opacity-0",
                             )}
-                          >
-                            <span
-                              className={cn(
-                                "size-[9px] rounded-full bg-primary transition",
-                                isOn ? "opacity-100" : "opacity-0",
-                              )}
-                            />
-                          </span>
-                        ) : (
-                          <Checkbox
-                            checked={isOn}
-                            disabled={isLocked}
-                            onCheckedChange={() => {
-                              if (!isLocked) onToggle(spec.id);
-                            }}
-                            className="size-4 border-[1.5px] border-brand-400 bg-card shadow-none data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                            strokeWidth={3}
                           />
-                        )}
-                        <span className="min-w-0">
-                          {spec.title}
-                          {isLocked ? (
-                            <span className="ml-1.5 text-caption font-normal text-text-secondary">
-                              (already added)
-                            </span>
-                          ) : null}
                         </span>
-                      </label>
-                    );
-                  },
-                )}
-              </div>
+                        <span className="min-w-0 truncate">{spec.title}</span>
+                        {isLocked ? (
+                          <span className="shrink-0 text-caption font-normal text-text-secondary">
+                            already added
+                          </span>
+                        ) : null}
+                        {isSuggested ? (
+                          <Badge className="shrink-0">
+                            <Sparkles aria-hidden />
+                            Recommended
+                          </Badge>
+                        ) : null}
+                      </button>
 
-              {reasoning ? (
-                <div
-                  className="absolute top-4 right-4 z-20"
-                  onBlur={(e) => {
-                    if (!e.currentTarget.contains(e.relatedTarget)) {
-                      setOpenReasoningPillar((current) =>
-                        current === pillar ? null : current,
-                      );
-                    }
-                  }}
-                >
-                  <button
-                    type="button"
-                    aria-label={`Why ${suggestedSpec?.title ?? "this competency"} was suggested`}
-                    aria-expanded={reasoningOpen}
-                    onClick={() =>
-                      setOpenReasoningPillar((current) =>
-                        current === pillar ? null : pillar,
-                      )
-                    }
-                    className="grid size-8 place-items-center rounded-full text-text-secondary transition hover:bg-[var(--hover-veil-strong)] hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                  >
-                    <CircleHelp className="size-4" strokeWidth={2} aria-hidden />
-                  </button>
-                  {reasoningOpen ? (
-                    <div
-                      role="tooltip"
-                      className="absolute top-[calc(100%+8px)] right-0 w-[min(18rem,calc(100vw-3rem))] rounded-lg border border-border bg-popover p-3 text-left text-caption leading-snug text-text-primary shadow-[var(--elevation-tooltip)]"
-                    >
-                      <p className="mb-1 font-medium text-extended-cyan-green">
-                        Why we suggested {suggestedSpec?.title}
-                      </p>
-                      <p>{reasoning}</p>
+                      {/* Why this one — inline under a checked option, hanging
+                          off the box via a short rail. Always mounted so the
+                          0fr→1fr grid trick can height-tween to auto: opening
+                          one while another closes reads as a single move. */}
+                      <div
+                        aria-hidden={!isOn}
+                        className={cn(
+                          "grid transition-[grid-template-rows,opacity] duration-250 ease-out motion-reduce:transition-none",
+                          isOn
+                            ? "grid-rows-[1fr] opacity-100"
+                            : "grid-rows-[0fr] opacity-0",
+                        )}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="mt-0.5 mb-1 ml-[11px] border-l-[1.5px] border-brand-400/50 pl-[19px] pr-2">
+                            <p className="text-caption leading-snug text-text-secondary">
+                              {suggestionReasoningFor(spec.id, { targetRole })}
+                            </p>
+                            {signals.length ? (
+                              <p className="mt-1 text-overline text-text-secondary">
+                                <span className="font-medium uppercase tracking-wide">
+                                  From your posting:
+                                </span>{" "}
+                                {signals.map((signal, i) => (
+                                  <span key={signal}>
+                                    {i > 0 ? " · " : ""}
+                                    <span className="font-semibold text-extended-blue">
+                                      “{signal}”
+                                    </span>
+                                  </span>
+                                ))}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  ) : null}
-                </div>
-              ) : null}
+                  );
+                })}
+              </div>
             </SuccessDriverCard>
           );
         })}
       </div>
 
-      <p className="mt-5 text-agent-question text-text-primary">{helperText}</p>
+      <p className="text-agent-question text-text-primary">{helperText}</p>
 
-      {error ? <div className="text-body-sm text-destructive">{error}</div> : null}
+      {error ? (
+        <p role="alert" className="text-caption text-destructive">
+          {error}
+        </p>
+      ) : null}
 
-      <div className="flex flex-wrap gap-3">
+      {/* Both buttons take the same metrics from one constant — a row where
+          the secondary is shorter than the primary reads as a mistake, and
+          two separate className strings is exactly how they drift apart. */}
+      <div className="flex flex-wrap items-center gap-3">
         {onCancel ? (
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className={cn(FOOTER_BUTTON, "px-6!")}
+          >
             {cancelLabel}
           </Button>
         ) : null}
-        <Button onClick={onConfirm} className="pl-4! pr-2!">
+        <Button onClick={onConfirm} className={cn(FOOTER_BUTTON, "pl-6! pr-4!")}>
           {confirmLabel}
           <ArrowRight />
         </Button>

@@ -1419,11 +1419,14 @@ function DraftSectionCard({
           </Badge>
           <div className="flex flex-wrap items-center gap-2 print:hidden">
             {showDeepenEdit ? (
+              /* Secondary, not ghost: this is the only way to change a saved
+                 Dive, and as a ghost it was --extended-dark-cyan, which is
+                 #01161B in light — the same ink as the body text beside it,
+                 so the icon was carrying the entire affordance. */
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 size="sm"
-                className="text-extended-dark-cyan hover:text-extended-dark-cyan"
                 onClick={onDeepenEdit}
                 title="A saved Dive is read-only — this starts a new Dive with only this section unlocked"
               >
@@ -1447,9 +1450,8 @@ function DraftSectionCard({
                 ) : null}
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
-                  className="text-extended-dark-cyan hover:text-extended-dark-cyan"
                   onClick={() => {
                     if (isEditing) {
                       resetEditBar();
@@ -1540,7 +1542,7 @@ function DraftSectionCard({
                       {" "}
                       <a
                         href="/profile/billing?addon=storyboard"
-                        className="font-medium text-primary underline-offset-2 hover:underline"
+                        className="app-link font-medium"
                       >
                         Purchase Storyboard add-on
                       </a>

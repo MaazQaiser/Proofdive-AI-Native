@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PixelMedia } from "@/components/ui/pixel-media";
 import {
@@ -175,14 +176,14 @@ export function AssessmentPlanPanel({
                         </span>
                         <span className="min-w-0 truncate">{spec.title}</span>
                         {isSuggested ? (
-                          // Same pill language as the "AI draft" badge on the
-                          // spec panel (shared AI-provenance semantic), toned
-                          // down so it labels without competing with the
-                          // option text.
-                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-secondary/60 px-2 py-0.5 text-overline font-normal text-secondary-foreground/90">
-                            <Sparkles className="size-2.5" aria-hidden />
-                            AI pick
-                          </span>
+                          // "Recommended", not "AI pick": every option on this
+                          // panel is machine-derived, so "AI" does not tell the
+                          // user which one this is — being the suggested one
+                          // does.
+                          <Badge className="shrink-0">
+                            <Sparkles aria-hidden />
+                            Recommended
+                          </Badge>
                         ) : null}
                       </button>
 
