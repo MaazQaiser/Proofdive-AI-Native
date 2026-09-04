@@ -50,10 +50,13 @@ import { cn } from "@/lib/utils";
  * `max-w-[62ch]` keeps the measure readable as the block grows: a long note
  * takes another line rather than running the full column width.
  *
- * WHY IT DOESN'T OUT-RANK THE QUESTION. Rank is scale, ink and weight, and the
- * brief concedes all three: 16px against the question's 40px,
- * `--text-primary/80` (10.11:1 light / 10.63:1 dark) against the question's
- * `--heading-teal` at 10.32:1 / 13.17:1, and regular against its medium.
+ * WHY IT DOESN'T OUT-RANK THE QUESTION. Rank is scale, ink and weight, and
+ * the brief concedes all three: 16px against the question's 40px, regular
+ * against its medium, and `--text-primary/80` (10.11:1 light / 10.63:1 dark)
+ * against the question's `--extended-blue` at 5.24:1 / 11.37:1. The brief is
+ * the higher number in light — a neutral ink always will be against a
+ * saturated one — but at 2.5x the size and in the brand hue the question is
+ * unmistakably the louder of the two.
  *
  * MOTION IS ON THE SENTENCE, NOT THE BLOCK. The `key` is on the `<p>` and it is
  * the sentence text itself, so the rule never re-animates and two consecutive

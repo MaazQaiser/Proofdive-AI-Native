@@ -1380,7 +1380,7 @@ export function StoryboardAgent() {
         {addCompetencyOpen ? (
           <div className="space-y-4">
             <div className="space-y-2">
-              <h2 className="text-agent-heading text-left text-heading-teal">Add competencies</h2>
+              <h2 className="text-agent-heading text-left text-extended-blue">Add competencies</h2>
               <p className="text-left text-agent-question text-text-primary">
                 Choose additional competencies to deepen this Dive. Competencies you&apos;ve
                 already captured stay selected and can&apos;t be removed.
@@ -1405,7 +1405,7 @@ export function StoryboardAgent() {
         ) : showDiveHome ? (
           <div className="space-y-6">
             <div className="space-y-3">
-              <h2 className="text-agent-heading text-left text-heading-teal">
+              <h2 className="text-agent-heading text-left text-extended-blue">
                 {savedDives.length > 1
                   ? `Hey ${firstName}, this Dive adds more evidence to your Storyboard.`
                   : `Hey ${firstName}, your Storyboard is ready.`}
@@ -1596,7 +1596,25 @@ export function StoryboardAgent() {
               promptKey={storyPromptKey}
               prompt={storyPrompt}
               ariaLabel="Storyboard prompt"
-              headingClassName="text-agent-heading text-heading-teal"
+              /* `--extended-blue`, on the flow's own `text-agent-heading`
+                     (Inter Medium 40px) — the font is deliberately NOT the
+                     hero's Gilroy Bold.
+
+                     Why not `--primary`, the anchor teal the hero uses: at
+                     Inter Medium it measures 3.05:1 on `--app-ground`, which
+                     clears the 3:1 WCAG asks of 40px text by 0.05 and nothing
+                     more. Five shades of ground darker and it fails; drop the
+                     heading under 24px and the bar becomes 4.5 and it fails
+                     there too. It also reads visibly washed at this weight —
+                     a bold face lays down enough more ink per glyph to carry
+                     that hex, and Inter Medium does not.
+
+                     `--extended-blue` #006F8F is the same teal a few steps
+                     deeper on the brand's own extended palette: 5.24:1 light,
+                     11.37:1 dark. Comfortable at ANY size in both themes, and
+                     still unmistakably the brand rather than the near-black
+                     `--heading-teal` (#094149) it replaces. */
+              headingClassName="text-agent-heading text-extended-blue"
               subtextClassName="mt-3 text-agent-question text-text-primary"
             />
 
