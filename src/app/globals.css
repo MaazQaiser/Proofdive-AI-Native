@@ -142,6 +142,10 @@
      inherit the same canvas without setting a local bg. */
   --app-bg: var(--background);
   --app-fg: var(--foreground);
+
+  /* Wordmark ink — the flat colour the logo asset itself is drawn in.
+     The Logo paints a mask over currentColor, so this is its default. */
+  --logo-ink: #062c35;
 }
 
 .dark {
@@ -204,6 +208,9 @@
   /* KPI trend text — tuned for ≥4.5:1 contrast on dark --card (#01161B). */
   --trend-up: #4ADE80;
   --trend-down: #FCA5A5;
+
+  /* The asset colour is invisible on a dark page; a light tint replaces it. */
+  --logo-ink: #cfe3e8;
 }
 
 /* Typography & logo scale (mode-independent).
@@ -284,6 +291,7 @@
 }
 
 @theme inline {
+  --color-logo-ink: var(--logo-ink);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
