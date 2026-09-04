@@ -28,6 +28,15 @@ const GRAIN_URL =
  * shapes, the asymmetry and the brand hue all survive; only the register
  * changes, from light emerging out of a dark room to colour blooming on paper.
  *
+ * Both plates have since been hue-corrected onto the brand band. The board
+ * shipped a green-leaning teal — hue ~180, green channel above blue — while
+ * every brand token sits at 186-193 with blue above green (--primary #0E9AB5
+ * is 189.7deg). The correction moves ONLY hue: the saturation and value fields
+ * are bit-identical to the originals, so the composition, the falloff and the
+ * vignette are untouched and only the colour changed. Peaks now land on
+ * --extended-green-blue (#073E4C) in dark and --brand-800 (#B7E1E9) in light.
+ * If either plate is ever re-exported from the board, run that hue remap again.
+ *
  * The one thing added on top of the stills: a very slow drift, so the entry
  * screen breathes instead of being wallpaper. Deliberately below the threshold
  * where you would notice it moving — the brief asked for energy, not motion.

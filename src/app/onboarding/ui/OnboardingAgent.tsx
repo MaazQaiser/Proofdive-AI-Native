@@ -15,6 +15,7 @@ import {
   ArrowUpRight,
   BookOpen,
   FileText,
+  Gauge,
   GraduationCap,
   MessageCircleQuestion,
   Mic,
@@ -22,6 +23,7 @@ import {
   Sparkles,
   UserCheck,
   X,
+  type LucideIcon,
 } from "lucide-react";
 
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
@@ -29,9 +31,10 @@ import { AiOrb, type AiOrbState } from "@/components/chat/AiOrb";
 import { ChatComposer } from "@/components/chat/ChatComposer";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
 import { AiProgressStatus } from "@/components/onboarding/AiProgressStatus";
-import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
+import { WelcomeAmbience } from "@/components/onboarding/WelcomeAmbience";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 import { SelectionChip } from "@/components/ui/selection-chip";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
@@ -66,12 +69,14 @@ import { COMPETENCY_SPECS, type CompetencyId } from "@/lib/storyboardDraft";
  *   4. First session — the session contract, then straight into value.
  */
 type Stage =
+  | "welcome"
   | "bgEntry"
   | "bgParsing"
   | "bgFailed"
   | "bgConfirm"
-  | "bgExp"
   | "bgStudy"
+  | "bgExp"
+  | "bgInterests"
   | "targetRole"
   | "targetIndustry"
   | "targetJd"
@@ -79,12 +84,15 @@ type Stage =
   | "session";
 
 const STAGE_STEP: Record<Stage, number> = {
+  // `welcome` sits before the numbered steps; its header is hidden.
+  welcome: 0,
   bgEntry: 0,
   bgParsing: 0,
   bgFailed: 0,
   bgConfirm: 0,
-  bgExp: 0,
   bgStudy: 0,
+  bgExp: 0,
+  bgInterests: 0,
   targetRole: 1,
   targetIndustry: 1,
   targetJd: 1,
@@ -100,6 +108,7 @@ type Draft = {
   education: string;
   lastWorkedAt: string;
   background: string;
+  interests: string;
   jobDescription: string;
   jobDescriptionSource: "user" | "generated";
   resume: string;
@@ -140,7 +149,20 @@ const FIELD_OF_STUDY_OPTIONS = [
   "Data Science",
 ];
 
-const EXPERIENCE_OPTIONS = [
+/* Every value the rest of the flow can produce. The resume parse and the
+ * free-text shortcut ("6 years") still yield the granular ones and
+ * `applyExperienceId` maps all of them, so the union stays complete even
+ * though the QUESTION now offers only the two in STATUS_OPTIONS below. */
+type ExperienceId = "student" | "new_grad" | "1-4" | "5-9" | "10+";
+
+/* Status. The brief said "fresh graduate vs experienced professional", and
+ * this ladder answers exactly that — `applyExperienceId` folds Student and
+ * New grad into backgroundType "fresh_grad"/"under_grad" and every year band
+ * into "experienced". Offering the bands rather than the bare binary costs
+ * the user nothing (still one tap) and keeps `experienceLevel`, which
+ * `generateMockJobDescription` uses to pitch the posting — a two-way question
+ * would throw that away and leave the JD generator on its fallback. */
+const STATUS_OPTIONS = [
   { id: "student", label: "Student" },
   { id: "new_grad", label: "New grad" },
   { id: "1-4", label: "1–4 yrs" },
@@ -148,7 +170,29 @@ const EXPERIENCE_OPTIONS = [
   { id: "10+", label: "10+ yrs" },
 ] as const;
 
-type ExperienceId = (typeof EXPERIENCE_OPTIONS)[number]["id"];
+/** Suggested interests. Deliberately broad and non-professional: this is the
+ *  one question on the path that is not about work, and the chips are there to
+ *  show that, not to constrain the answer — anything can be typed instead. */
+const INTEREST_OPTIONS = [
+  "Sport",
+  "Music",
+  "Reading",
+  "Travel",
+  "Cooking",
+  "Volunteering",
+];
+
+/* The welcome screen's "How it works": the product's actual loop, in the order
+ * the user will walk it, and each icon is the one that will be sitting in the
+ * left rail from the next screen on — so the list teaches the navigation
+ * rather than decorating the hero. Bold carries the module name, because the
+ * name is the thing worth remembering; the rest is one clause of plain
+ * explanation. */
+const HOW_IT_WORKS: Array<{ icon: LucideIcon; name: string; detail: string }> = [
+  { icon: BookOpen, name: "Storyboard", detail: "real experience, turned into proof" },
+  { icon: UserCheck, name: "Mock Interview", detail: "timed, adaptive follow-ups" },
+  { icon: Gauge, name: "Report", detail: "scored, with what to improve next" },
+];
 
 const RESUME_ACCEPT = ".pdf,.doc,.docx,.txt";
 const MAX_RESUME_BYTES = 10 * 1024 * 1024;
@@ -284,19 +328,9 @@ function initialStage(
   isNewRoleMode: boolean,
 ): Stage {
   if (isNewRoleMode) return "targetRole";
-  if (isEditMode) return "bgExp";
+  if (isEditMode) return "bgStudy";
   if (profile?.targetRole?.trim()) return "session";
-  return "bgEntry";
-}
-
-/** The welcome overlay belongs to a first run only — the same condition that
- *  used to land the flow on a `welcome` stage of its own. */
-function shouldWelcome(
-  profile: RoleProfile | null,
-  isEditMode: boolean,
-  isNewRoleMode: boolean,
-): boolean {
-  return !isNewRoleMode && !isEditMode && !profile?.targetRole?.trim();
+  return "welcome";
 }
 
 function initialDraft(
@@ -311,6 +345,7 @@ function initialDraft(
     education: profile?.education ?? "",
     lastWorkedAt: profile?.lastWorkedAt ?? "",
     background: profile?.background ?? "",
+    interests: profile?.interests ?? "",
     jobDescription: isNewRoleMode ? "" : (profile?.jobDescription ?? ""),
     jobDescriptionSource: isNewRoleMode
       ? "user"
@@ -383,11 +418,6 @@ function OnboardingAgentInner({
   const [stage, setStage] = useState<Stage>(() =>
     initialStage(roleProfile, isEditMode, isNewRoleMode),
   );
-  /** The welcome moment. Not a stage: the page under it is already step 1, so
-   *  dismissing it needs no transition and Back from step 1 reopens it. */
-  const [welcomeOpen, setWelcomeOpen] = useState(() =>
-    shouldWelcome(roleProfile, isEditMode, isNewRoleMode),
-  );
   const [draft, setDraft] = useState<Draft>(() =>
     initialDraft(roleProfile, isNewRoleMode),
   );
@@ -416,10 +446,14 @@ function OnboardingAgentInner({
   const [manualExp, setManualExp] = useState<ExperienceId | "">(
     isEditMode ? experienceIdFromProfile(roleProfile) : "",
   );
-  /** The background answer: field of study for students / new grads, most
-   * recent employer for experienced users. */
+  /** Education — asked of everyone on the no-resume path. (The resume-parse
+   * path still fills it, or `lastWorkedAt`, from what it read.) */
   const [manualStudy, setManualStudy] = useState(
     isEditMode ? (roleProfile?.education ?? roleProfile?.lastWorkedAt ?? "") : "",
+  );
+  /** Hobbies / personal interests — question 3 on the no-resume path. */
+  const [manualInterests, setManualInterests] = useState(
+    isEditMode ? (roleProfile?.interests ?? "") : "",
   );
   const [manualIndustry, setManualIndustry] = useState(
     isEditMode ? (roleProfile?.industryVertical ?? "") : "",
@@ -573,8 +607,8 @@ function OnboardingAgentInner({
     study: string,
     industry: string,
     skipped: boolean,
+    interests = "",
   ) {
-    const studying = expId === "student" || expId === "new_grad";
     const detail = study.trim();
     // No experience answer (free text that never mentioned one) leaves the
     // draft's own values alone rather than guessing a seniority.
@@ -584,9 +618,12 @@ function OnboardingAgentInner({
       // The role belongs to the Target step; anything parsed out of the
       // free-text shortcut only pre-fills it.
       targetRole: next.targetRole.trim() || manualRole.trim(),
-      education: studying ? detail : next.education,
-      lastWorkedAt: studying ? next.lastWorkedAt : detail,
+      // Education is now asked of everyone, so it is no longer the
+      // studying-path-only branch it was; `lastWorkedAt` is not collected on
+      // this path at all any more (the resume parse still fills it).
+      education: detail || next.education,
       industryVertical: skipped ? "" : industry,
+      interests: interests.trim() || next.interests,
       background: [detail, skipped ? "" : industry].filter(Boolean).join(" · "),
     };
     setDraft(next);
@@ -628,14 +665,31 @@ function OnboardingAgentInner({
     finishManual(expId as ExperienceId, study, industry, skipped);
   }
 
-  function chooseExperience(expId: ExperienceId) {
-    setManualExp(expId);
-    setStage("bgStudy");
-  }
-
+  /* The no-resume questionnaire, in the order the client specified:
+   *   1. education   (bgStudy)
+   *   2. status      (bgExp)
+   *   3. interests   (bgInterests)
+   * Education leads, which is why it is asked of everyone rather than
+   * branching on status the way it used to — at question 1 the status is not
+   * known yet, and a question that changes shape based on an answer the user
+   * has not given is the thing to avoid, not a feature. */
   function chooseStudy(value: string) {
     setManualStudy(value);
-    finishManual(manualExp as ExperienceId, value, manualIndustry, industrySkipped);
+    setDraft((d) => ({ ...d, education: value.trim() }));
+    setStage("bgExp");
+  }
+
+  function chooseExperience(expId: ExperienceId) {
+    setManualExp(expId);
+    setDraft((d) => applyExperienceId(d, expId));
+    setStage("bgInterests");
+  }
+
+  function chooseInterests(value: string) {
+    const detail = value.trim();
+    setManualInterests(detail);
+    setDraft((d) => ({ ...d, interests: detail }));
+    finishManual(manualExp as ExperienceId, manualStudy, manualIndustry, industrySkipped, detail);
   }
 
   /** Industry now belongs to the target step — it describes the job being
@@ -786,6 +840,7 @@ function OnboardingAgentInner({
       education: nextDraft.education.trim() || undefined,
       lastWorkedAt: nextDraft.lastWorkedAt.trim() || undefined,
       background: nextDraft.background.trim() || undefined,
+      interests: nextDraft.interests.trim() || undefined,
       jobDescription: nextDraft.jobDescription.trim() || undefined,
       jobDescriptionSource: nextDraft.jobDescription.trim()
         ? nextDraft.jobDescriptionSource
@@ -825,13 +880,15 @@ function OnboardingAgentInner({
         // Nothing precedes step 1 as a stage any more; Back reopens the
         // welcome overlay (wired at the progress header).
         return null;
-      case "bgExp":
-        return isEditMode ? null : "bgEntry";
       case "bgStudy":
+        return isEditMode ? null : "bgEntry";
+      case "bgExp":
+        return "bgStudy";
+      case "bgInterests":
         return "bgExp";
       case "targetRole":
         if (isNewRoleMode) return null;
-        return parsed ? "bgConfirm" : "bgStudy";
+        return parsed ? "bgConfirm" : "bgInterests";
       case "targetIndustry":
         return "targetRole";
       case "targetJd":
@@ -867,11 +924,14 @@ function OnboardingAgentInner({
       case "bgFailed":
         applyManualText(cleaned, true);
         return;
+      case "bgStudy":
+        chooseStudy(cleaned);
+        return;
       case "bgExp":
         applyManualText(cleaned);
         return;
-      case "bgStudy":
-        chooseStudy(cleaned);
+      case "bgInterests":
+        chooseInterests(cleaned);
         return;
       case "bgConfirm":
         applyCorrection(cleaned);
@@ -917,10 +977,6 @@ function OnboardingAgentInner({
     startParsing(file);
   }
 
-  /** Students / new grads answer with a field of study; everyone else with
-   * where they have been working. Drives the background question's copy. */
-  const studyingPath = manualExp === "student" || manualExp === "new_grad";
-
   const composerPlaceholder: string =
     stage === "bgEntry"
       ? 'Or just tell me: "senior UX designer, 6 years, fintech"…'
@@ -930,12 +986,12 @@ function OnboardingAgentInner({
           ? "Or describe your background in a sentence…"
           : stage === "bgConfirm"
             ? 'Anything to correct? Just type it: "actually 7 years"…'
-            : stage === "bgExp"
-              ? 'Or tell me: "6 years"…'
-              : stage === "bgStudy"
-                ? studyingPath
-                  ? 'Or type your field: "Computer Science"…'
-                  : 'Type your company: "Acme"…'
+            : stage === "bgStudy"
+              ? 'Or type your field: "Computer Science"…'
+              : stage === "bgExp"
+                ? 'Or tell me: "6 years"…'
+                : stage === "bgInterests"
+                  ? 'Or type your own: "long-distance running, chess"…'
                 : stage === "targetRole"
                   ? 'Or type your target role: "senior UX designer"…'
                   : stage === "targetIndustry"
@@ -959,12 +1015,12 @@ function OnboardingAgentInner({
             ? "I couldn't read that file.\n\nScanned or image-based resumes are hard to read. A text-based PDF or DOCX works best, or skip this step."
             : stage === "bgConfirm"
             ? `Here's what I read. Does this look correct?\n\n${confirmNote ?? "Confirm it and the questionnaire is done."}`
-            : stage === "bgExp"
-              ? "How far along are you?\n\nThis sets the level your session is pitched at, so select the one that fits."
-              : stage === "bgStudy"
-                ? studyingPath
-                  ? "What did you study?\n\nYour field gives me context for the examples I ask about, so select one or type your own below."
-                  : "Where have you been working?\n\nYour most recent company gives me context for the examples I ask about. Type it below."
+            : stage === "bgStudy"
+              ? "What did you study?\n\nYour field gives me context for the examples I ask about, so select one or type your own below."
+              : stage === "bgExp"
+                ? "How far along are you?\n\nThis sets the level your session is pitched at, so select the one that fits."
+                : stage === "bgInterests"
+                  ? "What do you do outside work?\n\nInterests are where some of the strongest stories come from — teams you have run, things you have organised, skills you taught yourself. Select any or type your own."
                 : stage === "targetRole"
                   ? "What are you preparing for?\n\nYour sessions are built and scored against this target, so select a role or type your own below."
                   : stage === "targetIndustry"
@@ -983,17 +1039,18 @@ function OnboardingAgentInner({
 
   /* Any flag that swaps the prompt text WITHOUT changing `stage` has to be in
    * this key, or TypingText keeps its old typed state and the two prompts read
-   * as one merged sentence. `welcomeOpen` also stops step 1 typing itself out
-   * behind the modal, so the user dismisses onto a question that then speaks. */
-  const promptKey = `${stage}-${stage === "targetJd" ? (generatedJdDraft ? "ready" : isGeneratingJd ? "gen" : "ask") : ""}-${confirmNote ?? ""}-${welcomeOpen ? "w" : ""}-${planPhase !== null ? "p" : ""}`;
+   * as one merged sentence. */
+  const promptKey = `${stage}-${stage === "targetJd" ? (generatedJdDraft ? "ready" : isGeneratingJd ? "gen" : "ask") : ""}-${confirmNote ?? ""}-${planPhase !== null ? "p" : ""}`;
 
   /** Sub-question position within the current step, shown above the heading
    * so the user always knows where they are inside a multi-question step. */
   const microStep: { index: number; total: number } | null =
-    stage === "bgExp"
-      ? { index: 0, total: 2 }
-      : stage === "bgStudy"
-        ? { index: 1, total: 2 }
+    stage === "bgStudy"
+      ? { index: 0, total: 3 }
+      : stage === "bgExp"
+        ? { index: 1, total: 3 }
+        : stage === "bgInterests"
+          ? { index: 2, total: 3 }
         : stage === "targetRole"
           ? { index: 0, total: 3 }
           : stage === "targetIndustry"
@@ -1072,6 +1129,12 @@ function OnboardingAgentInner({
           : undefined
       }
     >
+      {/* The welcome moment's ambient AI light — the entry screen is the only
+          stage that carries it, because it is the only one with no input of
+          its own to answer. From step 1 onward the AI's presence is the chat
+          bar's own glow instead, so there are never two of them at once. */}
+      {stage === "welcome" ? <WelcomeAmbience /> : null}
+
       {/* App-level chrome. The theme switch belongs HERE rather than beside
           the flow's own controls: "Back" and "Step 2 of 4" describe progress
           through the questions, while the theme is a property of the app the
@@ -1081,13 +1144,31 @@ function OnboardingAgentInner({
           present on every stage including the welcome screen (where only the
           progress row is hidden). Far right also puts it where users already
           reach for account-level controls. */}
-      <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-border bg-background/75 px-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-        <Link
-          href="/"
-          className="flex h-full shrink-0 items-center border-r border-border pr-6"
-        >
-          <Logo size="xxs" />
-        </Link>
+      <header
+        className={cn(
+          "relative z-30 flex h-14 w-full shrink-0 items-center justify-between px-6",
+          /* On the welcome stage the mark is the hero below, so the header
+             carries nothing but the switch — and the rule and glass would
+             only draw a line across the ambience for no content. From step 1
+             the chrome returns and the mark settles into its corner. */
+          stage === "welcome"
+            ? "bg-transparent"
+            : "border-b border-border bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60",
+        )}
+      >
+        {stage === "welcome" ? null : (
+          <Link
+            href="/"
+            className="flex h-full shrink-0 items-center border-r border-border pr-6"
+          >
+            {/* Same `--primary` the welcome hero's mark carries, so the
+                wordmark does not change colour when the flow moves off the
+                welcome screen. The default `--logo-ink` (#062C35) is a brand
+                token too, but it is the deepest one on the ladder and reads
+                as near-black rather than as the brand. */}
+            <Logo size="xxs" className="text-primary" />
+          </Link>
+        )}
         <ThemeToggle className="-mr-1.5 ml-auto" />
       </header>
 
@@ -1123,17 +1204,29 @@ function OnboardingAgentInner({
           canvas keeps painting #0a1013, exactly as before.
           Full width and flex-1 so the colour fills the whole area rather than
           the 800px reading column, and a separate element so the header keeps
-          its own translucent surface untouched. */}
-      <div className="relative flex min-h-0 w-full flex-1 flex-col bg-[#F5F5F3] dark:bg-transparent">
+          its own translucent surface untouched. On the welcome stage it stands
+          down entirely: there the ambience IS the ground, and a flat fill over
+          it would paint the light out. */}
+      <div
+        className={cn(
+          "relative flex min-h-0 w-full flex-1 flex-col",
+          stage === "welcome" ? "bg-transparent" : "bg-[#F5F5F3] dark:bg-transparent",
+        )}
+      >
         <div className="relative z-[2] mx-auto flex min-h-0 w-[800px] max-w-full flex-1 flex-col px-6">
-          <div className="shrink-0 bg-transparent pt-4">
+          <div
+            className={cn(
+              "shrink-0 bg-transparent pt-4",
+              stage === "welcome" && "invisible",
+            )}
+          >
             <OnboardingProgressHeader
               currentIndex={STAGE_STEP[stage]}
               onBack={
                 backTarget
                   ? goBack
                   : stage === "bgEntry"
-                    ? () => setWelcomeOpen(true)
+                    ? () => setStage("welcome")
                     : undefined
               }
             />
@@ -1147,30 +1240,188 @@ function OnboardingAgentInner({
                     Question {microStep.index + 1} of {microStep.total}
                   </div>
                 ) : null}
-                {/* On the plan step the guide sits beside the heading —
-                    offered where the decision starts, without a full-width
-                    banner above the cards. */}
-                <div
-                  className={cn(
-                    stage === "plan" &&
-                      "flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-10",
-                  )}
-                >
-                  <div className={cn(stage === "plan" && "min-w-0 flex-1")}>
-                    <AgentPrompt
-                      key={promptKey}
-                      promptKey={promptKey}
-                      prompt={prompt}
-                      ariaLabel="Onboarding prompt"
-                      headingClassName="text-agent-heading text-heading-teal"
-                      subtextClassName="mt-3 text-agent-question text-text-primary"
-                      mode="word"
-                    />
+                {stage === "welcome" ? (
+                  /* The welcome stage is composed here rather than through
+                     AgentPrompt, because it is the only stage that asks
+                     nothing. Typing is the agent's speaking voice — from step 1
+                     on, every prompt is a question, so the effect earns itself.
+                     Spending it on a fixed sentence nobody was asked is the
+                     exact texture we are trying to get rid of, and AgentPrompt
+                     can only carry a heading/subtext pair anyway, not a mark, a
+                     display line and a control. One wrapper, one entrance: the
+                     composition arrives as a single object, using the same rise
+                     the landing hero uses (globals.css --animate-landing-rise),
+                     so the screen behind sign-in arrives the way the screen in
+                     front of it did. */
+                  <div className="motion-safe:animate-landing-rise flex w-full flex-col items-start">
+                    {/* `sm` (48px) is sized against the headline, not chosen
+                        off the ladder. The asset is an icon (89.6% of the box)
+                        plus the wordmark, and the icon is the densest ink here
+                        — at 48px it renders 43px against the headline's 33.6px
+                        caps, so the mark reads as a signature above the line
+                        rather than competing with it. */}
+                    {/* The default `--logo-ink` (#062C35) is a brand token,
+                        but it is the deepest one on the ladder — at hero size
+                        over the ambience it just reads black. `--primary` is
+                        the brand's anchor teal, so the mark reads as the brand
+                        rather than as dark type, and against the deep
+                        --heading-teal line below it the bright mark and the
+                        dark headline each keep their own job. The wordmark is
+                        painted as a mask over currentColor, so a text class is
+                        the whole change. */}
+                    <Logo size="sm" className="max-w-full text-primary" />
+
+                    {/* `--primary`, matching the logo above it exactly — one
+                        brand ink for the mark and the message.
+
+                        Known and accepted: against this plate --primary
+                        measures 2.37:1, under the 3:1 WCAG asks of a 48px bold
+                        line, so the headline sits lighter than the paragraph
+                        beneath it. --extended-blue (#006F8F) is the same teal a
+                        few steps deeper and clears it at 4.07:1 — swap the two
+                        classes here and on the Logo above if that call is ever
+                        revisited.
+
+                        One ink, not the landing's two-tone: measured on this
+                        plate the second tone falls to 1.16:1 against the first
+                        in dark, and a flat two-colour split is the non-gradient
+                        version of the gradient-headline tic. Authority comes
+                        from the family instead — Gilroy Bold against the flow's
+                        Inter Medium — which is also why 48px can outrank step
+                        1's 40px without the jump reading as an accident.
+                        6vw (not the landing's 4.2vw) because this column is
+                        fixed at 800px rather than fluid, so the headline pins
+                        at 48px exactly where the column stops being fixed and
+                        scales only below it. Broken by hand on the full stop so
+                        the line break is a syntactic hinge, not wherever 752px
+                        ran out. `cap-baseline` trims Gilroy's ~6px of shoulder
+                        and ~14px of descent space so the authored 32/20 gaps
+                        are the gaps the eye actually sees; `-ml-[0.065em]`
+                        cancels the 'E's left sidebearing, since the logo's
+                        first tile has none. */}
+                    <h1 className="mt-8 -ml-[0.065em] w-full whitespace-pre-line cap-baseline font-gilroy text-[clamp(2rem,6vw,3rem)] font-bold leading-[1.12] tracking-[-0.04em] text-heading-teal">
+                      {"Every answer is scored.\nSee exactly what to improve."}
+                    </h1>
+
+                    {/* 28rem, the landing's own measure: ~62 characters,
+                        against the 752px column the old paragraph ran to.
+                        Demoting this from 28px to 20px is the change that
+                        creates a second read where there was none. */}
+                    <p className="mt-5 max-w-[30rem] text-body-lg leading-7 text-text-primary/80">
+                      You bring the real experience. The four Success{"\u00A0"}Drivers
+                      are the standard your answers are held to.
+                    </p>
+
+                    {/* "How it works" sits BEFORE the CTA because it answers a
+                        pre-commitment question — what am I about to do — and
+                        that reassurance is worth nothing after the click.
+
+                        Held to the paragraph's own 30rem measure rather than
+                        run to the 752px column: the block above it tapers
+                        (headline ~640px, paragraph 480px, CTA row ~380px), and
+                        a full-width list at the bottom would invert that and
+                        leave the composition bottom-heavy. At 30rem every row
+                        still sets on one line, so the three read as a column of
+                        three, not a paragraph of three.
+
+                        The chips are the modal's, minus its solid `bg-muted`
+                        fill: on a card that fill was correct, but here they sit
+                        on the ambience, and an opaque disc punches a hole in
+                        the light. A hairline ring over a transparent centre
+                        lets the plate through, so they read as lit by the same
+                        source as everything else. Ink stays neutral — the
+                        headline and the CTA are already carrying the teal, and
+                        a third saturated element would flatten the hierarchy
+                        the CTA depends on. */}
+                    <div className="mt-10 w-full max-w-[30rem]">
+                      {/* Not text-secondary: over the light plate that ink
+                          measures 3.20:1, and a 12px label needs 4.5. At 70%
+                          the primary ink gives 5.98 light / 8.66 dark and still
+                          reads as a label rather than a heading. */}
+                      <p className="text-overline font-medium uppercase tracking-wide text-text-primary/70">
+                        How it works
+                      </p>
+                      <ul className="mt-4 flex flex-col gap-3.5">
+                        {HOW_IT_WORKS.map(({ icon: Icon, name, detail }) => (
+                          <li key={name} className="flex items-center gap-3">
+                            <span
+                              aria-hidden
+                              className="grid size-9 shrink-0 place-items-center rounded-full border border-primary/25 bg-primary/[0.08] text-heading-teal"
+                            >
+                              <Icon className="size-[18px]" strokeWidth={1.75} />
+                            </span>
+                            <span className="min-w-0 text-body-sm leading-6 text-text-primary/80">
+                              <span className="font-semibold text-text-primary">
+                                {name}
+                              </span>{" "}
+                              — {detail}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* The reassurance belongs beside the control it reassures
+                        about, not stacked above it as a third rank of type. */}
+                    <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 motion-safe:animate-landing-cta">
+                      <Button
+                        type="button"
+                        onClick={() => setStage("bgEntry")}
+                        /* A brand-tinted lift, welcome screen only. The CTA
+                           sits on the ambience plate rather than on a flat
+                           page, and in light mode its fill measures 3.04:1
+                           against that wash — a pass, but with no margin. The
+                           shadow makes the button's edge independent of
+                           whatever the plate is doing behind it, and reads as
+                           elevation rather than an added border. */
+                        className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium shadow-[0_4px_16px_-4px_rgba(14,154,181,0.55)] dark:shadow-[0_6px_20px_-6px_rgba(0,0,0,0.75)]"
+                      >
+                        Let&apos;s get started
+                        <ArrowRight />
+                      </Button>
+                      <span className="text-caption text-text-primary/80">
+                        Setting up takes about a minute.
+                      </span>
+                    </div>
                   </div>
-                  {stage === "plan" ? (
-                    <SuccessDriversGuideCard className="w-full max-w-[280px] shrink-0 sm:mt-1 sm:w-[232px] min-[1360px]:hidden" />
-                  ) : null}
-                </div>
+                ) : (
+                  /* On the plan step the guide sits beside the heading —
+                     offered where the decision starts, without a full-width
+                     banner above the cards. */
+                  <div
+                    className={cn(
+                      stage === "plan" &&
+                        "flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-10",
+                    )}
+                  >
+                    <div className={cn(stage === "plan" && "min-w-0 flex-1")}>
+                      <AgentPrompt
+                        key={promptKey}
+                        promptKey={promptKey}
+                        prompt={prompt}
+                        ariaLabel="Onboarding prompt"
+                        /* `--extended-blue`, the same ink the storyboard's question
+                         headings carry — one colour on every 40px agent
+                         heading in the product.
+
+                         Not `--primary`, the brighter anchor the welcome hero
+                         and the logo use: at this weight it measures 3.05:1 on
+                         `--app-ground`, clearing the 3:1 the size needs by
+                         0.05 and nothing more, and it reads washed on Inter
+                         Medium — the hero can carry it only because Gilroy
+                         Bold lays down far more ink per glyph.
+                         `--extended-blue` is the same teal a few steps deeper:
+                         5.24:1 light, 11.37:1 dark. */
+                      headingClassName="text-agent-heading text-extended-blue"
+                        subtextClassName="mt-3 text-agent-question text-text-primary"
+                        mode="word"
+                      />
+                    </div>
+                    {stage === "plan" ? (
+                      <SuccessDriversGuideCard className="w-full max-w-[280px] shrink-0 sm:mt-1 sm:w-[232px] min-[1360px]:hidden" />
+                    ) : null}
+                  </div>
+                )}
 
                 {/* No resume, no substitute questionnaire: the only alternative
                     is to skip, using the same chip control the flow's other
@@ -1181,8 +1432,13 @@ function OnboardingAgentInner({
                       No resume?
                     </span>
                     <div className="flex flex-wrap gap-2">
-                      <SelectionChip onClick={() => setStage("targetRole")}>
-                        Skip
+                      {/* Not "Skip" any more: this path no longer skips
+                          anything, it swaps one long input for three short
+                          questions. Saying so up front is what keeps the
+                          choice honest — a chip labelled "Skip" that opens a
+                          questionnaire is a trapdoor. */}
+                      <SelectionChip onClick={() => setStage("bgStudy")}>
+                        Answer 3 quick questions instead
                       </SelectionChip>
                     </div>
                   </div>
@@ -1231,51 +1487,59 @@ function OnboardingAgentInner({
                       setManualStudy(parsed.employer);
                       setManualIndustry(parsed.industry);
                       setIndustrySkipped(false);
-                      setStage("bgExp");
+                      setStage("bgStudy");
                     }}
+                  />
+                ) : null}
+
+                {/* The no-resume questionnaire — one question per screen, in
+                    the client's order: education, status, interests. Each is
+                    the same `ManualQuestion` chrome the rest of the flow uses,
+                    so the transition from the upload screen into the questions
+                    is a change of question, not a change of interface. Every
+                    one accepts a typed answer too (see `handleSend`), so the
+                    chips suggest without constraining. */}
+
+                {stage === "bgStudy" ? (
+                  <ManualQuestion
+                    chipsLabel="Popular fields"
+                    chips={studyChips}
+                    selectedLabel={manualStudy}
+                    onPick={chooseStudy}
+                    trailing={
+                      <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
+                        Type any field below ↓
+                      </span>
+                    }
                   />
                 ) : null}
 
                 {stage === "bgExp" ? (
                   <ManualQuestion
                     chipsLabel="Select one"
-                    chips={EXPERIENCE_OPTIONS.map((o) => o.label)}
+                    chips={STATUS_OPTIONS.map((o) => o.label)}
                     selectedLabel={
-                      EXPERIENCE_OPTIONS.find((o) => o.id === manualExp)?.label ?? ""
+                      STATUS_OPTIONS.find((o) => o.id === manualExp)?.label ?? ""
                     }
                     onPick={(label) => {
-                      const opt = EXPERIENCE_OPTIONS.find((o) => o.label === label);
+                      const opt = STATUS_OPTIONS.find((o) => o.label === label);
                       if (opt) chooseExperience(opt.id);
                     }}
                   />
                 ) : null}
 
-                {stage === "bgStudy" ? (
-                  studyingPath ? (
-                    <ManualQuestion
-                      chipsLabel="Popular fields"
-                      chips={studyChips}
-                      selectedLabel={manualStudy}
-                      onPick={chooseStudy}
-                      trailing={
-                        <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
-                          Type any field below ↓
-                        </span>
-                      }
-                    />
-                  ) : (
-                    <ManualQuestion
-                      chipsLabel="Type your most recent company"
-                      chips={[]}
-                      selectedLabel={manualStudy}
-                      onPick={chooseStudy}
-                      trailing={
-                        <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
-                          Type it below ↓
-                        </span>
-                      }
-                    />
-                  )
+                {stage === "bgInterests" ? (
+                  <ManualQuestion
+                    chipsLabel="Pick any, or type your own"
+                    chips={INTEREST_OPTIONS}
+                    selectedLabel={manualInterests}
+                    onPick={chooseInterests}
+                    trailing={
+                      <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
+                        Type anything below ↓
+                      </span>
+                    }
+                  />
                 ) : null}
 
                 {stage === "targetIndustry" ? (
@@ -1315,32 +1579,28 @@ function OnboardingAgentInner({
                 {stage === "targetJd" ? (
                   <div className="mt-6 flex w-full flex-col gap-6">
                     {!isGeneratingJd && !generatedJdDraft ? (
-                      <div className="flex flex-col gap-3">
-                        <div className="flex flex-wrap items-center gap-3">
+                      /* Same shape as step 1's "No resume?" — a short label
+                         above, the escape hatch as a chip below. Both screens
+                         ask for one big input and both offer a way past it, so
+                         the offer should look the same in both places; it used
+                         to be a prose link here and a chip there, which made
+                         two identical decisions read as two different kinds of
+                         thing. */
+                      <div className="mt-2 flex flex-col gap-2">
+                        <span className="text-body-sm font-semibold text-text-secondary">
+                          Don&apos;t have the posting?
+                        </span>
+                        <div className="flex flex-wrap gap-2">
                           {draft.jobDescription.trim() ? (
                             <SelectionChip onClick={() => goToPlan(draft)}>
                               Keep the posting on file
                               <ArrowRight className="size-4" aria-hidden />
                             </SelectionChip>
                           ) : null}
-                          {/* The question is context; only the action is the
-                              link. Underlining the whole sentence made the
-                              affordance vaguer, not clearer — the user has to
-                              read to the end to find out what is clickable. */}
-                          <p className="text-body-sm text-text-secondary">
-                            Don&apos;t have the posting?{" "}
-                            <button
-                              type="button"
-                              onClick={handleGenerateJd}
-                              className="app-link inline-flex items-center gap-1 font-medium"
-                            >
-                              Draft one from your background
-                              <ArrowRight
-                                className="size-[0.8em] shrink-0"
-                                aria-hidden
-                              />
-                            </button>
-                          </p>
+                          <SelectionChip onClick={handleGenerateJd}>
+                            Draft one from your background
+                            <ArrowRight className="size-4" aria-hidden />
+                          </SelectionChip>
                         </div>
                       </div>
                     ) : null}
@@ -1423,8 +1683,12 @@ function OnboardingAgentInner({
             </div>
           </div>
 
+          {/* The welcome moment is a single CTA — no input to type into. */}
           <div
-            className="fixed bottom-0 left-0 right-0 z-40 w-full"
+            className={cn(
+              "fixed bottom-0 left-0 right-0 z-40 w-full",
+              stage === "welcome" && "hidden",
+            )}
             // These capture handlers only feed the ambient orb (focus / has-text).
             // They MUST be deferred out of the event: a synchronous re-render
             // during a keystroke re-commits the controlled input's `value` while
@@ -1535,12 +1799,6 @@ function OnboardingAgentInner({
           </div>
         </div>
       </div>
-
-      <WelcomeDialog
-        open={welcomeOpen}
-        onOpenChange={setWelcomeOpen}
-        onStart={() => setWelcomeOpen(false)}
-      />
     </div>
   );
 }
