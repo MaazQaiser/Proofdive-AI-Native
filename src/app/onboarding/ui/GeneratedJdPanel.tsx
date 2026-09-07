@@ -10,9 +10,9 @@ import {
   SquarePen,
 } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { SelectionChip } from "@/components/ui/selection-chip";
 import { Textarea } from "@/components/ui/textarea";
 import { jdHtmlRootToMarkdown, jdMarkdownToHtml } from "@/lib/jdMarkdown";
 import { cn } from "@/lib/utils";
@@ -151,9 +151,7 @@ export function GeneratedJdPanel({
               <h2 className="text-h5 font-medium text-heading-teal">
                 Your assessment spec
               </h2>
-              <span className="inline-flex shrink-0 items-center rounded-full bg-secondary px-2 py-0.5 text-overline font-medium text-secondary-foreground">
-                AI draft{variant > 0 ? ` · v${variant + 1}` : ""}
-              </span>
+              <Badge>Draft{variant > 0 ? ` · v${variant + 1}` : ""}</Badge>
             </div>
             <p className="mt-0.5 text-caption text-text-secondary">
               Your interview questions and scoring come from this. Review it
@@ -171,12 +169,7 @@ export function GeneratedJdPanel({
               Built from
             </span>
             {targetingChips.map((chip) => (
-              <span
-                key={chip}
-                className="rounded-full bg-brand-1000 px-2.5 py-1 text-overline font-medium text-extended-blue"
-              >
-                {chip}
-              </span>
+              <Badge key={chip}>{chip}</Badge>
             ))}
           </div>
         ) : null}
@@ -208,27 +201,38 @@ export function GeneratedJdPanel({
           </div>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border/70 bg-brand-1000/25 px-4 py-2.5">
             <div className="flex shrink-0 items-center gap-1.5">
-              <SelectionChip
-                selected={isEditing}
+              {/* Document-level actions use the app's secondary button, not
+                  the selection chip: a chip is a choice among options, these
+                  are commands. Edit is a toggle, so it takes the primary fill
+                  while it is on — same state the chip expressed with
+                  `selected`. */}
+              <Button
+                type="button"
+                variant={isEditing ? "default" : "secondary"}
                 onClick={handleEditToggle}
                 aria-pressed={isEditing}
               >
                 {isEditing ? (
                   <>
-                    <Check className="size-4" />
+                    <Check />
                     Done
                   </>
                 ) : (
                   <>
-                    <SquarePen className="size-4" />
+                    <SquarePen />
                     Edit
                   </>
                 )}
-              </SelectionChip>
-              <SelectionChip onClick={onRegenerate} disabled={isEditing}>
-                <RefreshCcw className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onRegenerate}
+                disabled={isEditing}
+              >
+                <RefreshCcw />
                 Regenerate
-              </SelectionChip>
+              </Button>
             </div>
             <p
               aria-live="polite"
@@ -288,8 +292,14 @@ export function GeneratedJdPanel({
               onClick={() => setShowPaste(true)}
               className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-4 text-body-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             >
+              {/* Short on purpose: "the … instead" was carried by the
+                  neighbouring "Use this draft" and by the helper line right
+                  below, so the label only has to name the action and the one
+                  thing that distinguishes it — that this one is REAL. Kept as
+                  "posting" rather than "job description": the flow says
+                  posting on every other screen. */}
               <ClipboardPaste className="size-4 text-primary" aria-hidden />
-              Paste the real posting instead
+              Paste real posting
             </button>
           </div>
         )}

@@ -14,8 +14,8 @@ import {
   ArrowRight,
   ArrowUpRight,
   BookOpen,
-  Check,
   FileText,
+  Gauge,
   GraduationCap,
   MessageCircleQuestion,
   Mic,
@@ -23,15 +23,18 @@ import {
   Sparkles,
   UserCheck,
   X,
+  type LucideIcon,
 } from "lucide-react";
 
 import { AgentPrompt } from "@/components/agents/AgentPrompt";
 import { AiOrb, type AiOrbState } from "@/components/chat/AiOrb";
 import { ChatComposer } from "@/components/chat/ChatComposer";
-import { Button } from "@/components/ui/button";
 import { FaqAssistantThread } from "@/components/faq/FaqAssistantThread";
+import { AiProgressStatus } from "@/components/onboarding/AiProgressStatus";
 import { WelcomeAmbience } from "@/components/onboarding/WelcomeAmbience";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 import { SelectionChip } from "@/components/ui/selection-chip";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
@@ -71,8 +74,9 @@ type Stage =
   | "bgParsing"
   | "bgFailed"
   | "bgConfirm"
-  | "bgExp"
   | "bgStudy"
+  | "bgExp"
+  | "bgInterests"
   | "targetRole"
   | "targetIndustry"
   | "targetJd"
@@ -86,8 +90,9 @@ const STAGE_STEP: Record<Stage, number> = {
   bgParsing: 0,
   bgFailed: 0,
   bgConfirm: 0,
-  bgExp: 0,
   bgStudy: 0,
+  bgExp: 0,
+  bgInterests: 0,
   targetRole: 1,
   targetIndustry: 1,
   targetJd: 1,
@@ -103,6 +108,7 @@ type Draft = {
   education: string;
   lastWorkedAt: string;
   background: string;
+  interests: string;
   jobDescription: string;
   jobDescriptionSource: "user" | "generated";
   resume: string;
@@ -121,15 +127,91 @@ type ParsedResume = {
   skills: string[];
 };
 
-const SUGGESTED_ROLES = [
-  "UX Designer",
-  "Product Manager",
-  "Software Engineer",
-  "Data Analyst",
-  "Project Manager",
-];
+/* Roles by seniority band. Forty options is far too many to show flat, so the
+ * question renders one band at a time (`ROLE_BANDS` below drives the group
+ * picker): the user says how senior they are, then reads ten roles instead of
+ * scanning forty. Typing still bypasses the whole thing. */
+const ROLE_BANDS = [
+  {
+    id: "internship",
+    label: "Internships",
+    roles: [
+      "HR Intern",
+      "Investment Banking Intern",
+      "Marketing Intern",
+      "Sales Intern",
+      "UX Design Intern",
+      "Software Engineering Intern",
+      "Data Analyst Intern",
+      "Product Management Intern",
+      "Finance Intern",
+      "Operations Intern",
+    ],
+  },
+  {
+    id: "entry",
+    label: "Entry-Level",
+    roles: [
+      "Talent Acquisition Specialist",
+      "UX Design Specialist",
+      "Business Analyst",
+      "Data Analyst",
+      "Software Engineer",
+      "Marketing Coordinator",
+      "Sales Development Representative",
+      "Financial Analyst",
+      "Customer Success Associate",
+      "Operations Analyst",
+    ],
+  },
+  {
+    id: "mid",
+    label: "Mid-Management",
+    roles: [
+      "HR Manager",
+      "UX Design Manager",
+      "Product Manager",
+      "Marketing Manager",
+      "Sales Manager",
+      "Finance Manager",
+      "Operations Manager",
+      "Customer Success Manager",
+      "Strategy Manager",
+      "Transformation Manager",
+    ],
+  },
+  {
+    id: "senior",
+    label: "Senior Management",
+    roles: [
+      "HR Director",
+      "Design Director",
+      "Product Director",
+      "Marketing Director",
+      "Sales Director",
+      "Finance Director",
+      "Operations Director",
+      "Customer Success Director",
+      "Strategy Director",
+      "Transformation Director",
+    ],
+  },
+] as const;
 
-const INDUSTRY_OPTIONS = ["Technology", "Finance", "Healthcare", "Retail"];
+type RoleBandId = (typeof ROLE_BANDS)[number]["id"];
+
+const INDUSTRY_OPTIONS = [
+  "Technology",
+  "Financial Services",
+  "Consulting",
+  "Advertising & Creative",
+  "Retail & Consumer",
+  "Healthcare",
+  "Government & Public Sector",
+  "Energy",
+  "Hospitality & Tourism",
+  "Education",
+];
 
 /** Fields of study for the student / new-grad path. A degree is the background
  * signal they actually have; asking them to name a role here would force a
@@ -143,7 +225,20 @@ const FIELD_OF_STUDY_OPTIONS = [
   "Data Science",
 ];
 
-const EXPERIENCE_OPTIONS = [
+/* Every value the rest of the flow can produce. The resume parse and the
+ * free-text shortcut ("6 years") still yield the granular ones and
+ * `applyExperienceId` maps all of them, so the union stays complete even
+ * though the QUESTION now offers only the two in STATUS_OPTIONS below. */
+type ExperienceId = "student" | "new_grad" | "1-4" | "5-9" | "10+";
+
+/* Status. The brief said "fresh graduate vs experienced professional", and
+ * this ladder answers exactly that — `applyExperienceId` folds Student and
+ * New grad into backgroundType "fresh_grad"/"under_grad" and every year band
+ * into "experienced". Offering the bands rather than the bare binary costs
+ * the user nothing (still one tap) and keeps `experienceLevel`, which
+ * `generateMockJobDescription` uses to pitch the posting — a two-way question
+ * would throw that away and leave the JD generator on its fallback. */
+const STATUS_OPTIONS = [
   { id: "student", label: "Student" },
   { id: "new_grad", label: "New grad" },
   { id: "1-4", label: "1–4 yrs" },
@@ -151,7 +246,29 @@ const EXPERIENCE_OPTIONS = [
   { id: "10+", label: "10+ yrs" },
 ] as const;
 
-type ExperienceId = (typeof EXPERIENCE_OPTIONS)[number]["id"];
+/** Suggested interests. Deliberately broad and non-professional: this is the
+ *  one question on the path that is not about work, and the chips are there to
+ *  show that, not to constrain the answer — anything can be typed instead. */
+const INTEREST_OPTIONS = [
+  "Sport",
+  "Music",
+  "Reading",
+  "Travel",
+  "Cooking",
+  "Volunteering",
+];
+
+/* The welcome screen's "How it works": the product's actual loop, in the order
+ * the user will walk it, and each icon is the one that will be sitting in the
+ * left rail from the next screen on — so the list teaches the navigation
+ * rather than decorating the hero. Bold carries the module name, because the
+ * name is the thing worth remembering; the rest is one clause of plain
+ * explanation. */
+const HOW_IT_WORKS: Array<{ icon: LucideIcon; name: string; detail: string }> = [
+  { icon: BookOpen, name: "Storyboard", detail: "real experience, turned into proof" },
+  { icon: UserCheck, name: "Mock Interview", detail: "timed, adaptive follow-ups" },
+  { icon: Gauge, name: "Report", detail: "scored, with what to improve next" },
+];
 
 const RESUME_ACCEPT = ".pdf,.doc,.docx,.txt";
 const MAX_RESUME_BYTES = 10 * 1024 * 1024;
@@ -161,6 +278,23 @@ const PARSE_PHASES = [
   "Reading the document",
   "Found 3 roles across 6 years",
   "Matching your skills to interview topics",
+];
+
+/* The two lists below name what their generators actually assemble — see
+ * `generateMockJobDescription` (title from role + level + industry, then a
+ * responsibilities list, then the "what we're looking for" list) and
+ * `suggestCoreFour` (scores role + posting against each competency's keyword
+ * set and keeps one winner per Success Driver). Kept honest on purpose: a
+ * named sequence that does not match the work is a spinner that also lies. */
+const JD_DRAFT_PHASES = [
+  "Reading your role, level and industry",
+  "Drafting the responsibilities",
+  "Adding what they would look for",
+];
+
+const PLAN_PHASE_TAIL = [
+  "Matching it against the competency framework",
+  "Picking the strongest fit in each Success Driver",
 ];
 
 /** "kashif-resume.pdf" → "Kashif". Empty string when nothing name-like. */
@@ -270,7 +404,7 @@ function initialStage(
   isNewRoleMode: boolean,
 ): Stage {
   if (isNewRoleMode) return "targetRole";
-  if (isEditMode) return "bgExp";
+  if (isEditMode) return "bgStudy";
   if (profile?.targetRole?.trim()) return "session";
   return "welcome";
 }
@@ -287,6 +421,7 @@ function initialDraft(
     education: profile?.education ?? "",
     lastWorkedAt: profile?.lastWorkedAt ?? "",
     background: profile?.background ?? "",
+    interests: profile?.interests ?? "",
     jobDescription: isNewRoleMode ? "" : (profile?.jobDescription ?? ""),
     jobDescriptionSource: isNewRoleMode
       ? "user"
@@ -387,10 +522,14 @@ function OnboardingAgentInner({
   const [manualExp, setManualExp] = useState<ExperienceId | "">(
     isEditMode ? experienceIdFromProfile(roleProfile) : "",
   );
-  /** The background answer: field of study for students / new grads, most
-   * recent employer for experienced users. */
+  /** Education — asked of everyone on the no-resume path. (The resume-parse
+   * path still fills it, or `lastWorkedAt`, from what it read.) */
   const [manualStudy, setManualStudy] = useState(
     isEditMode ? (roleProfile?.education ?? roleProfile?.lastWorkedAt ?? "") : "",
+  );
+  /** Hobbies / personal interests — question 3 on the no-resume path. */
+  const [manualInterests, setManualInterests] = useState(
+    isEditMode ? (roleProfile?.interests ?? "") : "",
   );
   const [manualIndustry, setManualIndustry] = useState(
     isEditMode ? (roleProfile?.industryVertical ?? "") : "",
@@ -402,6 +541,12 @@ function OnboardingAgentInner({
   // --- Step 2 state ---------------------------------------------------
   const [generatedJdDraft, setGeneratedJdDraft] = useState<string | null>(null);
   const [isGeneratingJd, setIsGeneratingJd] = useState(false);
+  const [jdPhase, setJdPhase] = useState(0);
+  /** The Core Four inference used to be instant and therefore invisible —
+   *  the user arrived at four chosen competencies with no account of where
+   *  they came from. It is an inference over the posting, so it now says so
+   *  while it runs. */
+  const [planPhase, setPlanPhase] = useState<number | null>(null);
   const [jdVariant, setJdVariant] = useState(0);
   const [isEditingJd, setIsEditingJd] = useState(false);
   const [, setEditedJdText] = useState("");
@@ -538,8 +683,8 @@ function OnboardingAgentInner({
     study: string,
     industry: string,
     skipped: boolean,
+    interests = "",
   ) {
-    const studying = expId === "student" || expId === "new_grad";
     const detail = study.trim();
     // No experience answer (free text that never mentioned one) leaves the
     // draft's own values alone rather than guessing a seniority.
@@ -549,9 +694,12 @@ function OnboardingAgentInner({
       // The role belongs to the Target step; anything parsed out of the
       // free-text shortcut only pre-fills it.
       targetRole: next.targetRole.trim() || manualRole.trim(),
-      education: studying ? detail : next.education,
-      lastWorkedAt: studying ? next.lastWorkedAt : detail,
+      // Education is now asked of everyone, so it is no longer the
+      // studying-path-only branch it was; `lastWorkedAt` is not collected on
+      // this path at all any more (the resume parse still fills it).
+      education: detail || next.education,
       industryVertical: skipped ? "" : industry,
+      interests: interests.trim() || next.interests,
       background: [detail, skipped ? "" : industry].filter(Boolean).join(" · "),
     };
     setDraft(next);
@@ -593,14 +741,31 @@ function OnboardingAgentInner({
     finishManual(expId as ExperienceId, study, industry, skipped);
   }
 
-  function chooseExperience(expId: ExperienceId) {
-    setManualExp(expId);
-    setStage("bgStudy");
-  }
-
+  /* The no-resume questionnaire, in the order the client specified:
+   *   1. education   (bgStudy)
+   *   2. status      (bgExp)
+   *   3. interests   (bgInterests)
+   * Education leads, which is why it is asked of everyone rather than
+   * branching on status the way it used to — at question 1 the status is not
+   * known yet, and a question that changes shape based on an answer the user
+   * has not given is the thing to avoid, not a feature. */
   function chooseStudy(value: string) {
     setManualStudy(value);
-    finishManual(manualExp as ExperienceId, value, manualIndustry, industrySkipped);
+    setDraft((d) => ({ ...d, education: value.trim() }));
+    setStage("bgExp");
+  }
+
+  function chooseExperience(expId: ExperienceId) {
+    setManualExp(expId);
+    setDraft((d) => applyExperienceId(d, expId));
+    setStage("bgInterests");
+  }
+
+  function chooseInterests(value: string) {
+    const detail = value.trim();
+    setManualInterests(detail);
+    setDraft((d) => ({ ...d, interests: detail }));
+    finishManual(manualExp as ExperienceId, manualStudy, manualIndustry, industrySkipped, detail);
   }
 
   /** Industry now belongs to the target step — it describes the job being
@@ -625,14 +790,28 @@ function OnboardingAgentInner({
 
   // --- Step 2: target + job posting --------------------------------------
 
+  /* Which seniority band's roles are on screen. Defaults to whichever band
+   * already contains the drafted role (so Back lands on the list the answer
+   * came from), then to the one the background answer implies, then Entry. */
+  const [roleBand, setRoleBand] = useState<RoleBandId>(() => {
+    const current = (roleProfile?.targetRole ?? "").trim().toLowerCase();
+    const owning = ROLE_BANDS.find((b) =>
+      b.roles.some((r) => r.toLowerCase() === current),
+    );
+    return owning?.id ?? "entry";
+  });
+
   const targetRoleChips = useMemo(() => {
-    const chips = [...SUGGESTED_ROLES];
+    const band = ROLE_BANDS.find((b) => b.id === roleBand) ?? ROLE_BANDS[1];
+    const chips: string[] = [...band.roles];
+    // A typed role is kept at the head of whatever band is open, so it stays
+    // visibly selected instead of vanishing when the band changes.
     const current = draft.targetRole.trim();
     if (current && !chips.some((c) => c.toLowerCase() === current.toLowerCase())) {
       chips.unshift(current);
     }
-    return chips.slice(0, 6);
-  }, [draft.targetRole]);
+    return chips;
+  }, [draft.targetRole, roleBand]);
 
   function jdMockInput() {
     return {
@@ -643,32 +822,34 @@ function OnboardingAgentInner({
     };
   }
 
-  function handleGenerateJd() {
+  /** One timeline for both draft and redraft. 3.4s rather than the old 1.4s:
+   *  three named steps need long enough to be read, and a real generation call
+   *  will not be faster than this — the old figure under-represented the work
+   *  it stands in for. Paced like the resume parse (3.2s) so the two waits in
+   *  the flow feel like the same machine. */
+  function runJdGeneration(variant: number) {
     setGeneratedJdDraft(null);
+    setJdPhase(0);
     setIsGeneratingJd(true);
     const input = jdMockInput();
     timersRef.current.push(
+      window.setTimeout(() => setJdPhase(1), 1100),
+      window.setTimeout(() => setJdPhase(2), 2300),
       window.setTimeout(() => {
-        setJdVariant(0);
-        setGeneratedJdDraft(generateMockJobDescription(input, 0));
+        setJdVariant(variant);
+        setGeneratedJdDraft(generateMockJobDescription(input, variant));
         setIsGeneratingJd(false);
-      }, 1400),
+      }, 3400),
     );
+  }
+
+  function handleGenerateJd() {
+    runJdGeneration(0);
   }
 
   function handleRegenerateJd() {
     setIsEditingJd(false);
-    setGeneratedJdDraft(null);
-    setIsGeneratingJd(true);
-    const input = jdMockInput();
-    const v = jdVariant + 1;
-    timersRef.current.push(
-      window.setTimeout(() => {
-        setJdVariant(v);
-        setGeneratedJdDraft(generateMockJobDescription(input, v));
-        setIsGeneratingJd(false);
-      }, 1400),
-    );
+    runJdGeneration(jdVariant + 1);
   }
 
   function goToPlan(next: Draft) {
@@ -687,6 +868,19 @@ function OnboardingAgentInner({
     setCoreFourError(null);
     setDraft(withPlan);
     setStage("plan");
+
+    // Coming back to a plan that already exists is navigation, not inference:
+    // only narrate when something is actually being worked out.
+    if (keepExisting) {
+      setPlanPhase(null);
+      return;
+    }
+    setPlanPhase(0);
+    timersRef.current.push(
+      window.setTimeout(() => setPlanPhase(1), 900),
+      window.setTimeout(() => setPlanPhase(2), 1800),
+      window.setTimeout(() => setPlanPhase(null), 2700),
+    );
   }
 
   function acceptJobDescription(text: string, source: "user" | "generated") {
@@ -736,6 +930,7 @@ function OnboardingAgentInner({
       education: nextDraft.education.trim() || undefined,
       lastWorkedAt: nextDraft.lastWorkedAt.trim() || undefined,
       background: nextDraft.background.trim() || undefined,
+      interests: nextDraft.interests.trim() || undefined,
       jobDescription: nextDraft.jobDescription.trim() || undefined,
       jobDescriptionSource: nextDraft.jobDescription.trim()
         ? nextDraft.jobDescriptionSource
@@ -772,14 +967,18 @@ function OnboardingAgentInner({
       case "bgConfirm":
         return "bgEntry";
       case "bgEntry":
-        return "welcome";
-      case "bgExp":
-        return isEditMode ? null : "bgEntry";
+        // Nothing precedes step 1 as a stage any more; Back reopens the
+        // welcome overlay (wired at the progress header).
+        return null;
       case "bgStudy":
+        return isEditMode ? null : "bgEntry";
+      case "bgExp":
+        return "bgStudy";
+      case "bgInterests":
         return "bgExp";
       case "targetRole":
         if (isNewRoleMode) return null;
-        return parsed ? "bgConfirm" : "bgStudy";
+        return parsed ? "bgConfirm" : "bgInterests";
       case "targetIndustry":
         return "targetRole";
       case "targetJd":
@@ -815,11 +1014,14 @@ function OnboardingAgentInner({
       case "bgFailed":
         applyManualText(cleaned, true);
         return;
+      case "bgStudy":
+        chooseStudy(cleaned);
+        return;
       case "bgExp":
         applyManualText(cleaned);
         return;
-      case "bgStudy":
-        chooseStudy(cleaned);
+      case "bgInterests":
+        chooseInterests(cleaned);
         return;
       case "bgConfirm":
         applyCorrection(cleaned);
@@ -865,10 +1067,6 @@ function OnboardingAgentInner({
     startParsing(file);
   }
 
-  /** Students / new grads answer with a field of study; everyone else with
-   * where they have been working. Drives the background question's copy. */
-  const studyingPath = manualExp === "student" || manualExp === "new_grad";
-
   const composerPlaceholder: string =
     stage === "bgEntry"
       ? 'Or just tell me: "senior UX designer, 6 years, fintech"…'
@@ -878,20 +1076,20 @@ function OnboardingAgentInner({
           ? "Or describe your background in a sentence…"
           : stage === "bgConfirm"
             ? 'Anything to correct? Just type it: "actually 7 years"…'
-            : stage === "bgExp"
-              ? 'Or tell me: "6 years"…'
-              : stage === "bgStudy"
-                ? studyingPath
-                  ? 'Or type your field: "Computer Science"…'
-                  : 'Type your company: "Acme"…'
+            : stage === "bgStudy"
+              ? 'Or type your field: "Computer Science"…'
+              : stage === "bgExp"
+                ? 'Or tell me: "6 years"…'
+                : stage === "bgInterests"
+                  ? 'Or type your own: "long-distance running, chess"…'
                 : stage === "targetRole"
-                  ? 'Or type your target role: "senior UX designer"…'
+                  ? 'Type your target role. Example: "Senior UX Designer."'
                   : stage === "targetIndustry"
-                    ? 'Or type the industry: "fintech"…'
+                    ? 'Type the industry. Example: "fintech."'
                     : stage === "targetJd"
                       ? generatedJdDraft
                         ? "Paste the real posting here to replace the draft…"
-                        : "Paste the job posting here…"
+                        : "Paste the Job Description here, or upload it."
                       : stage === "plan"
                   ? "Confirm your selection above to continue"
                   : faq.isFaqMode
@@ -899,45 +1097,54 @@ function OnboardingAgentInner({
                     : "Questions? Ask anytime";
 
   const prompt: string =
-    stage === "welcome"
-      ? `${greetingName ? `Welcome, ${greetingName}.` : "Welcome to ProofDive."}\n\nProofDive turns your real experience into interview-ready proof: you practice, and every answer is scored against the four Success Drivers so you can see exactly what to improve. Setting up takes about a minute.`
-      : stage === "bgEntry"
-        ? "Let's start with your resume.\n\nI'll read your role, experience, and industry from it, so everything ahead is built on your real background instead of guesswork. You'll review and confirm it all before it's saved."
+    stage === "bgEntry"
+        ? "Let's start with your background.\n\nUpload your resume so ProofDive can identify your roles, education, experience, and possible story anchors. You will review and confirm anything we use before it shapes your MyStoryBoard journey."
         : stage === "bgParsing"
           ? "Reading your resume…"
           : stage === "bgFailed"
             ? "I couldn't read that file.\n\nScanned or image-based resumes are hard to read. A text-based PDF or DOCX works best, or skip this step."
             : stage === "bgConfirm"
             ? `Here's what I read. Does this look correct?\n\n${confirmNote ?? "Confirm it and the questionnaire is done."}`
-            : stage === "bgExp"
-              ? "How far along are you?\n\nThis sets the level your session is pitched at, so select the one that fits."
-              : stage === "bgStudy"
-                ? studyingPath
-                  ? "What did you study?\n\nYour field gives me context for the examples I ask about, so select one or type your own below."
-                  : "Where have you been working?\n\nYour most recent company gives me context for the examples I ask about. Type it below."
+            : stage === "bgStudy"
+              ? "What did you study?\n\nYour field gives me context for the examples I ask about, so select one or type your own below."
+              : stage === "bgExp"
+                ? "How far along are you?\n\nThis sets the level your session is pitched at, so select the one that fits."
+                : stage === "bgInterests"
+                  ? "What do you do outside work?\n\nInterests are where some of the strongest stories come from — teams you have run, things you have organised, skills you taught yourself. Select any or type your own."
                 : stage === "targetRole"
-                  ? "What are you preparing for?\n\nYour sessions are built and scored against this target, so select a role or type your own below."
+                  ? "What role are you preparing for?\n\nYour target role sets the direction for your preparation. ProofDive uses it to tailor your journey around the role you are preparing for."
                   : stage === "targetIndustry"
-                    ? "Which industry are you targeting?\n\nIt sharpens the scenarios and the wording of your questions. Skip if nothing fits."
+                    ? `Which industry is this ${draft.targetRole.trim() || "role"} role in?\n\nThe same role can carry different requirements across industries. Select the industry you are targeting so ProofDive can tailor your preparation to the right context.`
                     : stage === "targetJd"
                       ? isGeneratingJd
                         ? "Drafting a posting from your background…"
                         : generatedJdDraft
-                          ? "Here's a draft to work from.\n\nReview it as an interviewer would, and replace it with the real posting whenever you have one."
-                          : `Target set: ${draft.targetRole.trim() || "your role"}.\n\nDo you have the job posting? Paste it below. It shapes the questions and how the evidence is assessed.`
+                          ? `We've prepared a working draft for ${draft.targetRole.trim() || "your role"}${draft.industryVertical.trim() ? ` in ${draft.industryVertical.trim()}` : ""}.\n\nBased on your role and industry, this draft gives ProofDive a working view of the responsibilities and expectations relevant to your preparation. It is not an employer-authored Job Description, so review it before continuing.`
+                          : `Do you have the Job Description for the ${draft.targetRole.trim() || "target"} role?\n\nA Job Description gives ProofDive the clearest view of what this specific role requires. We use it to tailor your Core Four competencies, shape your questions, and where your preparation should focus.`
                       : stage === "plan"
-                  ? "Here's the plan I'd start with.\n\nFour competencies, one per Success Driver, selected from your role and posting to keep your first Storyboard focused. You can change any before you confirm."
-                  : `You're set${greetingName ? `, ${greetingName}` : ""}.\n\nHere's a roadmap to get you started, put together from the details you shared${draft.targetRole.trim() ? ` and your ${draft.targetRole.trim()} target` : ""}. Take it in order, or start wherever you like.`;
+                  ? planPhase !== null
+                    ? "Working out where to start…"
+                    : `Your recommended Core Four\n\nBased on your ${draft.targetRole.trim() || "target"} role and the ${
+                        draft.jobDescriptionSource === "generated"
+                          ? "working draft you approved"
+                          : "Job Description you provided"
+                      }, ProofDive has identified the Core Four competencies most critical to your target role. They are the strongest starting point for building role-relevant interview examples. Review the recommendations and make any changes before continuing.`
+                  : `You're set${greetingName ? `, ${greetingName}` : ""}.\n\nYour preparation plan is ready, built around your background and the ${draft.targetRole.trim() || "target"} role. We recommend following the sequence below, but you can also jump straight into MyStoryBoard to develop your interview examples or go directly to Mock Studios to stress test your interviewing skills.`;
 
-  const promptKey = `${stage}-${stage === "targetJd" ? (generatedJdDraft ? "ready" : isGeneratingJd ? "gen" : "ask") : ""}-${confirmNote ?? ""}`;
+  /* Any flag that swaps the prompt text WITHOUT changing `stage` has to be in
+   * this key, or TypingText keeps its old typed state and the two prompts read
+   * as one merged sentence. */
+  const promptKey = `${stage}-${stage === "targetJd" ? (generatedJdDraft ? "ready" : isGeneratingJd ? "gen" : "ask") : ""}-${confirmNote ?? ""}-${planPhase !== null ? "p" : ""}`;
 
   /** Sub-question position within the current step, shown above the heading
    * so the user always knows where they are inside a multi-question step. */
   const microStep: { index: number; total: number } | null =
-    stage === "bgExp"
-      ? { index: 0, total: 2 }
-      : stage === "bgStudy"
-        ? { index: 1, total: 2 }
+    stage === "bgStudy"
+      ? { index: 0, total: 3 }
+      : stage === "bgExp"
+        ? { index: 1, total: 3 }
+        : stage === "bgInterests"
+          ? { index: 2, total: 3 }
         : stage === "targetRole"
           ? { index: 0, total: 3 }
           : stage === "targetIndustry"
@@ -1031,14 +1238,32 @@ function OnboardingAgentInner({
           present on every stage including the welcome screen (where only the
           progress row is hidden). Far right also puts it where users already
           reach for account-level controls. */}
-      <header className="relative z-30 flex h-14 w-full shrink-0 items-center justify-between border-b border-border bg-background/75 px-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-        <Link
-          href="/"
-          className="flex h-full shrink-0 items-center border-r border-border pr-6"
-        >
-          <Logo size="xxs" />
-        </Link>
-        <ThemeToggle className="-mr-1.5" />
+      <header
+        className={cn(
+          "relative z-30 flex h-14 w-full shrink-0 items-center justify-between px-6",
+          /* On the welcome stage the mark is the hero below, so the header
+             carries nothing but the switch — and the rule and glass would
+             only draw a line across the ambience for no content. From step 1
+             the chrome returns and the mark settles into its corner. */
+          stage === "welcome"
+            ? "bg-transparent"
+            : "border-b border-border bg-background/75 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60",
+        )}
+      >
+        {stage === "welcome" ? null : (
+          <Link
+            href="/"
+            className="flex h-full shrink-0 items-center border-r border-border pr-6"
+          >
+            {/* Same `--primary` the welcome hero's mark carries, so the
+                wordmark does not change colour when the flow moves off the
+                welcome screen. The default `--logo-ink` (#062C35) is a brand
+                token too, but it is the deepest one on the ladder and reads
+                as near-black rather than as the brand. */}
+            <Logo size="xxs" className="text-primary" />
+          </Link>
+        )}
+        <ThemeToggle className="-mr-1.5 ml-auto" />
       </header>
 
       <input
@@ -1065,154 +1290,320 @@ function OnboardingAgentInner({
         </div>
       ) : null}
 
-      <div className="relative z-[2] mx-auto flex min-h-0 w-[800px] max-w-full flex-1 flex-col px-6">
-        <div
-          className={cn(
-            "shrink-0 bg-transparent pt-4",
-            stage === "welcome" && "invisible",
-          )}
-        >
-          <OnboardingProgressHeader
-            currentIndex={STAGE_STEP[stage]}
-            onBack={backTarget ? goBack : undefined}
-          />
-        </div>
+      {/* Everything below the header sits on its own ground. #F5F5F3 is the
+          foundation's own `:root --background`, but it cannot be reached as
+          `bg-background` here: `.app-canvas` on the page shell reassigns
+          `--background: var(--canvas)` (white), so the token is shadowed for
+          every descendant. In dark the class stands down entirely and the
+          canvas keeps painting #0a1013, exactly as before.
+          Full width and flex-1 so the colour fills the whole area rather than
+          the 800px reading column, and a separate element so the header keeps
+          its own translucent surface untouched. On the welcome stage it stands
+          down entirely: there the ambience IS the ground, and a flat fill over
+          it would paint the light out. */}
+      <div
+        className={cn(
+          "relative flex min-h-0 w-full flex-1 flex-col",
+          stage === "welcome" ? "bg-transparent" : "bg-[#F5F5F3] dark:bg-transparent",
+        )}
+      >
+        <div className="relative z-[2] mx-auto flex min-h-0 w-[800px] max-w-full flex-1 flex-col px-6">
+          <div
+            className={cn(
+              "shrink-0 bg-transparent pt-4",
+              stage === "welcome" && "invisible",
+            )}
+          >
+            <OnboardingProgressHeader
+              currentIndex={STAGE_STEP[stage]}
+              onBack={
+                backTarget
+                  ? goBack
+                  : stage === "bgEntry"
+                    ? () => setStage("welcome")
+                    : undefined
+              }
+            />
+          </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-32">
-          <div className="flex min-h-full items-center justify-center py-10">
-            <div className="w-full">
-              {microStep ? (
-                <div className="mb-3 text-overline font-medium uppercase tracking-wide text-text-secondary">
-                  Question {microStep.index + 1} of {microStep.total}
-                </div>
-              ) : null}
-              {/* On the plan step the guide sits beside the heading —
-                  offered where the decision starts, without a full-width
-                  banner above the cards. */}
-              <div
-                className={cn(
-                  stage === "plan" &&
-                    "flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-10",
-                )}
-              >
-                <div className={cn(stage === "plan" && "min-w-0 flex-1")}>
-                  <AgentPrompt
-                    key={promptKey}
-                    promptKey={promptKey}
-                    prompt={prompt}
-                    ariaLabel="Onboarding prompt"
-                    headingClassName="text-agent-heading text-heading-teal"
-                    subtextClassName="mt-3 text-agent-question text-text-primary"
-                    mode="word"
-                  />
-                </div>
-                {stage === "plan" ? (
-                  <SuccessDriversGuideCard className="w-full max-w-[280px] shrink-0 sm:mt-1 sm:w-[232px] min-[1360px]:hidden" />
-                ) : null}
-              </div>
-
-              {stage === "welcome" ? (
-                <div className="mt-8">
-                  {/* Padding follows the product's trailing-arrow CTA (see the
-                      plan step's Confirm): more room on the left so the arrow
-                      does not make the right side look heavy. */}
-                  <Button
-                    type="button"
-                    onClick={() => setStage("bgEntry")}
-                    /* A brand-tinted lift, welcome screen only. The CTA sits
-                       on the ambience plate rather than on a flat page, and in
-                       light mode its fill measures 3.04:1 against that wash —
-                       a pass, but with no margin. The shadow makes the button's
-                       edge independent of whatever the plate is doing behind
-                       it, and reads as elevation rather than an added border. */
-                    className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium shadow-[0_4px_16px_-4px_rgba(14,154,181,0.55)] dark:shadow-[0_6px_20px_-6px_rgba(0,0,0,0.75)]"
-                  >
-                    Let&apos;s get started
-                    <ArrowRight />
-                  </Button>
-                </div>
-              ) : null}
-
-              {/* No resume, no substitute questionnaire: the only alternative
-                  is to skip, using the same chip control the flow's other
-                  optional question uses. */}
-              {stage === "bgEntry" ? (
-                <div className="mt-8 flex flex-col gap-2">
-                  <span className="text-body-sm font-semibold text-text-secondary">
-                    No resume?
-                  </span>
-                  <div className="flex flex-wrap gap-2">
-                    <SelectionChip onClick={() => setStage("targetRole")}>
-                      Skip
-                    </SelectionChip>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-32">
+            <div className="flex min-h-full items-center justify-center py-10">
+              <div className="w-full">
+                {microStep ? (
+                  <div className="mb-3 text-overline font-medium uppercase tracking-wide text-text-secondary">
+                    Question {microStep.index + 1} of {microStep.total}
                   </div>
-                </div>
-              ) : null}
+                ) : null}
+                {stage === "welcome" ? (
+                  /* The welcome stage is composed here rather than through
+                     AgentPrompt, because it is the only stage that asks
+                     nothing. Typing is the agent's speaking voice — from step 1
+                     on, every prompt is a question, so the effect earns itself.
+                     Spending it on a fixed sentence nobody was asked is the
+                     exact texture we are trying to get rid of, and AgentPrompt
+                     can only carry a heading/subtext pair anyway, not a mark, a
+                     display line and a control. One wrapper, one entrance: the
+                     composition arrives as a single object, using the same rise
+                     the landing hero uses (globals.css --animate-landing-rise),
+                     so the screen behind sign-in arrives the way the screen in
+                     front of it did. */
+                  <div className="motion-safe:animate-landing-rise flex w-full flex-col items-start">
+                    {/* `sm` (48px) is sized against the headline, not chosen
+                        off the ladder. The asset is an icon (89.6% of the box)
+                        plus the wordmark, and the icon is the densest ink here
+                        — at 48px it renders 43px against the headline's 33.6px
+                        caps, so the mark reads as a signature above the line
+                        rather than competing with it. */}
+                    {/* The default `--logo-ink` (#062C35) is a brand token,
+                        but it is the deepest one on the ladder — at hero size
+                        over the ambience it just reads black. `--primary` is
+                        the brand's anchor teal, so the mark reads as the brand
+                        rather than as dark type, and against the deep
+                        --heading-teal line below it the bright mark and the
+                        dark headline each keep their own job. The wordmark is
+                        painted as a mask over currentColor, so a text class is
+                        the whole change. */}
+                    <Logo size="sm" className="max-w-full text-primary" />
 
-              {stage === "bgParsing" && parseFile ? (
-                <ParsingProgress file={parseFile} phase={parsePhase} />
-              ) : null}
+                    {/* `--primary`, matching the logo above it exactly — one
+                        brand ink for the mark and the message.
 
-              {stage === "bgFailed" ? (
-                <div className="mt-8 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="rounded-xl border-2 border-dashed border-brand-400 bg-card/60 p-5 text-left transition hover:bg-card focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        Known and accepted: against this plate --primary
+                        measures 2.37:1, under the 3:1 WCAG asks of a 48px bold
+                        line, so the headline sits lighter than the paragraph
+                        beneath it. --extended-blue (#006F8F) is the same teal a
+                        few steps deeper and clears it at 4.07:1 — swap the two
+                        classes here and on the Logo above if that call is ever
+                        revisited.
+
+                        One ink, not the landing's two-tone: measured on this
+                        plate the second tone falls to 1.16:1 against the first
+                        in dark, and a flat two-colour split is the non-gradient
+                        version of the gradient-headline tic. Authority comes
+                        from the family instead — Gilroy Bold against the flow's
+                        Inter Medium — which is also why 48px can outrank step
+                        1's 40px without the jump reading as an accident.
+                        6vw (not the landing's 4.2vw) because this column is
+                        fixed at 800px rather than fluid, so the headline pins
+                        at 48px exactly where the column stops being fixed and
+                        scales only below it. Broken by hand on the full stop so
+                        the line break is a syntactic hinge, not wherever 752px
+                        ran out. `cap-baseline` trims Gilroy's ~6px of shoulder
+                        and ~14px of descent space so the authored 32/20 gaps
+                        are the gaps the eye actually sees; `-ml-[0.065em]`
+                        cancels the 'E's left sidebearing, since the logo's
+                        first tile has none. */}
+                    <h1 className="mt-8 -ml-[0.065em] w-full whitespace-pre-line cap-baseline font-gilroy text-[clamp(2rem,6vw,3rem)] font-bold leading-[1.12] tracking-[-0.04em] text-heading-teal">
+                      {`Hi${greetingName ? ` ${greetingName}` : ""}, I'm your assigned\nProofDive Consultant.`}
+                    </h1>
+
+                    {/* 28rem, the landing's own measure: ~62 characters,
+                        against the 752px column the old paragraph ran to.
+                        Demoting this from 28px to 20px is the change that
+                        creates a second read where there was none. */}
+                    {/* 42rem, not the 30rem it was: the headline runs the
+                        column's full 752px and a 480px paragraph under it read
+                        as a narrow inset rather than the same block. Measured
+                        on this string, 672px is 72 characters over 3 lines —
+                        the top of the 45-75 band that stays comfortable, and
+                        the widest it can go before the measure starts costing
+                        the reader. The full 752px would be 81. */}
+                    <p className="mt-5 max-w-[42rem] text-body-lg leading-7 text-text-primary/80">
+                      I will work with you through a guided experience to help you
+                      prepare for your target role. We will deep dive into your real
+                      experiences, develop interview ready examples, and stress test
+                      them under realistic interview conditions.
+                    </p>
+
+                    {/* "How it works" sits BEFORE the CTA because it answers a
+                        pre-commitment question — what am I about to do — and
+                        that reassurance is worth nothing after the click.
+
+                        Held to the paragraph's own 30rem measure rather than
+                        run to the 752px column: the block above it tapers
+                        (headline ~640px, paragraph 480px, CTA row ~380px), and
+                        a full-width list at the bottom would invert that and
+                        leave the composition bottom-heavy. At 30rem every row
+                        still sets on one line, so the three read as a column of
+                        three, not a paragraph of three.
+
+                        The chips are the modal's, minus its solid `bg-muted`
+                        fill: on a card that fill was correct, but here they sit
+                        on the ambience, and an opaque disc punches a hole in
+                        the light. A hairline ring over a transparent centre
+                        lets the plate through, so they read as lit by the same
+                        source as everything else. Ink stays neutral — the
+                        headline and the CTA are already carrying the teal, and
+                        a third saturated element would flatten the hierarchy
+                        the CTA depends on. */}
+                    <div className="mt-10 w-full max-w-[42rem]">
+                      {/* Not text-secondary: over the light plate that ink
+                          measures 3.20:1, and a 12px label needs 4.5. At 70%
+                          the primary ink gives 5.98 light / 8.66 dark and still
+                          reads as a label rather than a heading. */}
+                      <p className="text-overline font-medium uppercase tracking-wide text-text-primary/70">
+                        How it works
+                      </p>
+                      <ul className="mt-4 flex flex-col gap-3.5">
+                        {HOW_IT_WORKS.map(({ icon: Icon, name, detail }) => (
+                          <li key={name} className="flex items-center gap-3">
+                            <span
+                              aria-hidden
+                              className="grid size-9 shrink-0 place-items-center rounded-full border border-primary/25 bg-primary/[0.08] text-heading-teal"
+                            >
+                              <Icon className="size-[18px]" strokeWidth={1.75} />
+                            </span>
+                            <span className="min-w-0 text-body-sm leading-6 text-text-primary/80">
+                              <span className="font-semibold text-text-primary">
+                                {name}
+                              </span>{" "}
+                              — {detail}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* The reassurance belongs beside the control it reassures
+                        about, not stacked above it as a third rank of type. */}
+                    <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 motion-safe:animate-landing-cta">
+                      <Button
+                        type="button"
+                        onClick={() => setStage("bgEntry")}
+                        /* A brand-tinted lift, welcome screen only. The CTA
+                           sits on the ambience plate rather than on a flat
+                           page, and in light mode its fill measures 3.04:1
+                           against that wash — a pass, but with no margin. The
+                           shadow makes the button's edge independent of
+                           whatever the plate is doing behind it, and reads as
+                           elevation rather than an added border. */
+                        className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium shadow-[0_4px_16px_-4px_rgba(14,154,181,0.55)] dark:shadow-[0_6px_20px_-6px_rgba(0,0,0,0.75)]"
+                      >
+                        Begin
+                        <ArrowRight />
+                      </Button>
+                      <span className="text-caption text-text-primary/80">
+                        Let&apos;s take it one step at a time.
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  /* On the plan step the guide sits beside the heading —
+                     offered where the decision starts, without a full-width
+                     banner above the cards. */
+                  <div
+                    className={cn(
+                      stage === "plan" &&
+                        "flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-10",
+                    )}
                   >
-                    <span className="block text-h5 font-medium text-foreground">
-                      Try another file
-                    </span>
-                    <span className="mt-1 block text-caption text-text-secondary">
-                      PDF or DOCX, up to 10 MB
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStage("targetRole")}
-                    className="rounded-xl border border-border bg-card p-5 text-left transition hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                  >
-                    <span className="block text-h5 font-medium text-foreground">
-                      Skip
-                    </span>
-                    <span className="mt-1 block text-caption text-text-secondary">
-                      Continue without a resume
-                    </span>
-                  </button>
-                </div>
-              ) : null}
+                    <div className={cn(stage === "plan" && "min-w-0 flex-1")}>
+                      <AgentPrompt
+                        key={promptKey}
+                        promptKey={promptKey}
+                        prompt={prompt}
+                        ariaLabel="Onboarding prompt"
+                        /* `--extended-blue`, the same ink the storyboard's question
+                         headings carry — one colour on every 40px agent
+                         heading in the product.
 
-              {stage === "bgConfirm" && parsed ? (
-                <ParsedConfirmCard
-                  parsed={parsed}
-                  onConfirm={confirmParsed}
-                  onEdit={() => {
-                    setManualRole(parsed.role);
-                    setManualExp(experienceIdFromYears(parsed.years));
-                    setManualStudy(parsed.employer);
-                    setManualIndustry(parsed.industry);
-                    setIndustrySkipped(false);
-                    setStage("bgExp");
-                  }}
-                />
-              ) : null}
+                         Not `--primary`, the brighter anchor the welcome hero
+                         and the logo use: at this weight it measures 3.05:1 on
+                         `--app-ground`, clearing the 3:1 the size needs by
+                         0.05 and nothing more, and it reads washed on Inter
+                         Medium — the hero can carry it only because Gilroy
+                         Bold lays down far more ink per glyph.
+                         `--extended-blue` is the same teal a few steps deeper:
+                         5.24:1 light, 11.37:1 dark. */
+                      headingClassName="text-agent-heading text-extended-blue"
+                        subtextClassName="mt-3 text-agent-question text-text-primary"
+                        mode="word"
+                      />
+                    </div>
+                    {stage === "plan" ? (
+                      <SuccessDriversGuideCard className="w-full max-w-[280px] shrink-0 sm:mt-1 sm:w-[232px] min-[1360px]:hidden" />
+                    ) : null}
+                  </div>
+                )}
 
-              {stage === "bgExp" ? (
-                <ManualQuestion
-                  chipsLabel="Select one"
-                  chips={EXPERIENCE_OPTIONS.map((o) => o.label)}
-                  selectedLabel={
-                    EXPERIENCE_OPTIONS.find((o) => o.id === manualExp)?.label ?? ""
-                  }
-                  onPick={(label) => {
-                    const opt = EXPERIENCE_OPTIONS.find((o) => o.label === label);
-                    if (opt) chooseExperience(opt.id);
-                  }}
-                />
-              ) : null}
+                {/* No resume, no substitute questionnaire: the only alternative
+                    is to skip, using the same chip control the flow's other
+                    optional question uses. */}
+                {stage === "bgEntry" ? (
+                  <div className="mt-8 flex flex-col gap-2">
+                    <span className="text-body-sm font-semibold text-text-secondary">
+                      No resume?
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {/* Not "Skip" any more: this path no longer skips
+                          anything, it swaps one long input for three short
+                          questions. Saying so up front is what keeps the
+                          choice honest — a chip labelled "Skip" that opens a
+                          questionnaire is a trapdoor. */}
+                      <SelectionChip onClick={() => setStage("bgStudy")}>
+                        Answer 3 quick questions instead
+                      </SelectionChip>
+                    </div>
+                  </div>
+                ) : null}
 
-              {stage === "bgStudy" ? (
-                studyingPath ? (
+                {stage === "bgParsing" && parseFile ? (
+                  <ParsingProgress file={parseFile} phase={parsePhase} />
+                ) : null}
+
+                {stage === "bgFailed" ? (
+                  <div className="mt-8 grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="rounded-xl border-2 border-dashed border-brand-400 bg-card/60 p-5 text-left transition hover:bg-card focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    >
+                      <span className="block text-h5 font-medium text-foreground">
+                        Try another file
+                      </span>
+                      <span className="mt-1 block text-caption text-text-secondary">
+                        PDF or DOCX, up to 10 MB
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStage("targetRole")}
+                      className="rounded-xl border border-border bg-card p-5 text-left transition hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    >
+                      <span className="block text-h5 font-medium text-foreground">
+                        Skip
+                      </span>
+                      <span className="mt-1 block text-caption text-text-secondary">
+                        Continue without a resume
+                      </span>
+                    </button>
+                  </div>
+                ) : null}
+
+                {stage === "bgConfirm" && parsed ? (
+                  <ParsedConfirmCard
+                    parsed={parsed}
+                    onConfirm={confirmParsed}
+                    onEdit={() => {
+                      setManualRole(parsed.role);
+                      setManualExp(experienceIdFromYears(parsed.years));
+                      setManualStudy(parsed.employer);
+                      setManualIndustry(parsed.industry);
+                      setIndustrySkipped(false);
+                      setStage("bgStudy");
+                    }}
+                  />
+                ) : null}
+
+                {/* The no-resume questionnaire — one question per screen, in
+                    the client's order: education, status, interests. Each is
+                    the same `ManualQuestion` chrome the rest of the flow uses,
+                    so the transition from the upload screen into the questions
+                    is a change of question, not a change of interface. Every
+                    one accepts a typed answer too (see `handleSend`), so the
+                    chips suggest without constraining. */}
+
+                {stage === "bgStudy" ? (
                   <ManualQuestion
                     chipsLabel="Popular fields"
                     chips={studyChips}
@@ -1224,242 +1615,320 @@ function OnboardingAgentInner({
                       </span>
                     }
                   />
-                ) : (
+                ) : null}
+
+                {stage === "bgExp" ? (
                   <ManualQuestion
-                    chipsLabel="Type your most recent company"
-                    chips={[]}
-                    selectedLabel={manualStudy}
-                    onPick={chooseStudy}
+                    chipsLabel="Select one"
+                    chips={STATUS_OPTIONS.map((o) => o.label)}
+                    selectedLabel={
+                      STATUS_OPTIONS.find((o) => o.id === manualExp)?.label ?? ""
+                    }
+                    onPick={(label) => {
+                      const opt = STATUS_OPTIONS.find((o) => o.label === label);
+                      if (opt) chooseExperience(opt.id);
+                    }}
+                  />
+                ) : null}
+
+                {stage === "bgInterests" ? (
+                  <ManualQuestion
+                    chipsLabel="Pick any, or type your own"
+                    chips={INTEREST_OPTIONS}
+                    selectedLabel={manualInterests}
+                    onPick={chooseInterests}
                     trailing={
                       <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
-                        Type it below ↓
+                        Type anything below ↓
                       </span>
                     }
                   />
-                )
-              ) : null}
+                ) : null}
 
-              {stage === "targetIndustry" ? (
-                <ManualQuestion
-                  chipsLabel="Optional: pick one or skip"
-                  chips={INDUSTRY_OPTIONS}
-                  selectedLabel={industrySkipped ? "" : manualIndustry}
-                  onPick={(label) => chooseIndustry(label, false)}
-                  trailing={
-                    <SelectionChip
-                      selected={industrySkipped}
-                      onClick={() => chooseIndustry("", true)}
-                    >
-                      Skip
-                    </SelectionChip>
-                  }
-                />
-              ) : null}
+                {stage === "targetIndustry" ? (
+                  <ManualQuestion
+                    chipsLabel="Optional: pick one or skip"
+                    chips={INDUSTRY_OPTIONS}
+                    selectedLabel={industrySkipped ? "" : manualIndustry}
+                    onPick={(label) => chooseIndustry(label, false)}
+                    trailing={
+                      <SelectionChip
+                        selected={industrySkipped}
+                        onClick={() => chooseIndustry("", true)}
+                      >
+                        Skip
+                      </SelectionChip>
+                    }
+                  />
+                ) : null}
 
-              {stage === "targetRole" ? (
-                <ManualQuestion
-                  chipsLabel="Popular roles"
-                  chips={targetRoleChips}
-                  selectedLabel={draft.targetRole}
-                  onPick={(r) => {
-                    setDraft((d) => ({ ...d, targetRole: r }));
-                    setStage("targetIndustry");
-                  }}
-                  trailing={
-                    <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
-                      Type any role below ↓
-                    </span>
-                  }
-                />
-              ) : null}
-
-              {stage === "targetJd" ? (
-                <div className="mt-6 flex w-full flex-col gap-6">
-                  {!isGeneratingJd && !generatedJdDraft ? (
-                    <div className="flex flex-col gap-3">
-                      <div className="flex flex-wrap items-center gap-3">
-                        {draft.jobDescription.trim() ? (
-                          <SelectionChip onClick={() => goToPlan(draft)}>
-                            Keep the posting on file
-                            <ArrowRight className="size-4" aria-hidden />
+                {stage === "targetRole" ? (
+                  /* Forty roles across four seniority bands. Shown flat they
+                     would be a wall; the band row above narrows it to ten at a
+                     time, which is a list you read rather than search. The
+                     bands are a FILTER, not an answer — nothing is recorded by
+                     switching one, so there is no wrong turn to undo. */
+                  <div className="mt-8 flex w-full flex-col gap-4">
+                    <div className="flex flex-col gap-2">
+                      <div className="text-body-sm font-semibold text-text-secondary">
+                        Suggested roles
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {ROLE_BANDS.map((band) => (
+                          <SelectionChip
+                            key={band.id}
+                            selected={band.id === roleBand}
+                            onClick={() => setRoleBand(band.id)}
+                          >
+                            {band.label}
                           </SelectionChip>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={handleGenerateJd}
-                          className="inline-flex items-center gap-1 text-body-sm font-medium text-link underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                        >
-                          Don't have the posting? Draft one from your background
-                          <ArrowRight className="size-[0.8em] shrink-0 text-primary" aria-hidden />
-                        </button>
+                        ))}
                       </div>
                     </div>
-                  ) : null}
 
-                  {isGeneratingJd ? (
-                    <JdGeneratingSkeleton
-                      roleTitle={draft.targetRole.trim() || undefined}
-                    />
-                  ) : generatedJdDraft ? (
-                    <GeneratedJdPanel
-                      text={generatedJdDraft}
-                      targeting={targetingSummary}
-                      variant={jdVariant}
-                      onUseRealPosting={(text) => acceptJobDescription(text, "user")}
-                      isEditing={isEditingJd}
-                      onEdit={() => setIsEditingJd(true)}
-                      onDoneEdit={(text) => {
-                        const next = text.trim();
-                        if (!next) return;
-                        setGeneratedJdDraft(next);
-                        setIsEditingJd(false);
-                      }}
-                      onRegenerate={handleRegenerateJd}
-                      onAccept={acceptGeneratedJobDescription}
-                      onDraftChange={setEditedJdText}
-                    />
-                  ) : null}
-                </div>
-              ) : null}
+                    <div className="flex flex-wrap gap-2">
+                      {targetRoleChips.map((label) => (
+                        <SelectionChip
+                          key={label}
+                          selected={
+                            label.toLowerCase() ===
+                            draft.targetRole.trim().toLowerCase()
+                          }
+                          onClick={() => {
+                            setDraft((d) => ({ ...d, targetRole: label }));
+                            setStage("targetIndustry");
+                          }}
+                        >
+                          {label}
+                        </SelectionChip>
+                      ))}
+                      <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
+                        Enter your own role below ↓
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
 
-              {stage === "plan" ? (
-                <AssessmentPlanPanel
-                  targetRole={draft.targetRole}
-                  jobDescription={draft.jobDescription}
-                  selected={draft.coreFourCompetencies}
-                  onSelect={selectPlanCompetency}
-                  onConfirm={confirmPlan}
-                  error={coreFourError}
-                />
-              ) : null}
+                {stage === "targetJd" ? (
+                  <div className="mt-6 flex w-full flex-col gap-6">
+                    {!isGeneratingJd && !generatedJdDraft ? (
+                      /* Same shape as step 1's "No resume?" — a short label
+                         above, the escape hatch as a chip below. Both screens
+                         ask for one big input and both offer a way past it, so
+                         the offer should look the same in both places; it used
+                         to be a prose link here and a chip there, which made
+                         two identical decisions read as two different kinds of
+                         thing. */
+                      <div className="mt-2 flex flex-col gap-2">
+                        <span className="text-body-sm font-semibold text-text-secondary">
+                          Don&apos;t have the posting?
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {draft.jobDescription.trim() ? (
+                            <SelectionChip onClick={() => goToPlan(draft)}>
+                              Keep the posting on file
+                              <ArrowRight className="size-4" aria-hidden />
+                            </SelectionChip>
+                          ) : null}
+                          <SelectionChip onClick={handleGenerateJd}>
+                            Draft one from your background
+                            <ArrowRight className="size-4" aria-hidden />
+                          </SelectionChip>
+                        </div>
+                      </div>
+                    ) : null}
 
-              {stage === "session" ? (
-                <SessionContract
-                  homeHref={homeHref}
-                  targetRole={draft.targetRole}
-                  focusTitles={draft.coreFourCompetencies
-                    .map(
-                      (id) =>
-                        COMPETENCY_SPECS.find((s) => s.id === id)?.title ?? "",
-                    )
-                    .filter(Boolean)}
-                />
-              ) : null}
+                    {isGeneratingJd ? (
+                      <AiProgressStatus
+                        className="mt-6 max-w-[30rem]"
+                        ariaLabel="Drafting your job posting"
+                        subtitle={
+                          draft.targetRole.trim()
+                            ? `Writing a ${draft.targetRole.trim()} posting from your answers.`
+                            : "Writing a posting from your answers."
+                        }
+                        steps={JD_DRAFT_PHASES}
+                        activeIndex={jdPhase}
+                        caption="A starting point, not the final word — you can edit it, redraft it, or paste the real posting instead."
+                      />
+                    ) : generatedJdDraft ? (
+                      <GeneratedJdPanel
+                        text={generatedJdDraft}
+                        targeting={targetingSummary}
+                        variant={jdVariant}
+                        onUseRealPosting={(text) => acceptJobDescription(text, "user")}
+                        isEditing={isEditingJd}
+                        onEdit={() => setIsEditingJd(true)}
+                        onDoneEdit={(text) => {
+                          const next = text.trim();
+                          if (!next) return;
+                          setGeneratedJdDraft(next);
+                          setIsEditingJd(false);
+                        }}
+                        onRegenerate={handleRegenerateJd}
+                        onAccept={acceptGeneratedJobDescription}
+                        onDraftChange={setEditedJdText}
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {stage === "plan" && planPhase !== null ? (
+                  <AiProgressStatus
+                    className="mt-6 max-w-[30rem]"
+                    ariaLabel="Choosing your focus areas"
+                    subtitle="Reading what this role is assessed on, one Success Driver at a time."
+                    steps={[
+                      draft.jobDescription.trim()
+                        ? "Reading the job posting"
+                        : "Reading your role and background",
+                      ...PLAN_PHASE_TAIL,
+                    ]}
+                    activeIndex={planPhase}
+                    caption="Nothing is locked in — you can swap any of the four before you confirm."
+                  />
+                ) : null}
+
+                {stage === "plan" && planPhase === null ? (
+                  <AssessmentPlanPanel
+                    targetRole={draft.targetRole}
+                    jobDescription={draft.jobDescription}
+                    selected={draft.coreFourCompetencies}
+                    onSelect={selectPlanCompetency}
+                    onConfirm={confirmPlan}
+                    error={coreFourError}
+                  />
+                ) : null}
+
+                {stage === "session" ? (
+                  <SessionContract
+                    homeHref={homeHref}
+                    targetRole={draft.targetRole}
+                    focusTitles={draft.coreFourCompetencies
+                      .map(
+                        (id) =>
+                          COMPETENCY_SPECS.find((s) => s.id === id)?.title ?? "",
+                      )
+                      .filter(Boolean)}
+                  />
+                ) : null}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div
-          className="fixed bottom-0 left-0 right-0 z-40 w-full"
-          // These capture handlers only feed the ambient orb (focus / has-text).
-          // They MUST be deferred out of the event: a synchronous re-render
-          // during a keystroke re-commits the controlled input's `value` while
-          // its onChange is still in flight, resetting React's value tracker and
-          // dropping the character (the first keystroke, or many when typing
-          // fast). Deferring lets the composer commit its own onChange first.
-          onFocusCapture={(e) => {
-            if ((e.target as HTMLElement).matches?.("input, textarea")) {
-              setTimeout(() => setComposerFocused(true), 0);
-            }
-          }}
-          onBlurCapture={(e) => {
-            if ((e.target as HTMLElement).matches?.("input, textarea")) {
-              setTimeout(() => setComposerFocused(false), 0);
-            }
-          }}
-          onInputCapture={(e) => {
-            const t = e.target as HTMLInputElement;
-            if (t.matches?.("input, textarea")) {
-              // Ref bump = no re-render, safe to run synchronously.
-              composerPulseRef.current += 1;
-              const hasText = Boolean(t.value?.trim());
-              setTimeout(() => setComposerHasText(hasText), 0);
-            }
-          }}
-        >
-          {showOrb ? (
-            <AiOrb
-              state={orbState}
-              engaged={orbEngaged}
-              pulseRef={composerPulseRef}
-            />
-          ) : null}
-          <div className="mx-auto flex w-full max-w-[800px] flex-col gap-2 px-6 py-5">
-            {composerGuidesUpload && !uploadHintDismissed ? (
-              /* Coach mark centered over the "Upload resume" pill, arrow at
-                 the bubble's own center — one straight line from bubble to
-                 arrow to pill. The 34px inset = (pill center from the
-                 composer's right edge, 162px) − half the 256px bubble. */
-              <div className="flex justify-end pr-[34px]">
-                <div
-                  role="status"
-                  className="relative w-64 rounded-xl border border-border bg-card p-3 pr-8 shadow-[var(--elevation-card)]"
-                >
-                  <p className="text-caption leading-snug text-text-primary">
-                    <strong className="font-semibold">Add your resume here.</strong>{" "}
-                    PDF or DOCX, up to 10 MB. Or drop it anywhere on this
-                    page.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setUploadHintDismissed(true)}
-                    aria-label="Dismiss upload hint"
-                    className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-foreground"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                  <span
-                    aria-hidden
-                    className="absolute -bottom-1 left-1/2 size-2 -translate-x-1/2 rotate-45 border-b border-r border-border bg-card"
-                  />
-                </div>
-              </div>
-            ) : null}
-            {/* The welcome moment is a single CTA — no input to type into. */}
-            {stage === "welcome" ? null : (
-            <ChatComposer
-              key={stage}
-              placeholder={composerPlaceholder}
-              onSend={handleSend}
-              disabled={composerDisabled}
-              uploadAccept={RESUME_ACCEPT}
-              onUpload={handleUpload}
-              showUploadButton={showUpload}
-              uploadLabel={composerGuidesUpload ? "Upload resume" : undefined}
-              // One ambient AI signal per screen. The CSS rim glow is the
-              // resting state on every other step; where the orb is mounted the
-              // orb's own shader draws that same traveling light and morphs it
-              // into the sphere, so this one stands down rather than competing.
-              aiGlow={!showOrb}
-              backgroundGlowIntensity="full"
-              modeToggle={
-                stage === "session"
-                  ? {
-                      isActive: faq.isFaqMode,
-                      icon: MessageCircleQuestion,
-                      activeLabel: "AI Assistant",
-                      onToggle: () =>
-                        faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode(),
-                    }
-                  : undefined
-              }
-              thread={
-                stage === "session" && faq.isFaqMode ? (
-                  <FaqAssistantThread
-                    screenData={faq.screenData}
-                    onSelectRootItem={faq.selectRootItem}
-                    onSelectFollowup={faq.selectFollowup}
-                    onBackToItemMenu={faq.backToItemMenu}
-                    onBackToRootMenu={faq.backToRootMenu}
-                  />
-                ) : undefined
-              }
-              onThreadClose={
-                stage === "session" && faq.isFaqMode ? faq.exitFaqMode : undefined
-              }
-              threadHeaderTitle="AI Assistant"
-            />
+          {/* The welcome moment is a single CTA — no input to type into. */}
+          <div
+            className={cn(
+              "fixed bottom-0 left-0 right-0 z-40 w-full",
+              stage === "welcome" && "hidden",
             )}
+            // These capture handlers only feed the ambient orb (focus / has-text).
+            // They MUST be deferred out of the event: a synchronous re-render
+            // during a keystroke re-commits the controlled input's `value` while
+            // its onChange is still in flight, resetting React's value tracker and
+            // dropping the character (the first keystroke, or many when typing
+            // fast). Deferring lets the composer commit its own onChange first.
+            onFocusCapture={(e) => {
+              if ((e.target as HTMLElement).matches?.("input, textarea")) {
+                setTimeout(() => setComposerFocused(true), 0);
+              }
+            }}
+            onBlurCapture={(e) => {
+              if ((e.target as HTMLElement).matches?.("input, textarea")) {
+                setTimeout(() => setComposerFocused(false), 0);
+              }
+            }}
+            onInputCapture={(e) => {
+              const t = e.target as HTMLInputElement;
+              if (t.matches?.("input, textarea")) {
+                // Ref bump = no re-render, safe to run synchronously.
+                composerPulseRef.current += 1;
+                const hasText = Boolean(t.value?.trim());
+                setTimeout(() => setComposerHasText(hasText), 0);
+              }
+            }}
+          >
+            {showOrb ? (
+              <AiOrb
+                state={orbState}
+                engaged={orbEngaged}
+                pulseRef={composerPulseRef}
+              />
+            ) : null}
+            <div className="mx-auto flex w-full max-w-[800px] flex-col gap-2 px-6 py-5">
+              {composerGuidesUpload && !uploadHintDismissed ? (
+                /* Coach mark centered over the "Upload resume" pill, arrow at
+                   the bubble's own center — one straight line from bubble to
+                   arrow to pill. The 34px inset = (pill center from the
+                   composer's right edge, 162px) − half the 256px bubble. */
+                <div className="flex justify-end pr-[34px]">
+                  <div
+                    role="status"
+                    className="relative w-64 rounded-xl border border-border bg-card p-3 pr-8 shadow-[var(--elevation-card)]"
+                  >
+                    <p className="text-caption leading-snug text-text-primary">
+                      <strong className="font-semibold">Add your resume here.</strong>{" "}
+                      PDF or DOCX, up to 10 MB. Or drop it anywhere on this
+                      page.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setUploadHintDismissed(true)}
+                      aria-label="Dismiss upload hint"
+                      className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full text-text-secondary transition hover:bg-muted hover:text-foreground"
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-1 left-1/2 size-2 -translate-x-1/2 rotate-45 border-b border-r border-border bg-card"
+                    />
+                  </div>
+                </div>
+              ) : null}
+              <ChatComposer
+                key={stage}
+                placeholder={composerPlaceholder}
+                onSend={handleSend}
+                disabled={composerDisabled}
+                uploadAccept={RESUME_ACCEPT}
+                onUpload={handleUpload}
+                showUploadButton={showUpload}
+                uploadLabel={composerGuidesUpload ? "Upload resume" : undefined}
+                // One ambient AI signal per screen. The CSS rim glow is the
+                // resting state on every other step; where the orb is mounted the
+                // orb's own shader draws that same traveling light and morphs it
+                // into the sphere, so this one stands down rather than competing.
+                aiGlow={!showOrb}
+                backgroundGlowIntensity="full"
+                modeToggle={
+                  stage === "session"
+                    ? {
+                        isActive: faq.isFaqMode,
+                        icon: MessageCircleQuestion,
+                        activeLabel: "AI Assistant",
+                        onToggle: () =>
+                          faq.isFaqMode ? faq.exitFaqMode() : faq.enterFaqMode(),
+                      }
+                    : undefined
+                }
+                thread={
+                  stage === "session" && faq.isFaqMode ? (
+                    <FaqAssistantThread
+                      screenData={faq.screenData}
+                      onSelectRootItem={faq.selectRootItem}
+                      onSelectFollowup={faq.selectFollowup}
+                      onBackToItemMenu={faq.backToItemMenu}
+                      onBackToRootMenu={faq.backToRootMenu}
+                    />
+                  ) : undefined
+                }
+                onThreadClose={
+                  stage === "session" && faq.isFaqMode ? faq.exitFaqMode : undefined
+                }
+                threadHeaderTitle="AI Assistant"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -1478,13 +1947,8 @@ function ParsingProgress({
   file: { name: string; sizeKb: number };
   phase: number;
 }) {
-  const percent = phase === 0 ? 22 : phase === 1 ? 55 : 85;
   return (
-    <div
-      className="mt-8 flex w-full flex-col gap-5"
-      role="status"
-      aria-label="Reading your resume"
-    >
+    <div className="mt-8 flex w-full flex-col gap-5">
       <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-5 py-4 shadow-sm">
         <div className="flex min-w-0 items-baseline gap-3">
           <span className="truncate text-body-sm font-semibold text-foreground">
@@ -1499,52 +1963,13 @@ function ParsingProgress({
         </span>
       </div>
 
-      <ul className="flex flex-col gap-2.5">
-        {PARSE_PHASES.map((label, i) => {
-          const isDone = i < phase;
-          const isCurrent = i === phase;
-          return (
-            <li
-              key={label}
-              className={cn(
-                "flex items-center gap-2.5 text-body-sm",
-                isDone
-                  ? "text-foreground"
-                  : isCurrent
-                    ? "text-text-secondary"
-                    : "text-text-secondary/50",
-              )}
-            >
-              {isDone ? (
-                <Check className="size-4 shrink-0 text-primary" aria-hidden />
-              ) : (
-                <span
-                  aria-hidden
-                  className={cn(
-                    "size-2 shrink-0 rounded-full border",
-                    isCurrent ? "border-primary" : "border-border",
-                  )}
-                />
-              )}
-              {label}
-              {isCurrent ? "…" : ""}
-            </li>
-          );
-        })}
-      </ul>
-
-      <div className="flex flex-col gap-2">
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-[linear-gradient(90deg,var(--brand-100),var(--brand-600))] transition-all duration-700"
-            style={{ width: `${percent}%` }}
-          />
-        </div>
-        <p className="text-caption text-text-secondary">
-          Usually under 20 seconds. You&apos;ll confirm everything before it
-          is saved.
-        </p>
-      </div>
+      {/* No title: the step's own heading already says "Reading your resume". */}
+      <AiProgressStatus
+        ariaLabel="Reading your resume"
+        steps={PARSE_PHASES}
+        activeIndex={phase}
+        caption="Usually under 20 seconds. You'll confirm everything before it is saved."
+      />
     </div>
   );
 }
@@ -1566,12 +1991,7 @@ function ParsedConfirmCard({
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         {parsed.skills.map((skill) => (
-          <span
-            key={skill}
-            className="rounded-full bg-brand-1000 px-3 py-1.5 text-caption font-medium text-extended-blue"
-          >
-            {skill}
-          </span>
+          <Badge key={skill}>{skill}</Badge>
         ))}
       </div>
       <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -1641,9 +2061,12 @@ function ManualQuestion({
  * reassurance the original contract card carried, kept as a compact strip so
  * it supports the cards instead of competing with them. */
 const SESSION_PROMISES = [
-  { icon: PauseCircle, text: "Pause anytime; skip or retry without losing progress" },
-  { icon: Mic, text: "Voice or text, your choice" },
-  { icon: FileText, text: "Every session ends with a proof report" },
+  { icon: PauseCircle, text: "Save and resume anytime — nothing is lost." },
+  { icon: Mic, text: "Use voice or text, whichever you prefer." },
+  {
+    icon: FileText,
+    text: "Anything we build from your experience stays grounded in what actually happened.",
+  },
 ];
 
 /**
@@ -1665,28 +2088,31 @@ function journeySteps(targetRole: string, focusTitles: string[]) {
     {
       href: "/training",
       icon: GraduationCap,
-      title: "Learn the standard",
-      // One glance line per node — what it costs and what it covers. The
-      // longer explanation is deliberately gone: on this screen the user is
-      // choosing where to go, not reading about it.
-      meta: "4 Success Driver guides · ~10 min each",
+      title: "Learn the Craft through our Master Classes",
+      badge: "Start here",
+      meta:
+        "Learn the interviewing essentials and the employer's perspective on what they listen for, what strong evidence looks like, and how the four Success Drivers shape that judgement.",
       cta: "Start learning",
     },
     {
       href: "/storyboard",
       icon: BookOpen,
-      title: "Build your storyboard",
-      meta: `${focus} · ~15 min each`,
-      cta: "Start crafting",
+      title: "Build your MyStoryBoard",
+      badge: null,
+      meta: `Turn your real experiences into structured, interview ready examples around the Core Four competencies prioritised for your role.${
+        focus !== "Your focus areas" ? ` Starting with ${focus}.` : ""
+      }`,
+      cta: "Build MyStoryBoard",
     },
     {
       href: "/interview",
       icon: UserCheck,
-      title: "Take your first session",
-      meta: role
-        ? `${role} · 3 questions · ~8 min`
-        : "3 questions · ~8 min",
-      cta: "Start session",
+      title: "Take a Mock Studios session",
+      badge: null,
+      meta: `Put your preparation into practice under realistic interview conditions and see how clearly your evidence comes through.${
+        role ? ` Pitched at your ${role} target.` : ""
+      }`,
+      cta: "Start Mock Studios",
     },
   ];
 }
@@ -1717,7 +2143,9 @@ function JourneyNode({
         className={cn(
           "group grid grid-cols-[auto_1fr_auto] items-center gap-x-4 rounded-lg px-2 -mx-2 transition-colors",
           "hover:bg-brand-1000/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
-          isLast ? "py-3.5" : "pt-3.5 pb-9",
+          // Same padding on every row, last one included: the steps are peers,
+          // and a shorter final row read as a different kind of item.
+          "pt-3.5 pb-9",
         )}
       >
         {/* Every node looks the same: the path is a sequence, not a ranking,
@@ -1733,9 +2161,19 @@ function JourneyNode({
           <Icon className="size-4" />
         </span>
 
-        <span className="flex min-w-0 flex-col gap-1">
-          <span className="text-body-sm font-semibold leading-snug text-text-primary transition-colors group-hover:text-extended-blue">
-            {step.title}
+        {/* Capped rather than left to fill the 1fr track: unbounded, the copy
+            ran to within ~24px of the CTA label, so the two read as one
+            crowded block. 28rem also lands the description at ~65 characters
+            a line, the top of the comfortable measure — and the cap is inert
+            below ~1200px, where the track is already narrower. */}
+        <span className="flex min-w-0 max-w-[28rem] flex-col gap-1">
+          {/* Title and its badge share a line: "Start here" qualifies the step,
+              so it belongs beside the name rather than floating above it. */}
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="text-body-sm font-semibold leading-snug text-text-primary transition-colors group-hover:text-extended-blue">
+              {step.title}
+            </span>
+            {step.badge ? <Badge>{step.badge}</Badge> : null}
           </span>
           <span className="text-caption leading-snug text-text-secondary">
             {step.meta}
@@ -1769,7 +2207,11 @@ function SessionContract({
     <>
       <div
         className={cn(
-          "mt-6 w-full rounded-xl border-[0.5px] border-solid border-border px-4 pb-3 pt-4",
+          // pb matches pt: the row padding is inside each row's hover surface, so a
+          // card with no bottom padding let the last row's tint run flush into the
+          // border. 16px also lands the space under the last step at 52px, next to
+          // the 50px that separates one step from the next.
+          "mt-6 w-full rounded-xl border-[0.5px] border-solid border-border px-4 pb-4 pt-4",
           "bg-[linear-gradient(121.89deg,var(--glass-from)_0%,var(--glass-to)_98.96%)]",
         )}
       >
@@ -1777,14 +2219,16 @@ function SessionContract({
             the one thing worth knowing about it on the right — the path is a
             recommendation, not a lock. */}
         <div className="flex items-center gap-3">
+          {/* "Suggested for you", not "Suggested by AI coach" — same call as
+              the focus-areas tag: everything on this screen is generated, so
+              naming the machine labels nothing, and the product does not
+              introduce an "AI coach" persona anywhere else. */}
           <span className="flex shrink-0 items-center gap-1.5 text-overline font-medium uppercase tracking-wide text-text-secondary">
             <Sparkles className="size-3 text-primary" aria-hidden />
-            Suggested by AI coach
+            Your preparation plan
           </span>
           <span aria-hidden className="h-px flex-1 border-t border-dashed border-border" />
-          <span className="shrink-0 rounded-full bg-secondary/60 px-2.5 py-0.5 text-overline font-normal text-secondary-foreground/90">
-            Start anywhere
-          </span>
+          <Badge>Start anywhere</Badge>
         </div>
 
         <ol className="mt-1 flex w-full flex-col">
@@ -1811,12 +2255,12 @@ function SessionContract({
       </ul>
 
       <p className="mt-6 text-agent-question text-text-primary">
-        Prefer to look around?{" "}
+        Want to look around first?{" "}
         <Link
           href={homeHref}
-          className="inline-flex items-center gap-1 font-medium text-link underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          className="app-link inline-flex items-center gap-1 font-medium"
         >
-          go to home
+          Go to home
           <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />
         </Link>
       </p>
@@ -1824,36 +2268,3 @@ function SessionContract({
   );
 }
 
-/** Skeleton loader shown while Proofy "thinks" — bar widths/heights mirror
- * the design's two line-pairs; the shimmer sweep reuses the design's motion
- * timing (2s, linear, infinite) via `animate-shimmer-sweep`. */
-function JdGeneratingSkeleton({ roleTitle }: { roleTitle?: string }) {
-  const shimmerBar =
-    "rounded-full bg-[linear-gradient(90deg,var(--brand-100),var(--brand-400),var(--brand-700),var(--brand-1000),var(--brand-700),var(--brand-400),var(--brand-100))] bg-[length:200%_100%] animate-shimmer-sweep";
-  return (
-    <div
-      className="mt-6 flex w-full flex-col gap-6"
-      role="status"
-      aria-label="Proofy is drafting a job description"
-    >
-      <div className="flex flex-col gap-1">
-        <p className="text-body-sm font-medium text-heading-teal">
-          Proofy is drafting…
-        </p>
-        <p className="text-caption text-text-secondary">
-          {roleTitle
-            ? `Writing a ${roleTitle} job description from your answers.`
-            : "Writing a job description from your answers."}
-        </p>
-      </div>
-      <div className="flex flex-col gap-3">
-        <div className={cn("h-6 w-full", shimmerBar)} />
-        <div className={cn("h-6 w-1/2", shimmerBar)} />
-      </div>
-      <div className="flex flex-col gap-2">
-        <div className={cn("h-4 w-full", shimmerBar)} />
-        <div className={cn("h-4 w-1/2", shimmerBar)} />
-      </div>
-    </div>
-  );
-}

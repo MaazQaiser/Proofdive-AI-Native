@@ -202,7 +202,7 @@ export default function SignupPage() {
             <Link
               href="/terms"
               target="_blank"
-              className="font-medium text-primary hover:underline"
+              className="app-link font-medium"
             >
               terms
             </Link>{" "}
@@ -210,7 +210,7 @@ export default function SignupPage() {
             <Link
               href="/privacy"
               target="_blank"
-              className="font-medium text-primary hover:underline"
+              className="app-link font-medium"
             >
               privacy policy
             </Link>
@@ -219,7 +219,7 @@ export default function SignupPage() {
 
           <p className="text-center text-body-sm">
             <span className="text-muted-foreground">Already have an account? </span>
-            <Link href="/login" className="font-medium text-primary hover:underline">
+            <Link href="/login" className="app-link font-medium">
               Sign in
             </Link>
           </p>

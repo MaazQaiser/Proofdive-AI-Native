@@ -120,6 +120,10 @@ export type RoleProfile = {
   /** Last employer, captured only for backgroundType === "experienced" (replaces education for that path). */
   lastWorkedAt?: string;
   background?: string;
+  /** Hobbies / personal interests, captured on the no-resume path. Kept apart
+   *  from `background` (a derived one-line summary) because this is the user's
+   *  own words and is the only signal on that path that is not about work. */
+  interests?: string;
   jobDescription?: string;
   /** Whether `jobDescription` was typed by the user or accepted as-is from the mock generator. */
   jobDescriptionSource?: "user" | "generated";

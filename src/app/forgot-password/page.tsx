@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
             <button
               type="button"
               onClick={() => toast.success("Reset link sent again.")}
-              className="font-medium text-primary hover:underline"
+              className="app-link font-medium"
             >
               Resend
             </button>{" "}
@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
             <button
               type="button"
               onClick={() => setSubmitted(false)}
-              className="font-medium text-primary hover:underline"
+              className="app-link font-medium"
             >
               try another email
             </button>
@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
           </p>
           <p className="text-body-sm">
             <span className="text-muted-foreground">Remembered it? </span>
-            <Link href="/login" className="font-medium text-primary hover:underline">
+            <Link href="/login" className="app-link font-medium">
               Back to sign in
             </Link>
           </p>
@@ -120,7 +120,7 @@ export default function ForgotPasswordPage() {
 
           <p className="text-body-sm">
             <span className="text-muted-foreground">Remembered it? </span>
-            <Link href="/login" className="font-medium text-primary hover:underline">
+            <Link href="/login" className="app-link font-medium">
               Back to sign in
             </Link>
           </p>

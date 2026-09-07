@@ -28,11 +28,28 @@ const GRAIN_URL =
  * shapes, the asymmetry and the brand hue all survive; only the register
  * changes, from light emerging out of a dark room to colour blooming on paper.
  *
+ * Both plates have since been hue-corrected onto the brand band. The board
+ * shipped a green-leaning teal — hue ~180, green channel above blue — while
+ * every brand token sits at 186-193 with blue above green (--primary #0E9AB5
+ * is 189.7deg). The correction moves ONLY hue: the saturation and value fields
+ * are bit-identical to the originals, so the composition, the falloff and the
+ * vignette are untouched and only the colour changed. Peaks now land on
+ * --extended-green-blue (#073E4C) in dark and --brand-800 (#B7E1E9) in light.
+ * If either plate is ever re-exported from the board, run that hue remap again.
+ *
  * The one thing added on top of the stills: a very slow drift, so the entry
  * screen breathes instead of being wallpaper. Deliberately below the threshold
  * where you would notice it moving — the brief asked for energy, not motion.
  */
-export function WelcomeAmbience({ className }: { className?: string }) {
+export function WelcomeAmbience({
+  className,
+  /** Overrides the plate's own `bg-cover bg-center` — the dialog crops in on
+   *  the glow's core, because at card size the full plate is mostly falloff. */
+  plateClassName,
+}: {
+  className?: string;
+  plateClassName?: string;
+}) {
   const driftRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -79,13 +96,19 @@ export function WelcomeAmbience({ className }: { className?: string }) {
         style={{ transform: "scale(1.06)" }}
       >
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden"
+          className={cn(
+            "absolute inset-0 bg-cover bg-center bg-no-repeat dark:hidden",
+            plateClassName,
+          )}
           style={{
             backgroundImage: "url(/brand/welcome-ambience-light.webp)",
           }}
         />
         <div
-          className="absolute inset-0 hidden bg-cover bg-center bg-no-repeat dark:block"
+          className={cn(
+            "absolute inset-0 hidden bg-cover bg-center bg-no-repeat dark:block",
+            plateClassName,
+          )}
           style={{ backgroundImage: "url(/brand/welcome-ambience.webp)" }}
         />
       </div>

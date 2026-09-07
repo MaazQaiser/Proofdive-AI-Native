@@ -309,7 +309,7 @@ export function InterviewScreen() {
                 <span className="text-caption text-text-secondary">Mock interview</span>
                 <Badge
                   variant="outline"
-                  className="rounded-full border-scoring-green/25 bg-scoring-green/15 text-caption text-scoring-green-fg"
+                  className="border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg"
                 >
                   <CheckCircle2 className="size-3" aria-hidden />
                   Ready for you
@@ -404,14 +404,9 @@ export function InterviewScreen() {
                             <span className="text-body-sm text-text-secondary"> / 5</span>
                           </div>
                           <div className="mt-1.5">
-                            <span
-                              className={cn(
-                                "inline-flex rounded-full border px-2 py-0.5 text-overline",
-                                scoringBadgeClass(c.status),
-                              )}
-                            >
+                            <Badge variant="outline" className={scoringBadgeClass(c.status)}>
                               {c.status}
-                            </span>
+                            </Badge>
                           </div>
                           <div className="mt-3 text-overline text-text-secondary">
                             SESSION TYPE
@@ -474,7 +469,7 @@ export function InterviewScreen() {
                   <button
                     type="button"
                     onClick={() => openConsent("full_competency")}
-                    className="inline-flex items-center gap-1 font-medium text-[#095B73] underline-offset-2 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                    className="app-link inline-flex items-center gap-1 font-medium"
                   >
                     Start the interview
                     <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />

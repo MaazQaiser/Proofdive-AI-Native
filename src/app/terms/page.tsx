@@ -13,7 +13,7 @@ export default function TermsPage() {
       </p>
 
       <p className="mt-8 text-center text-caption text-text-secondary">
-        <Link href="/consent" className="font-semibold text-text-primary underline-offset-2 hover:underline">
+        <Link href="/consent" className="app-link font-semibold">
           Back
         </Link>
       </p>
