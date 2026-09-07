@@ -82,10 +82,13 @@ function sessionTypeLabel(report: InterviewReport): string {
 
 function LatestReportSummary({
   report,
+  locked,
   onViewReport,
   onRetake,
 }: {
   report: InterviewReport;
+  /** Free plan, free report already used: the scores show, the full report does not. */
+  locked: boolean;
   onViewReport: () => void;
   onRetake: () => void;
 }) {
@@ -118,7 +121,7 @@ function LatestReportSummary({
           <div className="flex flex-wrap items-center justify-end gap-2 border-t border-extended-green pt-4">
             <Button type="button" variant="ghost" size="sm" onClick={onViewReport}>
               <Eye aria-hidden />
-              View full report
+              {locked ? "Unlock full report" : "View full report"}
             </Button>
             <Button type="button" size="sm" onClick={onRetake}>
               <RotateCcw aria-hidden />
@@ -260,6 +263,15 @@ export function InterviewScreen() {
   }, [recentReports, recentDemoSeed, role, router, accessedReportIds, freePlan]);
 
   function openConsent(nextKind: InterviewSessionKind) {
+    // A new session produces a NEW report id. On Free that report is locked as
+    // soon as the one free report has been opened — so the plan has to be
+    // raised here, before the session and the report-generation wait, not on
+    // the report page the user is then refused. Any id not already in the
+    // accessed list stands in for the report that does not exist yet.
+    if (!canAccessReport("next-session", accessedReportIds, freePlan)) {
+      setUpgradeModalOpen(true);
+      return;
+    }
     setSessionKind(nextKind);
     setConsentOpen(true);
   }
@@ -290,6 +302,7 @@ export function InterviewScreen() {
   const latestReportSummaryEl = latestReport ? (
     <LatestReportSummary
       report={latestReport}
+      locked={!canAccessReport(latestReport.meta.id, accessedReportIds, freePlan)}
       onViewReport={() => tryViewReport(latestReport.meta.id)}
       onRetake={() =>
         openConsent(showPostJourneyMockLanding ? "full_competency" : "first_time")
@@ -438,7 +451,7 @@ export function InterviewScreen() {
                   key={latestReport ? `interview-done-${name}` : `interview-first-${name}`}
                   text={
                     latestReport
-                      ? `Hey ${name}, you're off to a strong start`
+                      ? `Hey ${name}, your session report is ready`
                       : `Hey ${name}, welcome to your first Mock Interview`
                   }
                   mode="word"
@@ -450,13 +463,13 @@ export function InterviewScreen() {
 
               {latestReport ? (
                 <p className="mt-3 w-full text-agent-question leading-relaxed text-text-primary">
-                  Your first mock is complete. Review the report below, or take another session to
-                  keep improving
+                  {recentReports.length > 1 ? "Your latest mock is complete." : "Your first mock is complete."}{" "}
+                  Review the report below, or take another session to keep improving
                   {role ? (
                     <>
                       {" "}
                       for{" "}
-                      <span className="rounded-sm bg-[#B9EFF4] px-1 text-[#095B73]">{role}</span>
+                      <span className="rounded-sm bg-extended-light-cyan px-1 text-link">{role}</span>
                     </>
                   ) : null}
                   .

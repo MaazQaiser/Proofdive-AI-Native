@@ -34,9 +34,11 @@ const STEP_SUBTEXT: Record<string, string> = {
 type Props = {
   stepIdx: number;
   steps: readonly string[];
+  /** How long each step takes — lets the overlay say how long is left. */
+  stepMs?: number;
 };
 
-export function ReportGeneratingOverlay({ stepIdx, steps }: Props) {
+export function ReportGeneratingOverlay({ stepIdx, steps, stepMs = 3_000 }: Props) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -47,6 +49,9 @@ export function ReportGeneratingOverlay({ stepIdx, steps }: Props) {
     "Mapping each answer to competencies and extracting the strongest proof points.";
   const progress =
     steps.length === 0 ? 0 : (Math.min(stepIdx, steps.length) / steps.length) * 100;
+  const remainingSeconds = Math.ceil(
+    ((steps.length - Math.min(stepIdx, steps.length)) * stepMs) / 1000,
+  );
 
   if (!mounted) return null;
 
@@ -56,19 +61,15 @@ export function ReportGeneratingOverlay({ stepIdx, steps }: Props) {
       role="status"
       aria-busy="true"
     >
-      {/* Same diagonal wash as `.app-canvas`, without its `position: relative` override. */}
+      {/* A brand wash into transparency, so it sits on the page ground in both
+          themes; the old wash faded to opaque white and the blur motif was a
+          light-only asset, both of which the app canvas has since dropped. */}
       <div
         className="pointer-events-none absolute inset-0 z-0 opacity-20"
         style={{
           backgroundImage:
-            "linear-gradient(to top right, rgb(14 154 181 / 0.3) 0%, rgb(255 255 255 / 1) 100%)",
+            "linear-gradient(to top right, rgb(14 154 181 / 0.3) 0%, transparent 100%)",
         }}
-        aria-hidden
-      />
-
-      {/* Same blur motif as `.app-canvas--motif` / candidate screens. */}
-      <div
-        className="pointer-events-none absolute left-0 top-[191px] z-0 h-[894px] w-[min(1024px,100%)] bg-[url('/brand/candidate-bg-blur.png')] bg-left-top bg-contain bg-no-repeat"
         aria-hidden
       />
 
@@ -81,7 +82,7 @@ export function ReportGeneratingOverlay({ stepIdx, steps }: Props) {
 
       <div className="relative z-[2] flex h-full w-full flex-col px-6 py-10">
         <div className="flex shrink-0 items-center">
-          <Logo size="xxs" />
+          <Logo size="xxs" className="text-primary" />
         </div>
 
         <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4">
@@ -107,6 +108,15 @@ export function ReportGeneratingOverlay({ stepIdx, steps }: Props) {
               )}
             >
               {subtext}
+            </p>
+            {/* Where we are and how long is left — the two things a wait has to
+                say for the user to feel held rather than stuck. */}
+            <p
+              className="text-overline font-medium uppercase tracking-wide text-text-secondary"
+              aria-live="polite"
+            >
+              Step {safeIdx + 1} of {steps.length}
+              {remainingSeconds > 0 ? ` · about ${remainingSeconds}s left` : " · opening your report"}
             </p>
           </div>
         </div>

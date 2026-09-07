@@ -96,13 +96,13 @@ export function InterviewReadinessCard({
   return (
     <div
       className={cn(
-        "flex w-full flex-col gap-2.5 rounded-[20px] border-[0.5px] border-solid border-[#dde7e9]",
+        "flex w-full flex-col gap-2.5 rounded-[20px] border-[0.5px] border-solid border-border",
         "px-6 py-4 backdrop-blur-[42px]",
-        "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+        "bg-[linear-gradient(114.96deg,var(--glass-from)_0%,var(--glass-to)_98.96%)]",
         className,
       )}
     >
-      <div className="flex w-full items-center justify-between gap-4 py-4">
+      <div className="flex w-full flex-wrap items-center justify-between gap-4 py-4">
         <div className="flex min-w-0 flex-1 items-baseline gap-2">
           <div className="flex shrink-0 items-baseline gap-1 font-gilroy whitespace-nowrap">
             <span
@@ -113,7 +113,7 @@ export function InterviewReadinessCard({
             >
               {overallText}
             </span>
-            <span className="cap-baseline text-[48px] font-normal leading-none tracking-[-2.4px] text-[#abadb2]">
+            <span className="cap-baseline text-[48px] font-normal leading-none tracking-[-2.4px] text-text-secondary/60">
               /{READINESS_MAX}
             </span>
           </div>
@@ -161,7 +161,7 @@ export function InterviewReadinessCard({
                 >
                   {displayScore != null ? displayScore.toFixed(1) : "—"}
                 </span>
-                <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2]">
+                <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-text-secondary/60">
                   /{READINESS_MAX}
                 </span>
               </div>

@@ -34,6 +34,7 @@ import { AiProgressStatus } from "@/components/onboarding/AiProgressStatus";
 import { WelcomeAmbience } from "@/components/onboarding/WelcomeAmbience";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 import { SelectionChip } from "@/components/ui/selection-chip";
@@ -1664,28 +1665,60 @@ function OnboardingAgentInner({
 
                 {stage === "targetRole" ? (
                   /* Forty roles across four seniority bands. Shown flat they
-                     would be a wall; the band row above narrows it to ten at a
+                     would be a wall; the band control narrows it to ten at a
                      time, which is a list you read rather than search. The
                      bands are a FILTER, not an answer — nothing is recorded by
-                     switching one, so there is no wrong turn to undo. */
-                  <div className="mt-8 flex w-full flex-col gap-4">
+                     switching one, so there is no wrong turn to undo.
+
+                     The bands are a segmented control, not chips. Rendered as
+                     SelectionChips they sat in the same row language as the
+                     roles beneath them and read as four more answers; users
+                     picked one and waited. A tab list says "this switches the
+                     list below", has its own label, and the list's label names
+                     the band it is showing so the relationship is stated twice. */
+                  <div className="mt-8 flex w-full flex-col gap-5">
+                    <div className="flex flex-col gap-2">
+                      <div className="text-body-sm font-semibold text-text-secondary">
+                        Career level
+                      </div>
+                      <Tabs
+                        value={roleBand}
+                        onValueChange={(value) => setRoleBand(value as RoleBandId)}
+                      >
+                        {/* Styled in the SelectionChip language (same tokens: chip
+                            surface + stroke, teal label, filled primary when
+                            active) so the control belongs to this screen — but
+                            kept as ONE grouped track so it still reads as a
+                            switch for the list below, not four more answers. */}
+                        <TabsList
+                          aria-label="Career level"
+                          className="h-auto max-w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-full border border-chip-border bg-chip-surface p-1 backdrop-blur-[9px] [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden"
+                        >
+                          {ROLE_BANDS.map((band) => (
+                            <TabsTrigger
+                              key={band.id}
+                              value={band.id}
+                              className={cn(
+                                "h-8 flex-none rounded-full border-transparent px-4 text-[15px] font-medium leading-none",
+                                "text-extended-cyan hover:bg-extended-light-cyan hover:text-extended-blue dark:text-extended-cyan",
+                                "data-[state=active]:border-brand-200 data-[state=active]:bg-primary data-[state=active]:text-brand-1000 data-[state=active]:shadow-none",
+                                "dark:data-[state=active]:border-brand-200 dark:data-[state=active]:bg-primary dark:data-[state=active]:text-brand-1000",
+                              )}
+                            >
+                              {band.label}
+                            </TabsTrigger>
+                          ))}
+                        </TabsList>
+                      </Tabs>
+                    </div>
+
                     <div className="flex flex-col gap-2">
                       <div className="text-body-sm font-semibold text-text-secondary">
                         Suggested roles
+                        <span className="font-normal">
+                          {" "}· {ROLE_BANDS.find((b) => b.id === roleBand)?.label}
+                        </span>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {ROLE_BANDS.map((band) => (
-                          <SelectionChip
-                            key={band.id}
-                            selected={band.id === roleBand}
-                            onClick={() => setRoleBand(band.id)}
-                          >
-                            {band.label}
-                          </SelectionChip>
-                        ))}
-                      </div>
-                    </div>
-
                     <div className="flex flex-wrap gap-2">
                       {targetRoleChips.map((label) => (
                         <SelectionChip
@@ -1705,6 +1738,7 @@ function OnboardingAgentInner({
                       <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
                         Enter your own role below ↓
                       </span>
+                    </div>
                     </div>
                   </div>
                 ) : null}

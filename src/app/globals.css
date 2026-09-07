@@ -1188,7 +1188,7 @@
 /* Report-loading overlay — explicit classes so motion isn't lost to
    utility/cascade conflicts (`.app-canvas` forces `position: relative`). */
 .report-loading-overlay {
-  background-color: #ffffff;
+  background-color: var(--app-ground);
 }
 
 .report-loading-blob {

@@ -4,6 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { IconButton } from "@/components/ui/icon-button";
 import { ReportGeneratingOverlay } from "@/components/interview/ReportGeneratingOverlay";
 import { cn } from "@/components/cn";
@@ -413,18 +421,18 @@ function buildMockReport(args: {
     overallStatus: readinessForScore(overallScore),
     overallBand: bandForScore(overallScore),
     headline: firstStart
-      ? `Baseline set across pillars (${overallScore.toFixed(1)}/5). Biggest lift: sharper outcomes and CAR structure.`
-      : `Strongest: ${strongest.shortTitle}. Biggest opportunity: ${weakest.shortTitle}.`,
+      ? `Baseline set at ${overallScore.toFixed(1)} — ${weakest.shortTitle} is holding your score back.`
+      : `Strong in ${strongest.shortTitle} — ${weakest.shortTitle} is holding your score back.`,
     summary: firstStart
-      ? "Finishing your first mock is the hardest step. You now have a baseline to build from. Scores sit around 2.4, which is normal early on: focus next on one clear metric per story and a tight Context → Action → Result flow."
-      : "Your strongest moments were when you aligned people quickly and communicated trade-offs clearly. The main gap is turning actions into measurable outcomes and using tighter CAR structure to keep answers crisp. With a few targeted rewrites, your delivery can feel more decisive and metric-driven.",
+      ? `Your answers were easy to follow but stopped short of a result: you described what happened, not what you specifically decided and what it changed. Where you're losing points is ${weakest.shortTitle}. Add one metric per answer and lead with the decision — that is where the next half-point is.`
+      : `Your ${strongest.shortTitle} answers showed real evidence, with clear alignment and trade-offs stated out loud. Where you're losing points is ${weakest.shortTitle} — your answers described what happened but not what you specifically decided and why. Fix that and your score moves up a band.`,
     drivers,
     narrative: {
       title: "What AI Coach saw in your session",
-      subtitle: firstStart ? "First session baseline" : "Strengths, gaps, and how you showed up",
+      subtitle: "Summary of strengths, gaps, and how you showed up.",
       paragraph: firstStart
-        ? "This first run establishes how you structure answers today. Expect scores to cluster until you add sharper metrics and more explicit trade-offs. Small reps on CAR and outcomes will move the needle fastest."
-        : "You came across as collaborative and calm under pressure, which boosted your People score. Your Action and Mastery scores dipped when results weren’t quantified or when the “why” behind choices wasn’t explicit. The biggest lift will come from adding one concrete metric and leading with a clear decision statement.",
+        ? "You structure answers clearly enough to follow, but they stop before the result: outcomes are described rather than measured, and decisions are attributed to the team rather than to you. Expect scores to cluster until every answer carries one metric and one explicit trade-off."
+        : `You came across as collaborative and calm under pressure, which is why ${strongest.shortTitle} scored highest. ${weakest.shortTitle} dipped wherever a result wasn’t quantified or the reasoning behind a choice wasn’t stated. The biggest lift is one concrete metric and a clear decision statement in every answer.`,
     },
     highlightChips: {
       strongest: "Q3 · Stakeholder alignment · 3.8/5",
@@ -543,6 +551,7 @@ export function InterviewLiveScreen() {
       session.prefs.cameraEnabled !== false,
   );
   const [isEnding, setIsEnding] = useState(false);
+  const [confirmEndOpen, setConfirmEndOpen] = useState(false);
   const [reportStepIdx, setReportStepIdx] = useState(0);
 
   const startedAtRef = useRef<number | null>(null);
@@ -762,10 +771,7 @@ export function InterviewLiveScreen() {
 
             <Button
               variant="destructive"
-              onClick={() => {
-                setReportStepIdx(0);
-                setIsEnding(true);
-              }}
+              onClick={() => setConfirmEndOpen(true)}
               disabled={isEnding}
               className="rounded-full px-6"
             >
@@ -775,8 +781,41 @@ export function InterviewLiveScreen() {
         </div>
       </div>
 
+      {/* One click on "End" used to close a 30-minute session and start the
+          report with no way back. Ending is the one irreversible action on
+          this screen, so it asks — and says what happens next and how long it
+          takes. */}
+      <Dialog open={confirmEndOpen} onOpenChange={setConfirmEndOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>End the session?</DialogTitle>
+            <DialogDescription>
+              You have {formatTimer(secondsLeft)} left. Ending now closes the interview and generates
+              your report — that takes about{" "}
+              {Math.round((reportSteps.length * REPORT_STEP_MS) / 1000)} seconds.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirmEndOpen(false)}>
+              Keep going
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                setConfirmEndOpen(false);
+                setReportStepIdx(0);
+                setIsEnding(true);
+              }}
+            >
+              End &amp; generate report
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {isEnding ? (
-        <ReportGeneratingOverlay stepIdx={reportStepIdx} steps={reportSteps} />
+        <ReportGeneratingOverlay stepIdx={reportStepIdx} steps={reportSteps} stepMs={REPORT_STEP_MS} />
       ) : null}
     </div>
   );
