@@ -142,6 +142,7 @@
      inherit the same canvas without setting a local bg. */
   --app-bg: var(--background);
   --app-fg: var(--foreground);
+
 }
 
 /* ==========================================================
