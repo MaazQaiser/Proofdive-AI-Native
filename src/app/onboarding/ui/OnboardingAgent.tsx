@@ -2143,7 +2143,9 @@ function JourneyNode({
         className={cn(
           "group grid grid-cols-[auto_1fr_auto] items-center gap-x-4 rounded-lg px-2 -mx-2 transition-colors",
           "hover:bg-brand-1000/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
-          isLast ? "py-3.5" : "pt-3.5 pb-9",
+          // Same padding on every row, last one included: the steps are peers,
+          // and a shorter final row read as a different kind of item.
+          "pt-3.5 pb-9",
         )}
       >
         {/* Every node looks the same: the path is a sequence, not a ranking,
@@ -2159,7 +2161,12 @@ function JourneyNode({
           <Icon className="size-4" />
         </span>
 
-        <span className="flex min-w-0 flex-col gap-1">
+        {/* Capped rather than left to fill the 1fr track: unbounded, the copy
+            ran to within ~24px of the CTA label, so the two read as one
+            crowded block. 28rem also lands the description at ~65 characters
+            a line, the top of the comfortable measure — and the cap is inert
+            below ~1200px, where the track is already narrower. */}
+        <span className="flex min-w-0 max-w-[28rem] flex-col gap-1">
           {/* Title and its badge share a line: "Start here" qualifies the step,
               so it belongs beside the name rather than floating above it. */}
           <span className="flex flex-wrap items-center gap-2">
@@ -2200,7 +2207,11 @@ function SessionContract({
     <>
       <div
         className={cn(
-          "mt-6 w-full rounded-xl border-[0.5px] border-solid border-border px-4 pb-3 pt-4",
+          // pb matches pt: the row padding is inside each row's hover surface, so a
+          // card with no bottom padding let the last row's tint run flush into the
+          // border. 16px also lands the space under the last step at 52px, next to
+          // the 50px that separates one step from the next.
+          "mt-6 w-full rounded-xl border-[0.5px] border-solid border-border px-4 pb-4 pt-4",
           "bg-[linear-gradient(121.89deg,var(--glass-from)_0%,var(--glass-to)_98.96%)]",
         )}
       >
