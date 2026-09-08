@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, ChevronLeft, Sparkles } from "lucide-react";
+import { ArrowUpRight, ChevronLeft } from "lucide-react";
+
+import { LogoMark } from "@/components/ui/logo";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -83,7 +85,7 @@ function AssistantText({ children }: { children: ReactNode }) {
         className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-brand-1000 text-primary"
         aria-hidden
       >
-        <Sparkles className="size-3.5" strokeWidth={2} />
+        <LogoMark className="size-3.5" />
       </span>
       <p className="min-w-0 flex-1 whitespace-pre-wrap pt-1 text-left text-body leading-7 text-text-primary [word-break:break-word]">
         {children}

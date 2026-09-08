@@ -6,6 +6,7 @@ import { flushSync } from "react-dom";
 
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
+import { LogoMark } from "@/components/ui/logo";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/components/cn";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
@@ -40,7 +41,6 @@ import {
   PersonStanding,
   Podium,
   RotateCcw,
-  Sparkles,
   SpellCheck,
   Tag,
   TrendingDown,
@@ -152,7 +152,7 @@ const CAR_STEPS = ["Context", "Action", "Result"] as const;
 
 const FALLBACK_IMPROVEMENT_ICONS: LucideIcon[] = [
   Lightbulb,
-  Sparkles,
+  Tag,
   ListTree,
   ChartNoAxesColumn,
 ];
@@ -170,7 +170,8 @@ function PanelLabel({
   children,
   hint,
 }: {
-  icon: LucideIcon;
+  /** A Lucide icon or `LogoMark` — anything that takes a className. */
+  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   children: string;
   /** One-line explainer after the label, e.g. "What you said". */
   hint?: string;
@@ -452,7 +453,7 @@ function QuestionRow({
                 </blockquote>
               </div>
               <div className="min-w-0">
-                <PanelLabel icon={Sparkles}>Areas for improvement</PanelLabel>
+                <PanelLabel icon={LogoMark}>Areas for improvement</PanelLabel>
                 <div className="mt-3 overflow-hidden rounded-lg border border-border bg-card">
                   <div className="divide-y divide-border">
                     {q.improvements.map((imp, index) => {
@@ -689,7 +690,7 @@ export function ReportDetailScreen({ reportId }: Props) {
         {showNudge ? (
           <div className="mb-4 flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
             <div className="flex min-w-0 items-start gap-3">
-              <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <LogoMark className="mt-0.5 size-4 text-primary" />
               <div className="min-w-0">
                 <p className="text-caption font-semibold text-text-primary">
                   Get more from your interview prep
@@ -722,7 +723,6 @@ export function ReportDetailScreen({ reportId }: Props) {
                 href={`/report/${encodeURIComponent(reportId)}/v2`}
                 className="app-link inline-flex items-center gap-1"
               >
-                <Sparkles className="size-3.5" aria-hidden />
                 Preview redesigned report
               </Link>
               <span aria-hidden className="text-text-secondary/60">·</span>
@@ -1289,7 +1289,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                                   "text-overline leading-[18px] font-medium text-primary-foreground",
                                 )}
                               >
-                                <Sparkles className="size-3.5 shrink-0" aria-hidden />
+                                <LogoMark className="size-3.5" />
                                 Featured
                               </span>
                             ) : null}

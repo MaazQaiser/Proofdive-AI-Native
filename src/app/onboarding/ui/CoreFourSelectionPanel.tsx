@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { ArrowRight, Check, Sparkles } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
+
+import { LogoMark } from "@/components/ui/logo";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -165,7 +167,7 @@ export function CoreFourSelectionPanel({
                         ) : null}
                         {isSuggested ? (
                           <Badge className="shrink-0">
-                            <Sparkles aria-hidden />
+                            <LogoMark className="size-3" />
                             Recommended
                           </Badge>
                         ) : null}

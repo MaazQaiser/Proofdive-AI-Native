@@ -59,5 +59,41 @@ function Logo({
   );
 }
 
-export { Logo, LOGO_SIZE_VAR };
+/**
+ * ProofDive mark — the four-block monogram on its own, square.
+ *
+ * Same mask technique as `Logo`, so it takes the surrounding text colour.
+ * Size comes from the className (`size-3`, `size-4` …), the way a Lucide
+ * icon is sized, because it is used in exactly those slots: the product's
+ * "this came from ProofDive" marker in badges, provenance headers and the
+ * assistant avatar — where a generic sparkles glyph used to say "AI".
+ * Decorative by default (`aria-hidden`); the label next to it carries the
+ * meaning.
+ */
+function LogoMark({
+  className,
+  ...props
+}: Omit<React.ComponentProps<"span">, "children">) {
+  return (
+    <span
+      aria-hidden="true"
+      data-slot="logo-mark"
+      className={cn("inline-block size-4 shrink-0", className)}
+      style={{
+        backgroundColor: "currentColor",
+        maskImage: "url(/brand/logo-mark.svg)",
+        WebkitMaskImage: "url(/brand/logo-mark.svg)",
+        maskRepeat: "no-repeat",
+        WebkitMaskRepeat: "no-repeat",
+        maskPosition: "center",
+        WebkitMaskPosition: "center",
+        maskSize: "contain",
+        WebkitMaskSize: "contain",
+      }}
+      {...props}
+    />
+  );
+}
+
+export { Logo, LogoMark, LOGO_SIZE_VAR };
 export type { LogoSize };

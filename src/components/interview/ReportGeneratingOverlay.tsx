@@ -1,124 +1,104 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
+import { TypingText } from "@/components/TypingText";
+import { AiProgressStatus } from "@/components/onboarding/AiProgressStatus";
 import { Logo } from "@/components/ui/logo";
-import { LogoFillProgress } from "@/components/ui/logo-fill-progress";
-import { cn } from "@/lib/utils";
 
-const BLOBS = [
-  {
-    src: "/brand/report-loading/blob-1.png",
-    className: "report-loading-blob report-loading-blob--a left-[-22%] top-[-18%]",
-  },
-  {
-    src: "/brand/report-loading/blob-2.png",
-    className: "report-loading-blob report-loading-blob--b bottom-[-24%] right-[-20%]",
-  },
-  {
-    src: "/brand/report-loading/blob-3.png",
-    className: "report-loading-blob report-loading-blob--c left-[22%] top-[28%]",
-  },
-] as const;
-
-const STEP_SUBTEXT: Record<string, string> = {
-  "Parsing answers": "Reading your transcript and lining up each response.",
-  "Mapping competencies":
-    "Mapping each answer to competencies and extracting the strongest proof points.",
-  "Scoring strengths & gaps": "Scoring where you showed strength — and where the gaps are.",
-  "Generating next actions": "Turning the gaps into clear, coachable next actions.",
-  "Finalizing report": "Putting the finishing touches on your interview report.",
-};
+const subscribeNoop = () => () => {};
 
 type Props = {
   stepIdx: number;
   steps: readonly string[];
-  /** How long each step takes — lets the overlay say how long is left. */
+  /** How long each step takes — lets the caption say how long is left. */
   stepMs?: number;
+  /** Names the session in the subtitle ("Reading your Financial Analyst session…"). */
+  roleTitle?: string;
 };
 
-export function ReportGeneratingOverlay({ stepIdx, steps, stepMs = 3_000 }: Props) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+/**
+ * The wait between "End session" and the report.
+ *
+ * Same shape as the onboarding waits (resume parse, JD draft, Core Four):
+ * the flow's agent heading, then `AiProgressStatus` — a named step list, a
+ * determinate bar and an honest caption — in the same left-set column on the
+ * plain app ground. This used to be its own thing (a centred hero with a
+ * gradient headline, a filling logo and drifting blobs), which meant the
+ * product's most anxious wait was also the one that looked least like the
+ * rest of it. One loading language, so the user already knows how to read
+ * this screen by the time they reach it.
+ *
+ * The step list is owned by the caller (InterviewLiveScreen) and must name
+ * what report generation actually does — same rule as every other
+ * AiProgressStatus.
+ */
+export function ReportGeneratingOverlay({
+  stepIdx,
+  steps,
+  stepMs = 3_000,
+  roleTitle,
+}: Props) {
+  // Portal target exists only on the client; this is the hydration-safe way
+  // to know that without a setState-in-effect.
+  const mounted = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
 
   const safeIdx = Math.min(Math.max(stepIdx, 0), Math.max(steps.length - 1, 0));
-  const status = steps[safeIdx] ?? "Generating your report…";
-  const subtext =
-    STEP_SUBTEXT[status] ??
-    "Mapping each answer to competencies and extracting the strongest proof points.";
-  const progress =
-    steps.length === 0 ? 0 : (Math.min(stepIdx, steps.length) / steps.length) * 100;
   const remainingSeconds = Math.ceil(
     ((steps.length - Math.min(stepIdx, steps.length)) * stepMs) / 1000,
   );
 
   if (!mounted) return null;
 
+  const role = roleTitle?.trim();
+
   return createPortal(
     <div
-      className="report-loading-overlay fixed inset-0 z-[200] h-dvh w-screen overflow-hidden text-foreground"
-      role="status"
+      className="report-loading-overlay fixed inset-0 z-[200] h-dvh w-screen overflow-y-auto text-foreground"
       aria-busy="true"
     >
-      {/* A brand wash into transparency, so it sits on the page ground in both
-          themes; the old wash faded to opaque white and the blur motif was a
-          light-only asset, both of which the app canvas has since dropped. */}
-      <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-20"
-        style={{
-          backgroundImage:
-            "linear-gradient(to top right, rgb(14 154 181 / 0.3) 0%, transparent 100%)",
-        }}
-        aria-hidden
-      />
-
-      <div className="pointer-events-none absolute inset-0 z-[1]" aria-hidden>
-        {BLOBS.map((blob) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img key={blob.src} src={blob.src} alt="" className={cn(blob.className)} />
-        ))}
-      </div>
-
-      <div className="relative z-[2] flex h-full w-full flex-col px-6 py-10">
+      <div className="flex min-h-full w-full flex-col px-6 py-10">
         <div className="flex shrink-0 items-center">
           <Logo size="xxs" className="text-primary" />
         </div>
 
-        <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4">
-          <LogoFillProgress progress={progress} aria-label="Report generation progress" />
+        {/* Same column as the onboarding steps: left-set, capped, vertically
+            centred so the heading lands where the flow's questions do. */}
+        <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center py-16">
+          <p className="text-overline font-medium uppercase tracking-wide text-text-secondary">
+            Session complete
+          </p>
+          <h1 className="mt-3 text-agent-heading text-extended-blue">
+            <TypingText
+              key="report-generating"
+              text="Drafting your interview report…"
+              mode="word"
+              cursor={false}
+              startDelayMs={200}
+            />
+          </h1>
 
-          <div className="flex max-w-3xl flex-col items-center gap-3 text-center">
-            <h1
-              key={`heading-${status}`}
-              aria-live="polite"
-              className={cn(
-                "text-h1",
-                "bg-gradient-to-r from-extended-blue via-brand-100 to-extended-cyan bg-clip-text text-transparent",
-                "report-loading-heading",
-              )}
-            >
-              {status}…
-            </h1>
-            <p
-              key={`sub-${status}`}
-              className={cn(
-                "text-agent-question max-w-2xl text-text-secondary",
-                "report-loading-subtext",
-              )}
-            >
-              {subtext}
-            </p>
-            {/* Where we are and how long is left — the two things a wait has to
-                say for the user to feel held rather than stuck. */}
-            <p
-              className="text-overline font-medium uppercase tracking-wide text-text-secondary"
-              aria-live="polite"
-            >
-              Step {safeIdx + 1} of {steps.length}
-              {remainingSeconds > 0 ? ` · about ${remainingSeconds}s left` : " · opening your report"}
-            </p>
-          </div>
+          <AiProgressStatus
+            className="mt-10 max-w-[30rem]"
+            ariaLabel="Drafting your interview report"
+            subtitle={
+              role
+                ? `Reading your ${role} session, one answer at a time.`
+                : "Reading your session, one answer at a time."
+            }
+            steps={steps}
+            activeIndex={safeIdx}
+            caption={
+              remainingSeconds > 0
+                ? `About ${remainingSeconds}s left — you'll see the full report next, with what to work on first.`
+                : "Opening your report…"
+            }
+          />
         </div>
       </div>
     </div>,

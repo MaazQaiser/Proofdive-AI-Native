@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+
+import { LogoMark } from "@/components/ui/logo";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -182,7 +184,7 @@ export function AssessmentPlanPanel({
                           // does. It also matches the voice the add-competency
                           // panel already uses ("Why we suggested …").
                           <Badge>
-                            <Sparkles aria-hidden />
+                            <LogoMark className="size-3" />
                             Consultant Pick
                           </Badge>
                         ) : null}

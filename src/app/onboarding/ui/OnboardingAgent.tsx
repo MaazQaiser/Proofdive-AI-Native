@@ -20,7 +20,6 @@ import {
   MessageCircleQuestion,
   Mic,
   PauseCircle,
-  Sparkles,
   UserCheck,
   X,
   type LucideIcon,
@@ -36,8 +35,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/ui/logo";
-import { SelectionChip } from "@/components/ui/selection-chip";
+import { Logo, LogoMark } from "@/components/ui/logo";
+import { SelectionChip, selectionChipVariants } from "@/components/ui/selection-chip";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
 import {
   AssessmentPlanPanel,
@@ -536,6 +535,9 @@ function OnboardingAgentInner({
     isEditMode ? (roleProfile?.industryVertical ?? "") : "",
   );
   const [industrySkipped, setIndustrySkipped] = useState(false);
+  /** Step 1 skipped outright (no resume, no questions) — Back from the role
+   *  step then returns here instead of to the last manual question. */
+  const [bgSkipped, setBgSkipped] = useState(false);
   const timersRef = useRef<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -629,6 +631,14 @@ function OnboardingAgentInner({
       resume: parseFile ? `📎 ${parseFile.name}` : next.resume,
     };
     setDraft(next);
+    setBgSkipped(false);
+    setStage("targetRole");
+  }
+
+  /** Skip step 1 entirely. Role, industry and JD still get asked; the
+   *  storyboard simply starts without resume-derived anchors. */
+  function skipBackground() {
+    setBgSkipped(true);
     setStage("targetRole");
   }
 
@@ -979,7 +989,8 @@ function OnboardingAgentInner({
         return "bgExp";
       case "targetRole":
         if (isNewRoleMode) return null;
-        return parsed ? "bgConfirm" : "bgInterests";
+        if (parsed) return "bgConfirm";
+        return bgSkipped ? "bgEntry" : "bgInterests";
       case "targetIndustry":
         return "targetRole";
       case "targetJd":
@@ -1527,22 +1538,28 @@ function OnboardingAgentInner({
                   </div>
                 )}
 
-                {/* No resume, no substitute questionnaire: the only alternative
-                    is to skip, using the same chip control the flow's other
-                    optional question uses. */}
+                {/* No resume: two honest alternatives, in the flow's chip
+                    control. The first swaps one long input for three short
+                    questions and says so (a chip labelled "Skip" that opens a
+                    questionnaire is a trapdoor); the second really does skip
+                    — straight to the role step, nothing asked. */}
                 {stage === "bgEntry" ? (
                   <div className="mt-8 flex flex-col gap-2">
                     <span className="text-body-sm font-semibold text-text-secondary">
                       No resume?
                     </span>
                     <div className="flex flex-wrap gap-2">
-                      {/* Not "Skip" any more: this path no longer skips
-                          anything, it swaps one long input for three short
-                          questions. Saying so up front is what keeps the
-                          choice honest — a chip labelled "Skip" that opens a
-                          questionnaire is a trapdoor. */}
-                      <SelectionChip onClick={() => setStage("bgStudy")}>
+                      <SelectionChip
+                        onClick={() => {
+                          setBgSkipped(false);
+                          setStage("bgStudy");
+                        }}
+                      >
                         Answer 3 quick questions instead
+                      </SelectionChip>
+                      <SelectionChip onClick={skipBackground}>
+                        Skip this step
+                        <ArrowRight className="size-4" aria-hidden />
                       </SelectionChip>
                     </div>
                   </div>
@@ -1568,7 +1585,7 @@ function OnboardingAgentInner({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setStage("targetRole")}
+                      onClick={skipBackground}
                       className="rounded-xl border border-border bg-card p-5 text-left transition hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                     >
                       <span className="block text-h5 font-medium text-foreground">
@@ -1648,18 +1665,10 @@ function OnboardingAgentInner({
 
                 {stage === "targetIndustry" ? (
                   <ManualQuestion
-                    chipsLabel="Optional: pick one or skip"
+                    chipsLabel="Pick one, or type your own below"
                     chips={INDUSTRY_OPTIONS}
                     selectedLabel={industrySkipped ? "" : manualIndustry}
                     onPick={(label) => chooseIndustry(label, false)}
-                    trailing={
-                      <SelectionChip
-                        selected={industrySkipped}
-                        onClick={() => chooseIndustry("", true)}
-                      >
-                        Skip
-                      </SelectionChip>
-                    }
                   />
                 ) : null}
 
@@ -1692,7 +1701,7 @@ function OnboardingAgentInner({
                             switch for the list below, not four more answers. */}
                         <TabsList
                           aria-label="Career level"
-                          className="h-auto max-w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-full border border-chip-border bg-chip-surface p-1 backdrop-blur-[9px] [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden"
+                          className="h-auto max-w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-full bg-chip-surface p-1 backdrop-blur-[9px] [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden"
                         >
                           {ROLE_BANDS.map((band) => (
                             <TabsTrigger
@@ -1701,8 +1710,8 @@ function OnboardingAgentInner({
                               className={cn(
                                 "h-8 flex-none rounded-full border-transparent px-4 text-[15px] font-medium leading-none",
                                 "text-extended-cyan hover:bg-extended-light-cyan hover:text-extended-blue dark:text-extended-cyan",
-                                "data-[state=active]:border-brand-200 data-[state=active]:bg-primary data-[state=active]:text-brand-1000 data-[state=active]:shadow-none",
-                                "dark:data-[state=active]:border-brand-200 dark:data-[state=active]:bg-primary dark:data-[state=active]:text-brand-1000",
+                                "data-[state=active]:bg-primary data-[state=active]:text-brand-1000 data-[state=active]:shadow-none",
+                                "dark:data-[state=active]:bg-primary dark:data-[state=active]:text-brand-1000",
                               )}
                             >
                               {band.label}
@@ -2258,7 +2267,7 @@ function SessionContract({
               naming the machine labels nothing, and the product does not
               introduce an "AI coach" persona anywhere else. */}
           <span className="flex shrink-0 items-center gap-1.5 text-overline font-medium uppercase tracking-wide text-text-secondary">
-            <Sparkles className="size-3 text-primary" aria-hidden />
+            <LogoMark className="size-3 text-primary" />
             Your preparation plan
           </span>
           <span aria-hidden className="h-px flex-1 border-t border-dashed border-border" />
@@ -2288,16 +2297,23 @@ function SessionContract({
         ))}
       </ul>
 
-      <p className="mt-6 text-agent-question text-text-primary">
-        Want to look around first?{" "}
-        <Link
-          href={homeHref}
-          className="app-link inline-flex items-center gap-1 font-medium"
-        >
-          Go to home
-          <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />
-        </Link>
-      </p>
+      {/* Same label-plus-chip shape as "No resume?" and "Don't have the
+          posting?": an inline text link read as prose here, not as a way
+          out, so the exit is a chip like every other optional move in the
+          flow. It is a Link wearing the chip's classes rather than a button
+          that pushes a route, so it stays a real anchor (open in new tab,
+          hover URL, middle-click). */}
+      <div className="mt-6 flex flex-col gap-2">
+        <span className="text-body-sm font-semibold text-text-secondary">
+          Want to look around first?
+        </span>
+        <div className="flex flex-wrap gap-2">
+          <Link href={homeHref} className={cn(selectionChipVariants())}>
+            Go to home
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </div>
+      </div>
     </>
   );
 }

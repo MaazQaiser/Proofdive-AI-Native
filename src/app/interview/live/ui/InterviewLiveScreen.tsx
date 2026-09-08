@@ -565,12 +565,15 @@ export function InterviewLiveScreen() {
     return () => window.clearInterval(t);
   }, [totalSeconds]);
 
+  /* Named the way the onboarding waits name their steps — a sentence about
+     the work, not a label — because the overlay now renders them in the same
+     AiProgressStatus list. Each one is a stage of building the report. */
   const reportSteps = [
-    "Parsing answers",
-    "Mapping competencies",
-    "Scoring strengths & gaps",
-    "Generating next actions",
-    "Finalizing report",
+    "Reading your answers",
+    "Mapping answers to competencies",
+    "Scoring strengths and gaps",
+    "Writing your next actions",
+    "Assembling the report",
   ] as const;
   /** Demo pacing — full progress sequence lasts at least 15s. */
   const REPORT_STEP_MS = 3_000;
@@ -815,7 +818,12 @@ export function InterviewLiveScreen() {
       </Dialog>
 
       {isEnding ? (
-        <ReportGeneratingOverlay stepIdx={reportStepIdx} steps={reportSteps} stepMs={REPORT_STEP_MS} />
+        <ReportGeneratingOverlay
+          stepIdx={reportStepIdx}
+          steps={reportSteps}
+          stepMs={REPORT_STEP_MS}
+          roleTitle={role}
+        />
       ) : null}
     </div>
   );

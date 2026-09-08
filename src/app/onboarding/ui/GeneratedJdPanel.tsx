@@ -6,9 +6,10 @@ import {
   Check,
   ClipboardPaste,
   RefreshCcw,
-  Sparkles,
   SquarePen,
 } from "lucide-react";
+
+import { LogoMark } from "@/components/ui/logo";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -144,7 +145,7 @@ export function GeneratedJdPanel({
             aria-hidden
             className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-1000 text-primary"
           >
-            <Sparkles className="size-4.5" />
+            <LogoMark className="size-4.5" />
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">

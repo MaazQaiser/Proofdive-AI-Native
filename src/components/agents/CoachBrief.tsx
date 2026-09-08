@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
  * it does.
  *
  * THE SPACING IS AUTHORED AS A GROUP, not per element: 20px above the badge,
- * 10px badge-to-sentence (the badge is 24px and the sentence sets on 24px
+ * 10px badge-to-sentence (the badge is 28px and the sentence sets on 28px
  * leading, so 10px reads as one unit rather than two stacked ones), 20px
  * sentence-to-rule, then 32px rule-to-question. The rule sits closer to the
  * text it belongs to than to the question beneath it, which is what makes it
@@ -51,11 +51,11 @@ import { cn } from "@/lib/utils";
  * takes another line rather than running the full column width.
  *
  * WHY IT DOESN'T OUT-RANK THE QUESTION. Rank is scale, ink and weight, and
- * the brief concedes all three: 16px against the question's 40px, regular
+ * the brief concedes all three: 18px against the question's 40px, regular
  * against its medium, and `--text-primary/80` (10.11:1 light / 10.63:1 dark)
  * against the question's `--extended-blue` at 5.24:1 / 11.37:1. The brief is
  * the higher number in light — a neutral ink always will be against a
- * saturated one — but at 2.5x the size and in the brand hue the question is
+ * saturated one — but at 2.2x the size and in the brand hue the question is
  * unmistakably the louder of the two.
  *
  * MOTION IS ON THE SENTENCE, NOT THE BLOCK. The `key` is on the `<p>` and it is
@@ -73,7 +73,7 @@ export function CoachBrief({
 }) {
   return (
     <aside
-      aria-label="AI Coach brief"
+      aria-label="Consultant Bar"
       className={cn(
         "mb-8 flex flex-col border-b border-brand-700 pt-5 pb-5",
         className,
@@ -84,22 +84,20 @@ export function CoachBrief({
           app uses, so the attribution reads as a labelled thing rather than a
           stray small line. `w-fit` comes from Badge itself, so it hugs.
 
-          Name only. "AI Coach" is the product's existing name for this voice,
-          not a new one invented here: CraftingScreen files its generated notes
-          under `AssessmentBlock icon={Bot} title="AI Coach"`, the report says
-          "What AI Coach saw in your session", and ChatComposer's thread header
-          defaults to it. A fifth wording on a fifth screen would read as a
-          different system. ("Consultant" is deliberately not used: it is not
-          user-visible anywhere in the product and implies human provenance.)
+          Named "Consultant Bar" (the client's own name for this block): onboarding already introduces this
+          voice as "your assigned ProofDive Consultant", so the storyboard byline
+          uses the same name rather than the report's "AI Coach". One step up
+          from Badge's default size — 28px, 14px caption text — so the byline
+          holds its own above an 18px sentence instead of reading as a tag on it.
 
           No glyph and no competency tag: the competency is already named in the
           question directly below, in the composer hint, and twice in the rail. */}
-      <Badge>AI Coach</Badge>
+      <Badge className="h-7 px-3 text-caption">Consultant Bar</Badge>
 
       <p
         key={note}
         className={cn(
-          "mt-2.5 max-w-[62ch] text-body-sm leading-6 text-text-primary/80",
+          "mt-2.5 max-w-[62ch] text-body leading-7 text-text-primary/80",
           "motion-safe:animate-coach-brief-settle",
         )}
       >
