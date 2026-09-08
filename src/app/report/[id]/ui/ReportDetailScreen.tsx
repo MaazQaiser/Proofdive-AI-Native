@@ -21,6 +21,7 @@ import {
 import { TranscriptReplay } from "@/components/interview/TranscriptReplay";
 import {
   AudioLines,
+  ArrowDown,
   ArrowUpRight,
   BookOpen,
   Calendar,
@@ -38,6 +39,7 @@ import {
   Lightbulb,
   ListTree,
   MessageSquareQuote,
+  PencilSparkles,
   PersonStanding,
   Podium,
   RotateCcw,
@@ -187,6 +189,42 @@ function PanelLabel({
   );
 }
 
+/**
+ * The spotlight's three labels — Your answer / Coach rewrite / Why this
+ * version is stronger — each with the filled roundel the original report
+ * used (the client asked for those back). Same roundel as `PanelLabel`;
+ * the difference is the two-line text beside it: the V1.2 overline label
+ * with its one-line hint under it, so the comparison keeps "What you said"
+ * against "How it should sound".
+ */
+function SpotlightLabel({
+  icon: Icon,
+  children,
+  hint,
+}: {
+  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  children: string;
+  hint?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+        <Icon className="size-4" aria-hidden />
+      </span>
+      <div className="min-w-0">
+        <div className="text-overline font-medium uppercase tracking-wide text-text-secondary">
+          {children}
+        </div>
+        {/* The hint stays on one line: it gives the label a real minimum
+            width, which is what lets a sibling badge wrap under it. */}
+        {hint ? (
+          <div className="mt-0.5 whitespace-nowrap text-caption text-text-secondary/80">{hint}</div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function useStickySummary(
   sentinelRef: React.RefObject<HTMLElement | null>,
   /** True once the report tree — and so the sentinel — is actually mounted.
@@ -254,14 +292,25 @@ function SectionTitle({
 function MetaChip({
   icon,
   children,
+  size = "sm",
 }: {
   icon: React.ReactNode;
   children: React.ReactNode;
+  /** One tag family, two scales: `md` (32px) for the hero's session facts,
+   *  `sm` (28px) for tags inside rows — both borderless soft pills with a
+   *  brand-teal icon and a 13px label. */
+  size?: "sm" | "md";
 }) {
+  const md = size === "md";
   return (
-    <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-pill-border bg-pill-surface py-0 pl-1 pr-2 text-pill-foreground">
+    <span
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full bg-pill-surface px-3 text-pill-foreground",
+        md ? "h-8" : "h-7",
+      )}
+    >
       {icon}
-      <span className="text-[11px] leading-4 font-medium tracking-[0.5px] text-pill-foreground">
+      <span className="text-[13px] leading-none font-medium text-pill-foreground">
         {children}
       </span>
     </span>
@@ -270,9 +319,124 @@ function MetaChip({
 
 /** Compact score, for a row where the number is a fact beside a name rather
  *  than the headline — the AI Coach card's carried / held-back lists. */
+/**
+ * One half of "What carried your score / What held it back". The verdict
+ * lives in the header tint (scoring green or red) so the two halves read as
+ * good news and bad news before a word is read; inside, the driver row and
+ * the question row are the same shape on both sides so the eye can compare
+ * them one-to-one. The question row names the whole chain — pillar,
+ * competency, then the question in the candidate's own words — because "Q8 ·
+ * Collaboration & Inclusion" on its own told the user neither which pillar
+ * that was nor what was asked.
+ */
+function VerdictPanel({
+  tone,
+  title,
+  driver,
+  driverEyebrow,
+  question,
+  questionEyebrow,
+  questionDriver,
+  cta,
+}: {
+  tone: "carried" | "held";
+  title: string;
+  driver: InterviewReportDriver | null | undefined;
+  driverEyebrow: string;
+  question: InterviewReportQuestion | null | undefined;
+  questionEyebrow: string;
+  questionDriver: InterviewReportDriver | null | undefined;
+  cta: React.ReactNode;
+}) {
+  const carried = tone === "carried";
+  const Icon = carried ? TrendingUp : TrendingDown;
+  return (
+    <article
+      className={cn(
+        "flex flex-col",
+        // Stacked under lg, the second half needs its own top rule.
+        !carried && "border-t border-border lg:border-t-0",
+      )}
+    >
+      <header
+        className={cn(
+          "flex items-center gap-2 border-b px-6 py-2.5 text-caption font-semibold",
+          carried
+            ? "border-scoring-green/20 bg-scoring-green/10 text-scoring-green-fg"
+            : "border-scoring-red/20 bg-scoring-red/10 text-scoring-red-fg",
+        )}
+      >
+        <Icon className="size-4 shrink-0" aria-hidden />
+        {title}
+      </header>
+
+      <div className="flex flex-1 flex-col divide-y divide-border">
+        {driver ? (
+          <div className="flex flex-col gap-2.5 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-1000 text-extended-blue">
+                <SuccessDriverIcon
+                  driver={driver.id as SuccessDriverId}
+                  className="size-4"
+                />
+              </span>
+              <div className="min-w-0">
+                <div className="whitespace-nowrap text-overline font-medium uppercase tracking-wide text-text-secondary">
+                  {driverEyebrow}
+                </div>
+                <div className="truncate text-caption font-semibold text-text-primary">
+                  {driver.fullTitle}
+                </div>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2 pl-11 sm:pl-0">
+              <Badge className={badgeClasses(driver.status)}>{driver.status}</Badge>
+              <ScoreChip score={driver.score} />
+            </div>
+          </div>
+        ) : null}
+
+        {question ? (
+          <div className="flex flex-1 items-start gap-3 px-6 py-4">
+            <QuestionNumber index={question.index} />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="whitespace-nowrap text-overline font-medium uppercase tracking-wide text-text-secondary">
+                  {questionEyebrow}
+                </span>
+                {questionDriver ? (
+                  <span className="inline-flex h-7 max-w-full items-center gap-2 rounded-full bg-pill-surface px-3 text-pill-foreground">
+                    <SuccessDriverIcon
+                      driver={questionDriver.id as SuccessDriverId}
+                      className="size-4 shrink-0 text-primary"
+                    />
+                    <span className="truncate text-[13px] leading-none font-medium">
+                      {questionDriver.shortTitle} · {question.facet}
+                    </span>
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-1.5 line-clamp-2 text-caption leading-6 text-text-primary">
+                “{question.text}”
+              </p>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge className={badgeClasses(question.status)}>{question.status}</Badge>
+                  <ScoreChip score={question.score} />
+                </div>
+                {cta}
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
 function ScoreChip({ score }: { score: number }) {
   return (
-    <span className="inline-flex h-6 shrink-0 items-center gap-0.5 rounded-full border border-border bg-card px-2 text-overline font-medium tabular-nums">
+    <span className="inline-flex h-7 shrink-0 items-center gap-0.5 rounded-full bg-pill-surface px-3 text-[13px] leading-none font-medium tabular-nums">
       <span className={scoreTextClasses(score)}>{score.toFixed(1)}</span>
       <span className="text-text-secondary/60">/5</span>
     </span>
@@ -311,12 +475,15 @@ function DriverRow({
   return (
     <div className="-mx-6 border-t border-extended-green px-6 py-[18px]">
       <div className="flex w-full flex-wrap items-center gap-4">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <SuccessDriverIcon
-            driver={driverId}
-            className="size-4 shrink-0 text-text-primary"
-          />
-          <span className="truncate text-[16px] font-medium tracking-[-0.5px] text-text-primary">
+        {/* The row's identity: the pillar icon on the same 32px brand tile the
+            verdict panels and question rows use, and an 18px semibold title —
+            the row used to open with a 16px glyph and 16px text, which read
+            as a list item rather than a heading for the breakdown under it. */}
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-1000 text-extended-blue">
+            <SuccessDriverIcon driver={driverId} className="size-4" />
+          </span>
+          <span className="truncate text-[18px] font-semibold tracking-[-0.4px] text-text-primary">
             {driver.fullTitle}
           </span>
           <SuccessDriverInfoTip driver={driverId} />
@@ -405,9 +572,9 @@ function QuestionRow({
                     </>
                   }
                 />
-                <span className="inline-flex h-6 items-center gap-1.5 rounded-full border border-pill-border bg-pill-surface py-0 pl-1 pr-2">
-                  <Clock3 className="size-3.5 shrink-0 text-pill-foreground" aria-hidden />
-                  <span className="text-[11px] leading-4 font-medium tracking-[0.5px] tabular-nums text-pill-foreground">
+                <span className="inline-flex h-7 items-center gap-2 rounded-full bg-pill-surface px-3 text-pill-foreground">
+                  <Clock3 className="size-4 shrink-0 text-primary" aria-hidden />
+                  <span className="text-[13px] leading-none font-medium tabular-nums text-pill-foreground">
                     {fmtDuration(q.timeSeconds)}
                     {answerLengthNote(q) ? (
                       <span className="text-scoring-yellow-fg">
@@ -802,16 +969,16 @@ export function ReportDetailScreen({ reportId }: Props) {
             <span className="rounded-sm bg-extended-light-cyan px-1 text-link">{report.meta.roleTitle}</span>
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <MetaChip icon={<ClipboardList className="size-3.5 shrink-0 text-pill-foreground" aria-hidden />}>
+            <MetaChip size="md" icon={<ClipboardList className="size-4 shrink-0 text-primary" aria-hidden />}>
               {sessionTypeLabel(report)}
             </MetaChip>
-            <MetaChip icon={<Calendar className="size-3.5 shrink-0 text-pill-foreground" aria-hidden />}>
+            <MetaChip size="md" icon={<Calendar className="size-4 shrink-0 text-primary" aria-hidden />}>
               {fmtDate(report.meta.createdAt)}
             </MetaChip>
-            <MetaChip icon={<Clock3 className="size-3.5 shrink-0 text-pill-foreground" aria-hidden />}>
+            <MetaChip size="md" icon={<Clock3 className="size-4 shrink-0 text-primary" aria-hidden />}>
               {fmtDuration(report.meta.durationSeconds)}
             </MetaChip>
-            <MetaChip icon={<ListChecks className="size-3.5 shrink-0 text-pill-foreground" aria-hidden />}>
+            <MetaChip size="md" icon={<ListChecks className="size-4 shrink-0 text-primary" aria-hidden />}>
               {report.meta.questionCount} questions
             </MetaChip>
           </div>
@@ -916,94 +1083,72 @@ export function ReportDetailScreen({ reportId }: Props) {
                   {report.narrative.paragraph}
                 </div>
                 {/* Strongest and weakest, driver and answer, each with its score
-                    and a link to the evidence. Derived from the scores, so the
-                    claims can never disagree with the numbers two sections down. */}
-                {/* `bg-card` on purpose: the card's decorative artwork is anchored
-                    bottom-right and would otherwise sit behind the right column's
-                    scores. The block's top rule is a clean line to cut it on. */}
+                    and a way to the evidence. Derived from the scores, so the
+                    claims can never disagree with the numbers two sections down.
+
+                    Two verdict panels, not two lists. Client feedback on the
+                    list version: no hierarchy (which side is good news?), no
+                    context (which pillar was Q8 under?), and links that did not
+                    look clickable. So each panel now carries its verdict in its
+                    own header tint (green / red, the scoring palette), names the
+                    chain pillar → competency → the question itself, and ends in
+                    a real button. */}
+                {/* Full-bleed and split by one divider, not two boxed cards: the
+                    section already sits inside a card, and a border inside a
+                    border read as a container inside a container. The verdict
+                    tint lives in each half's header band; the outer card is
+                    the only frame. `bg-card` also hides the card's artwork,
+                    which is anchored under this block. */}
                 <div className="-mx-6 -mb-6 mt-6 grid border-t border-border bg-card lg:grid-cols-2 lg:divide-x lg:divide-border">
-                  <div className="px-6 py-5">
-                    <div className="flex items-center gap-2 text-caption font-semibold text-scoring-green-fg">
-                      <TrendingUp className="size-4" aria-hidden />
-                      What carried your score
-                    </div>
-                    <ul className="mt-3 flex flex-col gap-3">
-                      {strongestDriver ? (
-                        <li className="flex items-center justify-between gap-3">
-                          <span className="flex min-w-0 items-center gap-2 text-caption text-text-primary">
-                            <SuccessDriverIcon
-                              driver={strongestDriver.id as SuccessDriverId}
-                              className="size-4 shrink-0 text-text-primary"
-                            />
-                            <span className="truncate">
-                              <span className="font-semibold">{strongestDriver.fullTitle}</span>
-                              <span className="text-text-secondary"> — your strongest driver</span>
-                            </span>
-                          </span>
-                          <ScoreChip score={strongestDriver.score} />
-                        </li>
-                      ) : null}
-                      {strongestQuestion ? (
-                        <li className="flex items-center justify-between gap-3">
-                          <span className="min-w-0 truncate text-caption text-text-primary">
-                            <span className="font-semibold">Q{strongestQuestion.index}</span>
-                            <span className="text-text-secondary">
-                              {" "}· {strongestQuestion.facet} — best answer
-                            </span>
-                          </span>
-                          <span className="flex shrink-0 items-center gap-2">
-                            <ScoreChip score={strongestQuestion.score} />
-                            <button
-                              type="button"
-                              onClick={() => revealQuestion(strongestQuestion.id)}
-                              className="app-link text-overline font-medium"
-                            >
-                              See answer
-                            </button>
-                          </span>
-                        </li>
-                      ) : null}
-                    </ul>
-                  </div>
-                  <div className="border-t border-border px-6 py-5 lg:border-t-0">
-                    <div className="flex items-center gap-2 text-caption font-semibold text-scoring-red-fg">
-                      <TrendingDown className="size-4" aria-hidden />
-                      What held it back
-                    </div>
-                    <ul className="mt-3 flex flex-col gap-3">
-                      {weakestDriver ? (
-                        <li className="flex items-center justify-between gap-3">
-                          <span className="flex min-w-0 items-center gap-2 text-caption text-text-primary">
-                            <SuccessDriverIcon
-                              driver={weakestDriver.id as SuccessDriverId}
-                              className="size-4 shrink-0 text-text-primary"
-                            />
-                            <span className="truncate">
-                              <span className="font-semibold">{weakestDriver.fullTitle}</span>
-                              <span className="text-text-secondary"> — your weakest driver</span>
-                            </span>
-                          </span>
-                          <ScoreChip score={weakestDriver.score} />
-                        </li>
-                      ) : null}
-                      {spotlightQuestion ? (
-                        <li className="flex items-center justify-between gap-3">
-                          <span className="min-w-0 truncate text-caption text-text-primary">
-                            <span className="font-semibold">Q{spotlightQuestion.index}</span>
-                            <span className="text-text-secondary">
-                              {" "}· {spotlightQuestion.facet} — weakest answer
-                            </span>
-                          </span>
-                          <span className="flex shrink-0 items-center gap-2">
-                            <ScoreChip score={spotlightQuestion.score} />
-                            <a href="#rewrite" className="app-link text-overline font-medium">
-                              See the rewrite
-                            </a>
-                          </span>
-                        </li>
-                      ) : null}
-                    </ul>
-                  </div>
+                  <VerdictPanel
+                    tone="carried"
+                    title="What carried your score"
+                    driver={strongestDriver}
+                    driverEyebrow="Strongest driver"
+                    question={strongestQuestion}
+                    questionEyebrow="Best answer"
+                    questionDriver={
+                      strongestQuestion
+                        ? report.drivers.find((d) => d.id === strongestQuestion.driver)
+                        : undefined
+                    }
+                    cta={
+                      strongestQuestion ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => revealQuestion(strongestQuestion.id)}
+                        >
+                          See answer
+                          <ArrowDown aria-hidden />
+                        </Button>
+                      ) : null
+                    }
+                  />
+                  <VerdictPanel
+                    tone="held"
+                    title="What held it back"
+                    driver={weakestDriver}
+                    driverEyebrow="Weakest driver"
+                    question={spotlightQuestion}
+                    questionEyebrow="Weakest answer"
+                    questionDriver={
+                      spotlightQuestion
+                        ? report.drivers.find((d) => d.id === spotlightQuestion.driver)
+                        : undefined
+                    }
+                    cta={
+                      spotlightQuestion ? (
+                        <Button asChild variant="outline" size="sm">
+                          <a href="#rewrite">
+                            See the rewrite
+                            <ArrowDown aria-hidden />
+                          </a>
+                        </Button>
+                      ) : null
+                    }
+                  />
                 </div>
               </div>
             </CardContent>
@@ -1062,17 +1207,23 @@ export function ReportDetailScreen({ reportId }: Props) {
         </section>
 
         <section id="rewrite" className="mt-10 scroll-mt-28">
-          <Card className="gap-0 py-0">
+          <Card className="gap-0 overflow-hidden py-0">
             <CardContent className="p-6">
               <SectionTitle
                 title="How to improve your weakest answer"
                 subtitle="Delivery, language, and a sharper version of your highest-priority gap answer."
               />
 
-              {/* Plain surface on purpose: the coach rewrite inside carries the
-                  brand tint, and it can only read as "the one highlighted thing"
-                  if the box around it is not tinted too. */}
-              <div className="mt-6 rounded-lg border border-border bg-card p-5">
+              {/* ONE frame. This used to be a box (the spotlight) inside the card,
+                  holding a bordered pair (the comparison) and three bordered
+                  cards (why stronger), with four more bordered cards below — the
+                  client read it as containers inside containers. Now the card is
+                  the only frame: the comparison and the delivery notes are
+                  full-bleed BANDS cut by hairlines, and the lists are divided,
+                  not boxed. The coach rewrite's brand tint stays the one filled
+                  surface in the section, which is what makes it the thing you
+                  look at. */}
+              <div className="mt-6">
                 <div className="flex items-start gap-3">
                   <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
                     <Podium className="size-4" aria-hidden />
@@ -1087,143 +1238,164 @@ export function ReportDetailScreen({ reportId }: Props) {
                   </div>
                 </div>
 
+                {/* The question, laid out exactly like its row in "Your answers"
+                    (Q tile, tags, the quote, score on the right) so the user
+                    recognises it as the same item they can expand above — one
+                    shape for "a question" across the report. This replaced a
+                    loose stack of pill + badge + score, an "INTERVIEW QUESTION"
+                    overline and the quote, which read as three unrelated bits. */}
                 {spotlightQuestion ? (
-                  <div className="mt-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <SuccessDriverCompetencyPill
-                        variant="filled"
-                        driver={spotlightQuestion.driver as SuccessDriverId}
-                        label={
-                          <>
-                            {SUCCESS_DRIVERS[spotlightQuestion.driver as SuccessDriverId].shortLabel}
-                            {" · "}
-                            {spotlightQuestion.facet}
-                          </>
-                        }
-                      />
-                      <Badge
-                        variant="outline"
-                        className={badgeClasses(spotlightQuestion.status)}
-                      >
-                        {spotlightQuestion.status}
-                      </Badge>
-                      <ScoreLockup score={spotlightQuestion.score} />
+                  <div className="mt-6 flex items-center gap-3">
+                    <QuestionNumber index={spotlightQuestion.index} />
+                    <div className="flex min-w-0 flex-1 flex-col gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <SuccessDriverCompetencyPill
+                          variant="filled"
+                          driver={spotlightQuestion.driver as SuccessDriverId}
+                          label={
+                            <>
+                              {SUCCESS_DRIVERS[spotlightQuestion.driver as SuccessDriverId].shortLabel}
+                              {" · "}
+                              {spotlightQuestion.facet}
+                            </>
+                          }
+                        />
+                        <span className="inline-flex h-7 items-center gap-2 rounded-full bg-pill-surface px-3 text-pill-foreground">
+                          <Clock3 className="size-4 shrink-0 text-primary" aria-hidden />
+                          <span className="text-[13px] leading-none font-medium tabular-nums text-pill-foreground">
+                            {fmtDuration(spotlightQuestion.timeSeconds)}
+                            {answerLengthNote(spotlightQuestion) ? (
+                              <span className="text-scoring-yellow-fg">
+                                {" · "}
+                                {answerLengthNote(spotlightQuestion)}
+                              </span>
+                            ) : null}
+                          </span>
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className={badgeClasses(spotlightQuestion.status)}
+                        >
+                          {spotlightQuestion.status}
+                        </Badge>
+                      </div>
+                      <p className="text-body-sm font-semibold text-text-primary">
+                        “{spotlightQuestion.text}”
+                      </p>
                     </div>
-                    <div className="mt-3 text-overline font-medium uppercase tracking-wide text-text-secondary">
-                      Interview question
-                    </div>
-                    <p className="mt-1 text-body-sm font-semibold text-text-primary">
-                      Q{spotlightQuestion.index}. “{spotlightQuestion.text}”
-                    </p>
+                    <ScoreLockup score={spotlightQuestion.score} />
                   </div>
                 ) : null}
+              </div>
 
-                {/* The comparison: what was said beside how it should sound. One
-                    bordered pair, the rewrite on a brand tint with a primary rule
-                    so the eye lands on the stronger version; the byline says who
-                    wrote it. */}
-                <div className="mt-5 grid gap-px overflow-hidden rounded-lg border border-border bg-border lg:grid-cols-2">
-                  <div className="min-w-0 bg-card p-5">
-                    <div className="text-overline font-medium uppercase tracking-wide text-text-secondary">
-                      Your answer
-                    </div>
-                    <div className="mt-0.5 text-caption text-text-secondary/80">What you said</div>
-                    <blockquote className="mt-3 border-l-2 border-border pl-4 text-caption leading-relaxed text-text-primary">
-                      {report.spotlight.yourAnswer}
-                    </blockquote>
+              {/* The comparison: what was said beside how it should sound. A
+                  full-bleed band — hairline above and below, one vertical rule
+                  between the halves — with the rewrite on the brand tint and a
+                  primary rule so the eye lands on the stronger version. */}
+              <div className="-mx-6 mt-6 grid border-y border-border lg:grid-cols-2 lg:divide-x lg:divide-border">
+                <div className="min-w-0 bg-card p-6">
+                  <SpotlightLabel icon={MessageSquareQuote} hint="What you said">
+                    Your answer
+                  </SpotlightLabel>
+                  <blockquote className="mt-4 border-l-2 border-border pl-4 text-caption leading-relaxed text-text-primary">
+                    {report.spotlight.yourAnswer}
+                  </blockquote>
+                </div>
+                <div className="min-w-0 border-t border-border bg-brand-1000 p-6 lg:border-t-0">
+                  {/* `flex-wrap`: on a narrow column the badge drops below the
+                      label instead of squeezing it into three lines. */}
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <SpotlightLabel icon={PencilSparkles} hint="How it should sound">
+                      Coach rewrite
+                    </SpotlightLabel>
+                    <Badge>AI Coach</Badge>
                   </div>
-                  <div className="min-w-0 bg-brand-1000 p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-overline font-medium uppercase tracking-wide text-text-secondary">
-                          Coach rewrite
-                        </div>
-                        <div className="mt-0.5 text-caption text-text-secondary/80">How it should sound</div>
+                  <blockquote className="mt-4 whitespace-pre-line border-l-2 border-primary pl-4 text-caption leading-relaxed text-text-primary">
+                    {report.spotlight.coachRewrite}
+                  </blockquote>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <SpotlightLabel icon={Lightbulb}>Why this version is stronger</SpotlightLabel>
+                {/* Three points side by side, divided by rules rather than boxed:
+                    the CAR beats read as one sentence in three parts. */}
+                <ul className="mt-4 grid gap-y-3 sm:grid-cols-3 sm:gap-y-0 sm:divide-x sm:divide-border">
+                  {report.spotlight.whyStronger.map((s, i) => (
+                    <li key={s} className="flex gap-3 sm:px-5 sm:first:pl-0 sm:last:pr-0">
+                      <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                      <span className="text-caption leading-relaxed text-text-primary">
+                        {carKeyed ? (
+                          <span className="font-semibold text-extended-blue">{CAR_STEPS[i]}: </span>
+                        ) : null}
+                        {s}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Delivery notes: a second full-bleed band that closes the card.
+                  Four notes in a 2x2 grid divided by hairlines — the same notes
+                  that used to be four more cards. */}
+              <div className="-mx-6 -mb-6 mt-8 border-t border-border">
+                <div className="px-6 pt-5 text-overline font-medium uppercase tracking-wide text-text-secondary">
+                  Delivery &amp; language
+                </div>
+                <div className="mt-3 grid border-t border-border sm:grid-cols-2">
+                  {(
+                    [
+                      {
+                        title: "Body language",
+                        icon: PersonStanding,
+                        items: report.spotlight.delivery.bodyLanguage,
+                      },
+                      {
+                        title: "Grammar & phrasing",
+                        icon: SpellCheck,
+                        items: report.spotlight.delivery.grammarPhrasing,
+                      },
+                      {
+                        title: "Gestures & interview presence",
+                        icon: Hand,
+                        items: report.spotlight.delivery.gesturesPresence,
+                      },
+                    ] as const
+                  ).map(({ title, icon: Icon, items }) => (
+                    <div
+                      key={title}
+                      className="flex gap-3 border-t border-border p-6 first:border-t-0 sm:odd:border-r sm:nth-[-n+2]:border-t-0"
+                    >
+                      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-extended-light-cyan text-extended-cyan-green">
+                        <Icon className="size-4" aria-hidden />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-body-sm font-semibold text-extended-cyan-green">{title}</div>
+                        <ul className="mt-2 space-y-2 text-caption leading-relaxed text-text-secondary">
+                          {items.map((s) => (
+                            <li key={s}>{s}</li>
+                          ))}
+                        </ul>
                       </div>
-                      <Badge>AI Coach</Badge>
                     </div>
-                    <blockquote className="mt-3 whitespace-pre-line border-l-2 border-primary pl-4 text-caption leading-relaxed text-text-primary">
-                      {report.spotlight.coachRewrite}
-                    </blockquote>
-                  </div>
-                </div>
+                  ))}
 
-                <div className="mt-5">
-                  <div className="text-overline font-medium uppercase tracking-wide text-text-secondary">
-                    Why this version is stronger
-                  </div>
-                  <ul className="mt-3 grid gap-2 sm:grid-cols-3">
-                    {report.spotlight.whyStronger.map((s, i) => (
-                      <li key={s} className="flex gap-3 rounded-lg border border-border bg-card p-3">
-                        <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-                        <span className="text-caption leading-relaxed text-text-primary">
-                          {carKeyed ? (
-                            <span className="font-semibold text-extended-blue">{CAR_STEPS[i]}: </span>
-                          ) : null}
-                          {s}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="mt-6 text-overline font-medium uppercase tracking-wide text-text-secondary">
-                Delivery &amp; language
-              </div>
-              <div className="mt-3 grid gap-4 lg:grid-cols-2">
-                {(
-                  [
-                    {
-                      title: "Body language",
-                      icon: PersonStanding,
-                      items: report.spotlight.delivery.bodyLanguage,
-                    },
-                    {
-                      title: "Grammar & phrasing",
-                      icon: SpellCheck,
-                      items: report.spotlight.delivery.grammarPhrasing,
-                    },
-                    {
-                      title: "Gestures & interview presence",
-                      icon: Hand,
-                      items: report.spotlight.delivery.gesturesPresence,
-                    },
-                  ] as const
-                ).map(({ title, icon: Icon, items }) => (
-                  <div
-                    key={title}
-                    className="flex gap-3 rounded-lg border border-border bg-card p-4"
-                  >
+                  <div className="flex gap-3 border-t border-border p-6 sm:odd:border-r sm:nth-[-n+2]:border-t-0">
                     <span className="grid size-8 shrink-0 place-items-center rounded-full bg-extended-light-cyan text-extended-cyan-green">
-                      <Icon className="size-4" aria-hidden />
+                      <AudioLines className="size-4" aria-hidden />
                     </span>
                     <div className="min-w-0">
-                      <div className="text-body-sm font-semibold text-extended-cyan-green">{title}</div>
-                      <ul className="mt-2 space-y-2 text-caption leading-relaxed text-text-secondary">
-                        {items.map((s) => (
-                          <li key={s}>{s}</li>
-                        ))}
-                      </ul>
+                      <div className="text-body-sm font-semibold text-extended-cyan-green">
+                        Filler words & pacing
+                      </div>
+                      <p className="mt-2 text-caption leading-relaxed text-text-secondary">
+                        {report.spotlight.delivery.fillerPacing.summary}
+                      </p>
+                      <div className="mt-3 text-overline text-extended-cyan-green">On-camera presence</div>
+                      <p className="mt-1 text-caption leading-relaxed text-text-secondary">
+                        {report.spotlight.delivery.fillerPacing.onCameraPresence}
+                      </p>
                     </div>
-                  </div>
-                ))}
-
-                <div className="flex gap-3 rounded-lg border border-border bg-card p-4">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-extended-light-cyan text-extended-cyan-green">
-                    <AudioLines className="size-4" aria-hidden />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="text-body-sm font-semibold text-extended-cyan-green">
-                      Filler words & pacing
-                    </div>
-                    <p className="mt-2 text-caption leading-relaxed text-text-secondary">
-                      {report.spotlight.delivery.fillerPacing.summary}
-                    </p>
-                    <div className="mt-3 text-overline text-extended-cyan-green">On-camera presence</div>
-                    <p className="mt-1 text-caption leading-relaxed text-text-secondary">
-                      {report.spotlight.delivery.fillerPacing.onCameraPresence}
-                    </p>
                   </div>
                 </div>
               </div>
@@ -1284,12 +1456,12 @@ export function ReportDetailScreen({ reportId }: Props) {
                             {index === 0 ? (
                               <span
                                 className={cn(
-                                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1",
+                                  "inline-flex h-7 items-center gap-2 rounded-full px-3",
                                   "bg-[linear-gradient(135deg,var(--brand-100)_0%,var(--brand-300)_100%)]",
-                                  "text-overline leading-[18px] font-medium text-primary-foreground",
+                                  "text-[13px] leading-none font-medium text-primary-foreground",
                                 )}
                               >
-                                <LogoMark className="size-3.5" />
+                                <LogoMark className="size-4" />
                                 Featured
                               </span>
                             ) : null}
@@ -1300,19 +1472,14 @@ export function ReportDetailScreen({ reportId }: Props) {
                                 label={SUCCESS_DRIVERS[driverId].shortLabel}
                               />
                             ) : item.pillar ? (
-                              <span className="inline-flex h-6 items-center rounded-full border border-pill-border bg-pill-surface px-2 py-0">
-                                <span className="text-[11px] leading-4 font-medium tracking-[0.5px] text-pill-foreground">
-                                  {item.pillar}
-                                </span>
+                              <span className="inline-flex h-7 items-center rounded-full bg-pill-surface px-3 text-[13px] leading-none font-medium text-pill-foreground">
+                                {item.pillar}
                               </span>
                             ) : null}
                             {item.durationMinutes != null ? (
                               <MetaChip
                                 icon={
-                                  <Clock3
-                                    className="size-3.5 shrink-0 text-pill-foreground"
-                                    aria-hidden
-                                  />
+                                  <Clock3 className="size-4 shrink-0 text-primary" aria-hidden />
                                 }
                               >
                                 {item.durationMinutes} min
@@ -1321,7 +1488,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                             {item.difficulty ? (
                               <MetaChip
                                 icon={
-                                  <BookOpen className="size-3.5 shrink-0 text-pill-foreground" aria-hidden />
+                                  <BookOpen className="size-4 shrink-0 text-primary" aria-hidden />
                                 }
                               >
                                 {item.difficulty}

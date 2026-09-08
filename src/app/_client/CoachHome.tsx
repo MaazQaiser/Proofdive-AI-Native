@@ -732,6 +732,14 @@ export function CoachHome() {
                 )}
               </>
             ) : null}
+
+            {/* Review-only: the redesigned Home lives at /coach/v2 so the two
+                can be compared side by side. Remove with that route. */}
+            <p className="mt-10 w-full max-w-[800px] text-caption text-text-secondary">
+              <Link href="/coach/v2" className="app-link">
+                Preview the new Home →
+              </Link>
+            </p>
           </div>
         </div>
       </div>

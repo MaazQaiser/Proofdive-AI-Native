@@ -177,20 +177,23 @@ function SuccessDriverCompetencyPill({
     <span
       className={cn(
         "inline-flex items-center rounded-full",
+        // `filled` is the report's row tag: borderless soft pill, roomy at the
+        // sides, brand-teal icon, 13px label — the same treatment as the
+        // report hero's session facts, so every tag on that page is one family.
         filled
-          ? "h-6 gap-1.5 border border-pill-border bg-pill-surface py-0 pl-1 pr-2"
+          ? "h-7 gap-2 bg-pill-surface px-3"
           : "gap-2 border border-pill-outline-border bg-card py-1.5 pl-1.5 pr-3",
         className,
       )}
     >
       <SuccessDriverIcon
         driver={driver}
-        className={cn(filled ? "size-3.5 text-pill-foreground" : "size-4")}
+        className={cn("size-4 shrink-0", filled && "text-primary")}
       />
       <span
         className={cn(
           filled
-            ? "text-[11px] leading-4 font-medium tracking-[0.5px] text-pill-foreground"
+            ? "text-[13px] leading-none font-medium text-pill-foreground"
             : "text-overline leading-[18px] text-text-primary",
         )}
       >
