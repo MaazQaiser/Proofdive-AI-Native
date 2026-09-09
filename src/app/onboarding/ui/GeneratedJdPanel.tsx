@@ -1,10 +1,9 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import {
   ArrowRight,
   Check,
-  ClipboardPaste,
   RefreshCcw,
   SquarePen,
 } from "lucide-react";
@@ -14,7 +13,6 @@ import { LogoMark } from "@/components/ui/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { jdHtmlRootToMarkdown, jdMarkdownToHtml } from "@/lib/jdMarkdown";
 import { cn } from "@/lib/utils";
 
@@ -31,8 +29,6 @@ type GeneratedJdPanelProps = {
   onDoneEdit: (text: string) => void;
   onRegenerate: () => void;
   onAccept: (text: string) => void;
-  /** The real-posting escape hatch — always available, always wins. */
-  onUseRealPosting: (text: string) => void;
   onDraftChange?: (text: string) => void;
 };
 
@@ -62,13 +58,10 @@ export function GeneratedJdPanel({
   onDoneEdit,
   onRegenerate,
   onAccept,
-  onUseRealPosting,
   onDraftChange,
 }: GeneratedJdPanelProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const wasEditingRef = useRef(false);
-  const [showPaste, setShowPaste] = useState(false);
-  const [pasteText, setPasteText] = useState("");
 
   // Keep view-mode DOM in sync with the latest draft. Skip while editing so
   // parent re-renders (draft change callbacks) don't wipe the caret.
@@ -126,12 +119,6 @@ export function GeneratedJdPanel({
     const next = isEditing ? readMarkdown() : text;
     if (!next.trim()) return;
     onAccept(next);
-  }
-
-  function handleUsePasted() {
-    const payload = pasteText.trim();
-    if (!payload) return;
-    onUseRealPosting(payload);
   }
 
   const targetingChips = targeting.map((t) => t.trim()).filter(Boolean);
@@ -246,40 +233,10 @@ export function GeneratedJdPanel({
           </div>
         </div>
 
-        {/* Actions — draft path and real-posting path, side by side */}
-        {showPaste ? (
-          <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-background/60 p-4">
-            <p className="text-caption text-text-secondary">
-              Paste the posting you&apos;re actually targeting. It replaces the
-              draft and becomes your assessment spec.
-            </p>
-            <Textarea
-              value={pasteText}
-              onChange={(e) => setPasteText(e.target.value)}
-              placeholder="Paste the job posting here…"
-              rows={6}
-              autoFocus
-              className="bg-card text-body-sm"
-            />
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                onClick={handleUsePasted}
-                disabled={!pasteText.trim()}
-                className="h-10 rounded-md pl-5! pr-3! text-body-sm font-medium"
-              >
-                Use this posting
-                <ArrowRight />
-              </Button>
-              <button
-                type="button"
-                onClick={() => setShowPaste(false)}
-                className="text-caption font-medium text-text-secondary underline-offset-2 hover:text-foreground hover:underline"
-              >
-                Keep the draft
-              </button>
-            </div>
-          </div>
-        ) : (
+        {/* The one action. The real posting goes in through the composer
+            below ("Paste the real posting here to replace the draft…"), so a
+            second paste UI up here was the same door twice. */}
+        {(
           <div className="flex flex-wrap items-center gap-3">
             <Button
               onClick={handleAccept}
@@ -288,20 +245,6 @@ export function GeneratedJdPanel({
               Use this draft
               <ArrowRight />
             </Button>
-            <button
-              type="button"
-              onClick={() => setShowPaste(true)}
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-card px-4 text-body-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-            >
-              {/* Short on purpose: "the … instead" was carried by the
-                  neighbouring "Use this draft" and by the helper line right
-                  below, so the label only has to name the action and the one
-                  thing that distinguishes it — that this one is REAL. Kept as
-                  "posting" rather than "job description": the flow says
-                  posting on every other screen. */}
-              <ClipboardPaste className="size-4 text-primary" aria-hidden />
-              Paste real posting
-            </button>
           </div>
         )}
       </CardContent>

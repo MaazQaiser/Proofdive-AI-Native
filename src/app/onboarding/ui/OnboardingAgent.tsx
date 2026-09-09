@@ -228,8 +228,8 @@ const FIELD_OF_STUDY_OPTIONS = [
 /* Every value the rest of the flow can produce. The resume parse and the
  * free-text shortcut ("6 years") still yield the granular ones and
  * `applyExperienceId` maps all of them, so the union stays complete even
- * though the QUESTION now offers only the two in STATUS_OPTIONS below. */
-type ExperienceId = "student" | "new_grad" | "1-4" | "5-9" | "10+";
+ * though the QUESTION now offers the tiers in STATUS_GROUPS below. */
+type ExperienceId = "student" | "diploma" | "new_grad" | "1-4" | "5-9" | "10+";
 
 /* Status. The brief said "fresh graduate vs experienced professional", and
  * this ladder answers exactly that — `applyExperienceId` folds Student and
@@ -238,13 +238,53 @@ type ExperienceId = "student" | "new_grad" | "1-4" | "5-9" | "10+";
  * the user nothing (still one tap) and keeps `experienceLevel`, which
  * `generateMockJobDescription` uses to pitch the posting — a two-way question
  * would throw that away and leave the JD generator on its fallback. */
-const STATUS_OPTIONS = [
-  { id: "student", label: "Student" },
-  { id: "new_grad", label: "New grad" },
-  { id: "1-4", label: "1–4 yrs" },
-  { id: "5-9", label: "5–9 yrs" },
-  { id: "10+", label: "10+ yrs" },
-] as const;
+/* Two tiers, same shape as the role step (client liked it there): the tab
+ * says WHERE you are — student, new grad, experienced — and the chips under
+ * it say the detail that actually changes something downstream. Student
+ * splits into undergraduate / diploma (both real `backgroundType`s the
+ * profile already carries; diploma was never offered before). Experienced
+ * splits into the year bands the JD generator pitches against. New grad has
+ * one honest option, kept as a chip so the rule stays the same on every tab:
+ * the tab filters, the chip answers. */
+type StatusGroupId = "student" | "new_grad" | "experienced";
+type StatusGroup = {
+  id: StatusGroupId;
+  label: string;
+  /** Chips label under the tab — what the second tier is asking. */
+  prompt: string;
+  options: ReadonlyArray<{ id: ExperienceId; label: string }>;
+};
+const STATUS_GROUPS: ReadonlyArray<StatusGroup> = [
+  {
+    id: "student",
+    label: "Student",
+    prompt: "Which best describes you?",
+    options: [
+      { id: "student", label: "Undergraduate" },
+      { id: "diploma", label: "Diploma or vocational" },
+    ],
+  },
+  {
+    id: "new_grad",
+    label: "New grad",
+    prompt: "Confirm to continue",
+    options: [{ id: "new_grad", label: "Graduated, looking for my first role" }],
+  },
+  {
+    id: "experienced",
+    label: "Experienced",
+    prompt: "Years of experience",
+    options: [
+      { id: "1-4", label: "1–4 years" },
+      { id: "5-9", label: "5–9 years" },
+      { id: "10+", label: "10+ years" },
+    ],
+  },
+];
+function statusGroupFor(expId: ExperienceId | ""): StatusGroupId | null {
+  if (!expId) return null;
+  return STATUS_GROUPS.find((g) => g.options.some((o) => o.id === expId))?.id ?? null;
+}
 
 /** Suggested interests. Deliberately broad and non-professional: this is the
  *  one question on the path that is not about work, and the chips are there to
@@ -334,6 +374,9 @@ function applyExperienceId(
   if (expId === "student") {
     return { ...draft, backgroundType: "under_grad", experienceLevel: "" };
   }
+  if (expId === "diploma") {
+    return { ...draft, backgroundType: "diploma_holder", experienceLevel: "" };
+  }
   if (expId === "new_grad") {
     return { ...draft, backgroundType: "fresh_grad", experienceLevel: "" };
   }
@@ -356,6 +399,8 @@ function parseBackgroundText(text: string): {
   if (yearsMatch) {
     expId = experienceIdFromYears(Number(yearsMatch[1]));
     rest = rest.replace(yearsMatch[0], " ");
+  } else if (/\bdiploma\b/i.test(rest)) {
+    expId = "diploma";
   } else if (/\bstudent\b/i.test(rest)) {
     expId = "student";
     rest = rest.replace(/\bstudent\b/i, " ");
@@ -519,6 +564,9 @@ function OnboardingAgentInner({
   const [manualRole, setManualRole] = useState(
     isEditMode ? (roleProfile?.targetRole ?? "") : "",
   );
+  /** Which status tab is open. `null` until the user touches it, so the
+   *  tab follows whatever is pre-selected (parsed resume, typed sentence). */
+  const [statusGroup, setStatusGroup] = useState<StatusGroupId | null>(null);
   const [manualExp, setManualExp] = useState<ExperienceId | "">(
     isEditMode ? experienceIdFromProfile(roleProfile) : "",
   );
@@ -628,6 +676,9 @@ function OnboardingAgentInner({
       resume: parseFile ? `📎 ${parseFile.name}` : next.resume,
     };
     setDraft(next);
+    // Pre-select the status the resume implied, so question 2 opens on the
+    // right tab with the band already highlighted.
+    setManualExp(expId);
     // The resume is the shortcut, not the whole step: the three quick
     // questions (education, status, interests) follow for everyone.
     setStage("bgStudy");
@@ -1627,19 +1678,64 @@ function OnboardingAgentInner({
                   />
                 ) : null}
 
-                {stage === "bgExp" ? (
-                  <ManualQuestion
-                    chipsLabel="Select one"
-                    chips={STATUS_OPTIONS.map((o) => o.label)}
-                    selectedLabel={
-                      STATUS_OPTIONS.find((o) => o.id === manualExp)?.label ?? ""
-                    }
-                    onPick={(label) => {
-                      const opt = STATUS_OPTIONS.find((o) => o.label === label);
-                      if (opt) chooseExperience(opt.id);
-                    }}
-                  />
-                ) : null}
+                {stage === "bgExp"
+                  ? (() => {
+                      const activeGroupId: StatusGroupId =
+                        statusGroup ?? statusGroupFor(manualExp) ?? "student";
+                      const group =
+                        STATUS_GROUPS.find((g) => g.id === activeGroupId) ?? STATUS_GROUPS[0];
+                      return (
+                        <div className="mt-8 flex flex-col gap-6">
+                          <div className="flex flex-col gap-2">
+                            <div className="text-body-sm font-semibold text-text-secondary">
+                              Your status
+                            </div>
+                            {/* Same chip-styled tab track as the role step's
+                                career levels: one grouped control, so it reads
+                                as a switch for the chips below, not as three
+                                more answers. */}
+                            <Tabs
+                              value={activeGroupId}
+                              onValueChange={(value) => setStatusGroup(value as StatusGroupId)}
+                            >
+                              <TabsList
+                                aria-label="Your status"
+                                className="h-auto max-w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-full bg-chip-surface p-1 backdrop-blur-[9px] [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden"
+                              >
+                                {STATUS_GROUPS.map((g) => (
+                                  <TabsTrigger
+                                    key={g.id}
+                                    value={g.id}
+                                    className={cn(
+                                      "h-8 flex-none rounded-full border-transparent px-4 text-[15px] font-medium leading-none",
+                                      "text-extended-cyan hover:bg-extended-light-cyan hover:text-extended-blue dark:text-extended-cyan",
+                                      "data-[state=active]:bg-primary data-[state=active]:text-brand-1000 data-[state=active]:shadow-none",
+                                      "dark:data-[state=active]:bg-primary dark:data-[state=active]:text-brand-1000",
+                                    )}
+                                  >
+                                    {g.label}
+                                  </TabsTrigger>
+                                ))}
+                              </TabsList>
+                            </Tabs>
+                          </div>
+
+                          <ManualQuestion
+                            className="mt-0"
+                            chipsLabel={group.prompt}
+                            chips={group.options.map((o) => o.label)}
+                            selectedLabel={
+                              group.options.find((o) => o.id === manualExp)?.label ?? ""
+                            }
+                            onPick={(label) => {
+                              const opt = group.options.find((o) => o.label === label);
+                              if (opt) chooseExperience(opt.id);
+                            }}
+                          />
+                        </div>
+                      );
+                    })()
+                  : null}
 
                 {stage === "bgInterests" ? (
                   <ManualQuestion
@@ -1791,7 +1887,6 @@ function OnboardingAgentInner({
                         text={generatedJdDraft}
                         targeting={targetingSummary}
                         variant={jdVariant}
-                        onUseRealPosting={(text) => acceptJobDescription(text, "user")}
                         isEditing={isEditingJd}
                         onEdit={() => setIsEditingJd(true)}
                         onDoneEdit={(text) => {
@@ -2060,15 +2155,18 @@ function ManualQuestion({
   selectedLabel,
   onPick,
   trailing,
+  className,
 }: {
   chipsLabel: string;
   chips: string[];
   selectedLabel: string;
   onPick: (label: string) => void;
   trailing?: React.ReactNode;
+  /** Overrides the default top margin when the question sits under a tab track. */
+  className?: string;
 }) {
   return (
-    <div className="mt-8 flex w-full flex-col gap-2">
+    <div className={cn("mt-8 flex w-full flex-col gap-2", className)}>
       <div className="text-body-sm font-semibold text-text-secondary">
         {chipsLabel}
       </div>
