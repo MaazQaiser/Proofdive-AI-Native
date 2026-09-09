@@ -53,7 +53,7 @@ export function ScoreChip({ score, className }: { score: number; className?: str
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center gap-0.5 rounded-full border border-border bg-card px-2 text-overline font-medium",
+        "inline-flex h-6 items-center gap-0.5 rounded-full bg-card px-2 text-overline font-medium",
         className,
       )}
     >

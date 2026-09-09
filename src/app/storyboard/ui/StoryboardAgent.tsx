@@ -1245,9 +1245,9 @@ export function StoryboardAgent() {
       <div key={dive.id} className="flex w-full flex-col gap-2">
         <div
           className={cn(
-            "flex w-full flex-col gap-2.5 rounded-[20px] border-[0.5px] border-solid border-[#dde7e9]",
+            "flex w-full flex-col gap-2.5 rounded-[20px] border-[0.5px] border-solid border-border",
             "p-4 backdrop-blur-[42px]",
-            "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+            "bg-[linear-gradient(114.96deg,var(--glass-from)_0%,var(--glass-to)_98.96%)]",
           )}
         >
           <div className="flex w-full items-center justify-between gap-4 py-4">
@@ -1261,7 +1261,7 @@ export function StoryboardAgent() {
                 >
                   {overallScore != null ? overallScore.toFixed(1) : "—"}
                 </span>
-                <span className="cap-baseline text-[48px] font-normal leading-none tracking-[-2.4px] text-[#abadb2]">
+                <span className="cap-baseline text-[48px] font-normal leading-none tracking-[-2.4px] text-text-secondary/60">
                   /5
                 </span>
               </div>
@@ -1295,7 +1295,7 @@ export function StoryboardAgent() {
                 type="button"
                 variant="solid"
                 size="md"
-                className="bg-brand-400 text-white hover:bg-brand-300"
+                className="bg-brand-400 text-primary-foreground hover:bg-brand-300"
                 aria-label={`View Dive ${dive.diveNumber} story`}
                 title="View Story"
                 onClick={() =>
@@ -1336,7 +1336,7 @@ export function StoryboardAgent() {
                         >
                           {displayScore.toFixed(1)}
                         </span>
-                        <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2]">
+                        <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-text-secondary/60">
                           /5
                         </span>
                       </div>
@@ -1467,10 +1467,10 @@ export function StoryboardAgent() {
                     setAddCompetencyOpen(true);
                   }}
                   className={cn(
-                    "flex w-full items-center justify-center gap-2 rounded-[20px] border border-dashed border-[#9FDFDA] px-4 py-5 text-left",
-                    "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)] backdrop-blur-[42px]",
+                    "flex w-full items-center justify-center gap-2 rounded-[20px] border border-dashed border-chip-border px-4 py-5 text-left",
+                    "bg-[linear-gradient(114.96deg,var(--glass-from)_0%,var(--glass-to)_98.96%)] backdrop-blur-[42px]",
                     "text-[16px] font-medium tracking-[-0.5px] text-extended-dark-cyan",
-                    "transition hover:-translate-y-0.5 hover:bg-white/90",
+                    "transition hover:-translate-y-0.5 hover:bg-[var(--hover-veil-strong)]",
                     "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                     "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
                   )}

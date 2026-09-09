@@ -201,24 +201,45 @@ function SpotlightLabel({
   icon: Icon,
   children,
   hint,
+  onBrand = false,
 }: {
   icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   children: string;
   hint?: string;
+  /** On the brand-gradient plate the roundel becomes a glass disc and the
+   *  text takes the plate's ink (`currentColor`), whatever the theme. */
+  onBrand?: boolean;
 }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+      <span
+        className={cn(
+          "grid size-8 shrink-0 place-items-center rounded-full",
+          onBrand ? "bg-white/20 text-current backdrop-blur-sm" : "bg-primary text-primary-foreground",
+        )}
+      >
         <Icon className="size-4" aria-hidden />
       </span>
       <div className="min-w-0">
-        <div className="text-overline font-medium uppercase tracking-wide text-text-secondary">
+        <div
+          className={cn(
+            "text-overline font-medium uppercase tracking-wide",
+            onBrand ? "text-current/90" : "text-text-secondary",
+          )}
+        >
           {children}
         </div>
         {/* The hint stays on one line: it gives the label a real minimum
             width, which is what lets a sibling badge wrap under it. */}
         {hint ? (
-          <div className="mt-0.5 whitespace-nowrap text-caption text-text-secondary/80">{hint}</div>
+          <div
+            className={cn(
+              "mt-0.5 whitespace-nowrap text-caption",
+              onBrand ? "text-current/80" : "text-text-secondary/80",
+            )}
+          >
+            {hint}
+          </div>
         ) : null}
       </div>
     </div>
@@ -490,7 +511,7 @@ function DriverRow({
         </div>
         <span
           className={cn(
-            "inline-flex items-center justify-center overflow-hidden rounded-full border border-solid px-[9px] py-[3px] text-[12px] font-medium leading-[1.2]",
+            "inline-flex items-center justify-center overflow-hidden rounded-full px-[9px] py-[3px] text-[12px] font-medium leading-[1.2]",
             badgeClasses(driver.status),
           )}
         >
@@ -833,21 +854,57 @@ export function ReportDetailScreen({ reportId }: Props) {
     <AppShell contentTopClassName="pt-16">
       <CoachFloatingNav />
 
+      {/* Sticky summary — the score that stays with you while you scroll.
+          One opaque card hung directly off the app header (top-14, square top
+          corners, rounded bottom), no gap, no ground strip, no inner divider:
+          every earlier layered version left a seam somewhere — content in the
+          header gap, a ground-coloured band crossing white cards, a long
+          shadow ghosting the row beneath. Now the header's hairline is the
+          only line above it and a tight shadow is the only edge below. */}
       {showSticky ? (
-        <div className="sticky top-14 z-10 -mx-6 border-b border-border bg-background/85 px-6 py-3 backdrop-blur print:hidden">
-          <div className="flex min-w-0 flex-wrap items-center gap-3">
-            <div className="flex items-baseline gap-2">
-              <div className={cn("text-caption font-semibold", scoreTextClasses(overall))}>
-                {overall.toFixed(1)} / 5.0
+        <div className="sticky top-14 z-10 print:hidden">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-3 rounded-b-xl bg-card px-5 py-3 shadow-[0_1px_2px_rgba(4,32,39,0.05),0_8px_16px_-10px_rgba(4,32,39,0.25)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_8px_16px_-8px_rgba(0,0,0,0.6)]">
+            <div className="flex items-center gap-3">
+              <div className="flex items-baseline gap-1 font-gilroy whitespace-nowrap">
+                <span className={cn("text-[26px] leading-none font-medium tracking-[-1px] tabular-nums", scoreTextClasses(overall))}>
+                  {overall.toFixed(1)}
+                </span>
+                <span className="text-[16px] leading-none text-text-secondary/60">/5</span>
               </div>
               <Badge variant="outline" className={badgeClasses(overall)}>
                 {scoringLabelForScore(overall)}
               </Badge>
             </div>
-            <div className="text-overline text-text-secondary">
-              {report.meta.questionCount} questions · {fmtDuration(report.meta.durationSeconds)}
-              {report.meta.hasAudio ? " · Audio" : ""}
-              {report.meta.hasVideo ? " · Video" : ""}
+
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <MetaChip icon={<ListChecks className="size-4 shrink-0 text-primary" aria-hidden />}>
+                {report.meta.questionCount} questions
+              </MetaChip>
+              <MetaChip icon={<Clock3 className="size-4 shrink-0 text-primary" aria-hidden />}>
+                {fmtDuration(report.meta.durationSeconds)}
+              </MetaChip>
+              {report.meta.hasAudio || report.meta.hasVideo ? (
+                <MetaChip icon={<AudioLines className="size-4 shrink-0 text-primary" aria-hidden />}>
+                  {[report.meta.hasAudio ? "Audio" : null, report.meta.hasVideo ? "Video" : null]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </MetaChip>
+              ) : null}
+            </div>
+
+            <div className="ml-auto flex shrink-0 items-center gap-2">
+              <Button asChild variant="outline" size="sm">
+                <a href="#rewrite">
+                  See the rewrite
+                  <ArrowDown aria-hidden />
+                </a>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/interview">
+                  <RotateCcw aria-hidden />
+                  Retake session
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -1018,7 +1075,7 @@ export function ReportDetailScreen({ reportId }: Props) {
                 </span>
                 <span
                   className={cn(
-                    "inline-flex items-center justify-center overflow-hidden rounded-full border border-solid px-[9px] py-[3px] text-[12px] font-medium leading-[1.2]",
+                    "inline-flex items-center justify-center overflow-hidden rounded-full px-[9px] py-[3px] text-[12px] font-medium leading-[1.2]",
                     badgeClasses(overall),
                   )}
                 >
@@ -1301,16 +1358,22 @@ export function ReportDetailScreen({ reportId }: Props) {
                     {report.spotlight.yourAnswer}
                   </blockquote>
                 </div>
-                <div className="min-w-0 border-t border-border bg-brand-1000 p-6 lg:border-t-0">
+                {/* The same brand-gradient plate as the training course tile
+                    (client's pick). It is a filled plate in both themes, so its
+                    ink is `--primary-foreground` — white on teal in light, dark
+                    on the brighter cyan in dark — not the page's text tokens. */}
+                <div className="min-w-0 border-t border-border bg-[linear-gradient(160deg,color-mix(in_srgb,var(--brand-100)_88%,white)_0%,color-mix(in_srgb,var(--brand-300)_92%,white)_100%)] p-6 text-primary-foreground lg:border-t-0">
                   {/* `flex-wrap`: on a narrow column the badge drops below the
                       label instead of squeezing it into three lines. */}
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <SpotlightLabel icon={PencilSparkles} hint="How it should sound">
+                    <SpotlightLabel icon={PencilSparkles} hint="How it should sound" onBrand>
                       Consultant rewrite
                     </SpotlightLabel>
-                    <Badge>AI Consultant</Badge>
+                    <Badge className="border-transparent bg-white/20 text-current backdrop-blur-sm">
+                      AI Consultant
+                    </Badge>
                   </div>
-                  <blockquote className="mt-4 whitespace-pre-line border-l-2 border-primary pl-4 text-caption leading-relaxed text-text-primary">
+                  <blockquote className="mt-4 whitespace-pre-line border-l-2 border-current/60 pl-4 text-caption leading-relaxed text-current">
                     {report.spotlight.coachRewrite}
                   </blockquote>
                 </div>

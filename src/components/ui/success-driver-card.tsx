@@ -142,7 +142,7 @@ function SuccessDriverCard({
       <div className="success-driver-noise absolute inset-0 z-[1]" aria-hidden />
       <div className="relative z-10 flex min-h-0 flex-1 flex-col gap-2.5 p-6">
         {badge ? (
-          <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[var(--glass-chip-border)] bg-[var(--glass-chip)] px-2.5 py-1 text-overline font-medium text-text-primary shadow-sm backdrop-blur-sm">
+          <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[var(--glass-chip)] px-2.5 py-1 text-overline font-medium text-text-primary shadow-sm backdrop-blur-sm">
             <span
               className="size-1.5 shrink-0 rounded-full bg-extended-cyan-green"
               aria-hidden
@@ -182,7 +182,7 @@ function SuccessDriverCompetencyPill({
         // report hero's session facts, so every tag on that page is one family.
         filled
           ? "h-7 gap-2 bg-pill-surface px-3"
-          : "gap-2 border border-pill-outline-border bg-card py-1.5 pl-1.5 pr-3",
+          : "gap-2 bg-card py-1.5 pl-1.5 pr-3",
         className,
       )}
     >

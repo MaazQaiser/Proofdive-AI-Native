@@ -335,9 +335,9 @@ export function TrainingScreen() {
                             "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                             isImageBg
                               ? [
-                                  "bg-white",
-                                  "shadow-[-4px_-4px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
-                                  "hover:shadow-[-4px_-4px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
+                                  "bg-card",
+                                  "shadow-[-4px_-4px_20px_rgba(14,154,181,0.08),inset_0_1px_0_var(--glass-inset)]",
+                                  "hover:shadow-[-4px_-4px_24px_rgba(14,154,181,0.12),inset_0_1px_0_var(--glass-inset)]",
                                 ]
                               : glassCardSurfaceClasses(variant),
                           )}
@@ -348,11 +348,14 @@ export function TrainingScreen() {
                               <img
                                 src="/brand/competency-pillars-card-bg.png"
                                 alt=""
-                                className="pointer-events-none absolute inset-0 z-0 size-full scale-110 object-cover object-[center_55%] -translate-y-1"
+                                // The photo is a light image; on dark it is dimmed and
+                                // desaturated (same move as the Success Driver cards) so it
+                                // sits behind the type instead of glowing through it.
+                                className="pointer-events-none absolute inset-0 z-0 size-full scale-110 object-cover object-[center_55%] -translate-y-1 dark:opacity-35 dark:saturate-[0.7]"
                                 aria-hidden
                               />
                               <div
-                                className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-[72%] bg-[linear-gradient(90deg,rgba(255,255,255,0.92)_0%,rgba(255,255,255,0.55)_55%,transparent_100%)]"
+                                className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-[72%] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--card)_92%,transparent)_0%,color-mix(in_srgb,var(--card)_55%,transparent)_55%,transparent_100%)]"
                                 aria-hidden
                               />
                             </>
@@ -393,7 +396,7 @@ export function TrainingScreen() {
                                 "grid size-8 shrink-0 place-items-center rounded-full backdrop-blur-sm",
                                 useLightType
                                   ? "bg-white/20 text-primary-foreground"
-                                  : "bg-white/70 text-primary shadow-sm",
+                                  : "bg-[var(--glass-chip)] text-primary shadow-sm",
                               )}
                               aria-hidden
                             >
@@ -460,9 +463,9 @@ export function TrainingScreen() {
                           type="button"
                           onClick={() => setSelectedCourseId(pill.courseId)}
                           className={cn(
-                            "group relative flex w-full overflow-hidden rounded-2xl bg-white p-4 text-left backdrop-blur-xl transition",
-                            "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
-                            "hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
+                            "group relative flex w-full overflow-hidden rounded-2xl bg-card p-4 text-left backdrop-blur-xl transition",
+                            "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_var(--glass-inset)]",
+                            "hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_var(--glass-inset)]",
                             "duration-200 ease-out active:scale-[0.985]",
                             "motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100",
                             "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
@@ -560,8 +563,11 @@ export function TrainingScreen() {
                       <div
                         data-slot="card"
                         className={cn(
-                          "relative mt-5 overflow-hidden rounded-[28px] bg-[#0c1f26] bg-cover bg-center bg-no-repeat text-white",
-                          "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
+                          // Imagery card: the photo sets the ground (deep teal in
+                          // both themes), so its type stays white by design — the
+                          // plate decides, not the theme.
+                          "relative mt-5 overflow-hidden rounded-[28px] bg-extended-dark-cyan-green bg-cover bg-center bg-no-repeat text-white",
+                          "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_var(--glass-inset)]",
                         )}
                         style={{ backgroundImage: "url(/brand/training-course-hero-bg.png)" }}
                       >
@@ -635,9 +641,9 @@ export function TrainingScreen() {
                           key={`${selectedCourse.id}-ch-${idx}`}
                           data-slot="card"
                           className={cn(
-                            "group relative flex w-full overflow-hidden rounded-2xl bg-white p-4 text-left backdrop-blur-xl transition",
-                            "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
-                            "hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
+                            "group relative flex w-full overflow-hidden rounded-2xl bg-card p-4 text-left backdrop-blur-xl transition",
+                            "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_var(--glass-inset)]",
+                            "hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_var(--glass-inset)]",
                             "duration-200 ease-out",
                             "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
                           )}

@@ -85,7 +85,7 @@ export function NotificationRow({
         onActivate && "cursor-pointer hover:bg-muted/50",
       )}
     >
-      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-1000 text-[#2f6d8c]">
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand-1000 text-link">
         {icon}
       </span>
       <div className="min-w-0 flex-1">

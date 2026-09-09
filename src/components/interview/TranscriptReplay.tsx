@@ -168,7 +168,7 @@ export function TranscriptReplay({
                 </div>
                 <p className="text-body-sm leading-relaxed text-text-primary">{active.text}</p>
                 {active.flag ? (
-                  <Badge variant="outline" className="mt-2 border-scoring-red/25 bg-scoring-red/15 text-scoring-red-fg">
+                  <Badge variant="outline" className="mt-2 bg-scoring-red/15 text-scoring-red-fg">
                     {active.flag}
                   </Badge>
                 ) : null}
@@ -288,7 +288,7 @@ export function TranscriptReplay({
                   {line.flag ? (
                     <Badge
                       variant="outline"
-                      className="mt-2 border-scoring-red/25 bg-scoring-red/15 text-scoring-red-fg"
+                      className="mt-2 bg-scoring-red/15 text-scoring-red-fg"
                     >
                       {line.flag}
                     </Badge>

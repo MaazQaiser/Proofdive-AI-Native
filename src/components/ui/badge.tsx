@@ -40,9 +40,11 @@ const badgeVariants = cva(
           "bg-secondary/60 text-secondary-foreground/90 [a&]:hover:bg-secondary/80",
         default: "bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
         destructive:
-          "bg-destructive text-white focus-visible:ring-destructive/20 [a&]:hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground focus-visible:ring-destructive/20 [a&]:hover:bg-destructive/90",
+        // Borderless like every other tag in the product: on a plain ground it is
+        // the quiet pill surface that separates it, not a stroke.
         outline:
-          "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+          "bg-pill-surface text-pill-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
       },
     },
     defaultVariants: {

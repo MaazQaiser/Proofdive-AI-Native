@@ -159,7 +159,7 @@ export function CandidateBillingScreen() {
                   </div>
                 </dl>
                 {subscription.status === "pending_cancel" ? (
-                  <p className="rounded-lg bg-amber-50 px-3 py-2 text-amber-900">
+                  <p className="rounded-lg bg-scoring-yellow/15 px-3 py-2 text-scoring-yellow-fg">
                     Cancellation pending. For this demo, your account reverts to Free in a few
                     seconds.
                   </p>

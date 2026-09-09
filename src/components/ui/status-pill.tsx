@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 export type StatusTone = "success" | "warning" | "danger" | "neutral";
 
 const TONE_CLASS: Record<StatusTone, string> = {
-  success: "border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg",
-  warning: "border-scoring-yellow/30 bg-scoring-yellow/20 text-scoring-yellow-fg",
-  danger: "border-scoring-red/25 bg-scoring-red/15 text-scoring-red-fg",
-  neutral: "border-border bg-muted text-muted-foreground",
+  success: "bg-scoring-green/15 text-scoring-green-fg",
+  warning: "bg-scoring-yellow/20 text-scoring-yellow-fg",
+  danger: "bg-scoring-red/15 text-scoring-red-fg",
+  neutral: "bg-muted text-muted-foreground",
 };
 
 /** Default icon per tone — override with `icon` when a status needs a more specific glyph. */
@@ -39,7 +39,7 @@ export function StatusPill({ tone, children, icon, className }: Props) {
   return (
     <span
       className={cn(
-        "text-overline inline-flex h-6 w-fit items-center gap-1 rounded-full border pl-1 pr-2 whitespace-nowrap",
+        "text-overline inline-flex h-6 w-fit items-center gap-1 rounded-full pl-1 pr-2 whitespace-nowrap",
         TONE_CLASS[tone],
         className,
       )}

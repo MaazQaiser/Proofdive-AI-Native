@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const fieldClassName =
-  "h-11 rounded-md border-border bg-white px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
+  "h-11 rounded-md border-border bg-card px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
             <Check className="size-6 text-primary" aria-hidden />
           </div>
           <div className="flex flex-col gap-2">
-            <h1 className="font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-[#033B4F]">
+            <h1 className="font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-extended-green-blue">
               Check your email
             </h1>
             {/* Enumeration-safe: never confirms whether the account exists. */}
@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
       ) : (
         <div className="flex w-full flex-col items-stretch gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-[#033B4F]">
+            <h1 className="font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-extended-green-blue">
               Reset your password
             </h1>
             <p className="text-body-sm text-muted-foreground">

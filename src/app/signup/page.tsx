@@ -29,7 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const fieldClassName =
-  "h-11 rounded-md border-border bg-white px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
+  "h-11 rounded-md border-border bg-card px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
 
 /** Right-panel pitch: the four Success Drivers — the product's fixed
  * assessment standard and its core differentiator. One line of benefit per
@@ -44,7 +44,7 @@ const PILLAR_PITCH: Record<SuccessDriverId, string> = {
 function SignupAside() {
   return (
     <div className="w-full max-w-[380px]">
-      <h2 className="font-gilroy text-h3 font-bold tracking-[-0.02em] text-[#033B4F]">
+      <h2 className="font-gilroy text-h3 font-bold tracking-[-0.02em] text-extended-green-blue">
         Interviews come down to four things.
       </h2>
       <p className="mt-3 text-body-sm text-text-secondary">
@@ -58,7 +58,7 @@ function SignupAside() {
               aria-hidden
               className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-extended-green-blue"
             >
-              <SuccessDriverIcon driver={id} className="size-4.5 text-white" />
+              <SuccessDriverIcon driver={id} className="size-4.5 text-primary-foreground" />
             </span>
             <div>
               <h3 className="text-body-sm font-semibold text-foreground">
@@ -103,7 +103,7 @@ export default function SignupPage() {
     <AuthShell aside={<SignupAside />}>
       <div className="flex w-full flex-col items-stretch gap-6">
         <div className="flex flex-col gap-2">
-          <h1 className="font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-[#033B4F]">
+          <h1 className="font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-extended-green-blue">
             Create your account
           </h1>
           <p className="text-body-sm text-muted-foreground">

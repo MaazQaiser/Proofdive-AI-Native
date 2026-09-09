@@ -98,7 +98,7 @@ function PlanBadge({
       className={cn(
         "inline-flex w-fit items-center rounded-full px-3.5 py-1.5 text-[13px] font-semibold tracking-[-0.01em]",
         featured
-          ? "bg-white text-extended-green-blue shadow-sm"
+          ? "bg-card text-extended-green-blue shadow-sm"
           : "bg-primary text-primary-foreground",
       )}
     >
@@ -267,7 +267,7 @@ export function CandidatePricingScreen() {
               >
                 <TabsList
                   aria-label="Billing cycle"
-                  className="mx-0 mt-0 h-auto w-auto gap-1 rounded-full border border-border/60 bg-white/80 p-1.5 shadow-sm backdrop-blur-sm"
+                  className="mx-0 mt-0 h-auto w-auto gap-1 rounded-full border border-border/60 bg-card/80 p-1.5 shadow-sm backdrop-blur-sm"
                 >
                   <TabsTrigger
                     value="monthly"
@@ -296,7 +296,7 @@ export function CandidatePricingScreen() {
               {/* Free */}
               <article
                 className={cn(
-                  "flex flex-col rounded-[20px] border border-border/70 bg-white/90 p-7 shadow-[0_12px_40px_-24px_rgba(7,62,76,0.35)] backdrop-blur-sm",
+                  "flex flex-col rounded-[20px] border border-border/70 bg-card/90 p-7 shadow-[0_12px_40px_-24px_rgba(7,62,76,0.35)] backdrop-blur-sm",
                 )}
               >
                 <div className="grid grid-rows-[auto_4.5rem_auto] gap-4">
@@ -363,10 +363,10 @@ export function CandidatePricingScreen() {
                     className={cn(
                       "relative flex flex-col overflow-hidden rounded-[20px] border p-7 shadow-[0_12px_40px_-24px_rgba(7,62,76,0.35)] backdrop-blur-sm",
                       isCareerStarter
-                        ? "border-border/70 bg-[url('/brand/pricing/career-starter-bg.png')] bg-cover bg-center bg-no-repeat"
+                        ? "border-border/70 bg-[url('/brand/pricing/career-starter-bg.png')] bg-cover bg-center bg-no-repeat [--text-primary:#0e0e0e] [--text-secondary:#4b5b62] [--muted-foreground:#4b5b62] [--foreground:#0e0e0e] [--heading-teal:#094149] [--border:#c9dde3] [--card:#ffffff] [--extended-green-blue:#073e4c]"
                         : isFeatured
-                          ? "border-primary/25 bg-gradient-to-b from-brand-1000 via-white to-white"
-                          : "border-border/70 bg-white/90",
+                          ? "border-primary/25 bg-gradient-to-b from-brand-1000 via-card to-card"
+                          : "border-border/70 bg-card/90",
                     )}
                   >
                     <div className="grid grid-rows-[auto_4.5rem_auto] gap-4">
@@ -433,7 +433,7 @@ export function CandidatePricingScreen() {
                           className={cn(
                             "mt-auto w-full rounded-full",
                             isFeatured &&
-                              "bg-extended-green-blue text-white hover:bg-extended-cyan-green",
+                              "bg-extended-green-blue text-primary-foreground hover:bg-extended-cyan-green",
                           )}
                           variant={isFeatured ? "default" : "outline"}
                           disabled={unavailableForCycle && bundle.cycles.length === 0}
@@ -455,7 +455,7 @@ export function CandidatePricingScreen() {
             </p>
           ) : null}
 
-          <section className="rounded-[20px] border border-border/70 bg-white/80 px-6 py-8 text-center shadow-[0_12px_40px_-24px_rgba(7,62,76,0.25)] backdrop-blur-sm">
+          <section className="rounded-[20px] border border-border/70 bg-card/80 px-6 py-8 text-center shadow-[0_12px_40px_-24px_rgba(7,62,76,0.25)] backdrop-blur-sm">
             <h2 className="text-[1.35rem] font-semibold tracking-[-0.02em] text-heading-teal">
               Need more usage on your current plan?
             </h2>

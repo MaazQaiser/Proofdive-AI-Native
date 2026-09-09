@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 
 import { COACH_NAV_CONTENT_INSET_CLASS } from "@/components/coachNavLayout";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Logo } from "@/components/ui/logo";
 
 import { AppShellHeaderRoleSelector } from "./AppShellHeaderRoleSelector";
@@ -33,15 +34,27 @@ export function AppShell({
 
   return (
     <div className="app-canvas app-canvas--motif min-h-screen w-full text-foreground print:bg-white">
-      <header className="sticky top-0 z-20 flex h-14 w-full shrink-0 items-center gap-6 border-b border-[#dfe7e9] bg-background/75 px-6 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 print:hidden">
+      {/* Solid, not frosted. The 60–75% fill with a backdrop blur let the
+          page scroll through the header as a ghost of itself, and on the
+          report — where a sticky summary hangs off the header — those ghosts
+          read as stray lines (client feedback). A solid ground the same
+          colour as the page keeps the header quiet and the hairline the only
+          edge. */}
+      <header className="sticky top-0 z-20 flex h-14 w-full shrink-0 items-center gap-6 border-b border-border bg-background px-6 print:hidden">
         <Link
           href="/"
-          className="flex h-full shrink-0 items-center border-r border-[#dfe7e9] pr-6"
+          className="flex h-full shrink-0 items-center border-r border-border pr-6"
         >
           <Logo size="xxs" className="text-primary" />
         </Link>
-        <div className="ml-auto flex h-full shrink-0 items-center border-l border-[#dfe7e9] pl-6">
-          <AppShellHeaderRoleSelector />
+        {/* Theme switch sits with the account-level chrome, far right, one
+            cell before the role selector — the same slot onboarding gives
+            it, so the control is in the same place on every screen. */}
+        <div className="ml-auto flex h-full shrink-0 items-center gap-3">
+          <ThemeToggle />
+          <div className="flex h-full shrink-0 items-center border-l border-border pl-6">
+            <AppShellHeaderRoleSelector />
+          </div>
         </div>
       </header>
       {/* z-[2] keeps scrolling page content above the fixed app-canvas
@@ -57,7 +70,7 @@ export function AppShell({
           </div>
           <aside
             data-slot="app-shell-right-panel"
-            className="flex h-full min-h-0 w-[min(var(--app-shell-right-panel),42vw)] max-w-[var(--app-shell-right-panel)] shrink-0 flex-col border-l border-[#dfe7e9] bg-transparent print:hidden"
+            className="flex h-full min-h-0 w-[min(var(--app-shell-right-panel),42vw)] max-w-[var(--app-shell-right-panel)] shrink-0 flex-col border-l border-border bg-transparent print:hidden"
             style={
               {
                 "--app-shell-right-panel": `${rightPanelMaxWidth}px`,

@@ -616,14 +616,14 @@ export function InterviewScreen() {
         <DialogContent
           showCloseButton={false}
           onPointerDownOutside={(e) => e.preventDefault()}
-          className="flex max-h-[min(92dvh,40rem)] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[20px] border-[#dde7e9] bg-white p-0 shadow-[-4px_-4px_40px_0_rgba(0,0,0,0.06)] sm:max-w-[640px]"
+          className="flex max-h-[min(92dvh,40rem)] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[20px] border-border bg-card p-0 shadow-[-4px_-4px_40px_0_rgba(0,0,0,0.06)] sm:max-w-[640px]"
         >
           <DialogHeader className="gap-0 p-0 text-left sm:text-left">
             <div
               data-slot="app-dialog-header"
               className={cn(
                 "relative flex items-center gap-3 px-5 py-4",
-                "bg-[linear-gradient(189.44deg,rgba(255,255,255,0.2)_50.11%,rgba(14,154,181,0.1)_110.8%),linear-gradient(#fff,#fff)]",
+                "bg-[linear-gradient(189.44deg,var(--glass-inset)_50.11%,var(--thread-header-tint)_110.8%),linear-gradient(var(--card),var(--card))]",
               )}
             >
               <div className="flex min-w-0 items-center gap-2.5">
@@ -649,7 +649,7 @@ export function InterviewScreen() {
             {sessionKind === "selective_pillar" &&
             pendingSelectivePillars &&
             pendingSelectivePillars.length > 0 ? (
-              <div className="rounded-xl border border-[#dde7e9] bg-extended-light-cyan/50 px-3 py-2 text-caption font-semibold text-text-primary">
+              <div className="rounded-xl border border-border bg-extended-light-cyan/50 px-3 py-2 text-caption font-semibold text-text-primary">
                 Selected focus:{" "}
                 {pendingSelectivePillars.map((id) => PILLAR_LABEL[id]).join(" · ")}
               </div>
@@ -670,7 +670,7 @@ export function InterviewScreen() {
             <div>
               <p className="text-overline text-text-secondary">Session options</p>
               <div className="mt-2 space-y-2">
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#dde7e9] bg-white p-3 transition-colors hover:bg-extended-light-cyan/30 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40">
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-extended-light-cyan/30 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40">
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-primary">
@@ -691,7 +691,7 @@ export function InterviewScreen() {
                   />
                 </label>
 
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#dde7e9] bg-white p-3 transition-colors hover:bg-extended-light-cyan/30 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40">
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-extended-light-cyan/30 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40">
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-primary">
@@ -715,7 +715,7 @@ export function InterviewScreen() {
             </div>
           </div>
 
-          <DialogFooter className="gap-2 border-t border-[#d4d4d2] bg-white px-5 py-3 sm:flex-row sm:justify-end">
+          <DialogFooter className="gap-2 border-t border-divider-soft bg-card px-5 py-3 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"

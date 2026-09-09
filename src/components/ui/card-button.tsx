@@ -58,8 +58,11 @@ function CardButton({
         <div
           className={cn(
             "grid size-8 shrink-0 place-items-center rounded-full backdrop-blur-sm [&_svg]:size-4",
+            // On the teal tile the disc is a 20% white veil, so the icon (white
+            // in light, dark in dark) always sits on tinted teal. The 90% white
+            // glass chip made a white icon vanish into a white disc in light.
             isPrimary
-              ? "bg-[var(--glass-chip)] text-primary-foreground"
+              ? "bg-white/20 text-primary-foreground"
               : "bg-brand-1000/80 text-primary",
           )}
           aria-hidden

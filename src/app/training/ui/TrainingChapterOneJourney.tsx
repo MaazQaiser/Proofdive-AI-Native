@@ -229,7 +229,7 @@ export function TrainingChapterOneJourney({
               <Card
                 className={cn(
                   "gap-0 overflow-hidden rounded-[16px] border-0 py-0",
-                  "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+                  "bg-[linear-gradient(114.96deg,var(--glass-from)_0%,var(--glass-to)_98.96%)]",
                 )}
               >
                 <CardContent className="p-5 sm:p-6">
@@ -268,7 +268,7 @@ export function TrainingChapterOneJourney({
                             ? "bg-primary"
                             : active
                               ? "bg-brand-400"
-                              : "bg-[#dde7e9]",
+                              : "bg-border",
                         )}
                       />
                     ))}
@@ -283,7 +283,7 @@ export function TrainingChapterOneJourney({
                           active
                             ? "bg-brand-1000 ring-1 ring-brand-500/40"
                             : done
-                              ? "bg-white/60"
+                              ? "bg-[var(--hover-veil-strong)]"
                               : "bg-transparent",
                         )}
                         aria-current={active ? "step" : undefined}
@@ -295,7 +295,7 @@ export function TrainingChapterOneJourney({
                               ? "bg-primary text-primary-foreground"
                               : active
                                 ? "bg-primary text-primary-foreground"
-                                : "border border-[#dde7e9] bg-white text-text-secondary",
+                                : "border border-border bg-card text-text-secondary",
                           )}
                         >
                           {done ? (
@@ -408,7 +408,7 @@ export function TrainingChapterOneJourney({
                 ) : null}
 
                 {phase === "quiz" ? (
-                  <Card className="gap-0 overflow-hidden rounded-[16px] border-[#dde7e9] py-0">
+                  <Card className="gap-0 overflow-hidden rounded-[16px] border-border py-0">
                     <CardContent className="p-5 sm:p-6">
                     <div className="flex items-center gap-2">
                       <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
@@ -418,7 +418,7 @@ export function TrainingChapterOneJourney({
                         Quick quiz · 3 questions
                       </h3>
                     </div>
-                    <div className="mt-5 divide-y divide-[#dde7e9]">
+                    <div className="mt-5 divide-y divide-border">
                       {QUIZ.map((item, qi) => (
                         <fieldset
                           key={qi}
@@ -466,15 +466,15 @@ export function TrainingChapterOneJourney({
                                       "grid size-4 shrink-0 place-items-center rounded-full border",
                                       selected
                                         ? "border-primary bg-primary"
-                                        : "border-[#dde7e9] bg-white",
+                                        : "border-border bg-card",
                                     )}
                                     aria-hidden
                                   >
                                     {selected ? (
-                                      <span className="size-1.5 rounded-full bg-white" />
+                                      <span className="size-1.5 rounded-full bg-primary-foreground" />
                                     ) : null}
                                   </span>
-                                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#f5f5f3] text-overline font-semibold text-extended-cyan">
+                                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-muted text-overline font-semibold text-extended-cyan">
                                     {String.fromCharCode(65 + oi)}
                                   </span>
                                   <span className="min-w-0 leading-snug text-text-primary">
@@ -581,7 +581,7 @@ export function TrainingChapterOneJourney({
                         onChange={(e) => setAssessmentText(e.target.value)}
                         rows={12}
                         className={cn(
-                          "mt-2 w-full resize-y rounded-2xl border border-border bg-white px-4 py-3 text-caption leading-6 outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--ring)]/40",
+                          "mt-2 w-full resize-y rounded-2xl border border-border bg-card px-4 py-3 text-caption leading-6 outline-none transition focus-visible:ring-2 focus-visible:ring-[var(--ring)]/40",
                           overWordLimit && "border-destructive/60 focus-visible:ring-destructive/30",
                         )}
                         placeholder="Write your assessment…"

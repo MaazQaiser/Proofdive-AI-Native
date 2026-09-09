@@ -15,7 +15,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { cn } from "@/lib/utils";
 
 const fieldClassName =
-  "h-11 rounded-md border-border bg-white px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
+  "h-11 rounded-md border-border bg-card px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
 
 /** Proof-record teaser + bar chart for the visual panel. Decorative
  * marketing content — the chart carries no data, so it's aria-hidden. */
@@ -64,7 +64,7 @@ export default function LoginPage() {
     <AuthShell aside={<LoginAside />}>
       <div className="flex w-full flex-col items-stretch gap-6">
         <div className="flex flex-col gap-2">
-          <h1 className="font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-[#033B4F]">
+          <h1 className="font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-extended-green-blue">
             Welcome back
           </h1>
           <p className="text-body-sm text-muted-foreground">

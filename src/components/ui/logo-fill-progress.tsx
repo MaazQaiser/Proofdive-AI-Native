@@ -52,9 +52,9 @@ export function LogoFillProgress({
       aria-valuenow={Math.round(clipped)}
       aria-label={ariaLabel}
     >
-      <div className="report-loading-logo-mask absolute inset-0 bg-[#d7ebf0]" aria-hidden />
+      <div className="report-loading-logo-mask absolute inset-0 bg-brand-900" aria-hidden />
       <div
-        className="report-loading-logo-mask absolute inset-0 bg-[#0e9ab5] motion-reduce:transition-none"
+        className="report-loading-logo-mask absolute inset-0 bg-brand-100 motion-reduce:transition-none"
         style={{
           clipPath: `inset(${insetTop} 0 0 0)`,
           transition: ready ? `clip-path ${durationMs}ms linear` : "none",

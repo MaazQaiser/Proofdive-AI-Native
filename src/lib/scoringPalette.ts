@@ -110,7 +110,8 @@ export function scoringFillClass(score: number | null | undefined): string {
 }
 
 /**
- * Soft pill for readiness / status badges.
+ * Soft pill for readiness / status badges. Borderless by design: tags and
+ * badges across the product carry no stroke, the tint is the whole chrome.
  * Tint uses the bright brand fill; label text uses the readable `-fg` token.
  */
 export function scoringBadgeClass(scoreOrLabel: number | string): string {
@@ -120,15 +121,15 @@ export function scoringBadgeClass(scoreOrLabel: number | string): string {
       : labelToBand(scoreOrLabel);
 
   if (band === "cyan") {
-    return "border-scoring-cyan/25 bg-scoring-cyan/15 text-scoring-cyan-fg";
+    return "bg-scoring-cyan/15 text-scoring-cyan-fg";
   }
   if (band === "green") {
-    return "border-scoring-green/25 bg-scoring-green/15 text-scoring-green-fg";
+    return "bg-scoring-green/15 text-scoring-green-fg";
   }
   if (band === "yellow") {
-    return "border-scoring-yellow/30 bg-scoring-yellow/20 text-scoring-yellow-fg";
+    return "bg-scoring-yellow/20 text-scoring-yellow-fg";
   }
-  return "border-scoring-red/25 bg-scoring-red/15 text-scoring-red-fg";
+  return "bg-scoring-red/15 text-scoring-red-fg";
 }
 
 function labelToBand(label: string): ScoringBand {

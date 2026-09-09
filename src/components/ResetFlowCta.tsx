@@ -6,7 +6,7 @@ import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { readJson, removeKey } from "@/lib/storage";
 
 const linkClassName =
-  "text-overline text-gray-500 underline decoration-black/30 underline-offset-4 transition hover:text-gray-600";
+  "text-overline text-text-secondary underline decoration-current/30 underline-offset-4 transition hover:text-foreground";
 
 /**
  * Testing scaffolding — one quiet fixed row, bottom-left, out of the product

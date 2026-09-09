@@ -88,7 +88,7 @@ function CoachJourneyPlanCard({
               return (
                 <>
                   Here are the suggested actions{" "}
-                  <span className="rounded-sm bg-[#B9EFF4] px-1 text-[#095B73]">
+                  <span className="rounded-sm bg-extended-light-cyan px-1 text-link">
                     AI coach
                   </span>{" "}
                   recommends.
@@ -98,7 +98,7 @@ function CoachJourneyPlanCard({
             return (
               <>
                 Based on your last session,{" "}
-                <span className="rounded-sm bg-[#B9EFF4] px-1 text-[#095B73]">
+                <span className="rounded-sm bg-extended-light-cyan px-1 text-link">
                   AI coach
                 </span>{" "}
                 identified the areas to work on.
@@ -111,8 +111,8 @@ function CoachJourneyPlanCard({
       <div className={cn("w-full", mode === "roadmap" ? "mt-0" : "mt-4")}>
         <div
           className={cn(
-            "flex w-full flex-col rounded-xl border-[0.5px] border-solid border-[#dde7e9] p-4",
-            "bg-[linear-gradient(121.89deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+            "flex w-full flex-col rounded-xl border-[0.5px] border-solid border-border p-4",
+            "bg-[linear-gradient(121.89deg,var(--glass-from)_0%,var(--glass-to)_98.96%)]",
           )}
         >
           <div className="flex w-full items-center justify-between border-b border-extended-green pb-4">

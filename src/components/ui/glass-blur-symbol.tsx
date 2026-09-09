@@ -44,7 +44,7 @@ function GlassBlurSymbol({
           "pointer-events-none absolute inset-y-0 left-0 z-[1] w-[72%]",
           isPrimary
             ? "bg-[linear-gradient(90deg,color-mix(in_srgb,var(--brand-100)_72%,transparent)_0%,color-mix(in_srgb,var(--brand-100)_28%,transparent)_55%,transparent_100%)]"
-            : "bg-[linear-gradient(90deg,color-mix(in_srgb,white_78%,transparent)_0%,color-mix(in_srgb,white_35%,transparent)_55%,transparent_100%)]",
+            : "bg-[linear-gradient(90deg,color-mix(in_srgb,var(--card)_78%,transparent)_0%,color-mix(in_srgb,var(--card)_35%,transparent)_55%,transparent_100%)]",
         )}
         aria-hidden
       />
@@ -63,9 +63,12 @@ function glassCardSurfaceClasses(variant: "primary" | "gray" = "primary") {
         "hover:shadow-[0_14px_28px_rgba(14,154,181,0.26),inset_0_1px_0_rgba(255,255,255,0.5)]",
       ]
     : [
-        "bg-white",
-        "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_rgba(255,255,255,0.72)]",
-        "hover:bg-white hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_rgba(255,255,255,0.8)]",
+        // `--card`, not white: in dark the frosted tile is the lifted card
+        // surface, and the lit top edge comes from `--glass-inset` so it
+        // reads as a rim of light rather than a white line.
+        "bg-card",
+        "shadow-[0_8px_20px_rgba(14,154,181,0.08),inset_0_1px_0_var(--glass-inset)]",
+        "hover:bg-card hover:shadow-[0_12px_24px_rgba(14,154,181,0.12),inset_0_1px_0_var(--glass-inset)]",
       ];
 }
 

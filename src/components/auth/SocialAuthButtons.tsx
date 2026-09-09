@@ -26,7 +26,7 @@ export function SocialAuthButtons({
         type="button"
         onClick={onLinkedIn}
         disabled={disabled}
-        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-md border border-border bg-white px-4 text-body-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-md border border-border bg-card px-4 text-body-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
       >
         <LinkedInIcon />
         Continue with LinkedIn
@@ -38,7 +38,7 @@ export function SocialAuthButtons({
         type="button"
         onClick={onGoogle}
         disabled={disabled}
-        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-md border border-border bg-white px-4 text-body-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-md border border-border bg-card px-4 text-body-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
       >
         <GoogleIcon />
         Continue with Google

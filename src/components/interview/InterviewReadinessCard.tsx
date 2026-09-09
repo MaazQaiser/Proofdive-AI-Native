@@ -34,25 +34,25 @@ function readinessScoreTextClass(score: number | null | undefined): string {
   return `${type} text-scoring-red`;
 }
 
-/** Status pill matching Figma Interview Readiness (solid border + 25% fill). */
+/** Status pill for Interview Readiness: 25% tint, no stroke (badges are borderless product-wide). */
 function readinessStatusPillClass(scoreOrLabel: number | string | null): string {
   if (scoreOrLabel == null) {
-    return "border-border bg-muted text-muted-foreground";
+    return "bg-muted text-muted-foreground";
   }
   const band: ScoringBand =
     typeof scoreOrLabel === "number"
       ? scoringBandForScore(scoreOrLabel)
       : labelToScoringBand(scoreOrLabel);
   if (band === "cyan") {
-    return "border-scoring-cyan bg-scoring-cyan/25 text-scoring-cyan-fg";
+    return "bg-scoring-cyan/25 text-scoring-cyan-fg";
   }
   if (band === "green") {
-    return "border-scoring-green bg-scoring-green/25 text-scoring-green";
+    return "bg-scoring-green/25 text-scoring-green";
   }
   if (band === "yellow") {
-    return "border-scoring-yellow bg-scoring-yellow/25 text-scoring-yellow-fg";
+    return "bg-scoring-yellow/25 text-scoring-yellow-fg";
   }
-  return "border-scoring-red bg-scoring-red/25 text-scoring-red";
+  return "bg-scoring-red/25 text-scoring-red";
 }
 
 function labelToScoringBand(label: string): ScoringBand {
@@ -128,7 +128,7 @@ export function InterviewReadinessCard({
           </span>
           <span
             className={cn(
-              "inline-flex items-center justify-center overflow-hidden rounded-full border border-solid px-[9px] py-[3px] text-[12px] font-medium leading-[1.2]",
+              "inline-flex items-center justify-center overflow-hidden rounded-full px-[9px] py-[3px] text-[12px] font-medium leading-[1.2]",
               bandClass,
             )}
           >

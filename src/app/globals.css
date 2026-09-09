@@ -354,7 +354,10 @@
   --extended-light-cyan: #123039; /* surface: chip hover fill */
   --extended-cyan: #3ec8df; /* text */
   --extended-blue: #7fd4e6; /* text */
-  --extended-green: #9fbfb8; /* text + row divider */
+  /* Row divider ONLY (no text use anywhere) - so it takes the same quiet
+     stroke as --border, not a text-grade tint. At #9fbfb8 the pillar rows
+     on the report and readiness cards read as bright rules on dark. */
+  --extended-green: #273b43;
   --extended-green-blue: #a9e4ef; /* text */
   --extended-cyan-green: #8fd9e8; /* text + small dot fills */
   --extended-dark-cyan-green: #b6e8f1;
@@ -826,6 +829,12 @@
 [data-slot="card-button"] {
   position: relative;
   border-width: 0;
+  /* Own stacking context, so the stroke's `z-index: 30` below is scoped to
+     the card. Without this the pseudo-element joined the PAGE's stacking
+     context at z-30 and painted over anything lower — the report's sticky
+     summary (z-10) showed every passing card's top edge as a hairline
+     through its opaque surface, while the card's content stayed hidden. */
+  isolation: isolate;
 }
 
 [data-slot="card"]::before,
@@ -1587,21 +1596,50 @@
    for a moment that happens twice. Limited to the paint properties that
    actually change (no `all`, which would animate layout-adjacent properties
    too). Honours reduced motion by simply not applying. */
+/* Theme switch, preferred path. `setThemePreference` flips the theme inside a
+   View Transition, so the browser snapshots the page before and after and
+   crossfades the two as ONE composited layer: gradients, photos, the WebGL
+   orb, shadows and text all move together, and nothing snaps a beat early.
+   Scoped to the switch (the class is on for exactly the transition's life),
+   so a future navigation transition keeps its own timing. */
+html.theme-crossfade::view-transition-group(root),
+html.theme-crossfade::view-transition-old(root),
+html.theme-crossfade::view-transition-new(root) {
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The snapshot layer sits over the page; without this it eats clicks for the
+   length of the fade, which reads as a hang. */
+html.theme-crossfade::view-transition {
+  pointer-events: none;
+}
+
+/* Fallback for browsers without View Transitions: a one-off per-property
+   crossfade. Only what CSS can interpolate fades; gradients and images snap. */
 html.theme-switching,
 html.theme-switching *,
 html.theme-switching *::before,
 html.theme-switching *::after {
   transition:
-    background-color 220ms cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 220ms cubic-bezier(0.4, 0, 0.2, 1),
-    color 220ms cubic-bezier(0.4, 0, 0.2, 1),
-    fill 220ms cubic-bezier(0.4, 0, 0.2, 1),
-    stroke 220ms cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 220ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background-color 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    fill 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    filter 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1) !important;
   transition-delay: 0ms !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html.theme-crossfade::view-transition-group(root),
+  html.theme-crossfade::view-transition-old(root),
+  html.theme-crossfade::view-transition-new(root) {
+    animation: none;
+  }
+
   html.theme-switching,
   html.theme-switching *,
   html.theme-switching *::before,

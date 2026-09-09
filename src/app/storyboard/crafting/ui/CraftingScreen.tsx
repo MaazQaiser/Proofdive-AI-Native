@@ -612,9 +612,9 @@ export function CraftingScreen() {
           {/* Screen dive card */}
           <div
             className={cn(
-              "flex w-full flex-col gap-2.5 rounded-[20px] border-[0.5px] border-solid border-[#dde7e9]",
+              "flex w-full flex-col gap-2.5 rounded-[20px] border-[0.5px] border-solid border-border",
               "p-4 backdrop-blur-[42px] print:hidden",
-              "bg-[linear-gradient(114.96deg,rgba(255,255,255,0.8)_0%,rgba(255,255,255,0.5)_98.96%)]",
+              "bg-[linear-gradient(114.96deg,var(--glass-from)_0%,var(--glass-to)_98.96%)]",
             )}
           >
             <div className="flex w-full items-center justify-between gap-4 py-4">
@@ -628,7 +628,7 @@ export function CraftingScreen() {
                   >
                     {overallScore != null ? overallScore.toFixed(1) : "—"}
                   </span>
-                  <span className="cap-baseline text-[48px] font-normal leading-none tracking-[-2.4px] text-[#abadb2]">
+                  <span className="cap-baseline text-[48px] font-normal leading-none tracking-[-2.4px] text-text-secondary/60">
                     /5
                   </span>
                 </div>
@@ -707,7 +707,7 @@ export function CraftingScreen() {
                         >
                           {displayScore.toFixed(1)}
                         </span>
-                        <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-[#abadb2]">
+                        <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-text-secondary/60">
                           /5
                         </span>
                       </div>
@@ -726,7 +726,7 @@ export function CraftingScreen() {
               <tr>
                 <td
                   rowSpan={2}
-                  className="w-1/2 border border-border bg-white p-4 align-top"
+                  className="w-1/2 border border-border bg-card p-4 align-top"
                 >
                   <div className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
                     Story Score
@@ -748,7 +748,7 @@ export function CraftingScreen() {
                 {divePillars.slice(0, 2).map(({ id, score }) => {
                   const displayScore = score > 0 ? score : null;
                   return (
-                    <td key={id} className="w-1/4 border border-border bg-white p-4 align-top">
+                    <td key={id} className="w-1/4 border border-border bg-card p-4 align-top">
                       <div className="flex w-full items-center gap-2">
                         <SuccessDriverIcon
                           driver={id}
@@ -779,7 +779,7 @@ export function CraftingScreen() {
                 {divePillars.slice(2, 4).map(({ id, score }) => {
                   const displayScore = score > 0 ? score : null;
                   return (
-                    <td key={id} className="w-1/4 border border-border bg-white p-4 align-top">
+                    <td key={id} className="w-1/4 border border-border bg-card p-4 align-top">
                       <div className="flex w-full items-center gap-2">
                         <SuccessDriverIcon
                           driver={id}
@@ -1391,7 +1391,7 @@ function DraftSectionCard({
     <Card className="gap-0 overflow-hidden py-0 print:break-inside-avoid print:rounded-none print:bg-white print:shadow-none">
       <div
         data-slot="storyboard-section-header"
-        className="relative z-10 flex flex-wrap items-center justify-between gap-2 bg-[linear-gradient(189.44deg,rgba(255,255,255,0.2)_50.11%,rgba(14,154,181,0.1)_110.8%),linear-gradient(#fff,#fff)] px-5 py-4 print:border-b print:border-border print:bg-white print:[&>[data-slot=section-header-stroke]]:hidden"
+        className="relative z-10 flex flex-wrap items-center justify-between gap-2 bg-[linear-gradient(189.44deg,var(--glass-inset)_50.11%,var(--thread-header-tint)_110.8%),linear-gradient(var(--card),var(--card))] px-5 py-4 print:border-b print:border-border print:bg-white print:[&>[data-slot=section-header-stroke]]:hidden"
       >
         {/* Client feedback: the section heading read as a caption. Eyebrow
             one step up (14px, 16px icon), title two steps up (14px → 20px, h4) with a
@@ -1411,7 +1411,7 @@ function DraftSectionCard({
         <span
           data-slot="section-header-stroke"
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-px bg-[linear-gradient(to_right,#F5F5F3,#6EC2D3)]"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-px bg-[linear-gradient(to_right,var(--app-ground),var(--brand-500))]"
         />
         <div className="flex flex-wrap items-center gap-2">
           {/* Same soft scoring pill the report and the hub use (tint + `-fg`

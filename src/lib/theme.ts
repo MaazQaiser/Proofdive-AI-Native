@@ -126,6 +126,10 @@ let teardown: (() => void) | null = null;
 
 let switchTimer: ReturnType<typeof setTimeout> | null = null;
 
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 export function setThemePreference(next: ThemePreference) {
   try {
     if (next === "system") localStorage.removeItem(THEME_STORAGE_KEY);
@@ -134,19 +138,49 @@ export function setThemePreference(next: ThemePreference) {
     /* private mode — the choice just will not persist */
   }
 
-  // Arm the one-off crossfade (see `html.theme-switching` in globals.css)
-  // BEFORE flipping the class, and disarm it once the fade is done, so the
-  // transition never lingers on ordinary hover/focus.
+  refresh();
+  const resolved = getThemeSnapshot().resolved;
   const root = document.documentElement;
+
+  // Nothing visible changes (e.g. `system` resolved to what is already
+  // painted) — just keep the attributes honest, no animation to run.
+  if (root.classList.contains("dark") === (resolved === "dark")) {
+    applyTheme(resolved);
+    return;
+  }
+
+  if (prefersReducedMotion()) {
+    applyTheme(resolved);
+    return;
+  }
+
+  // Preferred: the View Transitions API. The browser snapshots the page,
+  // we flip the theme, and it crossfades the before and after as ONE
+  // composited layer. That is what makes the switch feel smooth — gradients,
+  // photos, the WebGL orb, shadows and text all move together — where the
+  // per-element fallback below can only animate the properties CSS knows how
+  // to interpolate and leaves the rest to snap a beat early. Timing lives in
+  // `html.theme-crossfade::view-transition-*` in globals.css.
+  if (typeof document.startViewTransition === "function") {
+    root.classList.add("theme-crossfade");
+    const done = () => root.classList.remove("theme-crossfade");
+    document
+      .startViewTransition(() => applyTheme(resolved))
+      .finished.then(done, done);
+    return;
+  }
+
+  // Fallback (no View Transitions): arm the one-off per-property crossfade
+  // (see `html.theme-switching` in globals.css) BEFORE flipping the class,
+  // and disarm it once the fade is done, so the transition never lingers on
+  // ordinary hover/focus.
   root.classList.add("theme-switching");
   if (switchTimer) clearTimeout(switchTimer);
   switchTimer = setTimeout(() => {
     root.classList.remove("theme-switching");
     switchTimer = null;
-  }, 260);
-
-  refresh();
-  applyTheme(getThemeSnapshot().resolved);
+  }, 320);
+  applyTheme(resolved);
 }
 
 /**
