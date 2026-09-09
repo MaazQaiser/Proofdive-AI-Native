@@ -103,6 +103,11 @@ import {
   useCandidateSubscription,
 } from "@/lib/useSubscriberPayments";
 
+
+/** "let's build…" → "Let's build…" when no name leads the sentence. */
+function capitalise(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 type CarField = "context" | "action" | "result";
 
 type CapturePhase =
@@ -267,6 +272,10 @@ export function StoryboardAgent() {
     () => roleProfile?.name?.trim().split(/\s+/)[0] || "there",
     [roleProfile?.name],
   );
+  /* The client's headings open with the name itself ("Naila, let's build…"),
+   * so without a name the "there" stand-in has to drop out entirely rather
+   * than read as "there, let's build…". */
+  const nameLead = firstName === "there" ? "" : `${firstName}, `;
 
   const focusQueue = useMemo(() => demoCompetencyQueue(roleProfile), [roleProfile]);
 
@@ -648,7 +657,7 @@ export function StoryboardAgent() {
    * subtext is still the right home for their second line. */
   const storyPrompt = useMemo(() => {
     if (phase.kind === "greet") {
-      return `Hey ${firstName}, let's build interview-ready proof from real experience.`;
+      return capitalise(`${nameLead}let's build your MyStoryBoard.`);
     }
     if (phase.kind === "title") {
       return `Which experience best shows your ${competencySpec(phase.competencyId).title}?`;
@@ -659,7 +668,7 @@ export function StoryboardAgent() {
       return ABOUT_YOU_PROMPT;
     }
     return `This is coming together really well.`;
-  }, [phase, firstName]);
+  }, [phase, nameLead]);
 
   /* WHY THIS QUESTION EXISTS — the coach's brief, rendered above the question.
    *
@@ -678,6 +687,12 @@ export function StoryboardAgent() {
    *   - "Follow-up 1 of 2." — a progress fact. CONSULTANT_WHY now carries it
    *     in prose ("Two short follow-ups now…", "Last one."), so the screen
    *     does not grow a third counter next to the rail's two. */
+  /* The consultant's note on the closing screen (client copy, 2026-09): the
+   * capture is complete, Craft is the next action, and nothing is locked. It
+   * rides in the same brief chrome as the per-question guidance. */
+  const CLOSING_CONSULTANT_NOTE =
+    'All four experiences are captured. "Craft my story" will structure them into interview ready examples. You will be able to review and edit the result afterwards, so nothing is locked yet.';
+
   const storyBrief = useMemo<string | null>(() => {
     if (phase.kind === "title") return COMPETENCY_GUIDANCE[phase.competencyId].why;
     if (phase.kind === "car") {
@@ -834,7 +849,6 @@ export function StoryboardAgent() {
    * surface has been removed.) */
   const composerPlaceholder = useMemo(() => {
     if (phase.kind === "closing") return "Craft your story above when ready…";
-    if (phase.kind === "greet") return "Say hi to begin, or press Let’s Start above";
     if (phase.kind === "title") return "A short name for this experience, e.g. “Q3 launch turnaround”";
     if (phase.kind === "car") return `${CAR_FIELD_GUIDANCE[phase.field].shape} Type or use voice.`;
     if (phase.kind === "aboutYou") return "Who you are, where you’re headed, one thing you’re proud of…";
@@ -1408,12 +1422,12 @@ export function StoryboardAgent() {
               <h2 className="text-agent-heading text-left text-extended-blue">
                 {savedDives.length > 1
                   ? `Hey ${firstName}, this Dive adds more evidence to your Storyboard.`
-                  : `Hey ${firstName}, your Storyboard is ready.`}
+                  : capitalise(`${nameLead}your MyStoryBoard is ready.`)}
               </h2>
               <p className="text-left text-agent-question text-text-primary">
-                Structured from the evidence you provided for{" "}
-                <span className="rounded-sm bg-secondary px-1 text-secondary-foreground">{role}</span>
-                .
+                Built from the real experiences you shared and structured around your{" "}
+                <span className="rounded-sm bg-secondary px-1 text-secondary-foreground">{role}</span>{" "}
+                role.
               </p>
               {/* The word "Dive" used to appear first as a card title and was
                   defined only inside a dialog and the FAQ. One line, here. */}
@@ -1454,6 +1468,20 @@ export function StoryboardAgent() {
             ) : null}
             <div className="space-y-4">
               {savedDives.map((dive) => renderDiveCard(dive))}
+              {/* What the number is and is not (client copy, 2026-09): written
+                  evidence against the Success Drivers, not a live performance
+                  prediction — that is what Mock Studios measures. */}
+              <div className="px-1 pt-1">
+                <p className="text-body-sm font-semibold text-text-primary">
+                  What your MyStoryBoard score means
+                </p>
+                <p className="mt-1 max-w-[62ch] text-caption leading-6 text-text-secondary">
+                  This score reflects the strength of your written evidence against the
+                  ProofDive success drivers. This is not yet how you will perform live. Mock
+                  Studios will test how clearly you demonstrate that evidence under realistic
+                  interview conditions.
+                </p>
+              </div>
               {divesLeft > 0 ? (
                 <button
                   type="button"
@@ -1590,6 +1618,8 @@ export function StoryboardAgent() {
                 a straight swap on exactly the screens that had one. */}
             {showCaptureChrome && storyBrief ? (
               <CoachBrief note={storyBrief} />
+            ) : phase.kind === "closing" && !showDiveHome && !addCompetencyOpen ? (
+              <CoachBrief note={CLOSING_CONSULTANT_NOTE} />
             ) : null}
 
             <AgentPrompt
@@ -1626,8 +1656,8 @@ export function StoryboardAgent() {
             {phase.kind === "greet" ? (
               <>
                 <p className="mt-3 text-agent-question text-text-primary">
-                  I&apos;ll guide you through real experiences that become clear,
-                  evidence-backed stories.
+                  We will work through one real experience for each of your Core Four and
+                  turn them into clear, interview ready examples.
                 </p>
                 <div className="mt-8">
                   <Button variant="outline" size="lg" onClick={() => setGreetAcknowledged(true)}>
@@ -1641,8 +1671,8 @@ export function StoryboardAgent() {
             {phase.kind === "closing" ? (
               <>
                 <p className="mt-3 text-agent-question text-text-primary">
-                  Your experiences are ready to shape into interview-ready proof — you&apos;ll
-                  review it before it&apos;s saved.
+                  Your four experiences are ready to shape into clear, interview-ready
+                  examples.
                 </p>
                 <div className="mt-8">
                   <Button
@@ -1700,7 +1730,11 @@ export function StoryboardAgent() {
 
       <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
 
-      <CoachBottomChatBar
+      {/* No composer on greet (client, 2026-09): nothing is typed on that
+          screen, the one action is the Let's start button, and an idle input
+          under it read as a second, unexplained way in. */}
+      {phase.kind === "greet" && !showDiveHome && !addCompetencyOpen ? null : (
+        <CoachBottomChatBar
         placeholder={
           addCompetencyOpen
             ? "Select competencies above to continue…"
@@ -1710,9 +1744,8 @@ export function StoryboardAgent() {
         }
         onSend={handleText}
         freeTextMode="host"
-        // On greet the bar is LIVE: typing anything begins, exactly as the
-        // rail promises. Only closing (where the action is Craft) and the hub
-        // disable it.
+        // Greet has no bar at all (see above). Closing (where the action is
+        // Craft) and the hub keep it, disabled.
         disabled={
           addCompetencyOpen ||
           showDiveHome ||
@@ -1731,6 +1764,7 @@ export function StoryboardAgent() {
         // thing to use: the hub and the competency picker offer buttons.
         rightPanelMaxWidth={showDiveHome || addCompetencyOpen ? undefined : 400}
       />
+      )}
     </AppShell>
   );
 }

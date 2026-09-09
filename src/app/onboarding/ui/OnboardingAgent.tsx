@@ -217,19 +217,19 @@ const INDUSTRY_OPTIONS = [
  * signal they actually have; asking them to name a role here would force a
  * decision they may not have made yet, and the Target step asks for it anyway. */
 const FIELD_OF_STUDY_OPTIONS = [
-  "Computer Science",
-  "Software Engineering",
   "Business",
+  "Computer Science",
+  "Marketing",
   "Design",
+  "Finance",
   "Engineering",
-  "Data Science",
 ];
 
 /* Every value the rest of the flow can produce. The resume parse and the
  * free-text shortcut ("6 years") still yield the granular ones and
  * `applyExperienceId` maps all of them, so the union stays complete even
- * though the QUESTION now offers only the two in STATUS_OPTIONS below. */
-type ExperienceId = "student" | "new_grad" | "1-4" | "5-9" | "10+";
+ * though the QUESTION now offers the tiers in STATUS_GROUPS below. */
+type ExperienceId = "student" | "diploma" | "new_grad" | "1-4" | "5-9" | "10+";
 
 /* Status. The brief said "fresh graduate vs experienced professional", and
  * this ladder answers exactly that — `applyExperienceId` folds Student and
@@ -238,24 +238,71 @@ type ExperienceId = "student" | "new_grad" | "1-4" | "5-9" | "10+";
  * the user nothing (still one tap) and keeps `experienceLevel`, which
  * `generateMockJobDescription` uses to pitch the posting — a two-way question
  * would throw that away and leave the JD generator on its fallback. */
-const STATUS_OPTIONS = [
-  { id: "student", label: "Student" },
-  { id: "new_grad", label: "New grad" },
-  { id: "1-4", label: "1–4 yrs" },
-  { id: "5-9", label: "5–9 yrs" },
-  { id: "10+", label: "10+ yrs" },
-] as const;
+/* Two tiers, same shape as the role step (client liked it there): the tab
+ * says WHERE you are — student, new grad, experienced — and the chips under
+ * it say the detail that actually changes something downstream. Student
+ * splits into undergraduate / diploma (both real `backgroundType`s the
+ * profile already carries; diploma was never offered before). Experienced
+ * splits into the year bands the JD generator pitches against. New grad has
+ * one honest option, kept as a chip so the rule stays the same on every tab:
+ * the tab filters, the chip answers. */
+type StatusGroupId = "student" | "new_grad" | "experienced";
+type StatusGroup = {
+  id: StatusGroupId;
+  label: string;
+  /** Chips label under the tab — what the second tier is asking. */
+  prompt: string;
+  options: ReadonlyArray<{ id: ExperienceId; label: string }>;
+};
+const STATUS_GROUPS: ReadonlyArray<StatusGroup> = [
+  {
+    id: "student",
+    label: "Current Student",
+    prompt: "Which best describes you?",
+    options: [
+      { id: "student", label: "Undergraduate" },
+      { id: "diploma", label: "Diploma or vocational" },
+    ],
+  },
+  {
+    id: "new_grad",
+    label: "Fresh Graduate",
+    prompt: "Confirm to continue",
+    options: [{ id: "new_grad", label: "Graduated, looking for my first role" }],
+  },
+  {
+    id: "experienced",
+    label: "Experienced",
+    prompt: "Years of experience",
+    options: [
+      { id: "1-4", label: "1–4 years" },
+      { id: "5-9", label: "5–9 years" },
+      { id: "10+", label: "10+ years" },
+    ],
+  },
+];
+function statusGroupFor(expId: ExperienceId | ""): StatusGroupId | null {
+  if (!expId) return null;
+  return STATUS_GROUPS.find((g) => g.options.some((o) => o.id === expId))?.id ?? null;
+}
 
-/** Suggested interests. Deliberately broad and non-professional: this is the
- *  one question on the path that is not about work, and the chips are there to
- *  show that, not to constrain the answer — anything can be typed instead. */
-const INTEREST_OPTIONS = [
-  "Sport",
-  "Music",
-  "Reading",
-  "Travel",
-  "Cooking",
-  "Volunteering",
+/** "What makes you, YOU?" — examples, not answers. The client's copy (2026-09)
+ *  replaced the pick-any interest chips with prompts to think against, so the
+ *  answer is always typed: one or two things a resume would not show. */
+const ABOUT_YOU_EXAMPLES: Array<{ lead: string; example: string }> = [
+  { lead: "An interest or hobby you spend time on.", example: "Sport, Reading, Cooking" },
+  {
+    lead: "Something you have been committed to for a while.",
+    example: "Family responsibility, Hobby",
+  },
+  {
+    lead: "A subject or area you are naturally curious about.",
+    example: "A subject, Industry, Craft",
+  },
+  {
+    lead: "An experience that has shaped your perspective.",
+    example: "A move, Travel, Environment you grew up around",
+  },
 ];
 
 /* The welcome screen's "How it works": the product's actual loop, in the order
@@ -265,9 +312,22 @@ const INTEREST_OPTIONS = [
  * name is the thing worth remembering; the rest is one clause of plain
  * explanation. */
 const HOW_IT_WORKS: Array<{ icon: LucideIcon; name: string; detail: string }> = [
-  { icon: BookOpen, name: "Storyboard", detail: "real experience, turned into proof" },
-  { icon: UserCheck, name: "Mock Interview", detail: "timed, adaptive follow-ups" },
-  { icon: Gauge, name: "Report", detail: "scored, with what to improve next" },
+  {
+    icon: BookOpen,
+    name: "MyStoryBoard",
+    detail: "Guided questions turn your real experiences into interview ready examples",
+  },
+  {
+    icon: UserCheck,
+    name: "Mock Studios",
+    detail:
+      "Timed, realistic interview with adaptive follow ups to stress test how clearly you demonstrate your experience",
+  },
+  {
+    icon: Gauge,
+    name: "Analytical Report",
+    detail: "A scored breakdown of what's strong and what to improve",
+  },
 ];
 
 const RESUME_ACCEPT = ".pdf,.doc,.docx,.txt";
@@ -334,6 +394,9 @@ function applyExperienceId(
   if (expId === "student") {
     return { ...draft, backgroundType: "under_grad", experienceLevel: "" };
   }
+  if (expId === "diploma") {
+    return { ...draft, backgroundType: "diploma_holder", experienceLevel: "" };
+  }
   if (expId === "new_grad") {
     return { ...draft, backgroundType: "fresh_grad", experienceLevel: "" };
   }
@@ -356,6 +419,8 @@ function parseBackgroundText(text: string): {
   if (yearsMatch) {
     expId = experienceIdFromYears(Number(yearsMatch[1]));
     rest = rest.replace(yearsMatch[0], " ");
+  } else if (/\bdiploma\b/i.test(rest)) {
+    expId = "diploma";
   } else if (/\bstudent\b/i.test(rest)) {
     expId = "student";
     rest = rest.replace(/\bstudent\b/i, " ");
@@ -519,6 +584,9 @@ function OnboardingAgentInner({
   const [manualRole, setManualRole] = useState(
     isEditMode ? (roleProfile?.targetRole ?? "") : "",
   );
+  /** Which status tab is open. `null` until the user touches it, so the
+   *  tab follows whatever is pre-selected (parsed resume, typed sentence). */
+  const [statusGroup, setStatusGroup] = useState<StatusGroupId | null>(null);
   const [manualExp, setManualExp] = useState<ExperienceId | "">(
     isEditMode ? experienceIdFromProfile(roleProfile) : "",
   );
@@ -528,7 +596,7 @@ function OnboardingAgentInner({
     isEditMode ? (roleProfile?.education ?? roleProfile?.lastWorkedAt ?? "") : "",
   );
   /** Hobbies / personal interests — question 3 on the no-resume path. */
-  const [manualInterests, setManualInterests] = useState(
+  const [, setManualInterests] = useState(
     isEditMode ? (roleProfile?.interests ?? "") : "",
   );
   const [manualIndustry, setManualIndustry] = useState(
@@ -628,6 +696,9 @@ function OnboardingAgentInner({
       resume: parseFile ? `📎 ${parseFile.name}` : next.resume,
     };
     setDraft(next);
+    // Pre-select the status the resume implied, so question 2 opens on the
+    // right tab with the band already highlighted.
+    setManualExp(expId);
     // The resume is the shortcut, not the whole step: the three quick
     // questions (education, status, interests) follow for everyone.
     setStage("bgStudy");
@@ -1092,9 +1163,9 @@ function OnboardingAgentInner({
             : stage === "bgStudy"
               ? 'Or type your field: "Computer Science"…'
               : stage === "bgExp"
-                ? 'Or tell me: "6 years"…'
+                ? 'Or you could mention your exact years of experience — for example, "6 years."'
                 : stage === "bgInterests"
-                  ? 'Or type your own: "long-distance running, chess"…'
+                  ? 'Share one or two things, e.g. "long-distance running, chess"…'
                 : stage === "targetRole"
                   ? 'Type your target role. Example: "Senior UX Designer."'
                   : stage === "targetIndustry"
@@ -1111,7 +1182,7 @@ function OnboardingAgentInner({
 
   const prompt: string =
     stage === "bgEntry"
-        ? "Let's start with your background.\n\nUpload your resume so ProofDive can identify your roles, education, experience, and possible story anchors. You will review and confirm anything we use before it shapes your MyStoryBoard journey."
+        ? "Let's start with your background.\n\nUpload your resume so ProofDive can identify your roles, education, experience, and possible story anchors."
         : stage === "bgParsing"
           ? "Reading your resume…"
           : stage === "bgFailed"
@@ -1119,11 +1190,11 @@ function OnboardingAgentInner({
             : stage === "bgConfirm"
             ? `Here's what I read. Does this look correct?\n\n${confirmNote ?? "Confirm it, then three quick questions about you."}`
             : stage === "bgStudy"
-              ? "What did you study?\n\nYour field gives me context for the examples I ask about, so select one or type your own below."
+              ? "What did you study?\n\nYour field of study gives us context for the experiences we will explore later, so select one or type your own below."
               : stage === "bgExp"
-                ? "How far along are you?\n\nThis sets the level your session is pitched at, so select the one that fits."
+                ? "What is your current level of experience?\n\nThis helps ProofDive tailor your questions and preparation to where you are today. Select your current experience level."
                 : stage === "bgInterests"
-                  ? "What do you do outside work?\n\nInterests are where some of the strongest stories come from — teams you have run, things you have organised, skills you taught yourself. Select any or type your own."
+                  ? "What makes you, YOU?\n\nYour education and experience tell us part of your story. However, this section helps ProofDive understand a little more about you beyond your formal background. Share one or two things about your life, interests, experiences or commitments that would not normally appear on a resume."
                 : stage === "targetRole"
                   ? "What role are you preparing for?\n\nYour target role sets the direction for your preparation. ProofDive uses it to tailor your journey around the role you are preparing for."
                   : stage === "targetIndustry"
@@ -1132,8 +1203,8 @@ function OnboardingAgentInner({
                       ? isGeneratingJd
                         ? "Drafting a posting from your background…"
                         : generatedJdDraft
-                          ? `We've prepared a working draft for ${draft.targetRole.trim() || "your role"}${draft.industryVertical.trim() ? ` in ${draft.industryVertical.trim()}` : ""}.\n\nBased on your role and industry, this draft gives ProofDive a working view of the responsibilities and expectations relevant to your preparation. It is not an employer-authored Job Description, so review it before continuing.`
-                          : `Do you have the Job Description for the ${draft.targetRole.trim() || "target"} role?\n\nA Job Description gives ProofDive the clearest view of what this specific role requires. We use it to tailor your Core Four competencies, shape your questions, and where your preparation should focus.`
+                          ? `We have generated a Job Description for ${draft.targetRole.trim() || "your role"}${draft.industryVertical.trim() ? ` in ${draft.industryVertical.trim()}` : ""}.\n\nBased on your role and industry, this draft gives ProofDive a working view of the responsibilities and expectations relevant to your preparation. It is not an employer authored Job Description, so review it before continuing.`
+                          : `Add the Job Description for ${draft.targetRole.trim() || "your target role"}\n\nA Job Description gives ProofDive the clearest view of what this specific role requires. We use it to recommend your Core Four competencies, shape your questions, and determine where your preparation should focus.`
                       : stage === "plan"
                   ? planPhase !== null
                     ? "Working out where to start…"
@@ -1407,7 +1478,7 @@ function OnboardingAgentInner({
                         cancels the 'E's left sidebearing, since the logo's
                         first tile has none. */}
                     <h1 className="mt-8 -ml-[0.065em] w-full whitespace-pre-line cap-baseline font-gilroy text-[clamp(2rem,6vw,3rem)] font-bold leading-[1.12] tracking-[-0.04em] text-heading-teal">
-                      {`Hi${greetingName ? ` ${greetingName}` : ""}, I'm your assigned\nProofDive Consultant.`}
+                      {`Hi${greetingName ? ` ${greetingName}` : ""}, I am your assigned\nProofDive Consultant.`}
                     </h1>
 
                     {/* 28rem, the landing's own measure: ~62 characters,
@@ -1546,7 +1617,8 @@ function OnboardingAgentInner({
                 {stage === "bgEntry" ? (
                   <div className="mt-8 flex flex-col gap-2">
                     <span className="text-body-sm font-semibold text-text-secondary">
-                      No resume?
+                      It&apos;s okay if you don&apos;t have a ready resume yet. We will collect
+                      the needed information during the process.
                     </span>
                     <div className="flex flex-wrap gap-2">
                       <SelectionChip onClick={skipBackground}>
@@ -1615,44 +1687,100 @@ function OnboardingAgentInner({
 
                 {stage === "bgStudy" ? (
                   <ManualQuestion
-                    chipsLabel="Popular fields"
+                    chipsLabel="Popular options"
                     chips={studyChips}
                     selectedLabel={manualStudy}
                     onPick={chooseStudy}
                     trailing={
                       <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
-                        Type any field below ↓
+                        Or type your specific field below ↓
                       </span>
                     }
                   />
                 ) : null}
 
-                {stage === "bgExp" ? (
-                  <ManualQuestion
-                    chipsLabel="Select one"
-                    chips={STATUS_OPTIONS.map((o) => o.label)}
-                    selectedLabel={
-                      STATUS_OPTIONS.find((o) => o.id === manualExp)?.label ?? ""
-                    }
-                    onPick={(label) => {
-                      const opt = STATUS_OPTIONS.find((o) => o.label === label);
-                      if (opt) chooseExperience(opt.id);
-                    }}
-                  />
-                ) : null}
+                {stage === "bgExp"
+                  ? (() => {
+                      const activeGroupId: StatusGroupId =
+                        statusGroup ?? statusGroupFor(manualExp) ?? "student";
+                      const group =
+                        STATUS_GROUPS.find((g) => g.id === activeGroupId) ?? STATUS_GROUPS[0];
+                      return (
+                        <div className="mt-8 flex flex-col gap-6">
+                          <div className="flex flex-col gap-2">
+                            <div className="text-body-sm font-semibold text-text-secondary">
+                              Select the option that best describes you.
+                            </div>
+                            {/* Same chip-styled tab track as the role step's
+                                career levels: one grouped control, so it reads
+                                as a switch for the chips below, not as three
+                                more answers. */}
+                            <Tabs
+                              value={activeGroupId}
+                              onValueChange={(value) => setStatusGroup(value as StatusGroupId)}
+                            >
+                              <TabsList
+                                aria-label="Select the option that best describes you"
+                                className="h-auto max-w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-full bg-chip-surface p-1 backdrop-blur-[9px] [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden"
+                              >
+                                {STATUS_GROUPS.map((g) => (
+                                  <TabsTrigger
+                                    key={g.id}
+                                    value={g.id}
+                                    className={cn(
+                                      "h-8 flex-none rounded-full border-transparent px-4 text-[15px] font-medium leading-none",
+                                      "text-extended-cyan hover:bg-extended-light-cyan hover:text-extended-blue dark:text-extended-cyan",
+                                      "data-[state=active]:bg-primary data-[state=active]:text-brand-1000 data-[state=active]:shadow-none",
+                                      "dark:data-[state=active]:bg-primary dark:data-[state=active]:text-brand-1000",
+                                    )}
+                                  >
+                                    {g.label}
+                                  </TabsTrigger>
+                                ))}
+                              </TabsList>
+                            </Tabs>
+                          </div>
+
+                          <ManualQuestion
+                            className="mt-0"
+                            chipsLabel={group.prompt}
+                            chips={group.options.map((o) => o.label)}
+                            selectedLabel={
+                              group.options.find((o) => o.id === manualExp)?.label ?? ""
+                            }
+                            onPick={(label) => {
+                              const opt = group.options.find((o) => o.label === label);
+                              if (opt) chooseExperience(opt.id);
+                            }}
+                          />
+                        </div>
+                      );
+                    })()
+                  : null}
 
                 {stage === "bgInterests" ? (
-                  <ManualQuestion
-                    chipsLabel="Pick any, or type your own"
-                    chips={INTEREST_OPTIONS}
-                    selectedLabel={manualInterests}
-                    onPick={chooseInterests}
-                    trailing={
-                      <span className="inline-flex h-9 items-center rounded-full border border-dashed border-chip-border px-4 text-[16px] font-medium leading-[1.3] text-text-secondary">
-                        Type anything below ↓
-                      </span>
-                    }
-                  />
+                  /* Examples to think against, not chips to pick: the answer is
+                     typed in the composer below. Same label tone as the chip
+                     rows so the step still reads as one of the three. */
+                  <div className="mt-8 flex w-full flex-col gap-3">
+                    <span className="text-body-sm font-semibold text-text-secondary">
+                      Examples for you to consider
+                    </span>
+                    <ul className="flex flex-col gap-2.5">
+                      {ABOUT_YOU_EXAMPLES.map(({ lead, example }) => (
+                        <li key={lead} className="flex items-start gap-3">
+                          <span
+                            aria-hidden
+                            className="mt-[9px] size-1.5 shrink-0 rounded-full bg-primary"
+                          />
+                          <span className="text-body-sm leading-6 text-text-primary">
+                            {lead}{" "}
+                            <span className="text-text-secondary">For example: {example}.</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ) : null}
 
                 {stage === "targetIndustry" ? (
@@ -1756,7 +1884,8 @@ function OnboardingAgentInner({
                          thing. */
                       <div className="mt-2 flex flex-col gap-2">
                         <span className="text-body-sm font-semibold text-text-secondary">
-                          Don&apos;t have the posting?
+                          No Job Description? We will create a working draft from your role
+                          and industry.
                         </span>
                         <div className="flex flex-wrap gap-2">
                           {draft.jobDescription.trim() ? (
@@ -1766,7 +1895,7 @@ function OnboardingAgentInner({
                             </SelectionChip>
                           ) : null}
                           <SelectionChip onClick={handleGenerateJd}>
-                            Draft one from your background
+                            Create the working draft
                             <ArrowRight className="size-4" aria-hidden />
                           </SelectionChip>
                         </div>
@@ -1791,7 +1920,6 @@ function OnboardingAgentInner({
                         text={generatedJdDraft}
                         targeting={targetingSummary}
                         variant={jdVariant}
-                        onUseRealPosting={(text) => acceptJobDescription(text, "user")}
                         isEditing={isEditingJd}
                         onEdit={() => setIsEditingJd(true)}
                         onDoneEdit={(text) => {
@@ -2060,15 +2188,18 @@ function ManualQuestion({
   selectedLabel,
   onPick,
   trailing,
+  className,
 }: {
   chipsLabel: string;
   chips: string[];
   selectedLabel: string;
   onPick: (label: string) => void;
   trailing?: React.ReactNode;
+  /** Overrides the default top margin when the question sits under a tab track. */
+  className?: string;
 }) {
   return (
-    <div className="mt-8 flex w-full flex-col gap-2">
+    <div className={cn("mt-8 flex w-full flex-col gap-2", className)}>
       <div className="text-body-sm font-semibold text-text-secondary">
         {chipsLabel}
       </div>
@@ -2263,7 +2394,6 @@ function SessionContract({
             Your preparation plan
           </span>
           <span aria-hidden className="h-px flex-1 border-t border-dashed border-border" />
-          <Badge>Start anywhere</Badge>
         </div>
 
         <ol className="mt-1 flex w-full flex-col">

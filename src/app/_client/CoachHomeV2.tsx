@@ -17,6 +17,7 @@ import {
   readinessPillarsFromReport,
 } from "@/components/interview/InterviewReadinessCard";
 import { safeParseReportsMap } from "@/lib/interviewReports";
+import { SUCCESS_DRIVER_ORDER, SUCCESS_DRIVERS } from "@/lib/successDrivers";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type {
   InterviewReport,
@@ -249,18 +250,23 @@ export function CoachHomeV2() {
       </div>
     </InterviewReadinessCard>
   ) : model ? (
-    /* Empty readiness: one honest line, not four em-dashes and a banner.
-       Same glass surface as the scored card so it is recognisably the same
-       slot, just not filled yet. */
-    <div className="flex w-full flex-wrap items-center justify-between gap-4 rounded-[20px] border-[0.5px] border-border bg-[linear-gradient(114.96deg,var(--glass-from)_0%,var(--glass-to)_98.96%)] px-6 py-5 backdrop-blur-[42px]">
-      <div className="flex min-w-0 items-baseline gap-2">
-        <span className="font-gilroy text-[32px] leading-none tracking-[-1.6px] text-text-secondary/50">—/5</span>
-        <span className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">Interview readiness</span>
-      </div>
-      <p className="min-w-0 flex-1 basis-[18rem] text-caption text-text-secondary">
-        Complete your first mock interview to generate readiness insights across the four Success Drivers.
+    /* Empty readiness is the FULL card with em-dashes, above the journey —
+       the client's call: a new user should see the scoreboard they are about
+       to fill in, so the three steps read as the way to fill it. The card's
+       footer carries the one honest line about how it fills. */
+    <InterviewReadinessCard
+      overall={null}
+      pillars={SUCCESS_DRIVER_ORDER.map((id) => ({
+        id,
+        label: SUCCESS_DRIVERS[id].shortLabel,
+        score: null,
+      }))}
+    >
+      <p className="border-t border-border pt-4 text-caption text-text-secondary">
+        Complete your first mock interview to generate readiness insights across the four
+        Success Drivers.
       </p>
-    </div>
+    </InterviewReadinessCard>
   ) : null;
 
   return (
@@ -285,17 +291,10 @@ export function CoachHomeV2() {
               <h2 className="text-agent-heading text-heading-teal">{heading.h2}</h2>
               <h4 className="mt-3 text-agent-question text-text-primary">{heading.h4}</h4>
 
-              {model.report ? (
-                <>
-                  <div className="mt-8 w-full">{readinessEl}</div>
-                  <JourneyCard model={model} className="mt-8" />
-                </>
-              ) : (
-                <>
-                  <JourneyCard model={model} className="mt-8" />
-                  <div className="mt-6 w-full">{readinessEl}</div>
-                </>
-              )}
+              {/* Readiness first in every state (see the empty-card note above),
+                  then the journey that fills it. */}
+              <div className="mt-8 w-full">{readinessEl}</div>
+              <JourneyCard model={model} className="mt-8" />
             </>
           ) : (
             <div className="min-h-[40vh]" aria-hidden />
