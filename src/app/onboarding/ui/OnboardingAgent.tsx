@@ -535,9 +535,6 @@ function OnboardingAgentInner({
     isEditMode ? (roleProfile?.industryVertical ?? "") : "",
   );
   const [industrySkipped, setIndustrySkipped] = useState(false);
-  /** Step 1 skipped outright (no resume, no questions) — Back from the role
-   *  step then returns here instead of to the last manual question. */
-  const [bgSkipped, setBgSkipped] = useState(false);
   const timersRef = useRef<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -631,15 +628,15 @@ function OnboardingAgentInner({
       resume: parseFile ? `📎 ${parseFile.name}` : next.resume,
     };
     setDraft(next);
-    setBgSkipped(false);
-    setStage("targetRole");
+    // The resume is the shortcut, not the whole step: the three quick
+    // questions (education, status, interests) follow for everyone.
+    setStage("bgStudy");
   }
 
-  /** Skip step 1 entirely. Role, industry and JD still get asked; the
-   *  storyboard simply starts without resume-derived anchors. */
+  /** No resume. The three quick questions still follow — the resume only
+   *  ever pre-filled them; it was never a way around them. */
   function skipBackground() {
-    setBgSkipped(true);
-    setStage("targetRole");
+    setStage("bgStudy");
   }
 
   /** Typed corrections on the confirm card — "actually 7 years", "at Globex",
@@ -709,9 +706,13 @@ function OnboardingAgentInner({
       // studying-path-only branch it was; `lastWorkedAt` is not collected on
       // this path at all any more (the resume parse still fills it).
       education: detail || next.education,
-      industryVertical: skipped ? "" : industry,
+      // Keep what the resume parse filled (industry, background): the
+      // questions add to it; an empty answer here must not erase it.
+      industryVertical: industry.trim() ? industry : skipped ? "" : next.industryVertical,
       interests: interests.trim() || next.interests,
-      background: [detail, skipped ? "" : industry].filter(Boolean).join(" · "),
+      background: parsed
+        ? next.background
+        : [detail, skipped ? "" : industry].filter(Boolean).join(" · "),
     };
     setDraft(next);
     setStage("targetRole");
@@ -735,10 +736,10 @@ function OnboardingAgentInner({
       setIndustrySkipped(false);
     }
 
-    // From the entry screen there is no questionnaire to fall into: keep
-    // whatever the sentence gave us and move to the target.
+    // From the entry screen the sentence only pre-fills: the three quick
+    // questions still start, with whatever it answered already selected.
     if (finishNow) {
-      finishManual(expId, study, industry, skipped);
+      setStage("bgStudy");
       return;
     }
     if (!expId) {
@@ -982,15 +983,15 @@ function OnboardingAgentInner({
         // welcome overlay (wired at the progress header).
         return null;
       case "bgStudy":
-        return isEditMode ? null : "bgEntry";
+        if (isEditMode) return null;
+        return parsed ? "bgConfirm" : "bgEntry";
       case "bgExp":
         return "bgStudy";
       case "bgInterests":
         return "bgExp";
       case "targetRole":
         if (isNewRoleMode) return null;
-        if (parsed) return "bgConfirm";
-        return bgSkipped ? "bgEntry" : "bgInterests";
+        return "bgInterests";
       case "targetIndustry":
         return "targetRole";
       case "targetJd":
@@ -1114,9 +1115,9 @@ function OnboardingAgentInner({
         : stage === "bgParsing"
           ? "Reading your resume…"
           : stage === "bgFailed"
-            ? "I couldn't read that file.\n\nScanned or image-based resumes are hard to read. A text-based PDF or DOCX works best, or skip this step."
+            ? "I couldn't read that file.\n\nScanned or image-based resumes are hard to read. A text-based PDF or DOCX works best, or continue without one."
             : stage === "bgConfirm"
-            ? `Here's what I read. Does this look correct?\n\n${confirmNote ?? "Confirm it and the questionnaire is done."}`
+            ? `Here's what I read. Does this look correct?\n\n${confirmNote ?? "Confirm it, then three quick questions about you."}`
             : stage === "bgStudy"
               ? "What did you study?\n\nYour field gives me context for the examples I ask about, so select one or type your own below."
               : stage === "bgExp"
@@ -1538,27 +1539,18 @@ function OnboardingAgentInner({
                   </div>
                 )}
 
-                {/* No resume: two honest alternatives, in the flow's chip
-                    control. The first swaps one long input for three short
-                    questions and says so (a chip labelled "Skip" that opens a
-                    questionnaire is a trapdoor); the second really does skip
-                    — straight to the role step, nothing asked. */}
+                {/* No resume: one way on. The resume is optional; the three
+                    quick questions are not, and they follow either way — so
+                    the chip says what it does ("continue without"), not
+                    "skip", which would promise a shortcut that does not exist. */}
                 {stage === "bgEntry" ? (
                   <div className="mt-8 flex flex-col gap-2">
                     <span className="text-body-sm font-semibold text-text-secondary">
                       No resume?
                     </span>
                     <div className="flex flex-wrap gap-2">
-                      <SelectionChip
-                        onClick={() => {
-                          setBgSkipped(false);
-                          setStage("bgStudy");
-                        }}
-                      >
-                        Answer 3 quick questions instead
-                      </SelectionChip>
                       <SelectionChip onClick={skipBackground}>
-                        Skip this step
+                        Continue without a resume
                         <ArrowRight className="size-4" aria-hidden />
                       </SelectionChip>
                     </div>
@@ -1589,10 +1581,10 @@ function OnboardingAgentInner({
                       className="rounded-xl border border-border bg-card p-5 text-left transition hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                     >
                       <span className="block text-h5 font-medium text-foreground">
-                        Skip
+                        Continue without a resume
                       </span>
                       <span className="mt-1 block text-caption text-text-secondary">
-                        Continue without a resume
+                        Three quick questions instead
                       </span>
                     </button>
                   </div>

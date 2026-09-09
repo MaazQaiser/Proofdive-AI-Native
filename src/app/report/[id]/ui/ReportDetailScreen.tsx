@@ -755,7 +755,7 @@ export function ReportDetailScreen({ reportId }: Props) {
             </CardContent>
           </Card>
         </div>
-        <CoachBottomChatBar placeholder="Ask AI Coach about this report" />
+        <CoachBottomChatBar placeholder="Ask the Consultant about this report" />
         <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
       </AppShell>
     );
@@ -784,7 +784,7 @@ export function ReportDetailScreen({ reportId }: Props) {
             </CardContent>
           </Card>
         </div>
-        <CoachBottomChatBar placeholder="Ask AI Coach about this report" />
+        <CoachBottomChatBar placeholder="Ask the Consultant about this report" />
         <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
       </AppShell>
     );
@@ -820,7 +820,7 @@ export function ReportDetailScreen({ reportId }: Props) {
             </CardContent>
           </Card>
         </div>
-        <CoachBottomChatBar placeholder="Ask AI Coach about this report" />
+        <CoachBottomChatBar placeholder="Ask the Consultant about this report" />
         <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
       </AppShell>
     );
@@ -1072,8 +1072,8 @@ export function ReportDetailScreen({ reportId }: Props) {
                 <SectionTitle
                   title={
                     <>
-                      What{" "}
-                      <span className="rounded-sm bg-extended-light-cyan px-1 text-link">AI Coach</span>{" "}
+                      What the{" "}
+                      <span className="rounded-sm bg-extended-light-cyan px-1 text-link">AI Consultant</span>{" "}
                       saw in your session
                     </>
                   }
@@ -1306,9 +1306,9 @@ export function ReportDetailScreen({ reportId }: Props) {
                       label instead of squeezing it into three lines. */}
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <SpotlightLabel icon={PencilSparkles} hint="How it should sound">
-                      Coach rewrite
+                      Consultant rewrite
                     </SpotlightLabel>
-                    <Badge>AI Coach</Badge>
+                    <Badge>AI Consultant</Badge>
                   </div>
                   <blockquote className="mt-4 whitespace-pre-line border-l-2 border-primary pl-4 text-caption leading-relaxed text-text-primary">
                     {report.spotlight.coachRewrite}
@@ -1408,7 +1408,7 @@ export function ReportDetailScreen({ reportId }: Props) {
             <CardContent className="p-6">
               <SectionTitle
                 title="What to work on next"
-                subtitle="Based on your session — AI Coach's picks for your next training."
+                subtitle="Based on your session — the Consultant's picks for your next training."
               />
 
               <div className="mt-6 flex w-full flex-col">
@@ -1540,7 +1540,7 @@ export function ReportDetailScreen({ reportId }: Props) {
         </section>
       </div>
 
-      <CoachBottomChatBar placeholder="Ask AI Coach about this report" />
+      <CoachBottomChatBar placeholder="Ask the Consultant about this report" />
       <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
     </AppShell>
   );

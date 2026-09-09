@@ -428,7 +428,7 @@ function buildMockReport(args: {
       : `Your ${strongest.shortTitle} answers showed real evidence, with clear alignment and trade-offs stated out loud. Where you're losing points is ${weakest.shortTitle} — your answers described what happened but not what you specifically decided and why. Fix that and your score moves up a band.`,
     drivers,
     narrative: {
-      title: "What AI Coach saw in your session",
+      title: "What the Consultant saw in your session",
       subtitle: "Summary of strengths, gaps, and how you showed up.",
       paragraph: firstStart
         ? "You structure answers clearly enough to follow, but they stop before the result: outcomes are described rather than measured, and decisions are attributed to the team rather than to you. Expect scores to cluster until every answer carries one metric and one explicit trade-off."

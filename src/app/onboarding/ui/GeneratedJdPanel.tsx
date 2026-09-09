@@ -304,10 +304,6 @@ export function GeneratedJdPanel({
             </button>
           </div>
         )}
-        <p className="text-overline text-text-secondary">
-          A real posting always beats a draft. You can swap one in later from
-          your profile, too.
-        </p>
       </CardContent>
     </Card>
   );

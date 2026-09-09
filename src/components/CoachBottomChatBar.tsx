@@ -105,7 +105,7 @@ export function CoachBottomChatBar({
      composer. `--app-ground` is the exact colour the canvas paints, so the
      solid region is indistinguishable from the page it covers. */
   const composerBlock = (
-    <div className="pt-7 pb-4 [background:linear-gradient(to_bottom,transparent,var(--app-ground)_1.75rem)]">
+    <div className="pt-7 pb-4">
       {hint && !faq.isFaqMode ? (
         <div data-slot="coach-chat-hint" className="pb-2 pl-6 pr-4">
           {/* The clamp sits inside the padding wrapper: on a -webkit-box,
@@ -133,9 +133,13 @@ export function CoachBottomChatBar({
       {/* Mirrors AppShell's frame so this fixed bar's centering axis matches
           the main content column. When a flush right panel is present, reserve
           its width from the viewport edge instead of capping at max-w-6xl. */}
+      {/* The fade lives on the COLUMN, not on the 800px composer: the page's
+          cards run the full content width, so a backdrop only as wide as the
+          composer left their edges scrolling through in the clear on either
+          side of it (report question rows, client screenshot). */}
       {rightPanelMaxWidth ? (
         <div className={cn("flex w-full", COACH_NAV_CONTENT_INSET_CLASS)}>
-          <div className="pointer-events-auto min-w-0 flex-1 pr-4 sm:pr-6">
+          <div className={cn("pointer-events-auto min-w-0 flex-1 pr-4 sm:pr-6", "[background:linear-gradient(to_bottom,transparent,var(--app-ground)_1.75rem)]")}>
             <div className="mx-auto w-[800px] max-w-full">{composerBlock}</div>
           </div>
           <div
@@ -153,6 +157,7 @@ export function CoachBottomChatBar({
           className={cn(
             "pointer-events-auto mx-auto max-w-6xl pr-6",
             COACH_NAV_CONTENT_INSET_CLASS,
+            "[background:linear-gradient(to_bottom,transparent,var(--app-ground)_1.75rem)]",
           )}
         >
           <div className="mx-auto w-[800px] max-w-full">{composerBlock}</div>

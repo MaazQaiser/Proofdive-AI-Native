@@ -329,7 +329,7 @@ export function InterviewScreen() {
                 </Badge>
               </div>
 
-              <h1 className="mt-3 text-h3 text-heading-teal">
+              <h1 className="mt-3 text-agent-heading text-extended-blue">
                 <TypingText
                   key={`interview-welcome-${name}`}
                   text={`Hey ${name}, glad to see you back`}
@@ -446,7 +446,7 @@ export function InterviewScreen() {
             </>
           ) : (
             <>
-              <h1 className="text-agent-heading text-heading-teal">
+              <h1 className="text-agent-heading text-extended-blue">
                 <TypingText
                   key={latestReport ? `interview-done-${name}` : `interview-first-${name}`}
                   text={
@@ -475,19 +475,22 @@ export function InterviewScreen() {
                   .
                 </p>
               ) : (
-                <p className="mt-3 w-full text-agent-question leading-relaxed text-text-primary">
-                  This is a timed mock interview. It assesses how you demonstrate
-                  capability under interview conditions, using the ProofDive
-                  competency standard.{" "}
-                  <button
-                    type="button"
-                    onClick={() => openConsent("full_competency")}
-                    className="app-link inline-flex items-center gap-1 font-medium"
-                  >
-                    Start the interview
-                    <ArrowRight className="size-[0.7em] shrink-0 text-primary" aria-hidden />
-                  </button>
-                </p>
+                <>
+                  <p className="mt-3 w-full text-agent-question leading-relaxed text-text-primary">
+                    This is a timed mock interview. It assesses how you demonstrate
+                    capability under interview conditions, using the ProofDive
+                    competency standard.
+                  </p>
+                  {/* Outline button, not a link in the sentence — same call as the
+                      storyboard greeting: the step's one action should look
+                      like one. */}
+                  <div className="mt-8">
+                    <Button variant="outline" size="lg" onClick={() => openConsent("full_competency")}>
+                      Start the interview
+                      <ArrowRight aria-hidden />
+                    </Button>
+                  </div>
+                </>
               )}
 
               {latestReport ? (

@@ -45,7 +45,7 @@ export function ChatComposer({
   /** Renders above the text field, inside the white composer card (e.g. in-thread chat). */
   thread,
   onThreadClose,
-  threadHeaderTitle = "AI Coach",
+  threadHeaderTitle = "Consultant",
   /** Onboarding keeps the full wash; other candidate pages default to a softer glow. */
   backgroundGlowIntensity = "soft",
   aiGlow = false,

@@ -168,7 +168,7 @@ export function CoreFourSelectionPanel({
                         {isSuggested ? (
                           <Badge className="shrink-0">
                             <LogoMark className="size-3" />
-                            Recommended
+                            Consultant Pick
                           </Badge>
                         ) : null}
                       </button>

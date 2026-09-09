@@ -20,19 +20,17 @@ const buttonVariants = cva(
         ghost: "hover:bg-muted hover:text-foreground",
         link: "app-link",
       },
-      // `has-[>svg:first-child]` only covers a LEADING icon (the dominant case
-      // everywhere in the app). It can't also detect a trailing icon: when a
-      // button's only element child is an svg, that svg is simultaneously
-      // `:first-child` AND `:last-child` — a bare text label doesn't count as
-      // a sibling element, so CSS has no way to tell "icon before text" from
-      // "text before icon" from position alone. A trailing-icon button (e.g.
-      // "Confirm selection <ArrowRight />") must override with an explicit
-      // `pl-4! pr-2!` className — see CoreFourSelectionPanel.tsx.
+      // Symmetric padding whether or not the button carries an icon. The
+      // Figma action-button rule (8px on the icon side, 16px on the text side)
+      // used to live here as a `has-[>svg:first-child]` override; on the real
+      // 32px/36px buttons it read as the label sitting off-centre ("Edit" and
+      // "Lock" on the storyboard review, client feedback), and the same
+      // asymmetry was already removed from the chips for the same reason.
+      // Call sites that still want an offset set it explicitly (`pl-4 pr-2!`).
       size: {
-        default:
-          "h-9 px-4 py-2 has-[>svg:first-child]:pl-2 has-[>svg:first-child]:pr-4",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg:first-child]:pl-2 has-[>svg:first-child]:pr-4",
-        lg: "h-10 rounded-md px-6 has-[>svg:first-child]:pl-2 has-[>svg:first-child]:pr-4",
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-md gap-1.5 px-3",
+        lg: "h-10 rounded-md px-6",
         icon: "size-9",
       },
     },

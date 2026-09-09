@@ -1618,39 +1618,44 @@ export function StoryboardAgent() {
               subtextClassName="mt-3 text-agent-question text-text-primary"
             />
 
+            {/* The step's one action is an outline button on its own line, not a
+                link inside the sentence: an underlined word at the end of prose
+                read as a reference, not as "press here to begin" (client).
+                Outline, not filled: the agent screens keep their one filled
+                control for the composer's send. */}
             {phase.kind === "greet" ? (
-              <p className="mt-3 text-agent-question text-text-primary">
-                I&apos;ll guide you through real experiences that become clear,
-                evidence-backed stories.{" "}
-                <button
-                  type="button"
-                  onClick={() => setGreetAcknowledged(true)}
-                  className="app-link inline-flex items-center gap-1 font-semibold"
-                >
-                  Let&apos;s Start
-                  <ArrowRight className="size-[0.7em] shrink-0" aria-hidden />
-                </button>
-              </p>
+              <>
+                <p className="mt-3 text-agent-question text-text-primary">
+                  I&apos;ll guide you through real experiences that become clear,
+                  evidence-backed stories.
+                </p>
+                <div className="mt-8">
+                  <Button variant="outline" size="lg" onClick={() => setGreetAcknowledged(true)}>
+                    Let&apos;s start
+                    <ArrowRight aria-hidden />
+                  </Button>
+                </div>
+              </>
             ) : null}
 
             {phase.kind === "closing" ? (
-              <p className="mt-3 text-agent-question text-text-primary">
-                Your experiences are ready to shape into interview-ready proof — you&apos;ll
-                review it before it&apos;s saved.{" "}
-                <button
-                  type="button"
-                  onClick={startCrafting}
-                  disabled={craftUi === "crafting"}
-                  className="app-link inline-flex items-center gap-1 font-semibold"
-                >
-                  {craftUi === "crafting" ? "Crafting…" : "Craft my story"}
-                  <ArrowRight
-                    className="size-[1.15em] shrink-0"
-                    strokeWidth={2}
-                    aria-hidden
-                  />
-                </button>
-              </p>
+              <>
+                <p className="mt-3 text-agent-question text-text-primary">
+                  Your experiences are ready to shape into interview-ready proof — you&apos;ll
+                  review it before it&apos;s saved.
+                </p>
+                <div className="mt-8">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={startCrafting}
+                    disabled={craftUi === "crafting"}
+                  >
+                    {craftUi === "crafting" ? "Crafting…" : "Craft my story"}
+                    <ArrowRight aria-hidden />
+                  </Button>
+                </div>
+              </>
             ) : null}
 
             {statusLine ? (

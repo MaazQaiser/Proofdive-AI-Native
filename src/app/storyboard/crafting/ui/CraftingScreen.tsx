@@ -58,7 +58,7 @@ import {
   isLargePaste,
 } from "@/lib/storyboardGuardrails";
 import { SUCCESS_DRIVER_ORDER, SUCCESS_DRIVERS } from "@/lib/successDrivers";
-import { scoringFillClass, scoringBandForScore } from "@/lib/scoringPalette";
+import { scoringBadgeClass, scoringBandForScore } from "@/lib/scoringPalette";
 import type { InterviewReport, RoleProfile, TrainingJourneyProgress } from "@/lib/proofdiveTypes";
 import {
   competencySpec,
@@ -870,18 +870,22 @@ export function CraftingScreen() {
               spec,
               globalIndex,
             })).filter((x) => x.spec.pillar === pillar);
-            const visibleRows = readOnly
-              ? rows.filter(({ globalIndex }) => {
-                  const s = activeDive.competencies[globalIndex];
-                  return Boolean(
-                    s &&
-                      (s.car.context.trim() ||
-                        s.car.action.trim() ||
-                        s.car.result.trim() ||
-                        s.assessment),
-                  );
-                })
-              : rows;
+            // Only competencies that have something in them. A card with an
+            // empty CAR and "Strength 0 / 5" is not a section to review, it
+            // is a gap — and gaps are added from the Storyboard ("Add
+            // competency"), not typed into a review screen. This used to
+            // apply only to saved Dives; the client wanted the review of an
+            // in-progress Dive to read the same way.
+            const visibleRows = rows.filter(({ globalIndex }) => {
+              const s = activeDive.competencies[globalIndex];
+              return Boolean(
+                s &&
+                  (s.car.context.trim() ||
+                    s.car.action.trim() ||
+                    s.car.result.trim() ||
+                    s.assessment),
+              );
+            });
             if (!visibleRows.length) return null;
             return (
               <section key={pillar} className="space-y-4 print:space-y-0">
@@ -1058,7 +1062,7 @@ function CompetencyClassificationDetails({
             <Gauge className="size-4 shrink-0 text-primary" aria-hidden />
             Level
           </div>
-          <span className="rounded-full bg-card px-2.5 py-0.5 text-[13px] font-medium text-text-primary ring-1 ring-border">
+          <span className="rounded-full bg-card px-2.5 py-0.5 text-[13px] font-medium text-text-primary">
             {assessment.levelLabel}
           </span>
         </div>
@@ -1102,7 +1106,7 @@ function CompetencyClassificationDetails({
                     <AssessmentBlock icon={GraduationCap} title="Masterclass" nested>
                       {assessment.masterclass}
                     </AssessmentBlock>
-                    <AssessmentBlock icon={Bot} title="AI Coach" nested>
+                    <AssessmentBlock icon={Bot} title="Consultant" nested>
                       {assessment.aiCoach}
                     </AssessmentBlock>
                   </div>
@@ -1387,19 +1391,22 @@ function DraftSectionCard({
     <Card className="gap-0 overflow-hidden py-0 print:break-inside-avoid print:rounded-none print:bg-white print:shadow-none">
       <div
         data-slot="storyboard-section-header"
-        className="relative z-10 flex flex-wrap items-center justify-between gap-2 bg-[linear-gradient(189.44deg,rgba(255,255,255,0.2)_50.11%,rgba(14,154,181,0.1)_110.8%),linear-gradient(#fff,#fff)] px-4 py-3 print:border-b print:border-border print:bg-white print:[&>[data-slot=section-header-stroke]]:hidden"
+        className="relative z-10 flex flex-wrap items-center justify-between gap-2 bg-[linear-gradient(189.44deg,rgba(255,255,255,0.2)_50.11%,rgba(14,154,181,0.1)_110.8%),linear-gradient(#fff,#fff)] px-5 py-4 print:border-b print:border-border print:bg-white print:[&>[data-slot=section-header-stroke]]:hidden"
       >
-        <div className="min-w-0">
+        {/* Client feedback: the section heading read as a caption. Eyebrow
+            one step up (14px, 16px icon), title two steps up (14px → 20px, h4) with a
+            little air between them, and the bar padded to match. */}
+        <div className="flex min-w-0 flex-col gap-1">
           {driver ? (
             <SuccessDriverMark
               driver={driver}
-              className="text-overline"
-              iconClassName="size-3.5"
+              className="text-caption font-medium"
+              iconClassName="size-4"
             />
           ) : (
-            <div className="text-overline text-text-secondary">{pillarLabel}</div>
+            <div className="text-caption font-medium text-text-secondary">{pillarLabel}</div>
           )}
-          <h3 className="text-h6 text-text-primary">{displayTitle}</h3>
+          <h3 className="text-h4 text-text-primary">{displayTitle}</h3>
         </div>
         <span
           data-slot="section-header-stroke"
@@ -1407,12 +1414,18 @@ function DraftSectionCard({
           className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-px bg-[linear-gradient(to_right,#F5F5F3,#6EC2D3)]"
         />
         <div className="flex flex-wrap items-center gap-2">
+          {/* Same soft scoring pill the report and the hub use (tint + `-fg`
+              ink), not white on the bright fill: white on scoring-cyan is
+              ~1.6:1 and on scoring-yellow ~1.9:1 — both unreadable, which is
+              what the client saw on "Strength 4.5 / 5". */}
           <Badge
-            variant="secondary"
+            variant="outline"
             title="Strength score (0–5 half-steps)."
             className={cn(
-              "border-transparent text-white",
-              score > 0 ? scoringFillClass(score) : "bg-muted text-text-secondary",
+              // `border-transparent` LAST: the palette class carries its own
+              // border colour and tailwind-merge keeps whichever comes later.
+              score > 0 ? scoringBadgeClass(score) : "bg-muted text-text-secondary",
+              "border-transparent",
             )}
           >
             Strength <span className="font-gilroy tabular-nums">{score}</span> / 5
