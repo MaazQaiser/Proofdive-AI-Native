@@ -73,7 +73,7 @@ export function CoachBrief({
 }) {
   return (
     <aside
-      aria-label="Consultant Bar"
+      aria-label="Consultant Note"
       className={cn(
         "mb-8 flex flex-col border-b border-brand-700 pt-5 pb-5",
         className,
@@ -84,7 +84,7 @@ export function CoachBrief({
           app uses, so the attribution reads as a labelled thing rather than a
           stray small line. `w-fit` comes from Badge itself, so it hugs.
 
-          Named "Consultant Bar" (the client's own name for this block): onboarding already introduces this
+          Named "Consultant Note" (the client's own name for this block): onboarding already introduces this
           voice as "your assigned ProofDive Consultant", so the storyboard byline
           uses the same name rather than the report's "AI Coach". One step up
           from Badge's default size — 28px, 14px caption text — so the byline
@@ -92,7 +92,7 @@ export function CoachBrief({
 
           No glyph and no competency tag: the competency is already named in the
           question directly below, in the composer hint, and twice in the rail. */}
-      <Badge className="h-7 px-3 text-caption">Consultant Bar</Badge>
+      <Badge className="h-7 px-3 text-caption">Consultant Note</Badge>
 
       <p
         key={note}

@@ -194,7 +194,7 @@ export function CoreFourSelectionPanel({
                             {signals.length ? (
                               <p className="mt-1 text-overline text-text-secondary">
                                 <span className="font-medium uppercase tracking-wide">
-                                  From your posting:
+                                  From your Job Description:
                                 </span>{" "}
                                 {signals.map((signal, i) => (
                                   <span key={signal}>

@@ -1,18 +1,19 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import {
-  ArrowRight,
-  Check,
-  RefreshCcw,
-  SquarePen,
-} from "lucide-react";
+import { ArrowRight, Building2, Check, Rocket, SquarePen } from "lucide-react";
 
 import { LogoMark } from "@/components/ui/logo";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SelectionChip } from "@/components/ui/selection-chip";
+import {
+  JD_COMPANY_ANGLES,
+  jdCompanyAngleLabel,
+  type JdCompanyAngle,
+} from "@/lib/jobDescriptionMock";
 import { jdHtmlRootToMarkdown, jdMarkdownToHtml } from "@/lib/jdMarkdown";
 import { cn } from "@/lib/utils";
 
@@ -23,11 +24,13 @@ type GeneratedJdPanelProps = {
   targeting: string[];
   /** 0-based regenerate count; drafts after the first are numbered. */
   variant: number;
+  /** Company context the draft was regenerated for (null = first draft). */
+  angle: JdCompanyAngle | null;
   isEditing: boolean;
   onEdit: () => void;
   /** Persist in-place edits and leave edit mode (does not advance the flow). */
   onDoneEdit: (text: string) => void;
-  onRegenerate: () => void;
+  onRegenerate: (angle: JdCompanyAngle) => void;
   onAccept: (text: string) => void;
   onDraftChange?: (text: string) => void;
 };
@@ -43,7 +46,8 @@ const proseClasses =
   "[&_u]:underline";
 
 /**
- * The generated assessment spec — framed as the artifact it actually is
+ * The generated Job Description (the client's name for it, matching the
+ * screen heading; "assessment spec" read as jargon) — framed as the artifact it actually is
  * (the source of the interview questions and scoring), not "a job
  * description the AI wrote". Header carries AI provenance + the inputs it
  * was built from; the document sits in an inset well; the real-posting
@@ -53,6 +57,7 @@ export function GeneratedJdPanel({
   text,
   targeting,
   variant,
+  angle,
   isEditing,
   onEdit,
   onDoneEdit,
@@ -121,133 +126,135 @@ export function GeneratedJdPanel({
     onAccept(next);
   }
 
-  const targetingChips = targeting.map((t) => t.trim()).filter(Boolean);
+  const targetingChips = [
+    ...targeting.map((t) => t.trim()).filter(Boolean),
+    // The company context rides with the other inputs, so the user can see
+    // which draft they are looking at without opening the menu again.
+    ...(angle ? [jdCompanyAngleLabel(angle)] : []),
+  ];
 
   return (
-    <Card className="mt-6 gap-0 py-5">
-      <CardContent className="flex flex-col gap-4 px-5">
-        {/* Provenance header — what this is, where it came from */}
-        <div className="flex min-w-0 items-start gap-3">
-          <span
-            aria-hidden
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-1000 text-primary"
-          >
-            <LogoMark className="size-4.5" />
-          </span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-h5 font-medium text-heading-teal">
-                Your assessment spec
-              </h2>
-              <Badge>Draft{variant > 0 ? ` · v${variant + 1}` : ""}</Badge>
-            </div>
-            <p className="mt-0.5 text-caption text-text-secondary">
-              Your interview questions and scoring come from this. Review it
-              like an interviewer would.
-            </p>
-          </div>
-        </div>
-
-        {/* What the draft was built from. Extra top margin (2× the card's
-            base gap) so the header reads as its own block and the
-            provenance row doesn't crowd the description line. */}
-        {targetingChips.length ? (
-          <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-            <span className="text-overline font-medium uppercase tracking-wide text-text-secondary">
-              Built from
+    <>
+      <Card className="mt-6 gap-0 py-5">
+        <CardContent className="flex flex-col gap-4 px-5">
+          {/* Provenance header — what this is, where it came from. Edit sits
+              here as the document's one in-place action: the card is the
+              document, everything that changes or approves it lives below. */}
+          <div className="flex min-w-0 items-start gap-3">
+            <span
+              aria-hidden
+              className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-1000 text-primary"
+            >
+              <LogoMark className="size-4.5" />
             </span>
-            {targetingChips.map((chip) => (
-              <Badge key={chip}>{chip}</Badge>
-            ))}
-          </div>
-        ) : null}
-
-        {/* The document itself — an inset well, editable in place. Its own
-            footer carries the document-level actions (edit / regenerate), so
-            the header stays a clean statement of what this artifact is and
-            the card footer stays the single place you move forward from. */}
-        <div
-          className={cn(
-            "overflow-hidden rounded-xl border bg-background/60 transition-shadow",
-            isEditing
-              ? "border-ring ring-[3px] ring-ring/20"
-              : "border-border/70",
-          )}
-        >
-          <div className="px-5 py-4">
-            <div
-              ref={editorRef}
-              data-slot="jd-editor"
-              className={proseClasses}
-              contentEditable={isEditing}
-              suppressContentEditableWarning
-              role={isEditing ? "textbox" : undefined}
-              aria-multiline={isEditing ? true : undefined}
-              aria-label="Assessment spec draft"
-              onInput={isEditing ? handleInput : undefined}
-            />
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border/70 bg-brand-1000/25 px-4 py-2.5">
-            <div className="flex shrink-0 items-center gap-1.5">
-              {/* Document-level actions use the app's secondary button, not
-                  the selection chip: a chip is a choice among options, these
-                  are commands. Edit is a toggle, so it takes the primary fill
-                  while it is on — same state the chip expressed with
-                  `selected`. */}
-              <Button
-                type="button"
-                variant={isEditing ? "default" : "secondary"}
-                onClick={handleEditToggle}
-                aria-pressed={isEditing}
-              >
-                {isEditing ? (
-                  <>
-                    <Check />
-                    Done
-                  </>
-                ) : (
-                  <>
-                    <SquarePen />
-                    Edit
-                  </>
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={onRegenerate}
-                disabled={isEditing}
-              >
-                <RefreshCcw />
-                Regenerate
-              </Button>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-h5 font-medium text-heading-teal">Job Description</h2>
+                <Badge>JD Draft{variant > 0 ? ` · v${variant + 1}` : ""}</Badge>
+              </div>
+              <p aria-live="polite" className="mt-0.5 text-caption text-text-secondary">
+                {isEditing
+                  ? "Editing in place. Done saves your changes."
+                  : "ProofDive drafted this from your target role and industry. Review it before continuing."}
+              </p>
             </div>
-            <p
-              aria-live="polite"
-              className="min-w-0 text-overline text-text-secondary"
-            >
-              {isEditing
-                ? "Editing in place. Done saves your changes."
-                : "Review the draft and edit or regenerate it if needed."}
-            </p>
-          </div>
-        </div>
-
-        {/* The one action. The real posting goes in through the composer
-            below ("Paste the real posting here to replace the draft…"), so a
-            second paste UI up here was the same door twice. */}
-        {(
-          <div className="flex flex-wrap items-center gap-3">
             <Button
-              onClick={handleAccept}
-              className="h-10 rounded-md pl-5! pr-3! text-body-sm font-medium"
+              type="button"
+              size="sm"
+              variant={isEditing ? "default" : "secondary"}
+              onClick={handleEditToggle}
+              aria-pressed={isEditing}
+              className="shrink-0"
             >
-              Approve and continue
-              <ArrowRight />
+              {isEditing ? (
+                <>
+                  <Check />
+                  Done
+                </>
+              ) : (
+                <>
+                  <SquarePen />
+                  Edit
+                </>
+              )}
             </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* What the draft was built from, including the company context it
+              was last regenerated for. */}
+          {targetingChips.length ? (
+            <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+              <span className="text-overline font-medium uppercase tracking-wide text-text-secondary">
+                Built from
+              </span>
+              {targetingChips.map((chip) => (
+                <Badge key={chip}>{chip}</Badge>
+              ))}
+            </div>
+          ) : null}
+
+          {/* The document itself — an inset well, editable in place. */}
+          <div
+            className={cn(
+              "overflow-hidden rounded-xl border bg-background/60 transition-shadow",
+              isEditing ? "border-ring ring-[3px] ring-ring/20" : "border-border/70",
+            )}
+          >
+            <div className="px-5 py-4">
+              <div
+                ref={editorRef}
+                data-slot="jd-editor"
+                className={proseClasses}
+                contentEditable={isEditing}
+                suppressContentEditableWarning
+                role={isEditing ? "textbox" : undefined}
+                aria-multiline={isEditing ? true : undefined}
+                aria-label="Job Description draft"
+                onInput={isEditing ? handleInput : undefined}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Regenerate, as suggestion chips (client, 2026-09-10): the way
+          assistants offer "try again for…" — visible, one tap, icon per
+          option — in the same label-plus-chips shape every other step in
+          this flow uses for its offers. The selected chip is the context the
+          current draft describes, so the user always knows which one they
+          are looking at. Tapping the selected one redrafts it again. */}
+      <div className="flex flex-col gap-2">
+        <span className="text-body-sm font-semibold text-text-secondary">
+          Regenerate for
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {JD_COMPANY_ANGLES.map((option) => {
+            const Icon = option.id === "startup" ? Rocket : Building2;
+            return (
+              <SelectionChip
+                key={option.id}
+                selected={option.id === angle}
+                disabled={isEditing}
+                title={option.description}
+                onClick={() => onRegenerate(option.id)}
+              >
+                <Icon className="size-4" aria-hidden />
+                {option.label}
+              </SelectionChip>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* The step's forward action, outside the card and sized like the plan
+          step's Confirm, so every step in the flow moves on from the same
+          kind of control in the same place. */}
+      <div className="flex flex-wrap items-center gap-4">
+        <Button onClick={handleAccept} className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium">
+          Approve and continue
+          <ArrowRight />
+        </Button>
+      </div>
+    </>
   );
 }

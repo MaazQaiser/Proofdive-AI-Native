@@ -657,7 +657,7 @@ export function StoryboardAgent() {
    * subtext is still the right home for their second line. */
   const storyPrompt = useMemo(() => {
     if (phase.kind === "greet") {
-      return capitalise(`${nameLead}let's build your MyStoryBoard.`);
+      return capitalise(`${nameLead}let's build your StoryBoard.`);
     }
     if (phase.kind === "title") {
       return `Which experience best shows your ${competencySpec(phase.competencyId).title}?`;

@@ -53,7 +53,10 @@ import {
   coreFourValidationError,
   suggestCoreFour,
 } from "@/lib/coreFourSuggestion";
-import { generateMockJobDescription } from "@/lib/jobDescriptionMock";
+import {
+  generateMockJobDescription,
+  type JdCompanyAngle,
+} from "@/lib/jobDescriptionMock";
 import { cn } from "@/lib/utils";
 import { COMPETENCY_SPECS, type CompetencyId } from "@/lib/storyboardDraft";
 
@@ -616,6 +619,8 @@ function OnboardingAgentInner({
    *  while it runs. */
   const [planPhase, setPlanPhase] = useState<number | null>(null);
   const [jdVariant, setJdVariant] = useState(0);
+  /** Company context the current draft was regenerated for; null = first draft. */
+  const [jdAngle, setJdAngle] = useState<JdCompanyAngle | null>(null);
   const [isEditingJd, setIsEditingJd] = useState(false);
   const [, setEditedJdText] = useState("");
 
@@ -910,7 +915,7 @@ function OnboardingAgentInner({
    *  will not be faster than this — the old figure under-represented the work
    *  it stands in for. Paced like the resume parse (3.2s) so the two waits in
    *  the flow feel like the same machine. */
-  function runJdGeneration(variant: number) {
+  function runJdGeneration(variant: number, angle: JdCompanyAngle | null) {
     setGeneratedJdDraft(null);
     setJdPhase(0);
     setIsGeneratingJd(true);
@@ -920,19 +925,22 @@ function OnboardingAgentInner({
       window.setTimeout(() => setJdPhase(2), 2300),
       window.setTimeout(() => {
         setJdVariant(variant);
-        setGeneratedJdDraft(generateMockJobDescription(input, variant));
+        setJdAngle(angle);
+        setGeneratedJdDraft(generateMockJobDescription(input, variant, angle));
         setIsGeneratingJd(false);
       }, 3400),
     );
   }
 
   function handleGenerateJd() {
-    runJdGeneration(0);
+    runJdGeneration(0, null);
   }
 
-  function handleRegenerateJd() {
+  /** Regenerate is always FOR a company context (the two the client named);
+   *  the variant still advances so the wording changes too. */
+  function handleRegenerateJd(angle: JdCompanyAngle) {
     setIsEditingJd(false);
-    runJdGeneration(jdVariant + 1);
+    runJdGeneration(jdVariant + 1, angle);
   }
 
   function goToPlan(next: Draft) {
@@ -1172,7 +1180,7 @@ function OnboardingAgentInner({
                     ? 'Type the industry. Example: "fintech."'
                     : stage === "targetJd"
                       ? generatedJdDraft
-                        ? "Paste the real posting here to replace the draft…"
+                        ? "Review before proceeding"
                         : "Paste the Job Description here, or upload it."
                       : stage === "plan"
                   ? "Confirm your selection above to continue"
@@ -1920,6 +1928,7 @@ function OnboardingAgentInner({
                         text={generatedJdDraft}
                         targeting={targetingSummary}
                         variant={jdVariant}
+                        angle={jdAngle}
                         isEditing={isEditingJd}
                         onEdit={() => setIsEditingJd(true)}
                         onDoneEdit={(text) => {
