@@ -6,6 +6,7 @@ import { flushSync } from "react-dom";
 
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
+import { HowScoringWorks } from "@/components/report/HowScoringWorks";
 import { LogoMark } from "@/components/ui/logo";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/components/cn";
@@ -1113,6 +1114,13 @@ export function ReportDetailScreen({ reportId }: Props) {
         </section>
         {/* Sticky summary appears once this sentinel scrolls out of view. */}
         <div ref={stickySentinelRef} className="h-px w-full" />
+
+        {/* The rubric, directly under the numbers it explains — the client
+            asked for the redesign's version of this here too, so it is the
+            same component, not a second telling of the same rules. Outside
+            the card above and after the sentinel, so it neither crowds the
+            verdict nor delays the sticky summary. */}
+        <HowScoringWorks className="mt-6" />
 
         <section className="mt-10">
           <Card className="gap-0 overflow-hidden py-0">

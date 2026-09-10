@@ -73,13 +73,6 @@ export type ReportSectionId = (typeof REPORT_SECTIONS)[number]["id"];
 
 /** The four bands the badges use, with the thresholds `scoringBandForScore`
  *  actually applies — shown to the user so a badge is never a mystery. */
-export const SCORE_BANDS: { band: ScoringBand; label: string; range: string }[] = [
-  { band: "cyan", label: "Star", range: "4.5 – 5.0" },
-  { band: "green", label: "Pass", range: "3.5 – 4.4" },
-  { band: "yellow", label: "Borderline", range: "2.5 – 3.4" },
-  { band: "red", label: "Not ready", range: "1.0 – 2.4" },
-];
-
 export function bandFor(score: number): ScoringBand {
   return scoringBandForScore(score);
 }

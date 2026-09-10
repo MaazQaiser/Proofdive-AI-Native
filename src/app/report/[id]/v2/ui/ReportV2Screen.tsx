@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
-  ChevronDown,
   Download,
   RotateCcw,
   TrendingDown,
@@ -43,12 +42,12 @@ import { cn } from "@/lib/utils";
 
 import { FieldLabel, QuestionRow, ScoreChip, SpotlightRewrite } from "./ReportV2Answers";
 import {
-  SCORE_BANDS,
   deriveInsights,
   fmtDate,
   fmtDuration,
   sessionTypeLabel,
 } from "./reportV2Model";
+import { HowScoringWorks } from "@/components/report/HowScoringWorks";
 import { ReportV2Nav } from "./ReportV2Nav";
 import { ReportV2Transcript } from "./ReportV2Transcript";
 
@@ -157,38 +156,6 @@ function DriverCard({ driver }: { driver: InterviewReportDriver }) {
         ))}
       </ul>
     </div>
-  );
-}
-
-/** How the number was made. Collapsed by default — most people want the
- *  result, not the rubric — but one click away for anyone who asks "why
- *  Borderline?", which is the question the old report never answered. */
-function HowScoringWorks() {
-  return (
-    <details className="group rounded-[16px] border border-border bg-card open:bg-background">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-caption font-semibold text-text-primary [&::-webkit-details-marker]:hidden">
-        How scoring works
-        <ChevronDown className="size-4 text-text-secondary transition-transform group-open:rotate-180" aria-hidden />
-      </summary>
-      <div className="border-t border-border px-5 py-4">
-        <p className="max-w-[68ch] text-caption leading-relaxed text-text-secondary">
-          Every answer is scored from 1.0 to 5.0 against the competency it targets. Each Success
-          Driver is the average of its three competencies, and your overall is the average of the
-          four drivers. Answers that land in the 3–4 minute window with a clear Context → Action →
-          Result shape and one measurable outcome score highest.
-        </p>
-        <ul className="mt-4 grid gap-2 sm:grid-cols-4">
-          {SCORE_BANDS.map((b) => (
-            <li key={b.band} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2">
-              <Badge variant="outline" className={scoringBadgeClass(b.label)}>
-                {b.label}
-              </Badge>
-              <span className="font-gilroy text-caption tabular-nums text-text-secondary">{b.range}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </details>
   );
 }
 
