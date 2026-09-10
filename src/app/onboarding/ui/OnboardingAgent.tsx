@@ -36,7 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Logo, LogoMark } from "@/components/ui/logo";
-import { SelectionChip, selectionChipVariants } from "@/components/ui/selection-chip";
+import { SelectionChip } from "@/components/ui/selection-chip";
 import { useFaqAssistant } from "@/components/faq/useFaqAssistant";
 import {
   AssessmentPlanPanel,
@@ -2428,21 +2428,22 @@ function SessionContract({
         ))}
       </ul>
 
-      {/* Same label-plus-chip shape as "No resume?" and "Don't have the
-          posting?": an inline text link read as prose here, not as a way
-          out, so the exit is a chip like every other optional move in the
-          flow. It is a Link wearing the chip's classes rather than a button
-          that pushes a route, so it stays a real anchor (open in new tab,
-          hover URL, middle-click). */}
-      <div className="mt-6 flex flex-col gap-2">
+      {/* The step's forward action, as the same primary button every other
+          step in the flow ends on (Approve and continue, Confirm your Core
+          Four) — client asked for one consistent control here rather than a
+          chip. Still a real anchor underneath (open in new tab, hover URL,
+          middle-click). */}
+      <div className="mt-6 flex flex-col gap-3">
         <span className="text-body-sm font-semibold text-text-secondary">
           Want to look around first?
         </span>
-        <div className="flex flex-wrap gap-2">
-          <Link href={homeHref} className={cn(selectionChipVariants())}>
-            Go to home
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
+        <div className="flex flex-wrap items-center gap-4">
+          <Button asChild className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium">
+            <Link href={homeHref}>
+              Go to home
+              <ArrowRight aria-hidden />
+            </Link>
+          </Button>
         </div>
       </div>
     </>
