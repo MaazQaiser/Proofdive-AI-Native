@@ -485,7 +485,7 @@ export function InterviewScreen() {
                       storyboard greeting: the step's one action should look
                       like one. */}
                   <div className="mt-8">
-                    <Button variant="outline" size="lg" onClick={() => openConsent("full_competency")}>
+                    <Button className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium" onClick={() => openConsent("full_competency")}>
                       Start the interview
                       <ArrowRight aria-hidden />
                     </Button>

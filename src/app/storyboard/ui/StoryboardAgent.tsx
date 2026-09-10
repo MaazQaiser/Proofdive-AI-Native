@@ -1648,11 +1648,11 @@ export function StoryboardAgent() {
               subtextClassName="mt-3 text-agent-question text-text-primary"
             />
 
-            {/* The step's one action is an outline button on its own line, not a
-                link inside the sentence: an underlined word at the end of prose
-                read as a reference, not as "press here to begin" (client).
-                Outline, not filled: the agent screens keep their one filled
-                control for the composer's send. */}
+            {/* The step's one action is the product's primary button on its own
+                line, not a link inside the sentence: an underlined word at the
+                end of prose read as a reference, not as "press here to begin"
+                (client). Filled, same size as onboarding's Approve / Confirm,
+                so every step in the product moves on from the same control. */}
             {phase.kind === "greet" ? (
               <>
                 <p className="mt-3 text-agent-question text-text-primary">
@@ -1660,7 +1660,7 @@ export function StoryboardAgent() {
                   turn them into clear, interview ready examples.
                 </p>
                 <div className="mt-8">
-                  <Button variant="outline" size="lg" onClick={() => setGreetAcknowledged(true)}>
+                  <Button className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium" onClick={() => setGreetAcknowledged(true)}>
                     Let&apos;s start
                     <ArrowRight aria-hidden />
                   </Button>
@@ -1676,8 +1676,7 @@ export function StoryboardAgent() {
                 </p>
                 <div className="mt-8">
                   <Button
-                    variant="outline"
-                    size="lg"
+                    className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium"
                     onClick={startCrafting}
                     disabled={craftUi === "crafting"}
                   >
