@@ -47,7 +47,7 @@ import {
   fmtDuration,
   sessionTypeLabel,
 } from "./reportV2Model";
-import { HowScoringWorks } from "@/components/report/HowScoringWorks";
+import { HowScoringWorks } from "@/components/scoring/HowScoringWorks";
 import { ReportV2Nav } from "./ReportV2Nav";
 import { ReportV2Transcript } from "./ReportV2Transcript";
 

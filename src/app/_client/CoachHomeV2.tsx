@@ -12,6 +12,7 @@ import { CoachConversationalDock } from "@/components/coach/CoachConversationalD
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LogoMark } from "@/components/ui/logo";
+import { ScoreScale } from "@/components/scoring/ScoreScale";
 import {
   InterviewReadinessCard,
   readinessPillarsFromReport,
@@ -295,6 +296,13 @@ export function CoachHomeV2() {
                   then the journey that fills it. */}
               <div className="mt-8 w-full">{readinessEl}</div>
               <JourneyCard model={model} className="mt-8" />
+              {/* The key, last: the numbers come first, and the reader who
+                  wants to know what they mean is the one who has already
+                  read them. Same bands and the same pills as the report's
+                  scoring key. It says nothing about this reader's own score
+                  — that belongs to the numbers themselves, which explain
+                  their own band on hover. */}
+              <ScoreScale className="mt-8" />
             </>
           ) : (
             <div className="min-h-[40vh]" aria-hidden />

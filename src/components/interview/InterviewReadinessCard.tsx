@@ -5,6 +5,7 @@ import { SuccessDriverInfoTip } from "@/components/ui/success-driver-card";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import type { InterviewReport } from "@/lib/proofdiveTypes";
 import {
+  scoringBandEntry,
   scoringBandForScore,
   scoringLabelForScore,
   type ScoringBand,
@@ -63,6 +64,60 @@ function labelToScoringBand(label: string): ScoringBand {
   return "red";
 }
 
+/**
+ * A score, and what its band means, on hover or keyboard focus.
+ *
+ * The number alone tells nobody whether 2.5 is a near miss or a long way
+ * off — the report answers that in its scoring key, and the client asked
+ * for the same answer wherever the numbers appear. A button, like the
+ * product's other info tips, so it is reachable by keyboard and not only
+ * by a mouse; it does nothing on click, hence `cursor-help`.
+ *
+ * `align` decides which edge the bubble hangs from: the pillar scores sit
+ * hard against the card's right edge, where a centred bubble would run off.
+ */
+function ScoreWithBandTip({
+  score,
+  label,
+  align = "left",
+  children,
+}: {
+  score: number | null;
+  label: string;
+  align?: "left" | "right";
+  children: React.ReactNode;
+}) {
+  if (score == null || !Number.isFinite(score)) {
+    return <>{children}</>;
+  }
+  const band = scoringBandEntry(score);
+  return (
+    <button
+      type="button"
+      className="group/band relative inline-flex cursor-help items-baseline gap-1 rounded-lg font-gilroy whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+      aria-label={`${label} ${score.toFixed(1)} out of ${READINESS_MAX} — ${band.label}. ${band.meaning}`}
+    >
+      {children}
+      <span
+        role="tooltip"
+        className={cn(
+          /* `whitespace-normal` is load-bearing: the button around the
+             numerals is `whitespace-nowrap` so "2.4 /5" cannot break, and
+             the bubble inherits that — without this the sentence runs
+             straight out of its own background. */
+          "pointer-events-none absolute top-full z-20 mt-2 w-max max-w-[260px] rounded-xl bg-foreground px-3 py-2 text-left font-sans text-caption leading-4 font-normal tracking-normal whitespace-normal text-background opacity-0 transition group-hover/band:opacity-100 group-focus-visible/band:opacity-100",
+          align === "right" ? "right-0" : "left-0",
+        )}
+      >
+        <span className="font-semibold">
+          {band.label} · {band.range.replace("–", " – ")}
+        </span>
+        <span className="mt-1 block opacity-90">{band.meaning}</span>
+      </span>
+    </button>
+  );
+}
+
 export function readinessPillarsFromReport(report: InterviewReport): InterviewReadinessPillar[] {
   return SUCCESS_DRIVER_ORDER.map((id) => {
     const driver = report.drivers.find((d) => d.id === id);
@@ -104,7 +159,7 @@ export function InterviewReadinessCard({
     >
       <div className="flex w-full flex-wrap items-center justify-between gap-4 py-4">
         <div className="flex min-w-0 flex-1 items-baseline gap-2">
-          <div className="flex shrink-0 items-baseline gap-1 font-gilroy whitespace-nowrap">
+          <ScoreWithBandTip score={overall} label={title}>
             <span
               className={cn(
                 "cap-baseline text-[64px] font-normal leading-none tracking-[-3.2px] tabular-nums",
@@ -116,7 +171,7 @@ export function InterviewReadinessCard({
             <span className="cap-baseline text-[48px] font-normal leading-none tracking-[-2.4px] text-text-secondary/60">
               /{READINESS_MAX}
             </span>
-          </div>
+          </ScoreWithBandTip>
           <span className="cap-baseline text-[16px] font-medium tracking-[-0.5px] text-text-primary">
             {title}
           </span>
@@ -152,7 +207,7 @@ export function InterviewReadinessCard({
                 </span>
                 <SuccessDriverInfoTip driver={id} />
               </div>
-              <div className="flex shrink-0 items-baseline gap-1 font-gilroy whitespace-nowrap">
+              <ScoreWithBandTip score={displayScore} label={label} align="right">
                 <span
                   className={cn(
                     "cap-baseline w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums",
@@ -164,7 +219,7 @@ export function InterviewReadinessCard({
                 <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-text-secondary/60">
                   /{READINESS_MAX}
                 </span>
-              </div>
+              </ScoreWithBandTip>
             </div>
           );
         })}

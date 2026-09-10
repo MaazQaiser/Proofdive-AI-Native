@@ -23,6 +23,7 @@ export const SCORING_PALETTE = [
     band: "red" as const,
     label: "Not ready" as const,
     range: "1.0–2.4",
+    meaning: "Answers stop before the result: what happened, not what you decided.",
     min: 1.0,
     maxInclusive: 2.4,
     hex: "#CB3A31",
@@ -36,6 +37,7 @@ export const SCORING_PALETTE = [
     band: "yellow" as const,
     label: "Borderline" as const,
     range: "2.5–3.4",
+    meaning: "The shape is there; most answers still need one measurable outcome.",
     min: 2.5,
     maxInclusive: 3.4,
     hex: "#E9A13B",
@@ -49,6 +51,7 @@ export const SCORING_PALETTE = [
     band: "green" as const,
     label: "Pass" as const,
     range: "3.5–4.4",
+    meaning: "Answers land: a clear decision and a result an interviewer can check.",
     min: 3.5,
     maxInclusive: 4.4,
     hex: "#16A34A",
@@ -62,6 +65,7 @@ export const SCORING_PALETTE = [
     band: "cyan" as const,
     label: "Star" as const,
     range: "4.5–5.0",
+    meaning: "Consistently sharp: decision, action and a measured outcome every time.",
     min: 4.5,
     maxInclusive: 5.0,
     hex: "#22D3EE",
@@ -72,6 +76,19 @@ export const SCORING_PALETTE = [
     fgToken: "scoring-cyan-fg",
   },
 ] as const;
+
+/** The band's entry in the table above — label, range and what it means. */
+export function scoringBandEntry(scoreOrLabel: number | string) {
+  const band =
+    typeof scoreOrLabel === "number"
+      ? scoringBandForScore(scoreOrLabel)
+      : labelToBand(scoreOrLabel);
+  return SCORING_PALETTE.find((b) => b.band === band) ?? SCORING_PALETTE[0];
+}
+
+/** Bands from worst to best, which is how the table above is written; the
+ *  scale and the key both read best-first, so they reverse it themselves. */
+export const SCORING_BANDS_ASC = SCORING_PALETTE;
 
 export function scoringBandForScore(score: number): ScoringBand {
   if (score >= 4.5) return "cyan";

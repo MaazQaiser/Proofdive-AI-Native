@@ -6,7 +6,7 @@ import { flushSync } from "react-dom";
 
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
-import { HowScoringWorks } from "@/components/report/HowScoringWorks";
+import { HowScoringWorks } from "@/components/scoring/HowScoringWorks";
 import { LogoMark } from "@/components/ui/logo";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/components/cn";
