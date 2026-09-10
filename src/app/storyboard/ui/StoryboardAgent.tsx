@@ -1657,7 +1657,7 @@ export function StoryboardAgent() {
               <>
                 <p className="mt-3 text-agent-question text-text-primary">
                   We will work through one real experience for each of your Core Four and
-                  turn them into clear, interview ready examples.
+                  turn them into powerful, interview ready examples.
                 </p>
                 <div className="mt-8">
                   <Button className="h-11 rounded-md pl-6! pr-4! text-body-sm font-medium" onClick={() => setGreetAcknowledged(true)}>
