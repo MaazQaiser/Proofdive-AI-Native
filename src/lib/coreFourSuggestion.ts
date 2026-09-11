@@ -29,24 +29,46 @@ const COMPETENCY_KEYWORDS: Record<CompetencyId, string[]> = {
   "mastery-innovation": ["innovat", "improve", "optimi", "efficien", "redesign", "creativ"],
 };
 
-function bestForPillar(pillar: PillarId, haystack: string): CompetencyId {
-  const specs = COMPETENCY_SPECS.filter((s) => s.pillar === pillar);
-  let best = specs[0]!;
-  let bestScore = -1;
-  for (const spec of specs) {
-    const score = COMPETENCY_KEYWORDS[spec.id].filter((kw) => haystack.includes(kw)).length;
-    if (score > bestScore) {
-      bestScore = score;
-      best = spec;
-    }
-  }
-  return best.id;
+/** A pillar's competencies, strongest keyword match first. Ties keep spec
+ *  order, which is what makes the fallback (no signal at all) deterministic. */
+function rankedForPillar(pillar: PillarId, haystack: string): CompetencyId[] {
+  return COMPETENCY_SPECS.filter((s) => s.pillar === pillar)
+    .map((spec, order) => ({
+      id: spec.id,
+      order,
+      score: COMPETENCY_KEYWORDS[spec.id].filter((kw) => haystack.includes(kw)).length,
+    }))
+    .sort((a, b) => b.score - a.score || a.order - b.order)
+    .map((s) => s.id);
 }
 
 /** Always returns exactly 4 ids, one per pillar, in pillar order (thinking/action/people/mastery). */
 export function suggestCoreFour(input: { targetRole: string; jobDescription: string }): CompetencyId[] {
   const haystack = `${input.targetRole} ${input.jobDescription}`.toLowerCase();
-  return PILLAR_ORDER.map((pillar) => bestForPillar(pillar, haystack));
+  return PILLAR_ORDER.map((pillar) => rankedForPillar(pillar, haystack)[0]!);
+}
+
+/**
+ * The four the Consultant would reach for next — one per Success Driver, the
+ * strongest match in that driver that is not already taken.
+ *
+ * `exclude` is the candidate's confirmed Core Four rather than a recomputed
+ * suggestion, because they may have swapped one at onboarding: the second
+ * group has to be four competencies they have genuinely not practised, not
+ * four the algorithm merely ranked lower.
+ */
+export function suggestNextMostRelevant(
+  input: { targetRole: string; jobDescription: string },
+  exclude: readonly CompetencyId[] = [],
+): CompetencyId[] {
+  const haystack = `${input.targetRole} ${input.jobDescription}`.toLowerCase();
+  const taken = new Set(exclude);
+  return PILLAR_ORDER.map((pillar) => {
+    const ranked = rankedForPillar(pillar, haystack);
+    // Three specs per pillar and at most one excluded, so this always finds
+    // one; the tail is a guard, not a real branch.
+    return ranked.find((id) => !taken.has(id)) ?? ranked[ranked.length - 1]!;
+  });
 }
 
 /** Role-aware AI reasoning for why a competency was suggested for the Core Four. */

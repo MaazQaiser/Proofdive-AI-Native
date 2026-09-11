@@ -255,6 +255,11 @@
 
   /* Brand tint at the foot of the composer's thread header. */
   --thread-header-tint: rgba(14, 154, 181, 0.1);
+  /* The 1px stroke under that header, as a left-to-right ramp. Tokenised
+     because the light values are near-white → brand: on a dark card that
+     same ramp stops being a hairline and reads as a lit edge. */
+  --header-stroke-from: #f5f5f3;
+  --header-stroke-to: #6ec2d3;
   /* The user's own chat bubble — a brand-tinted cast shadow. */
   --bubble-shadow: 0 6px 18px rgba(14, 154, 181, 0.22);
 
@@ -467,6 +472,11 @@
   --card-button-text-shadow: transparent;
 
   --thread-header-tint: rgba(62, 200, 223, 0.13);
+  /* Dark keeps the same left-to-right ramp, pitched to divide rather than
+     glow: it starts at the divider colour and only hints at brand by the
+     right edge. */
+  --header-stroke-from: #22333a;
+  --header-stroke-to: #2d525d;
   /* Bubbles sit on a dark surface, so the shadow stops separating them and
      a lit top edge does the work instead. */
   --bubble-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
@@ -879,8 +889,9 @@
     var(--chatbox-padding-y) var(--chatbox-padding-left);
 }
 
-/* Shared header bottom stroke — LTR #F5F5F3 → #6EC2D3
-   (AI Assistant + candidate dialogs). */
+/* Shared header bottom stroke — a left-to-right ramp from the neutral edge
+   to brand (AI Assistant + candidate dialogs). Both stops are tokens so the
+   stroke can be a hairline in either theme. */
 [data-slot="chatbox-thread-header"]::after,
 [data-slot="app-dialog-header"]::after {
   content: "";
@@ -890,7 +901,11 @@
   left: 0;
   height: 1px;
   pointer-events: none;
-  background: linear-gradient(to right, #f5f5f3, #6ec2d3);
+  background: linear-gradient(
+    to right,
+    var(--header-stroke-from),
+    var(--header-stroke-to)
+  );
 }
 
 [data-slot="chatbox-send"] {

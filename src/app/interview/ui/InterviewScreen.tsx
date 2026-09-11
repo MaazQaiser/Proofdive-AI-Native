@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight, CheckCircle2, ChevronDown, ClipboardCheck, Eye, ListChecks, MicOff, RotateCcw, Video, VideoOff, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, ClipboardCheck, Eye, RotateCcw, Video, Zap } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { cn } from "@/components/cn";
@@ -28,9 +28,15 @@ import {
   InterviewReadinessCard,
   readinessPillarsFromReport,
 } from "@/components/interview/InterviewReadinessCard";
+import {
+  CompetencyGroupStep,
+  type InterviewCompetencyGroup,
+} from "@/app/interview/ui/CompetencyGroupStep";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
+import { StepIndicator, type StepIndicatorStep } from "@/components/ui/step-indicator";
 import { Switch } from "@/components/ui/switch";
 import { canAccessReport, isFreePlan } from "@/lib/candidateUsage";
+import { suggestCoreFour, suggestNextMostRelevant } from "@/lib/coreFourSuggestion";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import { scoringBadgeClass, scoringTextClass } from "@/lib/scoringPalette";
 import type {
@@ -40,10 +46,12 @@ import type {
   TrainingJourneyProgress,
 } from "@/lib/proofdiveTypes";
 import {
+  COMPETENCY_SPECS,
   latestSavedDive,
   overallCompetencyStrength,
   PILLAR_LABEL,
   savedDivesForRole,
+  type CompetencyId,
   type PillarId,
 } from "@/lib/storyboardDraft";
 import { hasCompletedAnyTrainingForRole } from "@/lib/trainingJourneyProgress";
@@ -136,6 +144,29 @@ function LatestReportSummary({
 
 const SELECTIVE_PILLAR_IDS: PillarId[] = ["thinking", "action", "people", "mastery"];
 
+/** The pre-interview flow, in order. */
+type ConsentStep = "competencies" | "instructions" | "consent";
+
+/* One name per step. The indicator and the step's own heading read from the
+   same entry on purpose: naming a step "Instructions" on the rail and "Before
+   you start" above its content is two names for one place, and that is what
+   makes a stepped dialog feel like it moved you somewhere unexpected. */
+const CONSENT_STEP_META: Record<ConsentStep, { title: string; detail: string }> = {
+  competencies: {
+    title: "Competencies",
+    detail:
+      "Each interview is assessed against one group of four — one competency per Success Driver.",
+  },
+  instructions: {
+    title: "Instructions",
+    detail: "A few habits that make these answers score better.",
+  },
+  consent: {
+    title: "Consent",
+    detail: "One choice to make. You can start the interview either way.",
+  },
+};
+
 const CONSENT_TIPS: ReactNode[] = [
   <>
     Structure your answers using the <span className="font-semibold text-text-primary">CAR</span>{" "}
@@ -197,6 +228,29 @@ export function InterviewScreen() {
     return storyOverallScore > 0;
   }, [role, diveStore, storyOverallScore]);
 
+  /* The confirmed Core Four for this role, falling back to what the Consultant
+     would infer when a role predates that step. Both groups are derived here
+     so the dialog and the payload cannot disagree about what was chosen. */
+  const coreFourIds = useMemo<CompetencyId[]>(() => {
+    const stored = (roleProfile?.coreFourCompetencies ?? []).filter((id) =>
+      COMPETENCY_SPECS.some((s) => s.id === id),
+    );
+    if (stored.length >= 4) return stored.slice(0, 4);
+    return suggestCoreFour({
+      targetRole: role,
+      jobDescription: roleProfile?.jobDescription ?? "",
+    });
+  }, [roleProfile?.coreFourCompetencies, roleProfile?.jobDescription, role]);
+
+  const nextRelevantIds = useMemo<CompetencyId[]>(
+    () =>
+      suggestNextMostRelevant(
+        { targetRole: role, jobDescription: roleProfile?.jobDescription ?? "" },
+        coreFourIds,
+      ),
+    [role, roleProfile?.jobDescription, coreFourIds],
+  );
+
   const trainingComplete = useMemo(
     () => hasCompletedAnyTrainingForRole(trainingJourneyProgressMap, role),
     [trainingJourneyProgressMap, role],
@@ -206,8 +260,18 @@ export function InterviewScreen() {
     (forceWelcomeBackLanding || (trainingComplete && hasCreatedStoryboard)) && !forceFirstMockFlow;
 
   const [consentOpen, setConsentOpen] = useState(false);
-  const [cancelRecording, setCancelRecording] = useState(false);
-  const [turnOffCamera, setTurnOffCamera] = useState(false);
+  /* The pre-interview flow is two screens in one dialog: which four
+     competencies this attempt is assessed against, then the instructions and
+     capture consent. A short session that already chose its pillars skips
+     straight to the second. */
+  const [consentStep, setConsentStep] = useState<ConsentStep>("competencies");
+  const [competencyGroup, setCompetencyGroup] = useState<InterviewCompetencyGroup>("core_four");
+  /* One positive choice instead of two negative ones. "Cancel recording" and
+     "Turn off camera" both meant the switch being ON turned something OFF,
+     which is the toggle people misread most often, and the two overlapped —
+     cancelling the recording already covered the camera. The stored prefs
+     keep both keys so the interview room reads what it always read. */
+  const [recordSession, setRecordSession] = useState(true);
   const [sessionKind, setSessionKind] = useState<InterviewSessionKind | null>(null);
   const [recentStatsOpen, setRecentStatsOpen] = useState(false);
   const [recentReports, setRecentReports] = useState<InterviewReport[]>([]);
@@ -217,6 +281,22 @@ export function InterviewScreen() {
   const [selectivePillarIds, setSelectivePillarIds] = useState<PillarId[]>([]);
   const [pillarPickError, setPillarPickError] = useState<string | null>(null);
   const [pendingSelectivePillars, setPendingSelectivePillars] = useState<PillarId[] | null>(null);
+
+  const chosenCompetencyIds =
+    competencyGroup === "core_four" ? coreFourIds : nextRelevantIds;
+
+  /* A short session picked its pillars in the previous modal, so it never
+     meets the competency step — and the indicator must show the steps this
+     session will actually pass through, not a greyed-out one it will skip. */
+  const consentSteps = useMemo<StepIndicatorStep[]>(() => {
+    const ids: ConsentStep[] =
+      sessionKind === "selective_pillar"
+        ? ["instructions", "consent"]
+        : ["competencies", "instructions", "consent"];
+    return ids.map((id) => ({ id, title: CONSENT_STEP_META[id].title }));
+  }, [sessionKind]);
+
+  const consentStepIndex = consentSteps.findIndex((s) => s.id === consentStep);
 
   useEffect(() => {
     setLatestReport(pickRecentReports(role, 1)[0] ?? null);
@@ -273,6 +353,10 @@ export function InterviewScreen() {
       return;
     }
     setSessionKind(nextKind);
+    // A selective session picked its pillars in the previous modal; asking it
+    // to choose a competency group as well would be asking twice.
+    setConsentStep(nextKind === "selective_pillar" ? "instructions" : "competencies");
+    setCompetencyGroup("core_four");
     setConsentOpen(true);
   }
 
@@ -609,6 +693,7 @@ export function InterviewScreen() {
         onOpenChange={(open) => {
           if (open) return;
           setConsentOpen(false);
+          setConsentStep("competencies");
           setSessionKind(null);
           setPendingSelectivePillars(null);
         }}
@@ -616,7 +701,7 @@ export function InterviewScreen() {
         <DialogContent
           showCloseButton={false}
           onPointerDownOutside={(e) => e.preventDefault()}
-          className="flex max-h-[min(92dvh,40rem)] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[20px] border-border bg-card p-0 shadow-[-4px_-4px_40px_0_rgba(0,0,0,0.06)] sm:max-w-[640px]"
+          className="flex max-h-[min(92dvh,44rem)] w-full max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[20px] border-border bg-card p-0 shadow-[-4px_-4px_40px_0_rgba(0,0,0,0.06)] sm:max-w-[640px]"
         >
           <DialogHeader className="gap-0 p-0 text-left sm:text-left">
             <div
@@ -626,6 +711,10 @@ export function InterviewScreen() {
                 "bg-[linear-gradient(189.44deg,var(--glass-inset)_50.11%,var(--thread-header-tint)_110.8%),linear-gradient(var(--card),var(--card))]",
               )}
             >
+              {/* Deliberately fixed for the whole flow. Something has to stay
+                  still or each step reads as a different dialog rather than
+                  the next page of one — the indicator below is the only thing
+                  that should move. */}
               <div className="flex min-w-0 items-center gap-2.5">
                 <span
                   className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"
@@ -635,17 +724,55 @@ export function InterviewScreen() {
                 </span>
                 <div className="min-w-0 space-y-1">
                   <DialogTitle className="font-gilroy text-[20px] font-medium leading-[1.2] text-extended-cyan-green">
-                    Interview consent & instructions
+                    Start your mock interview
                   </DialogTitle>
                   <DialogDescription className="text-caption leading-snug text-text-secondary">
-                    Quick prep, then choose how this session captures audio and video.
+                    A few quick steps, then you are in.
                   </DialogDescription>
                 </div>
               </div>
             </div>
           </DialogHeader>
 
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+          <div className="border-b border-divider-soft bg-card px-5 pb-3 pt-4">
+            <StepIndicator
+              steps={consentSteps}
+              currentIndex={consentStepIndex}
+              label="Interview setup steps"
+              size="compact"
+              onStepSelect={(index) => {
+                const target = consentSteps[index];
+                if (target) setConsentStep(target.id as ConsentStep);
+              }}
+            />
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            {/* A floor under the content so the frame holds its size from one
+                step to the next; without it the short consent step shrinks the
+                dialog and the whole thing reads as a new window. */}
+            <div className="flex min-h-[19rem] flex-col gap-4">
+            <div className="space-y-1">
+              <h3 className="font-gilroy text-[16px] font-medium leading-tight text-text-primary">
+                {CONSENT_STEP_META[consentStep].title}
+              </h3>
+              <p className="text-caption leading-snug text-text-secondary">
+                {CONSENT_STEP_META[consentStep].detail}
+              </p>
+            </div>
+
+            {consentStep === "competencies" ? (
+              <CompetencyGroupStep
+                targetRole={role}
+                coreFour={coreFourIds}
+                nextRelevant={nextRelevantIds}
+                value={competencyGroup}
+                onChange={setCompetencyGroup}
+              />
+            ) : consentStep === "instructions" ? (
+            <>
+            {/* What the previous step settled, carried forward — the step
+                after a choice should confirm it, not drop it. */}
             {sessionKind === "selective_pillar" &&
             pendingSelectivePillars &&
             pendingSelectivePillars.length > 0 ? (
@@ -653,89 +780,110 @@ export function InterviewScreen() {
                 Selected focus:{" "}
                 {pendingSelectivePillars.map((id) => PILLAR_LABEL[id]).join(" · ")}
               </div>
-            ) : null}
+            ) : (
+              <div className="rounded-xl border border-border bg-extended-light-cyan/50 px-3 py-2 text-caption font-semibold text-text-primary">
+                Assessing:{" "}
+                {competencyGroup === "core_four" ? "your Core Four" : "your next most relevant four"}
+              </div>
+            )}
 
             <div className="space-y-1.5 rounded-lg bg-primary/10 px-3.5 py-3">
-              <div className="flex items-center gap-1.5 text-[14px] font-medium text-text-primary">
-                <ListChecks className="size-4 shrink-0 text-primary" aria-hidden />
-                Before you start
-              </div>
               <ul className="list-disc space-y-1.5 pl-5 text-body-sm leading-6 text-text-secondary">
                 {CONSENT_TIPS.map((tip, index) => (
                   <li key={index}>{tip}</li>
                 ))}
               </ul>
             </div>
-
-            <div>
-              <p className="text-overline text-text-secondary">Session options</p>
-              <div className="mt-2 space-y-2">
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-extended-light-cyan/30 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40">
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-primary">
-                        <MicOff className="size-3.5 text-text-secondary" aria-hidden />
-                        Cancel recording{" "}
-                        <span className="font-medium text-text-secondary">(Optional)</span>
-                      </span>
-                    </span>
-                    <span className="mt-1 block text-caption leading-snug text-text-secondary">
-                      Session runs without audio / video capture
-                    </span>
+            </>
+            ) : (
+            <>
+            <div className="flex flex-col gap-3">
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:bg-extended-light-cyan/30 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40">
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1.5 text-caption font-semibold text-text-primary">
+                    <Video className="size-3.5 text-text-secondary" aria-hidden />
+                    Record this interview
                   </span>
-                  <Switch
-                    checked={cancelRecording}
-                    onCheckedChange={setCancelRecording}
-                    className="mt-0.5"
-                    aria-label="Cancel recording"
-                  />
-                </label>
-
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:bg-extended-light-cyan/30 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40">
-                  <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-primary">
-                        <VideoOff className="size-3.5 text-text-secondary" aria-hidden />
-                        Turn off camera{" "}
-                        <span className="font-medium text-text-secondary">(Optional)</span>
-                      </span>
-                    </span>
-                    <span className="mt-1 block text-caption leading-snug text-text-secondary">
-                      Disables gesture and body movement analysis
-                    </span>
+                  <span className="mt-1 block text-caption leading-snug text-text-secondary">
+                    Your audio and video are kept so you can watch the session back afterwards.
                   </span>
-                  <Switch
-                    checked={turnOffCamera}
-                    onCheckedChange={setTurnOffCamera}
-                    className="mt-0.5"
-                    aria-label="Turn off camera"
-                  />
-                </label>
-              </div>
+                </span>
+                <Switch
+                  checked={recordSession}
+                  onCheckedChange={setRecordSession}
+                  className="mt-0.5"
+                  aria-label="Record this interview"
+                />
+              </label>
+
+              {/* What happens regardless — stated before the consequence, so
+                  the switch is never mistaken for a choice about scoring. */}
+              <p className="text-caption leading-snug text-text-secondary">
+                Either way, what you say is turned into text and kept, so the interview can be
+                scored and picked up again if your connection drops.
+              </p>
+
+              {/* Reads back the choice actually made, rather than describing
+                  only the off state. */}
+              <p className="rounded-xl border border-border bg-muted/40 px-3.5 py-3 text-caption leading-snug text-text-primary">
+                {recordSession
+                  ? "This session will be recorded, and the video sits with your report."
+                  : "Without recording, your interview still runs and is still scored — you just will not have a video to review afterwards."}
+              </p>
+            </div>
+            </>
+            )}
             </div>
           </div>
 
           <DialogFooter className="gap-2 border-t border-divider-soft bg-card px-5 py-3 sm:flex-row sm:justify-end">
+            {/* Back only exists where there is a step to go back to — a
+                selective session enters this dialog on the second step. */}
             <Button
               type="button"
               variant="outline"
               onClick={() => {
+                const previous = consentSteps[consentStepIndex - 1];
+                if (previous) {
+                  setConsentStep(previous.id as ConsentStep);
+                  return;
+                }
                 setConsentOpen(false);
+                setConsentStep("competencies");
                 setSessionKind(null);
                 setPendingSelectivePillars(null);
               }}
               className="sm:w-auto"
             >
-              Cancel
+              {consentStepIndex > 0 ? "Back" : "Cancel"}
             </Button>
+            {consentStep !== "consent" ? (
+              <Button
+                type="button"
+                onClick={() => {
+                  const next = consentSteps[consentStepIndex + 1];
+                  if (next) setConsentStep(next.id as ConsentStep);
+                }}
+                className="sm:w-auto"
+              >
+                Continue
+                <ArrowRight aria-hidden />
+              </Button>
+            ) : (
             <Button
               type="button"
               onClick={() => {
                 try {
                   const kind: InterviewSessionKind = sessionKind ?? "first_time";
+                  /* The room still reads the two original keys; the single
+                     switch is what the candidate answers, and both derive
+                     from it. */
                   const payload: Record<string, unknown> = {
-                    cancelRecording,
-                    turnOffCamera,
+                    cancelRecording: !recordSession,
+                    turnOffCamera: !recordSession,
+                    /* Left as it was: the room has always hardcoded this off,
+                       and this round is scoped to the popup. Worth revisiting
+                       — it makes the room's camera panel unreachable. */
                     cameraEnabled: false,
                     sessionKind: kind,
                   };
@@ -745,6 +893,9 @@ export function InterviewScreen() {
                     pendingSelectivePillars.length > 0
                   ) {
                     payload.selectivePillars = pendingSelectivePillars;
+                  } else {
+                    payload.competencyGroup = competencyGroup;
+                    payload.competencyIds = chosenCompetencyIds;
                   }
                   window.localStorage.setItem(
                     StorageKeys.interviewSessionPrefs,
@@ -754,14 +905,16 @@ export function InterviewScreen() {
                   // ignore
                 }
                 setConsentOpen(false);
+                setConsentStep("competencies");
                 setSessionKind(null);
                 setPendingSelectivePillars(null);
                 router.push("/interview/live");
               }}
               className="sm:w-auto"
             >
-              I understand
+              Start interview
             </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

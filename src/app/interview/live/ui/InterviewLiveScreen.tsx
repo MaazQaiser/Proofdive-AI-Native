@@ -16,7 +16,7 @@ import { IconButton } from "@/components/ui/icon-button";
 import { ReportGeneratingOverlay } from "@/components/interview/ReportGeneratingOverlay";
 import { cn } from "@/components/cn";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
-import { PILLAR_LABEL, type PillarId } from "@/lib/storyboardDraft";
+import { COMPETENCY_SPECS, PILLAR_LABEL, type CompetencyId, type PillarId } from "@/lib/storyboardDraft";
 import type {
   InterviewReport,
   InterviewReportDriver,
@@ -37,6 +37,10 @@ type InterviewSessionPrefs = {
   sessionKind?: InterviewSessionKind;
   /** When `sessionKind` is `selective_pillar`, pillars chosen on /interview (short session). */
   selectivePillars?: ("thinking" | "action" | "people" | "mastery")[];
+  /** Otherwise: which group of four the candidate chose on the competency step. */
+  competencyGroup?: "core_four" | "next_relevant";
+  /** The four ids that group resolved to — one per Success Driver. */
+  competencyIds?: CompetencyId[];
 };
 
 function readInterviewSessionOnClient(): { duration: number; prefs: InterviewSessionPrefs } {
@@ -640,6 +644,18 @@ export function InterviewLiveScreen() {
                 Focus:{" "}
                 {session.prefs.selectivePillars
                   .map((id) => PILLAR_LABEL[id as PillarId] ?? id)
+                  .join(" · ")}
+              </div>
+            ) : session.prefs.competencyIds && session.prefs.competencyIds.length > 0 ? (
+              /* The competency step is a decision the candidate made a moment
+                 ago; the room has to show it was honoured. */
+              <div className="mt-1 text-caption font-semibold leading-snug text-black/75">
+                {session.prefs.competencyGroup === "next_relevant"
+                  ? "Next most relevant"
+                  : "Your Core Four"}
+                :{" "}
+                {session.prefs.competencyIds
+                  .map((id) => COMPETENCY_SPECS.find((s) => s.id === id)?.title ?? id)
                   .join(" · ")}
               </div>
             ) : null}
