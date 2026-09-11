@@ -1,14 +1,15 @@
 "use client";
 
 import { cn } from "@/components/cn";
+import { Badge } from "@/components/ui/badge";
 import { SuccessDriverInfoTip } from "@/components/ui/success-driver-card";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
 import type { InterviewReport } from "@/lib/proofdiveTypes";
 import {
+  scoringBadgeClass,
   scoringBandEntry,
   scoringBandForScore,
   scoringLabelForScore,
-  type ScoringBand,
 } from "@/lib/scoringPalette";
 import {
   SUCCESS_DRIVER_ORDER,
@@ -35,33 +36,18 @@ function readinessScoreTextClass(score: number | null | undefined): string {
   return `${type} text-scoring-red`;
 }
 
-/** Status pill for Interview Readiness: 25% tint, no stroke (badges are borderless product-wide). */
+/**
+ * Status pill for Interview Readiness.
+ *
+ * Deliberately not its own palette: this card and the scoring key sit on the
+ * same Home screen, so "Not ready" here and "Not ready" in the key have to be
+ * the same tag. `scoringBadgeClass` is that tag.
+ */
 function readinessStatusPillClass(scoreOrLabel: number | string | null): string {
   if (scoreOrLabel == null) {
     return "bg-muted text-muted-foreground";
   }
-  const band: ScoringBand =
-    typeof scoreOrLabel === "number"
-      ? scoringBandForScore(scoreOrLabel)
-      : labelToScoringBand(scoreOrLabel);
-  if (band === "cyan") {
-    return "bg-scoring-cyan/25 text-scoring-cyan-fg";
-  }
-  if (band === "green") {
-    return "bg-scoring-green/25 text-scoring-green";
-  }
-  if (band === "yellow") {
-    return "bg-scoring-yellow/25 text-scoring-yellow-fg";
-  }
-  return "bg-scoring-red/25 text-scoring-red";
-}
-
-function labelToScoringBand(label: string): ScoringBand {
-  const n = label.trim().toLowerCase();
-  if (n === "star") return "cyan";
-  if (n === "pass" || n === "ready") return "green";
-  if (n === "borderline") return "yellow";
-  return "red";
+  return scoringBadgeClass(scoreOrLabel);
 }
 
 /**
@@ -181,14 +167,12 @@ export function InterviewReadinessCard({
           <span className="text-[16px] font-medium tracking-[-0.5px] text-text-primary">
             You are currently
           </span>
-          <span
-            className={cn(
-              "inline-flex items-center justify-center overflow-hidden rounded-full px-[9px] py-[3px] text-[12px] font-medium leading-[1.2]",
-              bandClass,
-            )}
-          >
+          {/* The product's one tag chrome, not a hand-rolled pill: this badge
+              and the scoring key's badges sit on the same screen saying the
+              same word, so they have to be the same object. */}
+          <Badge variant="outline" className={bandClass}>
             {bandText}
-          </span>
+          </Badge>
         </div>
       </div>
 

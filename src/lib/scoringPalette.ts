@@ -127,9 +127,18 @@ export function scoringFillClass(score: number | null | undefined): string {
 }
 
 /**
- * Soft pill for readiness / status badges. Borderless by design: tags and
- * badges across the product carry no stroke, the tint is the whole chrome.
- * Tint uses the bright brand fill; label text uses the readable `-fg` token.
+ * Soft pill for readiness / status badges — the ONE chrome for a scoring
+ * band, wherever it appears. Borderless by design: tags and badges across
+ * the product carry no stroke, the tint is the whole chrome.
+ *
+ * One tint strength for all four bands (25%) and the readable `-fg` token
+ * for the label. The strength is deliberate: the same band was previously
+ * drawn at 15% in the report's key and 25% on the readiness card, and side
+ * by side on Home the two read as different tags. 25% is the version that
+ * survives — it is the one that still separates from the card in dark mode,
+ * where a 15% wash of the bright fill all but disappears. Callers must not
+ * re-tint; if a band needs different weight somewhere, it needs a different
+ * component, not a different opacity.
  */
 export function scoringBadgeClass(scoreOrLabel: number | string): string {
   const band =
@@ -138,15 +147,15 @@ export function scoringBadgeClass(scoreOrLabel: number | string): string {
       : labelToBand(scoreOrLabel);
 
   if (band === "cyan") {
-    return "bg-scoring-cyan/15 text-scoring-cyan-fg";
+    return "bg-scoring-cyan/25 text-scoring-cyan-fg";
   }
   if (band === "green") {
-    return "bg-scoring-green/15 text-scoring-green-fg";
+    return "bg-scoring-green/25 text-scoring-green-fg";
   }
   if (band === "yellow") {
-    return "bg-scoring-yellow/20 text-scoring-yellow-fg";
+    return "bg-scoring-yellow/25 text-scoring-yellow-fg";
   }
-  return "bg-scoring-red/15 text-scoring-red-fg";
+  return "bg-scoring-red/25 text-scoring-red-fg";
 }
 
 function labelToBand(label: string): ScoringBand {

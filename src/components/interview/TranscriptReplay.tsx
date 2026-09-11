@@ -6,6 +6,7 @@ import { AudioLines, Captions, Mic, Pause, Play, RotateCcw, RotateCw, UserRound,
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { InterviewTranscriptLine } from "@/lib/proofdiveTypes";
+import { scoringBadgeClass } from "@/lib/scoringPalette";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -168,7 +169,7 @@ export function TranscriptReplay({
                 </div>
                 <p className="text-body-sm leading-relaxed text-text-primary">{active.text}</p>
                 {active.flag ? (
-                  <Badge variant="outline" className="mt-2 bg-scoring-red/15 text-scoring-red-fg">
+                  <Badge variant="outline" className={cn("mt-2", scoringBadgeClass("Not ready"))}>
                     {active.flag}
                   </Badge>
                 ) : null}
@@ -286,10 +287,7 @@ export function TranscriptReplay({
                   </div>
                   <p className="mt-2 text-caption leading-relaxed text-text-primary">{line.text}</p>
                   {line.flag ? (
-                    <Badge
-                      variant="outline"
-                      className="mt-2 bg-scoring-red/15 text-scoring-red-fg"
-                    >
+                    <Badge variant="outline" className={cn("mt-2", scoringBadgeClass("Not ready"))}>
                       {line.flag}
                     </Badge>
                   ) : null}
