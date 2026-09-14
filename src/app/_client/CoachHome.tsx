@@ -181,6 +181,18 @@ export function CoachHome() {
     );
   }, [readinessCardModel, readinessReport, showInterviewReadinessCard]);
 
+  /* The key changes job with the reader. Nobody has a score on their first
+     visit, so the bands are not reference yet — they are what makes the empty
+     scoreboard mean anything, and they go first, open. Once a mock has
+     produced real numbers the key is reference again: closed, and last, after
+     the numbers it explains. */
+  const scoreKeyEl = showInterviewReadinessCard ? (
+    <ScoreScale
+      defaultOpen={!readinessReport}
+      className={cn("w-full max-w-[800px]", readinessReport ? "mt-8" : "mt-6")}
+    />
+  ) : null;
+
   /* Why a passing score is not the end of the work. It sits under the numbers
      rather than beside them: it is context for a score, so it is meaningless
      until there is one. */
@@ -444,11 +456,13 @@ export function CoachHome() {
                         onClick={startRoadmapReveal}
                       />
                     </div>
+                    {readinessReport ? null : scoreKeyEl}
                     {readinessCardEl}
                   </>
                 ) : null}
                 {roadmapCardVisible ? (
                   <>
+                    {readinessReport ? null : scoreKeyEl}
                     {readinessCardEl}
                     <div ref={journeyCardRef} className="w-full max-w-[800px]">
                       {journeyModel ? <JourneyCard model={journeyModel} className="mt-8" /> : null}
@@ -474,7 +488,9 @@ export function CoachHome() {
                 {/* Readiness first in every state, the journey under it — the
                     client's call on the redesigned Home and now here too: a new
                     user should see the scoreboard they are about to fill in, so
-                    the three steps read as the way to fill it. */}
+                    the three steps read as the way to fill it. The key goes
+                    above it while there is nothing to read yet. */}
+                {readinessReport ? null : scoreKeyEl}
                 {readinessCardEl}
                 {employerInsightEl}
                 {journeyModel ? (
@@ -493,12 +509,10 @@ export function CoachHome() {
               </>
             ) : null}
 
-            {/* The scoring key, last: the numbers come first, and the reader
-                who wants to know what they mean is the one who has already
-                read them. Same bands and the same pills as the report's key. */}
-            {showInterviewReadinessCard ? (
-              <ScoreScale className="mt-8 max-w-[800px]" />
-            ) : null}
+            {/* Once there is a score, the key comes last: the numbers go first
+                and the reader who wants to know what they mean is the one who
+                has already read them. */}
+            {readinessReport ? scoreKeyEl : null}
 
             {/* Review-only: the redesigned Home lives at /coach/v2 so the two
                 can be compared side by side. Remove with that route. */}
