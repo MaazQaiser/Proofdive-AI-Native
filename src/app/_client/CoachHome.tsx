@@ -3,17 +3,19 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpRight, BookOpen, Map, Plus, X } from "lucide-react";
+import { ArrowUpRight, BookOpen, Map } from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { COACH_HUB_CONTENT_TOP_CLASS } from "@/components/coachNavLayout";
 import { cn } from "@/components/cn";
 import { CoachConversationalDock } from "@/components/coach/CoachConversationalDock";
+import { JourneyCard } from "@/components/coach/JourneyCard";
 import { RoadmapPreparingOverlay, ROADMAP_PREPARING_FILL_MS } from "@/components/coach/RoadmapPreparingOverlay";
 import { TypingText } from "@/components/TypingText";
 import { Button } from "@/components/ui/button";
 import { CardButton } from "@/components/ui/card-button";
+import { ScoreScale } from "@/components/scoring/ScoreScale";
 import {
   InterviewReadinessCard,
   readinessPillarsFromReport,
@@ -31,11 +33,8 @@ import {
   savedDivesForRole,
   type StoryboardDiveStore,
 } from "@/lib/storyboardDraft";
-import { pickMostRecentForRole } from "@/lib/trainingJourneyProgress";
-import type {
-  RoleProfile,
-  TrainingJourneyProgress,
-} from "@/lib/proofdiveTypes";
+import type { RoleProfile } from "@/lib/proofdiveTypes";
+import { useCoachJourneyModel } from "@/lib/coachJourneyModel";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 
 export type CoachJourneyView = "welcome" | "roadmap" | "journey" | "final";
@@ -48,8 +47,6 @@ const DEFAULT_COACH_JOURNEY_VIEW: CoachJourneyView = "journey";
 const COACH_WELCOME_ENTRY_SESSION_KEY = "proofdive.session.coachWelcomeEntry.v1";
 /** Session-only: this tab used `?roadmap=1` after welcome (prep roadmap). */
 const COACH_ROADMAP_ENTRY_SESSION_KEY = "proofdive.session.coachRoadmapEntry.v1";
-/** Session-only dismiss for the readiness empty-state banner. */
-const COACH_READINESS_BANNER_DISMISS_KEY = "proofdive.session.coachReadinessBannerDismissed.v1";
 
 const DRIVER_ORDER = SUCCESS_DRIVER_ORDER;
 
@@ -57,193 +54,10 @@ const DRIVER_ORDER = SUCCESS_DRIVER_ORDER;
 /** Matches `RoadmapPreparingOverlay` logo-fill duration (+ settle for paint/ready). */
 const ROADMAP_PREPARING_MS = ROADMAP_PREPARING_FILL_MS + 400;
 
-function CoachJourneyPlanCard({
-  mode,
-  isFirstStart,
-  trainingContinue,
-  hasCraftedStoryboard,
-}: {
-  mode: "roadmap" | "journey" | "final" | "suggested";
-  isFirstStart: boolean;
-  trainingContinue: boolean;
-  hasCraftedStoryboard: boolean;
-}) {
-  const isSecondInterview = mode === "final" && !isFirstStart;
-  const showIntro = mode !== "roadmap";
-  /** Add competency only after the user already has a crafted storyboard. */
-  const showAddCompetency =
-    (mode === "journey" || mode === "final") && hasCraftedStoryboard;
-
-  return (
-    <div className="mt-4 w-full max-w-[800px] scroll-mt-24 pt-4">
-      {showIntro ? (
-        <p className="w-full text-left text-[20px] font-medium leading-7 tracking-[-1px] text-text-secondary">
-          {(() => {
-            if (mode === "final") {
-              return isFirstStart
-                ? "Complete the guided journey to help you improve."
-                : "Based on your last session, let’s focus on strengthening your execution and depth.";
-            }
-            if (mode === "suggested") {
-              return (
-                <>
-                  Here are the suggested actions{" "}
-                  <span className="rounded-sm bg-extended-light-cyan px-1 text-link">
-                    AI coach
-                  </span>{" "}
-                  recommends.
-                </>
-              );
-            }
-            return (
-              <>
-                Based on your last session,{" "}
-                <span className="rounded-sm bg-extended-light-cyan px-1 text-link">
-                  AI coach
-                </span>{" "}
-                identified the areas to work on.
-              </>
-            );
-          })()}
-        </p>
-      ) : null}
-
-      <div className={cn("w-full", mode === "roadmap" ? "mt-0" : "mt-4")}>
-        <div
-          className={cn(
-            "flex w-full flex-col rounded-xl border-[0.5px] border-solid border-border p-4",
-            "bg-[linear-gradient(121.89deg,var(--glass-from)_0%,var(--glass-to)_98.96%)]",
-          )}
-        >
-          <div className="flex w-full items-center justify-between border-b border-extended-green pb-4">
-            <div className="flex min-w-0 flex-1 items-start gap-4">
-              <span
-                aria-hidden
-                className="flex shrink-0 self-stretch items-center font-gilroy text-[52px] font-normal leading-[52px] tracking-[-1.04px] tabular-nums text-brand-500"
-              >
-                1
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                <h3 className="text-[18px] font-medium leading-[27px] tracking-[-1.3px] text-text-primary">
-                  {isSecondInterview
-                    ? "Strengthen how you take action"
-                    : "Train with essential interview guides"}
-                </h3>
-                <p className="text-[16px] font-normal leading-6 text-text-secondary">
-                  {isSecondInterview
-                    ? "Work on turning ideas into clear, outcome-driven execution."
-                    : "Learn the fundamentals with guided practice."}
-                </p>
-              </div>
-            </div>
-            <Button
-              asChild
-              variant="ghost"
-              className="h-auto shrink-0 gap-2 rounded-md py-2 pl-4 pr-2! text-[14px] font-medium leading-5 text-extended-dark-cyan hover:bg-transparent hover:text-extended-dark-cyan"
-            >
-              <Link href="/training">
-                {mode === "journey" && isFirstStart && trainingContinue
-                  ? "Continue learning"
-                  : "Start learning"}
-                <ArrowUpRight className="size-4" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="flex w-full items-center justify-between border-b border-extended-green py-4">
-            <div className="flex min-w-0 flex-1 items-start gap-4">
-              <span
-                aria-hidden
-                className="flex shrink-0 self-stretch items-center font-gilroy text-[52px] font-normal leading-[52px] tracking-[-1.04px] tabular-nums text-brand-500"
-              >
-                2
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                <h3 className="text-[18px] font-medium leading-[27px] tracking-[-1.3px] text-text-primary">
-                  {isSecondInterview ? "Improve your story" : "Craft your story"}
-                </h3>
-                <p className="text-[16px] font-normal leading-6 text-text-secondary">
-                  {!isSecondInterview ? (
-                    "Turn your experience into structured answers."
-                  ) : (
-                    <>
-                      Add more depth around your{" "}
-                      <span className="font-semibold text-text-primary">decisions</span>,{" "}
-                      <span className="font-semibold text-text-primary">actions</span>, and{" "}
-                      <span className="font-semibold text-text-primary">impact</span>.
-                    </>
-                  )}
-                </p>
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              {showAddCompetency ? (
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="h-auto gap-2 rounded-md py-2 pl-0! pr-2 text-[14px] font-medium leading-5 text-text-secondary hover:bg-transparent hover:text-text-secondary"
-                >
-                  <Link href="/storyboard?new=1">
-                    <Plus className="size-4" />
-                    {isSecondInterview ? "Add more" : "Add competency"}
-                  </Link>
-                </Button>
-              ) : null}
-              <Button
-                asChild
-                variant="ghost"
-                className="h-auto gap-2 rounded-md py-2 pl-4 pr-2! text-[14px] font-medium leading-5 text-extended-dark-cyan hover:bg-transparent hover:text-extended-dark-cyan"
-              >
-                <Link href="/storyboard">
-                  Start crafting
-                  <ArrowUpRight className="size-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex w-full items-center justify-between pt-4">
-            <div className="flex min-w-0 flex-1 items-start gap-4">
-              <span
-                aria-hidden
-                className="flex shrink-0 self-stretch items-center font-gilroy text-[52px] font-normal leading-[52px] tracking-[-1.04px] tabular-nums text-brand-500"
-              >
-                3
-              </span>
-              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                <h3 className="text-[18px] font-medium leading-[27px] tracking-[-1.3px] text-text-primary">
-                  {isSecondInterview
-                    ? "Practice with a focused mock"
-                    : "Take a mock interview"}
-                </h3>
-                <p className="text-[16px] font-normal leading-6 text-text-secondary">
-                  {!isSecondInterview ? (
-                    "Practice with a 30-minute, real-world interview."
-                  ) : (
-                    <>
-                      Try a short interview focused on{" "}
-                      <span className="font-semibold text-text-primary">Action</span> and{" "}
-                      <span className="font-semibold text-text-primary">Mastery</span> pillars.
-                    </>
-                  )}
-                </p>
-              </div>
-            </div>
-            <Button
-              asChild
-              variant="ghost"
-              className="h-auto shrink-0 gap-2 rounded-md py-2 pl-4 pr-2! text-[14px] font-medium leading-5 text-extended-dark-cyan hover:bg-transparent hover:text-extended-dark-cyan"
-            >
-              <Link href="/interview?welcomeBack=1">
-                Start interview
-                <ArrowUpRight className="size-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+function fmtCoachDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
 }
 
 export function CoachHome() {
@@ -254,10 +68,6 @@ export function CoachHome() {
     StorageKeys.roleProfile,
     null,
   );
-  const [trainingJourneyProgressMap] = useLocalStorageState<Record<string, TrainingJourneyProgress>>(
-    StorageKeys.trainingProgress,
-    {},
-  );
   const [coachJourneyView, setCoachJourneyView] = useLocalStorageState<CoachJourneyView>(
     StorageKeys.coachJourneyView,
     DEFAULT_COACH_JOURNEY_VIEW,
@@ -266,18 +76,10 @@ export function CoachHome() {
     StorageKeys.coachFinalReadinessReportId,
     null,
   );
-  const [readinessBannerDismissed, setReadinessBannerDismissed] = useState(false);
   const [roadmapPhase, setRoadmapPhase] = useState<"idle" | "preparing" | "ready">("idle");
   const [roadmapCardVisible, setRoadmapCardVisible] = useState(false);
   const journeyCardRef = useRef<HTMLDivElement>(null);
   const roadmapHoldTimerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setReadinessBannerDismissed(
-      sessionStorage.getItem(COACH_READINESS_BANNER_DISMISS_KEY) === "1",
-    );
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -286,13 +88,6 @@ export function CoachHome() {
       }
     };
   }, []);
-
-  function dismissReadinessBanner() {
-    setReadinessBannerDismissed(true);
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem(COACH_READINESS_BANNER_DISMISS_KEY, "1");
-    }
-  }
 
   const latestInterviewReport = useLatestInterviewReport();
   const readinessSourceReport = useMemo(() => {
@@ -306,13 +101,14 @@ export function CoachHome() {
   /** Suggested roadmap stays on the welcome chrome (actions + empty readiness) until storyboard or interview. */
   const showWelcomeLanding =
     coachJourneyView === "welcome" || coachJourneyView === "roadmap";
-  const isRoadmapCoach = coachJourneyView === "roadmap";
-  const isFinalCoach = coachJourneyView === "final";
   const showJourneyColumn =
     coachJourneyView === "journey" || coachJourneyView === "final";
   /**
    * Readiness sidebar: empty placeholders on `welcome` / `roadmap`, scored on `journey` / `final`.
    */
+  /* The journey's real state, from the one model both Homes read. */
+  const journeyModel = useCoachJourneyModel();
+
   const showInterviewReadinessCard =
     coachJourneyView === "welcome" ||
     coachJourneyView === "roadmap" ||
@@ -320,10 +116,6 @@ export function CoachHome() {
     coachJourneyView === "final";
   const interviewReadinessEmpty =
     coachJourneyView === "welcome" || coachJourneyView === "roadmap";
-  /** Until a mock exists, show the action plan above the empty readiness card. */
-  const showActionsAboveReadiness =
-    interviewReadinessEmpty || !latestInterviewReport;
-
   const readinessCardModel = useMemo(() => {
     const emptyPillars = DRIVER_ORDER.map((id) => ({
       id,
@@ -349,6 +141,14 @@ export function CoachHome() {
     return { pillars, overall, noteText };
   }, [interviewReadinessEmpty, readinessSourceReport]);
 
+  /* The card's own footer, which the client asked for here after seeing it on
+     the redesigned Home: one honest line while the scoreboard is empty, and
+     the way into the report as soon as there is one. It replaces the
+     dismissible banner that used to float above the card — a note about the
+     card belongs inside it, and a line you can dismiss is a line the next
+     visitor never reads. */
+  const readinessReport = interviewReadinessEmpty ? null : readinessSourceReport;
+
   const readinessCardEl = useMemo(() => {
     if (!showInterviewReadinessCard) return null;
     return (
@@ -356,33 +156,57 @@ export function CoachHome() {
         <InterviewReadinessCard
           overall={readinessCardModel.overall}
           pillars={readinessCardModel.pillars}
-        />
+        >
+          {readinessReport ? (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <span className="text-caption text-text-secondary">
+                Latest mock · {fmtCoachDate(readinessReport.meta.createdAt)} ·{" "}
+                {readinessReport.meta.questionCount} questions
+              </span>
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/report/${encodeURIComponent(readinessReport.meta.id)}`}>
+                  View full report
+                  <ArrowUpRight aria-hidden />
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <p className="border-t border-border pt-4 text-caption text-text-secondary">
+              Your score will appear here as you complete MasterClasses, build your StoryBoard,
+              and take mock interviews.
+            </p>
+          )}
+        </InterviewReadinessCard>
       </div>
     );
-  }, [readinessCardModel, showInterviewReadinessCard]);
+  }, [readinessCardModel, readinessReport, showInterviewReadinessCard]);
 
-  const readinessNoteBanner =
-    showInterviewReadinessCard &&
-    readinessCardModel.noteText &&
-    !readinessBannerDismissed ? (
-      <div
-        role="status"
-        className="mt-6 flex w-full items-center gap-3 rounded-lg border border-extended-light-cyan bg-extended-light-cyan/50 px-4 py-3"
-      >
-        <p className="min-w-0 flex-1 text-body-sm leading-6 text-extended-green-blue">
-          {readinessCardModel.noteText}
-        </p>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={dismissReadinessBanner}
-          className="size-8 shrink-0 text-extended-green-blue hover:bg-extended-light-cyan hover:text-extended-dark-cyan"
-          aria-label="Dismiss readiness tip"
-        >
-          <X />
-        </Button>
-      </div>
-    ) : null;
+  /* The key changes job with the reader. Nobody has a score on their first
+     visit, so the bands are not reference yet — they are what makes the empty
+     scoreboard mean anything, and they go first, open. Once a mock has
+     produced real numbers the key is reference again: closed, and last, after
+     the numbers it explains. */
+  const scoreKeyEl = showInterviewReadinessCard ? (
+    <ScoreScale
+      defaultOpen={!readinessReport}
+      className={cn("w-full max-w-[800px]", readinessReport ? "mt-8" : "mt-6")}
+    />
+  ) : null;
+
+  /* Why a passing score is not the end of the work. It sits under the numbers
+     rather than beside them: it is context for a score, so it is meaningless
+     until there is one. */
+  const employerInsightEl = readinessReport ? (
+    <aside className="mt-4 w-full max-w-[800px] rounded-xl border border-border bg-card px-4 py-3.5">
+      <p className="text-overline text-text-secondary">Employer insight</p>
+      <p className="mt-1.5 text-body-sm leading-6 text-text-primary">
+        Passing is the threshold, not the finish line. When several candidates pass for one
+        position, those who demonstrate stronger evidence across all four Success Drivers are
+        more likely to secure the role.
+      </p>
+    </aside>
+  ) : null;
+
   useEffect(() => {
     const is = (k: string) => {
       const v = searchParams.get(k);
@@ -486,14 +310,6 @@ export function CoachHome() {
     }
   }, [coachJourneyView, coachFinalReportId, pathname, setCoachJourneyView, setCoachFinalReportId]);
 
-  const role = roleProfile?.targetRole?.trim() ?? "";
-
-  const hasCraftedStoryboard = useMemo(() => {
-    if (!role || typeof window === "undefined") return false;
-    const diveStore = readJson<StoryboardDiveStore>(StorageKeys.storyboardDives);
-    return isDiveStore(diveStore) && savedDivesForRole(diveStore, role).length > 0;
-  }, [role, coachJourneyView, pathname]);
-
   /** Restore suggested roadmap chrome after remount (phase/card are in-memory). */
   useEffect(() => {
     if (coachJourneyView !== "roadmap") return;
@@ -540,17 +356,6 @@ export function CoachHome() {
     setCoachJourneyView,
     setCoachFinalReportId,
   ]);
-
-  const trainingProgressForRole = useMemo(
-    () => pickMostRecentForRole(trainingJourneyProgressMap, role),
-    [trainingJourneyProgressMap, role],
-  );
-
-  const trainingContinue =
-    typeof trainingProgressForRole?.percentComplete === "number" &&
-    trainingProgressForRole.percentComplete > 0;
-
-  const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
 
   const startRoadmapReveal = useCallback(() => {
     if (roadmapPhase !== "idle") return;
@@ -651,87 +456,63 @@ export function CoachHome() {
                         onClick={startRoadmapReveal}
                       />
                     </div>
-                    {readinessNoteBanner}
+                    {readinessReport ? null : scoreKeyEl}
                     {readinessCardEl}
                   </>
                 ) : null}
                 {roadmapCardVisible ? (
                   <>
-                    {showActionsAboveReadiness ? (
-                      <>
-                        <div ref={journeyCardRef} className="w-full max-w-[800px]">
-                          <CoachJourneyPlanCard
-                            mode="suggested"
-                            isFirstStart={Boolean(isFirstStart)}
-                            trainingContinue={trainingContinue}
-                            hasCraftedStoryboard={hasCraftedStoryboard}
-                          />
-                        </div>
-                        {readinessNoteBanner}
-                        {readinessCardEl}
-                      </>
-                    ) : (
-                      <>
-                        {readinessNoteBanner}
-                        {readinessCardEl}
-                        <div ref={journeyCardRef} className="w-full max-w-[800px]">
-                          <CoachJourneyPlanCard
-                            mode="suggested"
-                            isFirstStart={Boolean(isFirstStart)}
-                            trainingContinue={trainingContinue}
-                            hasCraftedStoryboard={hasCraftedStoryboard}
-                          />
-                        </div>
-                      </>
-                    )}
+                    {readinessReport ? null : scoreKeyEl}
+                    {readinessCardEl}
+                    <div ref={journeyCardRef} className="w-full max-w-[800px]">
+                      {journeyModel ? <JourneyCard model={journeyModel} className="mt-8" /> : null}
+                    </div>
                   </>
                 ) : null}
               </>
             ) : showJourneyColumn ? (
               <>
                 <h2 className="text-agent-heading text-heading-teal">
-                  {(() => {
-                    if (isRoadmapCoach) return "Here is your guided journey";
-                    if (isFinalCoach) return isFirstStart ? "You're off to a strong start." : "Good news, you're improving.";
-                    return "You're off to a strong start.";
-                  })()}
+                  {/* Two states, both the client's words: before a mock the
+                      page encourages, after one it credits the work and lets
+                      the report's own headline name what to strengthen. */}
+                  {readinessReport
+                    ? "You put in real work to get here."
+                    : "You're off to a strong start."}
                 </h2>
                 <h4 className="mt-3 mb-[14px] text-agent-question text-text-primary">
-                  {(() => {
-                    if (isRoadmapCoach) return "Follow the path below to prepare for this role.";
-                    if (isFinalCoach) {
-                      return isFirstStart
-                        ? "Follow the path below to keep improving."
-                        : "Focus on your weaker areas to get it done.";
-                    }
-                    return "Follow the path below to keep improving.";
-                  })()}
+                  {readinessReport
+                    ? readinessReport.headline
+                    : "Follow the path below to build your interview readiness."}
                 </h4>
-                {showActionsAboveReadiness ? (
-                  <>
-                    <CoachJourneyPlanCard
-                      mode={isFinalCoach ? "final" : isRoadmapCoach ? "roadmap" : "journey"}
-                      isFirstStart={Boolean(isFirstStart)}
-                      trainingContinue={trainingContinue}
-                      hasCraftedStoryboard={hasCraftedStoryboard}
-                    />
-                    {readinessNoteBanner}
-                    {readinessCardEl}
-                  </>
-                ) : (
-                  <>
-                    {readinessNoteBanner}
-                    {readinessCardEl}
-                    <CoachJourneyPlanCard
-                      mode={isFinalCoach ? "final" : isRoadmapCoach ? "roadmap" : "journey"}
-                      isFirstStart={Boolean(isFirstStart)}
-                      trainingContinue={trainingContinue}
-                      hasCraftedStoryboard={hasCraftedStoryboard}
-                    />
-                  </>
-                )}
+                {/* Readiness first in every state, the journey under it — the
+                    client's call on the redesigned Home and now here too: a new
+                    user should see the scoreboard they are about to fill in, so
+                    the three steps read as the way to fill it. The key goes
+                    above it while there is nothing to read yet. */}
+                {readinessReport ? null : scoreKeyEl}
+                {readinessCardEl}
+                {employerInsightEl}
+                {journeyModel ? (
+                  <JourneyCard
+                    model={journeyModel}
+                    className="mt-8"
+                    intro={
+                      <>
+                        Here&apos;s your path forward. Three steps
+                        {journeyModel.role ? <>, built around your {journeyModel.role} target</> : null}
+                        .
+                      </>
+                    }
+                  />
+                ) : null}
               </>
             ) : null}
+
+            {/* Once there is a score, the key comes last: the numbers go first
+                and the reader who wants to know what they mean is the one who
+                has already read them. */}
+            {readinessReport ? scoreKeyEl : null}
 
             {/* Review-only: the redesigned Home lives at /coach/v2 so the two
                 can be compared side by side. Remove with that route. */}

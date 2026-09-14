@@ -37,12 +37,24 @@ const SEGMENTS = SCORING_BANDS_ASC.map((b, i) => ({
  * ready" really is the widest stretch of the scale and the picture cannot
  * flatter or mislead. The pills are the same ones the report's key uses,
  * deliberately: two screens explaining one scale should not invent two
- * vocabularies. Collapsed by default, and built as the same disclosure the
- * report uses, so opening one teaches you how the other behaves.
+ * vocabularies. Built as the same disclosure the report uses, so opening one
+ * teaches you how the other behaves.
+ *
+ * `defaultOpen` is for the reader who has no score yet: to them this is not
+ * reference, it is the thing that makes the empty scoreboard above it mean
+ * something, so Home opens it and puts it first. Once there is a real score
+ * the key goes back to being reference — closed, and last.
  */
-export function ScoreScale({ className }: { className?: string }) {
+export function ScoreScale({
+  defaultOpen = false,
+  className,
+}: {
+  defaultOpen?: boolean;
+  className?: string;
+}) {
   return (
     <details
+      open={defaultOpen}
       className={cn(
         "group w-full rounded-[16px] border border-border bg-card open:bg-background",
         className,

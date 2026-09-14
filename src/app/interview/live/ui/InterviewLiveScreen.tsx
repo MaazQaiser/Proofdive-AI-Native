@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { IconButton } from "@/components/ui/icon-button";
+import { LogoMark } from "@/components/ui/logo";
 import { ReportGeneratingOverlay } from "@/components/interview/ReportGeneratingOverlay";
 import { cn } from "@/components/cn";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -425,8 +426,8 @@ function buildMockReport(args: {
     overallStatus: readinessForScore(overallScore),
     overallBand: bandForScore(overallScore),
     headline: firstStart
-      ? `Baseline set at ${overallScore.toFixed(1)} — ${weakest.shortTitle} is holding your score back.`
-      : `Strong in ${strongest.shortTitle} — ${weakest.shortTitle} is holding your score back.`,
+      ? `Baseline set at ${overallScore.toFixed(1)} — ${weakest.shortTitle} is your clearest area to strengthen.`
+      : `Strong in ${strongest.shortTitle} — ${weakest.shortTitle} is your clearest area to strengthen.`,
     summary: firstStart
       ? `Your answers were easy to follow but stopped short of a result: you described what happened, not what you specifically decided and what it changed. Where you're losing points is ${weakest.shortTitle}. Add one metric per answer and lead with the decision — that is where the next half-point is.`
       : `Your ${strongest.shortTitle} answers showed real evidence, with clear alignment and trade-offs stated out loud. Where you're losing points is ${weakest.shortTitle} — your answers described what happened but not what you specifically decided and why. Fix that and your score moves up a band.`,
@@ -539,12 +540,124 @@ function formatTimer(totalSeconds: number) {
   return `${mm}:${ss}`;
 }
 
+/* ------------------------------------------------------------------------
+   THE TURN CLOCK
+
+   A real interview has two clocks and only one of them is the session: the
+   other is "how long have I been on this answer", and it is the one a
+   candidate actually feels. The room runs it explicitly — the interviewer
+   asks, you get five minutes, and if you are still going at five you get one
+   more minute of grace before the next question rather than being cut off
+   mid-sentence. The grace minute is deliberately visible and red: an
+   unannounced overrun is what makes practice feel unfair.
+   ------------------------------------------------------------------------ */
+
+/** Time the interviewer spends asking before your clock starts. */
+const ASK_SECONDS = 5;
+/** The answer window a candidate is told they have. */
+const ANSWER_SECONDS = 5 * 60;
+/** One extra minute after it, flagged, before the next question. */
+const GRACE_SECONDS = 60;
+/** The answer clock turns amber for its last minute. */
+const WARN_AT_SECONDS = 60;
+
+/* The room's palette, as scoped variable overrides. Declared once and worn by
+   both the room and its dialog: the dialog renders through a portal at body
+   level, so it cannot inherit the room's scope and would otherwise arrive in
+   the app's ambient theme — a white card over a dark call. */
+const ROOM_PALETTE =
+  "[--background:#0A1013] [--card:#121C21] [--popover:#16232A] [--surface:#18252B] " +
+  "[--muted:#1C2C33] [--border:#273B43] [--divider-soft:#22333A] " +
+  "[--foreground:#E8EFF1] [--text-primary:#E8EFF1] [--card-foreground:#E8EFF1] " +
+  "[--popover-foreground:#E8EFF1] " +
+  "[--text-secondary:#94A6AC] [--muted-foreground:#94A6AC] " +
+  "[--primary:#22B2CC] [--primary-foreground:#03171C] [--ring:#22B2CC] " +
+  "[--destructive:#F0736A] [--destructive-foreground:#2A0B08] " +
+  "[--scoring-green:#34C76A] [--scoring-yellow:#E9A13B] [--scoring-red:#F0736A] " +
+  "[--logo-ink:#CFE3E8]";
+
+type Turn = "asking" | "answering" | "grace" | "done";
+
+function turnSpan(turn: Turn): number {
+  if (turn === "asking") return ASK_SECONDS;
+  if (turn === "answering") return ANSWER_SECONDS;
+  return GRACE_SECONDS;
+}
+
+/** One question per competency — the same twelve the framework defines. */
+const QUESTION_BY_COMPETENCY: Record<CompetencyId, string> = {
+  "thinking-analytical":
+    "Tell me about a time you were handed a messy problem. How did you work out what was actually causing it?",
+  "thinking-prioritization":
+    "Describe a time everything was urgent. How did you decide what to do first, and what did you let slip?",
+  "thinking-decision":
+    "Tell me about a decision you had to make without enough information. What did you weigh, and what happened?",
+  "action-ownership":
+    "Tell me about something you owned end to end. What went wrong along the way, and what did you do about it?",
+  "action-initiative":
+    "Describe something you started that nobody asked you to start. What made you act, and what came of it?",
+  "action-change":
+    "Tell me about a time priorities changed underneath you. How did you adjust, and what did it cost?",
+  "people-influence":
+    "Describe a time you had to bring someone round to a different view. How did you make the case?",
+  "people-collaboration":
+    "Tell me about working with a team that was not pulling in the same direction. What did you change?",
+  "people-capability":
+    "Describe a time you helped someone get better at their work. What did you do differently for them?",
+  "mastery-functional":
+    "Tell me about a time your depth in the subject changed the outcome. What did you know that others did not?",
+  "mastery-execution":
+    "Describe a piece of work you are proud of the craft in. What made the execution good rather than adequate?",
+  "mastery-innovation":
+    "Tell me about something you made meaningfully better. What was wrong with it before, and how do you know it improved?",
+};
+
+/** The four competencies this attempt covers, in Success Driver order. */
+function questionsForSession(prefs: InterviewSessionPrefs): {
+  competencyId: CompetencyId;
+  title: string;
+  pillar: PillarId;
+  question: string;
+}[] {
+  let ids: CompetencyId[] = [];
+
+  if (prefs.competencyIds?.length) {
+    ids = prefs.competencyIds.filter((id) => QUESTION_BY_COMPETENCY[id]);
+  } else if (prefs.selectivePillars?.length) {
+    // A short session chose pillars, not competencies: take each pillar's first.
+    ids = prefs.selectivePillars
+      .map((pillar) => COMPETENCY_SPECS.find((spec) => spec.pillar === pillar)?.id)
+      .filter((id): id is CompetencyId => Boolean(id));
+  }
+
+  if (ids.length === 0) {
+    ids = (["thinking", "action", "people", "mastery"] as PillarId[])
+      .map((pillar) => COMPETENCY_SPECS.find((spec) => spec.pillar === pillar)?.id)
+      .filter((id): id is CompetencyId => Boolean(id));
+  }
+
+  return ids.map((id) => {
+    const spec = COMPETENCY_SPECS.find((s) => s.id === id);
+    return {
+      competencyId: id,
+      title: spec?.title ?? id,
+      pillar: spec?.pillar ?? "thinking",
+      question: QUESTION_BY_COMPETENCY[id],
+    };
+  });
+}
+
 export function InterviewLiveScreen() {
   const router = useRouter();
   const [roleProfile] = useLocalStorageState<RoleProfile | null>(StorageKeys.roleProfile, null);
   const name = roleProfile?.name?.trim() || "You";
   const role = roleProfile?.targetRole?.trim() || "Mock Interview";
 
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [session] = useState(() => readInterviewSessionOnClient());
   const totalSeconds = session.duration;
   const [secondsLeft, setSecondsLeft] = useState(session.duration);
@@ -568,6 +681,74 @@ export function InterviewLiveScreen() {
     }, 250);
     return () => window.clearInterval(t);
   }, [totalSeconds]);
+
+  /* ---- the turn clock ------------------------------------------------- */
+
+  const questions = useMemo(() => questionsForSession(session.prefs), [session.prefs]);
+  const [qIndex, setQIndex] = useState(0);
+  const [turn, setTurn] = useState<Turn>("asking");
+  /* The turn and its deadline are set together, in the callback that ends the
+     previous turn — never in an effect. `now` is the only thing that ticks,
+     and the remaining seconds are derived from the two at render. */
+  const [turnEndsAt, setTurnEndsAt] = useState(() => Date.now() + ASK_SECONDS * 1000);
+  const [now, setNow] = useState(0);
+
+  const current = questions[Math.min(qIndex, questions.length - 1)]!;
+  const isLastQuestion = qIndex >= questions.length - 1;
+
+  const startTurn = useCallback((next: Turn) => {
+    setTurn(next);
+    setTurnEndsAt(Date.now() + turnSpan(next) * 1000);
+  }, []);
+
+  const nextQuestion = useCallback(() => {
+    if (qIndex >= questions.length - 1) {
+      setTurn("done");
+      return;
+    }
+    setQIndex(qIndex + 1);
+    startTurn("asking");
+  }, [qIndex, questions.length, startTurn]);
+
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(t);
+  }, []);
+
+  /* One timeout per turn: it is armed off the deadline the previous turn set,
+     so the hand-off happens exactly once and cannot drift from the display. */
+  useEffect(() => {
+    if (isEnding || turn === "done") return;
+
+    const advance = window.setTimeout(
+      () => {
+        if (turn === "asking") startTurn("answering");
+        else if (turn === "answering") startTurn("grace");
+        else nextQuestion();
+      },
+      Math.max(0, turnEndsAt - Date.now()),
+    );
+
+    return () => window.clearTimeout(advance);
+  }, [turn, turnEndsAt, isEnding, startTurn, nextQuestion]);
+
+  /* Before the first tick the full span is the honest answer, and it is what
+     the server renders too — no clock in the markup that hydration can fight. */
+  const turnLeft =
+    now > 0 ? Math.max(0, Math.ceil((turnEndsAt - now) / 1000)) : turnSpan(turn);
+
+  /* Answering state, as the ring and the number read it. `grace` is its own
+     level rather than "answering, but negative": the candidate was promised
+     five minutes and is now visibly into borrowed time. */
+  const clockLevel: "calm" | "warn" | "grace" =
+    turn === "grace" ? "grace" : turn === "answering" && turnLeft <= WARN_AT_SECONDS ? "warn" : "calm";
+
+  const answerPct =
+    turn === "answering"
+      ? (turnLeft / ANSWER_SECONDS) * 100
+      : turn === "grace"
+        ? (turnLeft / GRACE_SECONDS) * 100
+        : 100;
 
   /* Named the way the onboarding waits name their steps — a sentence about
      the work, not a label — because the overlay now renders them in the same
@@ -628,184 +809,353 @@ export function InterviewLiveScreen() {
     };
   }, [isEnding, reportSteps.length, role, router, session.prefs.sessionKind, totalSeconds]);
 
+  const micLabel = micOn ? "Mic on" : "Mic off";
+
+  /* Everything in this room comes from localStorage — the session prefs, the
+     chosen competencies, the candidate's name — so the server has no honest
+     version of it to render. `useSyncExternalStore` gives a false server
+     snapshot and a true client one with no effect and no setState, which is
+     the same trick `lib/theme.ts` uses; the alternative was a screenful of
+     text that differs between the two renders. */
+  if (!mounted) {
+    return <div className="min-h-dvh w-full bg-[#0A1013]" aria-busy="true" />;
+  }
+
   return (
-    <div className="app-canvas app-canvas--motif min-h-screen w-full text-foreground">
-      <div className="relative z-[2] mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-6 pb-28">
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <div className="truncate text-h5">
-              {role} • Live interview
+    /* THE PLATE DECIDES. A call room is its own world — Meet, Zoom and every
+       other one is dark whatever the OS is doing, because a dark room is what
+       makes a lit face and a lit stage read. So this screen pins the product's
+       DARK palette in both themes rather than following the toggle: the tokens
+       below are the same values `.dark` defines, so Button, IconButton and the
+       type need no knowledge of where they are. */
+    <div
+      className={cn("flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground", ROOM_PALETTE)}
+    >
+      {/* ---- room header -------------------------------------------------- */}
+      <header className="flex shrink-0 items-start justify-between gap-4 px-5 py-3.5">
+        <div className="min-w-0">
+          <p className="truncate text-body-sm font-semibold text-text-primary">
+            {role} <span className="text-text-secondary">·</span> Live interview
+          </p>
+          {session.prefs.sessionKind === "selective_pillar" &&
+          session.prefs.selectivePillars?.length ? (
+            <p className="mt-0.5 truncate text-caption text-text-secondary">
+              Focus:{" "}
+              {session.prefs.selectivePillars
+                .map((id) => PILLAR_LABEL[id as PillarId] ?? id)
+                .join(" · ")}
+            </p>
+          ) : (
+            <p className="mt-0.5 truncate text-caption text-text-secondary">
+              {session.prefs.competencyGroup === "next_relevant"
+                ? "Next most relevant"
+                : "Your Core Four"}
+              : {questions.map((q) => q.title).join(" · ")}
+            </p>
+          )}
+        </div>
+
+        {/* The session clock, deliberately the quieter of the two: it is the
+            room's clock, not the one you are answering against. */}
+        <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1.5 text-overline tabular-nums text-text-secondary">
+          <span className="size-1.5 rounded-full bg-scoring-green" aria-hidden />
+          <span>{formatTimer(secondsLeft)} left</span>
+        </div>
+      </header>
+
+      {/* ---- stage --------------------------------------------------------- */}
+      <main className="relative min-h-0 flex-1 px-5">
+        <div className="relative h-full w-full overflow-hidden rounded-[20px] border border-border bg-[radial-gradient(120%_90%_at_50%_0%,#16262E_0%,#0D171C_55%,#0A1013_100%)]">
+          {/* The interviewer. No photoreal avatar and no orb: the brand mark
+              on a lit plate, with the glow breathing only while it speaks, so
+              "who is talking" is legible at a glance and nothing is pretending
+              to be a face. */}
+          {/* Bottom padding on small screens so the self view cannot land on
+              top of the interviewer's name — at 375px the picture-in-picture
+              is a third of the stage. */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 pb-24 sm:pb-0">
+            <div className="relative grid place-items-center">
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute size-[260px] rounded-full blur-[56px] transition-opacity duration-700",
+                  turn === "asking"
+                    ? "bg-primary/40 motion-safe:animate-pulse"
+                    : "bg-primary/12",
+                )}
+              />
+              <span className="relative grid size-[176px] place-items-center rounded-full border border-white/10 bg-white/[0.05] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
+                <LogoMark className="size-[76px] text-primary" />
+              </span>
             </div>
-            <div className="mt-1 text-body-sm text-text-secondary">ProofDive interview room</div>
-            {session.prefs.sessionKind === "selective_pillar" &&
-            session.prefs.selectivePillars &&
-            session.prefs.selectivePillars.length > 0 ? (
-              <div className="mt-1 text-caption font-semibold leading-snug text-black/75">
-                Focus:{" "}
-                {session.prefs.selectivePillars
-                  .map((id) => PILLAR_LABEL[id as PillarId] ?? id)
-                  .join(" · ")}
-              </div>
-            ) : session.prefs.competencyIds && session.prefs.competencyIds.length > 0 ? (
-              /* The competency step is a decision the candidate made a moment
-                 ago; the room has to show it was honoured. */
-              <div className="mt-1 text-caption font-semibold leading-snug text-black/75">
-                {session.prefs.competencyGroup === "next_relevant"
-                  ? "Next most relevant"
-                  : "Your Core Four"}
-                :{" "}
-                {session.prefs.competencyIds
-                  .map((id) => COMPETENCY_SPECS.find((s) => s.id === id)?.title ?? id)
-                  .join(" · ")}
-              </div>
-            ) : null}
+
+            <div className="text-center">
+              <p className="text-body-sm font-semibold text-text-primary">
+                ProofDive Interviewer
+              </p>
+              {/* Not a second copy of the speaker chip — this line says what
+                  is expected of the candidate right now. */}
+              <p className="mt-1 text-caption text-text-secondary">
+                {turn === "asking"
+                  ? "Asking your question…"
+                  : turn === "grace"
+                    ? "Bring your answer to a close"
+                    : turn === "done"
+                      ? "That was the last question"
+                      : "Your turn — answer when you are ready"}
+              </p>
+            </div>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-card/60 px-4 py-2 text-overline text-text-secondary">
-            <span className="h-2 w-2 rounded-full bg-scoring-green" />
-            <span>{formatTimer(secondsLeft)}</span>
+
+          {/* State chip, bottom-left, the way a call names the active speaker. */}
+          <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-overline text-white backdrop-blur">
+            <span
+              aria-hidden
+              className={cn(
+                "size-1.5 rounded-full",
+                turn === "asking" ? "bg-scoring-green motion-safe:animate-pulse" : "bg-white/40",
+              )}
+            />
+            <span>{turn === "asking" ? "Speaking" : "Listening"}</span>
+          </div>
+
+          {/* Self view, picture-in-picture, where every call puts it. */}
+          <div className="absolute bottom-3 right-3 w-[128px] overflow-hidden rounded-xl border border-white/10 bg-[#0E1A20] shadow-[0_10px_30px_-12px_rgba(0,0,0,0.9)] sm:w-[216px]">
+            <div className="relative flex aspect-video items-center justify-center">
+              {camOn ? (
+                <p className="px-3 text-center text-overline text-text-secondary">
+                  Camera preview
+                </p>
+              ) : (
+                <span className="grid size-9 place-items-center rounded-full bg-white/[0.06] text-caption font-semibold text-text-primary sm:size-11 sm:text-body-sm">
+                  {name.trim().charAt(0).toUpperCase() || "Y"}
+                </span>
+              )}
+              <div className="absolute bottom-1.5 left-1.5 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] leading-4 text-white">
+                <span
+                  aria-hidden
+                  className={cn(
+                    "size-1.5 rounded-full",
+                    micOn ? "bg-scoring-green" : "bg-scoring-red",
+                  )}
+                />
+                <span className="max-w-[86px] truncate">{name}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* ---- the question, and the clock you are answering against --------- */}
+      <section
+        className="shrink-0 px-5 pt-4"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div
+          className={cn(
+            "flex items-center gap-4 rounded-[18px] border bg-card/80 px-4 py-3.5 transition-colors duration-500",
+            clockLevel === "grace"
+              ? "border-scoring-red/60 bg-scoring-red/[0.08]"
+              : clockLevel === "warn"
+                ? "border-scoring-yellow/50"
+                : "border-border",
+          )}
+        >
+          {/* A depleting ring rather than a bare number: the shape says how
+              much is left before the digits have been read. */}
+          <div
+            className={cn(
+              "relative grid size-[58px] shrink-0 place-items-center rounded-full",
+              clockLevel === "grace" && "motion-safe:animate-pulse",
+            )}
+            style={{
+              background: `conic-gradient(var(--clock) ${answerPct}%, color-mix(in srgb, var(--clock) 16%, transparent) 0)`,
+              ["--clock" as string]:
+                clockLevel === "grace"
+                  ? "var(--scoring-red)"
+                  : clockLevel === "warn"
+                    ? "var(--scoring-yellow)"
+                    : "var(--primary)",
+            }}
+            role="timer"
+            aria-label={
+              turn === "asking"
+                ? "The interviewer is asking the question"
+                : turn === "done"
+                  ? "All questions asked"
+                  : `${formatTimer(turnLeft)} ${turn === "grace" ? "of extra time" : "left to answer"}`
+            }
+          >
+            <span className="grid size-[48px] place-items-center rounded-full bg-card">
+              {turn === "asking" ? (
+                <span className="size-2 rounded-full bg-primary motion-safe:animate-pulse" aria-hidden />
+              ) : turn === "done" ? (
+                <span className="text-caption font-semibold text-text-secondary">—</span>
+              ) : (
+                <span
+                  className={cn(
+                    "font-gilroy text-[15px] font-semibold tabular-nums",
+                    clockLevel === "grace"
+                      ? "text-scoring-red"
+                      : clockLevel === "warn"
+                        ? "text-scoring-yellow"
+                        : "text-text-primary",
+                  )}
+                >
+                  {formatTimer(turnLeft)}
+                </span>
+              )}
+            </span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-overline text-text-secondary">
+                Question {Math.min(qIndex + 1, questions.length)} of {questions.length}
+              </span>
+              <span className="text-overline text-text-secondary/50" aria-hidden>
+                ·
+              </span>
+              <span className="text-overline text-primary">{current.title}</span>
+              {turn === "grace" ? (
+                <span className="rounded-full bg-scoring-red/20 px-2 py-0.5 text-overline font-medium text-scoring-red">
+                  Extra time — next question in {formatTimer(turnLeft)}
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1 text-body-sm leading-6 text-text-primary">
+              {turn === "done"
+                ? "That is every question for this attempt. End the session when you are ready and your report will be generated."
+                : current.question}
+            </p>
           </div>
         </div>
 
-        <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-card">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-caption font-semibold text-text-primary">
-                    AI Interviewer
-                  </div>
-                  <div className="mt-2 text-overline text-text-secondary">Video feed placeholder</div>
-                </div>
-              </div>
-              <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-overline text-white">
-                <span className="h-2 w-2 rounded-full bg-scoring-green" />
-                <span>Speaking</span>
-              </div>
-            </div>
-          </div>
+        {/* The promise, stated once, so the clock never reads as a punishment. */}
+        <p className="mt-2 px-1 text-overline text-text-secondary">
+          {turn === "done"
+            ? "Nothing more is being timed."
+            : `You get ${ANSWER_SECONDS / 60} minutes per answer, then one extra minute before the next question.`}
+        </p>
+      </section>
 
-          <div className="flex flex-col gap-4">
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-card">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-caption font-semibold text-text-primary">
-                    {name}
-                  </div>
-                  <div className="mt-2 text-overline text-text-secondary">Camera preview placeholder</div>
-                </div>
-              </div>
-              <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-overline text-white">
-                <span className={cn("h-2 w-2 rounded-full", micOn ? "bg-scoring-green" : "bg-scoring-red")} />
-                <span>{micOn ? "Mic on" : "Mic off"}</span>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-border bg-card p-4">
-              <div className="text-overline text-text-secondary">
-                Notes
-              </div>
-              <div className="mt-2 text-caption text-text-secondary">
-                Answer naturally. Use STAR/CARE structure where possible. Stay concise.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="fixed bottom-4 left-0 right-0 z-50 px-6">
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-full border border-border bg-card/80 px-3 py-3 backdrop-blur">
-            <div className="flex items-center gap-2">
-              <IconButton
-                variant="ghost"
-                size="xl"
-                onClick={() => setMicOn((v) => !v)}
-                className={cn(
-                  micOn
-                    ? "bg-card/60 text-text-primary hover:bg-card/80 hover:text-text-primary"
-                    : "bg-destructive/90 text-white hover:bg-destructive hover:text-white",
-                )}
-                disabled={isEnding}
-                aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
-                title={micOn ? "Mute" : "Unmute"}
-              >
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M19 11a7 7 0 0 1-14 0"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M12 19v3"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </IconButton>
-
-              <IconButton
-                variant="ghost"
-                size="xl"
-                onClick={() => setCamOn((v) => !v)}
-                className={cn(
-                  camOn
-                    ? "bg-card/60 text-text-primary hover:bg-card/80 hover:text-text-primary"
-                    : "bg-destructive/90 text-white hover:bg-destructive hover:text-white",
-                )}
-                disabled={isEnding}
-                aria-label={camOn ? "Turn camera off" : "Turn camera on"}
-                title={camOn ? "Camera off" : "Camera on"}
-              >
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M23 7 16 12l7 5V7Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M14 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </IconButton>
-            </div>
-
-            <div className="hidden text-overline text-text-secondary sm:block">
-              {formatTimer(secondsLeft)} remaining
-            </div>
-
-            <Button
-              variant="destructive"
-              onClick={() => setConfirmEndOpen(true)}
+      {/* ---- controls ------------------------------------------------------ */}
+      <footer className="shrink-0 px-5 py-4">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 rounded-full border border-border bg-card/80 px-3 py-2.5 backdrop-blur">
+          <div className="flex items-center gap-2">
+            <IconButton
+              variant="ghost"
+              size="xl"
+              onClick={() => setMicOn((v) => !v)}
+              className={cn(
+                micOn
+                  ? "bg-white/[0.06] text-text-primary hover:bg-white/[0.12] hover:text-text-primary"
+                  : "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground",
+              )}
               disabled={isEnding}
-              className="rounded-full px-6"
+              aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
+              title={micLabel}
             >
-              {isEnding ? "Ending…" : "End"}
-            </Button>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M19 11a7 7 0 0 1-14 0"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 19v3"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </IconButton>
+
+            <IconButton
+              variant="ghost"
+              size="xl"
+              onClick={() => setCamOn((v) => !v)}
+              className={cn(
+                camOn
+                  ? "bg-white/[0.06] text-text-primary hover:bg-white/[0.12] hover:text-text-primary"
+                  : "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground",
+              )}
+              disabled={isEnding}
+              aria-label={camOn ? "Turn camera off" : "Turn camera on"}
+              title={camOn ? "Camera off" : "Camera on"}
+            >
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M23 7 16 12l7 5V7Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M14 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </IconButton>
           </div>
+
+          {/* Nobody should have to sit out five minutes they do not need. The
+              clock is a ceiling, not a quota. */}
+          {turn === "answering" || turn === "grace" ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={nextQuestion}
+              disabled={isEnding}
+              className="rounded-full border-border bg-transparent px-5 text-text-primary hover:bg-white/[0.06] hover:text-text-primary"
+            >
+              {isLastQuestion ? "Finish answering" : "Next question"}
+            </Button>
+          ) : (
+            <span className="hidden text-overline tabular-nums text-text-secondary sm:block">
+              {formatTimer(secondsLeft)} remaining
+            </span>
+          )}
+
+          <Button
+            variant="destructive"
+            onClick={() => setConfirmEndOpen(true)}
+            disabled={isEnding}
+            className="rounded-full px-6"
+          >
+            {isEnding ? "Ending…" : "End"}
+          </Button>
         </div>
-      </div>
+      </footer>
 
       {/* One click on "End" used to close a 30-minute session and start the
           report with no way back. Ending is the one irreversible action on
           this screen, so it asks — and says what happens next and how long it
           takes. */}
       <Dialog open={confirmEndOpen} onOpenChange={setConfirmEndOpen}>
-        <DialogContent className="sm:max-w-md">
+        {/* `text-foreground` is load-bearing here: the title and the outline
+            button set no colour of their own, so without it they inherit a
+            colour already computed on <body> in the app's ambient theme and
+            arrive as near-black text on the room's dark card. Naming it here
+            makes the colour resolve inside the pinned scope. */}
+        <DialogContent
+          className={cn("border-border bg-card text-foreground sm:max-w-md", ROOM_PALETTE)}
+        >
           <DialogHeader>
             <DialogTitle>End the session?</DialogTitle>
             <DialogDescription>
