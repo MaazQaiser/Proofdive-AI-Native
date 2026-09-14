@@ -52,8 +52,8 @@ export function pickRecommendedNextStep(ctx: {
   if (!hasCompletedAnyTrainingForRole(ctx.trainingJourneyProgressMap, ctx.role)) {
     return {
       id: "training",
-      title: "Train with essential interview guides",
-      subtitle: "Learn the fundamentals with guided practice.",
+      title: "Learn with our Masterclass",
+      subtitle: "Cover everything from presentation to what employers actually evaluate.",
       ctaLabel: "Start learning",
       ctaHref: "/training",
       ctaIcon: GraduationCap,
@@ -62,8 +62,8 @@ export function pickRecommendedNextStep(ctx: {
   if (!ctx.hasCraftedStoryboard) {
     return {
       id: "storyboard",
-      title: "Craft your story",
-      subtitle: "Turn your experience into clear, structured answers.",
+      title: "Build MyStoryBoard",
+      subtitle: "Turn real experiences into powerful, interview ready examples.",
       ctaLabel: ctx.hasCreatedStoryboard ? "Add another experience" : "Start crafting",
       ctaHref: ctx.hasCreatedStoryboard ? "/storyboard?new=1" : "/storyboard",
       ctaIcon: BookOpen,
@@ -71,8 +71,8 @@ export function pickRecommendedNextStep(ctx: {
   }
   return {
     id: "interview",
-    title: "Take a mock interview",
-    subtitle: "Practice with a 30-minute, real-world interview.",
+    title: "Take a Mock Studios session",
+    subtitle: "Practice demonstrating your evidence under realistic interview conditions.",
     ctaLabel: "Start interview",
     ctaHref: "/interview?welcomeBack=1",
     ctaIcon: UserCheck,

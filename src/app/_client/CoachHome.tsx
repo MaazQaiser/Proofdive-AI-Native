@@ -101,8 +101,6 @@ export function CoachHome() {
   /** Suggested roadmap stays on the welcome chrome (actions + empty readiness) until storyboard or interview. */
   const showWelcomeLanding =
     coachJourneyView === "welcome" || coachJourneyView === "roadmap";
-  const isRoadmapCoach = coachJourneyView === "roadmap";
-  const isFinalCoach = coachJourneyView === "final";
   const showJourneyColumn =
     coachJourneyView === "journey" || coachJourneyView === "final";
   /**
@@ -174,14 +172,28 @@ export function CoachHome() {
             </div>
           ) : (
             <p className="border-t border-border pt-4 text-caption text-text-secondary">
-              Complete your first mock interview to generate readiness insights across the four
-              Success Drivers.
+              Your score will appear here as you complete MasterClasses, build your StoryBoard,
+              and take mock interviews.
             </p>
           )}
         </InterviewReadinessCard>
       </div>
     );
   }, [readinessCardModel, readinessReport, showInterviewReadinessCard]);
+
+  /* Why a passing score is not the end of the work. It sits under the numbers
+     rather than beside them: it is context for a score, so it is meaningless
+     until there is one. */
+  const employerInsightEl = readinessReport ? (
+    <aside className="mt-4 w-full max-w-[800px] rounded-xl border border-border bg-card px-4 py-3.5">
+      <p className="text-overline text-text-secondary">Employer insight</p>
+      <p className="mt-1.5 text-body-sm leading-6 text-text-primary">
+        Passing is the threshold, not the finish line. When several candidates pass for one
+        position, those who demonstrate stronger evidence across all four Success Drivers are
+        more likely to secure the role.
+      </p>
+    </aside>
+  ) : null;
 
   useEffect(() => {
     const is = (k: string) => {
@@ -333,8 +345,6 @@ export function CoachHome() {
     setCoachFinalReportId,
   ]);
 
-  const isFirstStart = readinessSourceReport?.meta.heroVariant === "first_start";
-
   const startRoadmapReveal = useCallback(() => {
     if (roadmapPhase !== "idle") return;
     setRoadmapPhase("preparing");
@@ -449,29 +459,37 @@ export function CoachHome() {
             ) : showJourneyColumn ? (
               <>
                 <h2 className="text-agent-heading text-heading-teal">
-                  {(() => {
-                    if (isRoadmapCoach) return "Here is your guided journey";
-                    if (isFinalCoach) return isFirstStart ? "You're off to a strong start." : "Good news, you're improving.";
-                    return "You're off to a strong start.";
-                  })()}
+                  {/* Two states, both the client's words: before a mock the
+                      page encourages, after one it credits the work and lets
+                      the report's own headline name what to strengthen. */}
+                  {readinessReport
+                    ? "You put in real work to get here."
+                    : "You're off to a strong start."}
                 </h2>
                 <h4 className="mt-3 mb-[14px] text-agent-question text-text-primary">
-                  {(() => {
-                    if (isRoadmapCoach) return "Follow the path below to prepare for this role.";
-                    if (isFinalCoach) {
-                      return isFirstStart
-                        ? "Follow the path below to keep improving."
-                        : "Focus on your weaker areas to get it done.";
-                    }
-                    return "Follow the path below to keep improving.";
-                  })()}
+                  {readinessReport
+                    ? readinessReport.headline
+                    : "Follow the path below to build your interview readiness."}
                 </h4>
                 {/* Readiness first in every state, the journey under it — the
                     client's call on the redesigned Home and now here too: a new
                     user should see the scoreboard they are about to fill in, so
                     the three steps read as the way to fill it. */}
                 {readinessCardEl}
-                {journeyModel ? <JourneyCard model={journeyModel} className="mt-8" /> : null}
+                {employerInsightEl}
+                {journeyModel ? (
+                  <JourneyCard
+                    model={journeyModel}
+                    className="mt-8"
+                    intro={
+                      <>
+                        Here&apos;s your path forward. Three steps
+                        {journeyModel.role ? <>, built around your {journeyModel.role} target</> : null}
+                        .
+                      </>
+                    }
+                  />
+                ) : null}
               </>
             ) : null}
 

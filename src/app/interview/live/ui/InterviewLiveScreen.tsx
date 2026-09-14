@@ -426,8 +426,8 @@ function buildMockReport(args: {
     overallStatus: readinessForScore(overallScore),
     overallBand: bandForScore(overallScore),
     headline: firstStart
-      ? `Baseline set at ${overallScore.toFixed(1)} — ${weakest.shortTitle} is holding your score back.`
-      : `Strong in ${strongest.shortTitle} — ${weakest.shortTitle} is holding your score back.`,
+      ? `Baseline set at ${overallScore.toFixed(1)} — ${weakest.shortTitle} is your clearest area to strengthen.`
+      : `Strong in ${strongest.shortTitle} — ${weakest.shortTitle} is your clearest area to strengthen.`,
     summary: firstStart
       ? `Your answers were easy to follow but stopped short of a result: you described what happened, not what you specifically decided and what it changed. Where you're losing points is ${weakest.shortTitle}. Add one metric per answer and lead with the decision — that is where the next half-point is.`
       : `Your ${strongest.shortTitle} answers showed real evidence, with clear alignment and trade-offs stated out loud. Where you're losing points is ${weakest.shortTitle} — your answers described what happened but not what you specifically decided and why. Fix that and your score moves up a band.`,

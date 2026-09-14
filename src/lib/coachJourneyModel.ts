@@ -132,8 +132,8 @@ export function useCoachJourneyModel(): CoachJourneyModel | null {
       {
         id: "training",
         index: 1,
-        title: "Train with essential interview guides",
-        subtitle: "Learn the fundamentals with guided practice.",
+        title: "Learn with our Masterclass",
+        subtitle: "Cover everything from presentation to what employers actually evaluate.",
         detail: trainingDone
           ? `${training?.courseTitle ?? "Course"} complete.`
           : training && trainingPct > 0
@@ -149,8 +149,8 @@ export function useCoachJourneyModel(): CoachJourneyModel | null {
       {
         id: "storyboard",
         index: 2,
-        title: "Craft your story",
-        subtitle: "Turn your experience into structured answers.",
+        title: "Build MyStoryBoard",
+        subtitle: "Turn real experiences into powerful, interview ready examples.",
         detail:
           dives.length > 0
             ? `${dives.length} ${dives.length === 1 ? "Dive" : "Dives"} saved${editing ? " · one in progress" : ""}.`
@@ -160,7 +160,7 @@ export function useCoachJourneyModel(): CoachJourneyModel | null {
         status: dives.length > 0 ? "done" : editing ? "in_progress" : "todo",
         percent: null,
         primary: {
-          label: dives.length > 0 ? "Open Storyboard" : editing ? "Continue crafting" : "Start crafting",
+          label: dives.length > 0 ? "Work on MyStoryBoard" : editing ? "Continue crafting" : "Start crafting",
           href: "/storyboard",
         },
         secondary: dives.length > 0 ? { label: "Add competency", href: "/storyboard?new=1" } : undefined,
@@ -168,8 +168,8 @@ export function useCoachJourneyModel(): CoachJourneyModel | null {
       {
         id: "interview",
         index: 3,
-        title: "Take a mock interview",
-        subtitle: "Practice with a 30-minute, real-world interview.",
+        title: "Take a Mock Studios session",
+        subtitle: "Practice demonstrating your evidence under realistic interview conditions.",
         detail: report
           ? `${reportCount} ${reportCount === 1 ? "session" : "sessions"} · latest ${report.overallScore.toFixed(1)}/5, ${scoringLabelForScore(report.overallScore)}.`
           : null,

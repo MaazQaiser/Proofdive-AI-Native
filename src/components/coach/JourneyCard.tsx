@@ -26,24 +26,33 @@ import { cn } from "@/lib/utils";
  */
 export function JourneyCard({
   model,
+  intro,
   className,
 }: {
   model: CoachJourneyModel;
+  /** One line under the heading, naming what the three steps are built for. */
+  intro?: React.ReactNode;
   className?: string;
 }) {
   const { steps, recommended, doneCount } = model;
 
   return (
     <section className={cn("w-full", className)} aria-label="Your guided journey">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
+      {/* Top-aligned so the count sits on the heading's line: with an intro
+          under the heading, `items-end` dropped it level with that sentence
+          and the two crowded each other. */}
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+        <div className="min-w-0">
           <h3 className="text-[20px] font-medium leading-7 tracking-[-1px] text-text-secondary">
             Your guided journey
           </h3>
+          {intro ? (
+            <p className="mt-1 text-body-sm leading-6 text-text-secondary">{intro}</p>
+          ) : null}
         </div>
         {/* Progress as three segments, one per step — a bar that can only ever
             say 0, 1, 2 or 3, which is exactly as precise as the truth. */}
-        <div className="flex items-center gap-2 text-overline font-medium uppercase tracking-wide text-text-secondary">
+        <div className="flex items-center gap-2 pt-1.5 text-overline font-medium uppercase tracking-wide text-text-secondary">
           <span className="flex gap-1" aria-hidden>
             {steps.map((s) => (
               <span
