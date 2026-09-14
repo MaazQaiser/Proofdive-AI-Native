@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
  * it does.
  *
  * THE SPACING IS AUTHORED AS A GROUP, not per element: 20px above the badge,
- * 10px badge-to-sentence (the badge is 28px and the sentence sets on 28px
+ * 10px badge-to-sentence (the badge is 32px and the sentence sets on 32px
  * leading, so 10px reads as one unit rather than two stacked ones), 20px
  * sentence-to-rule, then 32px rule-to-question. The rule sits closer to the
  * text it belongs to than to the question beneath it, which is what makes it
@@ -51,7 +51,9 @@ import { cn } from "@/lib/utils";
  * takes another line rather than running the full column width.
  *
  * WHY IT DOESN'T OUT-RANK THE QUESTION. Rank is scale, ink and weight, and
- * the brief concedes all three: 18px against the question's 40px, regular
+ * the brief concedes all three: 20px against the question's 40px — the client
+ * asked for both the byline and the note to carry more presence, and half the
+ * question's size is the most this block can take without competing — regular
  * against its medium, and `--text-primary/80` (10.11:1 light / 10.63:1 dark)
  * against the question's `--extended-blue` at 5.24:1 / 11.37:1. The brief is
  * the higher number in light — a neutral ink always will be against a
@@ -86,18 +88,18 @@ export function CoachBrief({
 
           Named "Consultant Note" (the client's own name for this block): onboarding already introduces this
           voice as "your assigned ProofDive Consultant", so the storyboard byline
-          uses the same name rather than the report's "AI Coach". One step up
-          from Badge's default size — 28px, 14px caption text — so the byline
-          holds its own above an 18px sentence instead of reading as a tag on it.
+          uses the same name rather than the report's "AI Coach". Two steps up
+          from Badge's default size — 32px, 16px body-sm text — so the byline
+          holds its own above a 20px sentence instead of reading as a tag on it.
 
           No glyph and no competency tag: the competency is already named in the
           question directly below, in the composer hint, and twice in the rail. */}
-      <Badge className="h-7 px-3 text-caption">Consultant Note</Badge>
+      <Badge className="h-8 px-3.5 text-body-sm">Consultant Note</Badge>
 
       <p
         key={note}
         className={cn(
-          "mt-2.5 max-w-[62ch] text-body leading-7 text-text-primary/80",
+          "mt-2.5 max-w-[62ch] text-body-lg leading-8 text-text-primary/80",
           "motion-safe:animate-coach-brief-settle",
         )}
       >

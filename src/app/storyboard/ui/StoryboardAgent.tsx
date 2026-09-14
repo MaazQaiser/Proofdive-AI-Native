@@ -693,6 +693,14 @@ export function StoryboardAgent() {
   const CLOSING_CONSULTANT_NOTE =
     'All four experiences are captured. "Craft my story" will structure them into interview ready examples. You will be able to review and edit the result afterwards, so nothing is locked yet.';
 
+  /* Tell-me-about-yourself is the one capture screen `showCaptureChrome`
+     excludes — it has no competency behind it — so it was the only question in
+     the flow arriving without a brief, and it read as a different kind of
+     screen. It gets its own: the "why" here is not a competency's, it is that
+     this answer frames every example after it. */
+  const ABOUT_YOU_CONSULTANT_NOTE =
+    "This is the one answer not scored against a single competency. It is the frame an interviewer hears every example through.";
+
   const storyBrief = useMemo<string | null>(() => {
     if (phase.kind === "title") return COMPETENCY_GUIDANCE[phase.competencyId].why;
     if (phase.kind === "car") {
@@ -1618,6 +1626,8 @@ export function StoryboardAgent() {
                 a straight swap on exactly the screens that had one. */}
             {showCaptureChrome && storyBrief ? (
               <CoachBrief note={storyBrief} />
+            ) : phase.kind === "aboutYou" && !showDiveHome && !addCompetencyOpen ? (
+              <CoachBrief note={ABOUT_YOU_CONSULTANT_NOTE} />
             ) : phase.kind === "closing" && !showDiveHome && !addCompetencyOpen ? (
               <CoachBrief note={CLOSING_CONSULTANT_NOTE} />
             ) : null}
@@ -1671,7 +1681,7 @@ export function StoryboardAgent() {
             {phase.kind === "closing" ? (
               <>
                 <p className="mt-3 text-agent-question text-text-primary">
-                  Your four experiences are ready to shape into clear, interview-ready
+                  Your four experiences are ready to shape into powerful, interview-ready
                   examples.
                 </p>
                 <div className="mt-8">

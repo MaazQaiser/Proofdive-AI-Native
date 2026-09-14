@@ -22,12 +22,12 @@ export const JD_COMPANY_ANGLES: ReadonlyArray<{
 }> = [
   {
     id: "startup",
-    label: "Startup / early-stage",
+    label: "Startup / Early-stage",
     description: "Broad ownership, fast iteration, small teams and few specialists.",
   },
   {
     id: "established",
-    label: "Larger / established company",
+    label: "Larger / Established company",
     description: "Defined scope, cross-team coordination and mature processes.",
   },
 ];
