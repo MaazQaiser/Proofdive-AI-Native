@@ -25,6 +25,7 @@ import {
   GlassCard,
   NestedCard,
 } from "@/components/Card";
+import { AiPresence, type AiPresenceActivity } from "@/components/chat/AiPresence";
 import { Chatbox } from "@/components/ui/chatbox";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
@@ -425,6 +426,8 @@ export default function DesignSystemPage() {
   const [chatCompactValue, setChatCompactValue] = useState("");
   const [attachedFileName, setAttachedFileName] = useState<string | null>(null);
   const [askActive, setAskActive] = useState(false);
+  const [presenceValue, setPresenceValue] = useState("");
+  const [presenceActivity, setPresenceActivity] = useState<AiPresenceActivity>("idle");
   const [dateRange, setDateRange] = useState<"7d" | "30d" | "90d">("30d");
   const [passwordVisible, setPasswordVisible] = useState(false);
 
@@ -1102,6 +1105,65 @@ export default function DesignSystemPage() {
                         onToggle: () => setAskActive((v) => !v),
                       }}
                     />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>AI presence</CardTitle>
+                  <CardDescription>
+                    The ProofDive mark in the composer&apos;s 36px disc, one
+                    state per moment. The ring&apos;s light and the tiles&apos;
+                    motion say what the AI is doing: idle is still, thinking
+                    takes the mark apart and lands it back on itself, responding
+                    surfaces light up through it, error stops the light warm.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex flex-wrap gap-6">
+                    {(
+                      [
+                        "idle",
+                        "attentive",
+                        "typing",
+                        "listening",
+                        "thinking",
+                        "responding",
+                        "error",
+                      ] as const
+                    ).map((s) => (
+                      <div key={s} className="flex flex-col items-center gap-2">
+                        <div className="grid size-16 place-items-center rounded-2xl bg-card shadow-[var(--elevation-card)]">
+                          <AiPresence state={s} />
+                        </div>
+                        <span className="text-overline text-text-secondary">{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-overline text-text-secondary">
+                      In the composer — focus and type to see it listen; pick what the AI is doing
+                    </div>
+                    <Chatbox
+                      variant="compact"
+                      value={presenceValue}
+                      onValueChange={setPresenceValue}
+                      onSend={() => setPresenceValue("")}
+                      onUploadClick={() => undefined}
+                      aiPresence={presenceActivity}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {(["idle", "thinking", "responding", "error"] as const).map((a) => (
+                        <SelectionChip
+                          key={a}
+                          selected={presenceActivity === a}
+                          onClick={() => setPresenceActivity(a)}
+                        >
+                          {a}
+                        </SelectionChip>
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -202,6 +202,43 @@
     rgb(0 111 143 / 0.6) 100%
   );
 
+  /* The AI presence disc in the chat composer (AiPresence.tsx). Its light is
+     a GLOW, not a drawn ring: one conic that never goes fully transparent,
+     painted twice — a soft filament straddling the disc's edge and a wide
+     blurred halo outside it. The conic's bright and dim stretches are what
+     give the glow its direction, so parking it aims the light. */
+  --ai-presence-arcs: conic-gradient(
+    from 0deg,
+    rgba(14, 154, 181, 0.22) 0deg,
+    rgba(34, 178, 204, 1) 58deg,
+    rgba(110, 194, 211, 0.6) 128deg,
+    rgba(14, 154, 181, 0.13) 200deg,
+    rgba(0, 168, 185, 0.78) 254deg,
+    rgba(86, 184, 203, 0.34) 312deg,
+    rgba(14, 154, 181, 0.22) 360deg
+  );
+  /* The plate sits one step ABOVE the white pill (surfaces rise), with its
+     own hairline so the disc has an edge wherever the glow is dim. */
+  --ai-presence-surface: #eef7f9;
+  --ai-presence-hairline: rgba(14, 154, 181, 0.16);
+  /* The mark itself is brand, and light passes through it in a paler brand
+     step so the pass reads as light rather than a colour change. */
+  --ai-presence-ink-color: var(--primary);
+  --ai-presence-light: #b7e1e9; /* --brand-800 */
+  /* Filament and halo levels per state. Idle is lit but perfectly still. */
+  --ai-presence-arc-idle: 0.5;
+  --ai-presence-arc-attentive: 0.72;
+  --ai-presence-arc-typing: 0.58; /* recedes: the words own the stage */
+  --ai-presence-arc-thinking: 1;
+  --ai-presence-arc-responding: 0.82;
+  --ai-presence-glow-idle: 0.5;
+  --ai-presence-glow-attentive: 0.75;
+  --ai-presence-glow-typing: 0.58;
+  --ai-presence-glow-listening: 0.75;
+  --ai-presence-glow-thinking: 0.95;
+  --ai-presence-glow-responding: 0.72;
+  --ai-presence-error-ring: 0.75;
+
   --canvas: #ffffff;
   /* The page ground, and ONLY that: the flat colour behind the app.
      Separate from --canvas so the header, sheets and drawers keep their own
@@ -430,6 +467,39 @@
     rgb(18 72 87 / 0.5) 80%,
     rgb(10 32 40 / 0.6) 100%
   );
+
+  /* The AI presence disc on dark. Levels come DOWN: the same glow that is a
+     whisper on white is genuinely luminous against a dark bar, and the
+     brief was premium, not neon. The conic flips from "deep brand ink laid
+     on white" to "brand light emitted into darkness". */
+  --ai-presence-arcs: conic-gradient(
+    from 0deg,
+    rgba(62, 200, 223, 0.2) 0deg,
+    rgba(140, 240, 252, 1) 58deg,
+    rgba(91, 214, 234, 0.58) 128deg,
+    rgba(40, 152, 176, 0.12) 200deg,
+    rgba(91, 214, 234, 0.76) 254deg,
+    rgba(62, 200, 223, 0.32) 312deg,
+    rgba(62, 200, 223, 0.2) 360deg
+  );
+  /* One step above the #111b20 composer (surfaces rise) — a plate, not a
+     hole. */
+  --ai-presence-surface: #16303a;
+  --ai-presence-hairline: rgba(62, 200, 223, 0.2);
+  --ai-presence-ink-color: var(--primary);
+  --ai-presence-light: #c9f0f8;
+  --ai-presence-arc-idle: 0.42;
+  --ai-presence-arc-attentive: 0.62;
+  --ai-presence-arc-typing: 0.5;
+  --ai-presence-arc-thinking: 0.9;
+  --ai-presence-arc-responding: 0.72;
+  --ai-presence-glow-idle: 0.38;
+  --ai-presence-glow-attentive: 0.58;
+  --ai-presence-glow-typing: 0.44;
+  --ai-presence-glow-listening: 0.58;
+  --ai-presence-glow-thinking: 0.78;
+  --ai-presence-glow-responding: 0.58;
+  --ai-presence-error-ring: 0.65;
 
   --canvas: #0a1013;
   --app-ground: #0a1013;
@@ -1140,6 +1210,246 @@
   .ai-orb-halo,
   .ai-orb-halo-warm {
     transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   AI presence — the ProofDive mark in a 36px disc at the left of the chat
+   composer (AiPresence.tsx). This block owns geometry and LEVELS; motion
+   that has to be timed (the ring's turn, the thinking cycle, light passes)
+   is driven from the component with the Web Animations API.
+
+   Layers, inside out: the mark (four tiles, inline SVG) · the disc plate
+   with its own static hairline · a warm ring that only shows on error · one
+   rotating layer carrying a 1.5px arc ring and, just outside it, a blurred
+   3px bloom. The arcs are two soft brand-cyan stretches on a transparent
+   conic (--ai-presence-arcs), so the ring reads as light passing round the
+   disc rather than a spinner.
+
+   States (data-state) change only levels — arc and bloom opacity, the
+   ink's tint — through 320–480ms transitions, so nothing steps:
+     idle        arc .28, bloom 0, ring still — the mark is just the logo
+     attentive   arc .50, ring turning slowly — the field has focus
+     typing      arc .42 — the ring recedes; the user's words own the stage
+     listening   arc .50, bloom breathing — voice dictation is on
+     thinking    arc .80, bloom .22, ink tinted brand — the AI is working
+     responding  arc .60 resting toward the text, bloom .10 — the answer
+     error       arc 0, warm ring — something did not come together */
+/* Levels are registered so they can be INTERPOLATED. Two states breathe
+   the glow with a keyframe animation, and a CSS animation outranks a
+   transition on the same property — so animating `opacity` directly made
+   the light step on the way into and out of those states. The animations
+   read these numbers instead, and the numbers are what eases. */
+@property --ai-presence-arc-a {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --ai-presence-glow-a {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.ai-presence {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  pointer-events: none;
+  --ai-presence-arc-a: var(--ai-presence-arc-idle);
+  --ai-presence-glow-a: var(--ai-presence-glow-idle);
+  --ai-presence-error-a: 0;
+  transition:
+    --ai-presence-arc-a 480ms cubic-bezier(0.4, 0, 0.2, 1),
+    --ai-presence-glow-a 480ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ai-presence[data-state="attentive"] {
+  --ai-presence-arc-a: var(--ai-presence-arc-attentive);
+  --ai-presence-glow-a: var(--ai-presence-glow-attentive);
+}
+.ai-presence[data-state="typing"] {
+  --ai-presence-arc-a: var(--ai-presence-arc-typing);
+  --ai-presence-glow-a: var(--ai-presence-glow-typing);
+}
+.ai-presence[data-state="listening"] {
+  --ai-presence-arc-a: var(--ai-presence-arc-attentive);
+  --ai-presence-glow-a: var(--ai-presence-glow-listening);
+}
+.ai-presence[data-state="thinking"] {
+  --ai-presence-arc-a: var(--ai-presence-arc-thinking);
+  --ai-presence-glow-a: var(--ai-presence-glow-thinking);
+}
+.ai-presence[data-state="responding"] {
+  --ai-presence-arc-a: var(--ai-presence-arc-responding);
+  --ai-presence-glow-a: var(--ai-presence-glow-responding);
+}
+.ai-presence[data-state="error"] {
+  --ai-presence-arc-a: 0;
+  --ai-presence-glow-a: 0;
+  --ai-presence-error-a: var(--ai-presence-error-ring);
+}
+
+/* The plate the mark sits on, with its own hairline so the disc has an edge
+   wherever the glow is dim. Painted FIRST, so the light above can spill
+   over its edge and wash a little way inward — light on the disc, not a
+   circle drawn around it. */
+.ai-presence-disc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--ai-presence-surface);
+  box-shadow: inset 0 0 0 1px var(--ai-presence-hairline);
+}
+
+/* One rotating layer carries the whole glow, so its parts never drift out
+   of register. 56px — 10px past the disc on every side, which is the room
+   the composer's padding leaves. */
+.ai-presence-rotor {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+/* Two passes of the same light. Each is a masked band whose BLUR lives on
+   the wrapper: a filter applies before the element's own mask, so masking
+   blurred paint would crop the spill back into a hard-edged ring — which is
+   the drawn ring this glow replaces. */
+.ai-presence-glow,
+.ai-presence-arc {
+  position: absolute;
+  border-radius: 50%;
+}
+.ai-presence-glow::before,
+.ai-presence-arc::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--ai-presence-arcs);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+/* The halo: a wide band sitting just outside the plate, heavily softened —
+   this is the part that reads as light in the air around the disc. */
+.ai-presence-glow {
+  inset: 4px;
+  filter: blur(5px);
+  opacity: var(--ai-presence-glow-a);
+}
+.ai-presence-glow::before {
+  padding: 7px;
+}
+/* The filament: a narrow band straddling the plate's edge, softened just
+   enough to have no drawn line in it. */
+.ai-presence-arc {
+  inset: 8.5px;
+  filter: blur(1.2px);
+  opacity: var(--ai-presence-arc-a);
+}
+.ai-presence-arc::before {
+  padding: 3px;
+}
+
+/* While the answer types, the settled light breathes — in brightness only,
+   since motion beside text being read competes with reading. */
+.ai-presence[data-state="responding"] .ai-presence-arc,
+.ai-presence[data-state="responding"] .ai-presence-glow {
+  animation: ai-presence-breathe 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.ai-presence[data-state="listening"] .ai-presence-glow {
+  animation: ai-presence-breathe 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes ai-presence-breathe {
+  0%,
+  100% {
+    opacity: calc(var(--ai-presence-arc-a) * 0.82);
+  }
+  50% {
+    opacity: calc(var(--ai-presence-arc-a) * 1.12);
+  }
+}
+.ai-presence-glow {
+  --ai-presence-arc-a: var(--ai-presence-glow-a);
+}
+
+/* Error: the brand light goes out and a warm one takes its place, on the
+   same two bands so the change reads as the light changing, not a new
+   object appearing. */
+.ai-presence-error-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    transparent 62%,
+    color-mix(in oklab, var(--destructive) 70%, transparent) 82%,
+    transparent 100%
+  );
+  filter: blur(2.5px);
+  opacity: var(--ai-presence-error-a);
+  transition: opacity 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The mark: 20px, centred — a step above the 16px LogoMark so the tiles
+   still read on a 1x display, and 8px clear of the disc edge. */
+.ai-presence-mark {
+  position: absolute;
+  inset: 8px;
+  width: 20px;
+  height: 20px;
+  overflow: visible;
+  will-change: transform;
+}
+/* Poses are inline transforms set by the component; this transition is what
+   makes any pose change ease in from wherever the tile is. Duration must
+   match POSE_MS in AiPresence.tsx. */
+.ai-presence-tile {
+  transition: transform 440ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* The mark is the brand mark, in the brand colour, in every state but one:
+   the glow and the tiles' own motion carry what the AI is doing, so the
+   logo never has to change hue to say it. The exception is a failure, where
+   the mark gathers into an information "i" and goes warm with the light
+   around it — the one moment the colour itself is the message. */
+.ai-presence-ink {
+  fill: var(--ai-presence-ink-color);
+  transition: fill 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ai-presence[data-state="error"] .ai-presence-ink {
+  fill: var(--destructive);
+}
+/* Light passing through a tile: the same shape in a paler brand step,
+   faded in and out by the component. */
+.ai-presence-light {
+  fill: var(--ai-presence-light);
+  opacity: 0;
+}
+
+/* The compact pill makes room: a 12px inset instead of 24, so
+   [disc][12px][text] starts 60px in and the disc mirrors the send button's
+   12px on the right. Compact only — in the expanded shell the disc sits in
+   the footer row and the text above it keeps its own 24px inset. */
+[data-slot="chatbox"][data-variant="compact"][data-ai-presence] {
+  --chatbox-padding-left: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-presence-tile {
+    transition-duration: 240ms;
+  }
+  .ai-presence[data-state="listening"] .ai-presence-glow,
+  .ai-presence[data-state="responding"] .ai-presence-arc,
+  .ai-presence[data-state="responding"] .ai-presence-glow {
+    animation: none;
   }
 }
 
