@@ -513,14 +513,6 @@ export function CoachHome() {
                 and the reader who wants to know what they mean is the one who
                 has already read them. */}
             {readinessReport ? scoreKeyEl : null}
-
-            {/* Review-only: the redesigned Home lives at /coach/v2 so the two
-                can be compared side by side. Remove with that route. */}
-            <p className="mt-10 w-full max-w-[800px] text-caption text-text-secondary">
-              <Link href="/coach/v2" className="app-link">
-                Preview the new Home →
-              </Link>
-            </p>
           </div>
         </div>
       </div>
