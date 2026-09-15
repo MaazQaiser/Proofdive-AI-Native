@@ -1091,12 +1091,20 @@ export function InterviewLiveScreen() {
           </div>
         </div>
 
-        {/* The promise, stated once, so the clock never reads as a punishment. */}
-        <p className="mt-2 px-1 text-overline text-text-secondary">
-          {turn === "done"
-            ? "Nothing more is being timed."
-            : `You get ${ANSWER_SECONDS / 60} minutes per answer, then one extra minute before the next question.`}
-        </p>
+        {/* No rules line here. Restating the clock's terms under every single
+            question is the room explaining itself, and a room that explains
+            itself is not the room an interview happens in — the ring beside
+            the question already counts the answer down, and turns yellow then
+            red when it matters. Its "done" variant went the same way: the
+            question block itself says that was the last question.
+
+            Worth knowing if this is ever revisited: this line was the ONLY
+            place the 5-minutes-plus-one rule was written down. The setup
+            dialog's Instructions step does not state it — what it says is
+            "Keep responses clear and concise (1–2 minutes max)", which is
+            coaching advice about a good answer, not the ceiling this room
+            actually enforces. The two disagreed before this line was removed
+            and they disagree now. */}
       </section>
 
       {/* ---- controls ------------------------------------------------------ */}
