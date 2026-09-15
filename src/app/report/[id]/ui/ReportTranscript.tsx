@@ -7,7 +7,7 @@ import type { InterviewReport } from "@/lib/proofdiveTypes";
 import { scoringBadgeClass } from "@/lib/scoringPalette";
 import { cn } from "@/lib/utils";
 
-import { fmtClock, fmtDuration } from "./reportV2Model";
+import { fmtClock, fmtDuration } from "./reportModel";
 
 type Props = { report: InterviewReport };
 
@@ -23,7 +23,7 @@ type Props = { report: InterviewReport };
  * answer lost points. The recording facts (audio, video, length) are stated
  * once in the header as facts, not as buttons.
  */
-export function ReportV2Transcript({ report }: Props) {
+export function ReportTranscript({ report }: Props) {
   const { hasAudio, hasVideo, durationSeconds } = report.meta;
 
   return (

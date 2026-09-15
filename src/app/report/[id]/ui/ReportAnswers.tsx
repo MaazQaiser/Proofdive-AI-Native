@@ -18,7 +18,7 @@ import { scoringBadgeClass, scoringTextClass } from "@/lib/scoringPalette";
 import { SUCCESS_DRIVERS, type SuccessDriverId } from "@/lib/successDrivers";
 import { cn } from "@/lib/utils";
 
-import { answerLength, fmtDuration, fmtIdealRange } from "./reportV2Model";
+import { answerLength, fmtDuration, fmtIdealRange } from "./reportModel";
 
 /* ------------------------------------------------------------------------ */
 /* Shared bits                                                               */

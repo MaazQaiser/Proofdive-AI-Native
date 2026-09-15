@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { scoringBadgeClass, scoringLabelForScore, scoringTextClass } from "@/lib/scoringPalette";
 import { cn } from "@/lib/utils";
 
-import { REPORT_SECTIONS, type ReportSectionId } from "./reportV2Model";
+import { REPORT_SECTIONS, type ReportSectionId } from "./reportModel";
 
 type Props = {
   overall: number;
@@ -35,7 +35,7 @@ const SPY_OFFSET = 56 + 48 + 16;
  * seven elements answers exactly; an observer would need per-section
  * thresholds tuned to section heights that vary with content.
  */
-export function ReportV2Nav({ overall, ready, className }: Props) {
+export function ReportNav({ overall, ready, className }: Props) {
   const [active, setActive] = useState<ReportSectionId>("verdict");
   const [pastVerdict, setPastVerdict] = useState(false);
 

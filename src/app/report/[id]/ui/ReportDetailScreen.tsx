@@ -1,1600 +1,735 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Download,
+  RotateCcw,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 
 import { AppShell } from "@/components/AppShell";
-import { Badge } from "@/components/ui/badge";
-import { HowScoringWorks } from "@/components/scoring/HowScoringWorks";
-import { LogoMark } from "@/components/ui/logo";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/components/cn";
 import { CoachBottomChatBar } from "@/components/CoachBottomChatBar";
 import { CoachFloatingNav } from "@/components/CoachFloatingNav";
 import { GenericUpgradeModal } from "@/components/GenericUpgradeModal";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { SuccessDriverInfoTip } from "@/components/ui/success-driver-card";
 import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
-import {
-  SuccessDriverCompetencyPill,
-  SuccessDriverInfoTip,
-} from "@/components/ui/success-driver-card";
-import { TranscriptReplay } from "@/components/interview/TranscriptReplay";
-import {
-  AudioLines,
-  ArrowDown,
-  ArrowUpRight,
-  BookOpen,
-  Calendar,
-  ClipboardList,
-  Hash,
-  History,
-  ListChecks,
-  ChartNoAxesColumn,
-  Check,
-  ChevronDown,
-  ChevronLeft,
-  Clock3,
-  Download,
-  Hand,
-  Lightbulb,
-  ListTree,
-  MessageSquareQuote,
-  PencilSparkles,
-  PersonStanding,
-  Podium,
-  RotateCcw,
-  SpellCheck,
-  Tag,
-  TrendingDown,
-  TrendingUp,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
-import {
-  canAccessReport,
-  isFreePlan,
-  withReportAccessRecorded,
-} from "@/lib/candidateUsage";
+import { canAccessReport, isFreePlan, withReportAccessRecorded } from "@/lib/candidateUsage";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import type {
   InterviewReport,
   InterviewReportDriver,
-  InterviewReportQuestion,
-  ReadinessLabel,
+  InterviewTrainingRecommendation,
 } from "@/lib/proofdiveTypes";
 import {
-  SUCCESS_DRIVER_ORDER,
-  SUCCESS_DRIVERS,
-  type SuccessDriverId,
-} from "@/lib/successDrivers";
-import {
   scoringBadgeClass,
+  scoringFillClass,
   scoringLabelForScore,
   scoringTextClass,
 } from "@/lib/scoringPalette";
+import { SUCCESS_DRIVERS, SUCCESS_DRIVER_ORDER, type SuccessDriverId } from "@/lib/successDrivers";
 import { useLocalStorageState } from "@/lib/useLocalStorageState";
 import { useCandidateSubscription } from "@/lib/useSubscriberPayments";
+import { cn } from "@/lib/utils";
+
+import { FieldLabel, QuestionRow, ScoreChip, SpotlightRewrite } from "./ReportAnswers";
+import {
+  deriveInsights,
+  fmtDate,
+  fmtDuration,
+  sessionTypeLabel,
+} from "./reportModel";
+import { HowScoringWorks } from "@/components/scoring/HowScoringWorks";
+import { ReportNav } from "./ReportNav";
+import { ReportTranscript } from "./ReportTranscript";
 
 type Props = { reportId: string };
 
-function safeParseJson<T>(raw: string | null): T | null {
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
-}
+/* ------------------------------------------------------------------------ */
+/* Section chrome                                                            */
+/* ------------------------------------------------------------------------ */
 
-/** Status tint without the stroke. The shared palette draws a 25% border
- *  around every band pill; on this page the tint alone carries the band, and
- *  the stroke only added an outline to something that already reads as a tag.
- *  Every status badge on the report goes through here, so they all match. */
-function badgeClasses(scoreOrLabel: ReadinessLabel | number) {
-  return cn(scoringBadgeClass(scoreOrLabel), "border-transparent");
-}
-
-function scoreTextClasses(score: number) {
-  return scoringTextClass(score);
-}
-
-function fmtDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "Unknown date";
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
-}
-
-/** The session KIND, the way the reference report leads its meta line. The
- *  stored `interviewName` is the generic "Mock interview" unless a specific
- *  name was recorded. */
-function sessionTypeLabel(report: InterviewReport): string {
-  const name = report.meta.interviewName?.trim();
-  if (name && name.toLowerCase() !== "mock interview") return name;
-  return "Role-based mock";
-}
-
-function fmtDuration(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds));
-  const mm = Math.floor(s / 60);
-  const ss = String(s % 60).padStart(2, "0");
-  return `${mm}m ${ss}s`;
-}
-
-/** "short of 3–4 min" / "over 3–4 min" — the one piece of question metadata
- *  the user can act on directly. Null when there is no window or the answer
- *  landed inside it (then the time alone is the fact). */
-function answerLengthNote(q: InterviewReportQuestion): string | null {
-  if (!q.idealRangeSeconds) return null;
-  const [lo, hi] = q.idealRangeSeconds;
-  const range = `${Math.round(lo / 60)}–${Math.round(hi / 60)} min`;
-  if (q.timeSeconds < lo) return `short of ${range}`;
-  if (q.timeSeconds > hi) return `over ${range}`;
-  return null;
-}
-
-/** The question's number as its own mark — what makes a list of eight rows
- *  scannable, and the same mark the rewrite section can point back to. */
-function QuestionNumber({ index, className }: { index: number; className?: string }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "grid size-8 shrink-0 place-items-center rounded-lg bg-brand-1000 text-caption font-medium tabular-nums text-extended-blue",
-        className,
-      )}
-    >
-      Q{index}
-    </span>
-  );
-}
-
-/** The three beats the coach rewrite is built on. "Why this version is
- *  stronger" is keyed to them when it has exactly three points. */
-const CAR_STEPS = ["Context", "Action", "Result"] as const;
-
-const FALLBACK_IMPROVEMENT_ICONS: LucideIcon[] = [
-  Lightbulb,
-  Tag,
-  ListTree,
-  ChartNoAxesColumn,
-];
-
-function improvementIconFor(title: string, index: number): LucideIcon {
-  const t = title.toLowerCase();
-  if (/(quantif|metric|number|measur|data)/.test(t)) return ChartNoAxesColumn;
-  if (/(“i”|"i"|’i’|'i'|ownership|language|yourself)/.test(t)) return UserRound;
-  if (/(structur|car\b|tighten|organiz|framework)/.test(t)) return ListTree;
-  return FALLBACK_IMPROVEMENT_ICONS[index % FALLBACK_IMPROVEMENT_ICONS.length]!;
-}
-
-function PanelLabel({
-  icon: Icon,
-  children,
-  hint,
-}: {
-  /** A Lucide icon or `LogoMark` — anything that takes a className. */
-  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-  children: string;
-  /** One-line explainer after the label, e.g. "What you said". */
-  hint?: string;
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-        <Icon className="size-4" aria-hidden />
-      </span>
-      <span className="text-overline text-extended-cyan-green">{children}</span>
-      {hint ? <span className="text-caption text-text-secondary">— {hint}</span> : null}
-    </div>
-  );
-}
-
-/**
- * The spotlight's three labels — Your answer / Coach rewrite / Why this
- * version is stronger — each with the filled roundel the original report
- * used (the client asked for those back). Same roundel as `PanelLabel`;
- * the difference is the two-line text beside it: the V1.2 overline label
- * with its one-line hint under it, so the comparison keeps "What you said"
- * against "How it should sound".
- */
-function SpotlightLabel({
-  icon: Icon,
-  children,
-  hint,
-  onBrand = false,
-}: {
-  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-  children: string;
-  hint?: string;
-  /** On the brand-gradient plate the roundel becomes a glass disc and the
-   *  text takes the plate's ink (`currentColor`), whatever the theme. */
-  onBrand?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <span
-        className={cn(
-          "grid size-8 shrink-0 place-items-center rounded-full",
-          onBrand ? "bg-white/20 text-current backdrop-blur-sm" : "bg-primary text-primary-foreground",
-        )}
-      >
-        <Icon className="size-4" aria-hidden />
-      </span>
-      <div className="min-w-0">
-        <div
-          className={cn(
-            "text-overline font-medium uppercase tracking-wide",
-            onBrand ? "text-current/90" : "text-text-secondary",
-          )}
-        >
-          {children}
-        </div>
-        {/* The hint stays on one line: it gives the label a real minimum
-            width, which is what lets a sibling badge wrap under it. */}
-        {hint ? (
-          <div
-            className={cn(
-              "mt-0.5 whitespace-nowrap text-caption",
-              onBrand ? "text-current/80" : "text-text-secondary/80",
-            )}
-          >
-            {hint}
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function useStickySummary(
-  sentinelRef: React.RefObject<HTMLElement | null>,
-  /** True once the report tree — and so the sentinel — is actually mounted.
-   *  The hook used to attach on first render, while the loading card was
-   *  showing and there was no sentinel to observe, so the bar never appeared. */
-  enabled: boolean,
-) {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    if (!enabled) return;
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    // Scroll position, not IntersectionObserver. The observer had two holes:
-    // "not intersecting" was true while the sentinel was still BELOW the fold
-    // on first paint (so the bar showed at scroll 0 on any viewport shorter
-    // than the hero card), and it only fires on a state CHANGE — an anchor
-    // jump or fast scroll that carries the sentinel from below the viewport
-    // to above it in one frame never intersects, so the bar never appeared.
-    // Reading the rect on scroll answers the one question exactly: is the
-    // sentinel above the app header (h-14 = 56px)?
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      setShow(sentinel.getBoundingClientRect().top < 56);
-    };
-    const onScroll = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (frame) window.cancelAnimationFrame(frame);
-    };
-  }, [sentinelRef, enabled]);
-
-  return show;
-}
-
-function SectionTitle({
+/** Every section opens the same way: a title the nav can point at, one line
+ *  saying what the section is for, and room on the right for a control. */
+function SectionHeader({
   title,
-  subtitle,
+  lede,
   right,
 }: {
-  title: React.ReactNode;
-  subtitle?: string;
+  title: string;
+  lede: string;
   right?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
-        <div className="text-h5 text-text-primary">{title}</div>
-        {subtitle ? <div className="mt-1 text-caption text-text-secondary">{subtitle}</div> : null}
+        <h2 className="text-h3 text-text-primary">{title}</h2>
+        <p className="mt-1 max-w-[62ch] text-caption text-text-secondary">{lede}</p>
       </div>
       {right ? <div className="shrink-0">{right}</div> : null}
     </div>
   );
 }
 
-function MetaChip({
-  icon,
+/** Section anchor: offset for the sticky header + nav so a jump lands the
+ *  title just under the bar instead of behind it. */
+function Section({
+  id,
   children,
-  size = "sm",
+  className,
 }: {
-  icon: React.ReactNode;
+  id: string;
   children: React.ReactNode;
-  /** One tag family, two scales: `md` (32px) for the hero's session facts,
-   *  `sm` (28px) for tags inside rows — both borderless soft pills with a
-   *  brand-teal icon and a 13px label. */
-  size?: "sm" | "md";
+  className?: string;
 }) {
-  const md = size === "md";
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-2 rounded-full bg-pill-surface px-3 text-pill-foreground",
-        md ? "h-8" : "h-7",
-      )}
-    >
-      {icon}
-      <span className="text-[13px] leading-none font-medium text-pill-foreground">
-        {children}
-      </span>
-    </span>
+    <section id={id} className={cn("scroll-mt-32", className)}>
+      {children}
+    </section>
   );
 }
 
-/** Compact score, for a row where the number is a fact beside a name rather
- *  than the headline — the AI Coach card's carried / held-back lists. */
-/**
- * One half of "What carried your score / What held it back". The verdict
- * lives in the header tint (scoring green or red) so the two halves read as
- * good news and bad news before a word is read; inside, the driver row and
- * the question row are the same shape on both sides so the eye can compare
- * them one-to-one. The question row names the whole chain — pillar,
- * competency, then the question in the candidate's own words — because "Q8 ·
- * Collaboration & Inclusion" on its own told the user neither which pillar
- * that was nor what was asked.
- */
-function VerdictPanel({
-  tone,
-  title,
-  driver,
-  driverEyebrow,
-  question,
-  questionEyebrow,
-  questionDriver,
-  cta,
-}: {
-  tone: "carried" | "held";
-  title: string;
-  driver: InterviewReportDriver | null | undefined;
-  driverEyebrow: string;
-  question: InterviewReportQuestion | null | undefined;
-  questionEyebrow: string;
-  questionDriver: InterviewReportDriver | null | undefined;
-  cta: React.ReactNode;
-}) {
-  const carried = tone === "carried";
-  const Icon = carried ? TrendingUp : TrendingDown;
+const GLASS_CARD =
+  "rounded-[20px] border border-border/70 bg-[linear-gradient(114.96deg,var(--glass-from)_0%,var(--glass-to)_98.96%)] shadow-[inset_0_1px_0_var(--glass-inset)] backdrop-blur-[42px]";
+
+/* ------------------------------------------------------------------------ */
+/* Drivers                                                                   */
+/* ------------------------------------------------------------------------ */
+
+function DriverCard({ driver }: { driver: InterviewReportDriver }) {
+  const id = driver.id as SuccessDriverId;
+  const meta = SUCCESS_DRIVERS[id];
+  const pct = Math.round(((driver.score - 1) / 4) * 100);
   return (
-    <article
-      className={cn(
-        "flex flex-col",
-        // Stacked under lg, the second half needs its own top rule.
-        !carried && "border-t border-border lg:border-t-0",
-      )}
-    >
-      <header
-        className={cn(
-          "flex items-center gap-2 border-b px-6 py-2.5 text-caption font-semibold",
-          carried
-            ? "border-scoring-green/20 bg-scoring-green/10 text-scoring-green-fg"
-            : "border-scoring-red/20 bg-scoring-red/10 text-scoring-red-fg",
-        )}
-      >
-        <Icon className="size-4 shrink-0" aria-hidden />
-        {title}
-      </header>
-
-      <div className="flex flex-1 flex-col divide-y divide-border">
-        {driver ? (
-          <div className="flex flex-col gap-2.5 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-1000 text-extended-blue">
-                <SuccessDriverIcon
-                  driver={driver.id as SuccessDriverId}
-                  className="size-4"
-                />
-              </span>
-              <div className="min-w-0">
-                <div className="whitespace-nowrap text-overline font-medium uppercase tracking-wide text-text-secondary">
-                  {driverEyebrow}
-                </div>
-                <div className="truncate text-caption font-semibold text-text-primary">
-                  {driver.fullTitle}
-                </div>
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-2 pl-11 sm:pl-0">
-              <Badge className={badgeClasses(driver.status)}>{driver.status}</Badge>
-              <ScoreChip score={driver.score} />
-            </div>
-          </div>
-        ) : null}
-
-        {question ? (
-          <div className="flex flex-1 items-start gap-3 px-6 py-4">
-            <QuestionNumber index={question.index} />
-            <div className="flex min-w-0 flex-1 flex-col">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="whitespace-nowrap text-overline font-medium uppercase tracking-wide text-text-secondary">
-                  {questionEyebrow}
-                </span>
-                {questionDriver ? (
-                  <span className="inline-flex h-7 max-w-full items-center gap-2 rounded-full bg-pill-surface px-3 text-pill-foreground">
-                    <SuccessDriverIcon
-                      driver={questionDriver.id as SuccessDriverId}
-                      className="size-4 shrink-0 text-primary"
-                    />
-                    <span className="truncate text-[13px] leading-none font-medium">
-                      {questionDriver.shortTitle} · {question.facet}
-                    </span>
-                  </span>
-                ) : null}
-              </div>
-              <p className="mt-1.5 line-clamp-2 text-caption leading-6 text-text-primary">
-                “{question.text}”
-              </p>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Badge className={badgeClasses(question.status)}>{question.status}</Badge>
-                  <ScoreChip score={question.score} />
-                </div>
-                {cta}
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </div>
-    </article>
-  );
-}
-
-function ScoreChip({ score }: { score: number }) {
-  return (
-    <span className="inline-flex h-7 shrink-0 items-center gap-0.5 rounded-full bg-pill-surface px-3 text-[13px] leading-none font-medium tabular-nums">
-      <span className={scoreTextClasses(score)}>{score.toFixed(1)}</span>
-      <span className="text-text-secondary/60">/5</span>
-    </span>
-  );
-}
-
-function ScoreLockup({ score }: { score: number }) {
-  return (
-    <div className="flex shrink-0 items-baseline gap-1 font-gilroy whitespace-nowrap">
-      <span
-        className={cn(
-          "cap-baseline w-[72px] text-right text-[32px] font-medium leading-none tracking-[-1.6px] tabular-nums",
-          scoreTextClasses(score),
-        )}
-      >
-        {score.toFixed(1)}
-      </span>
-      <span className="cap-baseline text-[24px] font-medium leading-none tracking-[-1.2px] text-text-secondary/60">
-        /5
-      </span>
-    </div>
-  );
-}
-
-function DriverRow({
-  driver,
-  expanded,
-  onToggle,
-}: {
-  driver: InterviewReportDriver;
-  expanded: boolean;
-  onToggle: () => void;
-}) {
-  const score = driver.score;
-  const driverId = driver.id as SuccessDriverId;
-  return (
-    <div className="-mx-6 border-t border-extended-green px-6 py-[18px]">
-      <div className="flex w-full flex-wrap items-center gap-4">
-        {/* The row's identity: the pillar icon on the same 32px brand tile the
-            verdict panels and question rows use, and an 18px semibold title —
-            the row used to open with a 16px glyph and 16px text, which read
-            as a list item rather than a heading for the breakdown under it. */}
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand-1000 text-extended-blue">
-            <SuccessDriverIcon driver={driverId} className="size-4" />
-          </span>
-          <span className="truncate text-[18px] font-semibold tracking-[-0.4px] text-text-primary">
-            {driver.fullTitle}
-          </span>
-          <SuccessDriverInfoTip driver={driverId} />
-        </div>
-        <span
-          className={cn(
-            "inline-flex items-center justify-center overflow-hidden rounded-full px-[9px] py-[3px] text-[12px] font-medium leading-[1.2]",
-            badgeClasses(driver.status),
-          )}
-        >
-          {driver.status}
+    <div className="flex flex-col rounded-[16px] border border-border bg-card p-5">
+      <div className="flex items-start justify-between gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-1000 text-extended-blue">
+          <SuccessDriverIcon driver={id} className="size-5 text-current" />
         </span>
-        <ScoreLockup score={score} />
+        <div className="flex items-baseline gap-1 font-gilroy tabular-nums">
+          <span className={cn("text-[28px] leading-none tracking-[-1.4px]", scoringTextClass(driver.score))}>
+            {driver.score.toFixed(1)}
+          </span>
+          <span className="text-body-sm text-text-secondary/70">/5</span>
+        </div>
       </div>
-      <div className="mt-3">
-        <button
-          type="button"
-          onClick={onToggle}
-          className="inline-flex items-center gap-2 text-caption font-semibold text-extended-dark-cyan"
-          aria-expanded={expanded}
-        >
-          {expanded ? "Hide breakdown" : "Show breakdown"}
-          <ChevronDown
-            className={cn("size-4 transition-transform", expanded ? "rotate-180" : "rotate-0")}
-            aria-hidden
-          />
-        </button>
-        {expanded ? (
-          <div className="mt-4 divide-y divide-border">
-            {driver.subSkills.map((s) => (
-              <div key={s.name} className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
-                <div className="min-w-0 truncate text-caption text-text-primary">{s.name}</div>
-                <div className="flex shrink-0 items-baseline gap-0.5 font-gilroy whitespace-nowrap">
-                  <span className={cn("text-caption font-semibold", scoreTextClasses(s.score))}>
-                    {s.score.toFixed(1)}
-                  </span>
-                  <span className="text-caption font-semibold text-text-secondary/60">/5</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : null}
+
+      <div className="mt-4 flex items-center gap-1.5">
+        <span className="text-body-sm font-semibold text-text-primary">{meta.shortLabel}</span>
+        <SuccessDriverInfoTip driver={id} />
       </div>
+      <div className="text-caption text-text-secondary">{meta.label}</div>
+
+      <div className="mt-3 flex items-center gap-3">
+        <ProgressBar
+          value={pct}
+          aria-label={`${meta.shortLabel} score`}
+          className="h-1.5"
+          indicatorClassName={cn("h-1.5 border-transparent", scoringFillClass(driver.score))}
+        />
+        <Badge variant="outline" className={cn("shrink-0", scoringBadgeClass(driver.status))}>
+          {driver.status}
+        </Badge>
+      </div>
+
+      <FieldLabel className="mt-5">Competency breakdown</FieldLabel>
+      <ul className="mt-2 divide-y divide-border">
+        {driver.subSkills.map((s) => (
+          <li key={s.name} className="flex items-center justify-between gap-3 py-2">
+            <span className="flex min-w-0 items-center gap-2 text-caption text-text-primary">
+              <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", scoringFillClass(s.score))} />
+              <span className="truncate">{s.name}</span>
+            </span>
+            <span className="flex shrink-0 items-baseline gap-0.5 font-gilroy text-caption tabular-nums">
+              <span className={cn("font-semibold", scoringTextClass(s.score))}>{s.score.toFixed(1)}</span>
+              <span className="text-text-secondary/70">/5</span>
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-function QuestionRow({
-  q,
-  open,
-  onToggle,
-  isSpotlight,
-}: {
-  q: InterviewReportQuestion;
-  open: boolean;
-  onToggle: () => void;
-  /** This is the answer the rewrite section below works on. */
-  isSpotlight: boolean;
-}) {
+/* ------------------------------------------------------------------------ */
+/* Trainings                                                                 */
+/* ------------------------------------------------------------------------ */
+
+function trainingDriver(pillar: string): SuccessDriverId | null {
+  const key = pillar.trim().toLowerCase();
+  return SUCCESS_DRIVER_ORDER.find((id) => SUCCESS_DRIVERS[id].shortLabel.toLowerCase() === key) ?? null;
+}
+
+function TrainingMeta({ t }: { t: InterviewTrainingRecommendation }) {
+  const driver = trainingDriver(t.pillar);
   return (
-    <Card id={`q-${q.id}`} className="gap-0 py-0 overflow-hidden scroll-mt-28">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full text-left"
-        aria-expanded={open}
-        aria-controls={`q-panel-${q.id}`}
-      >
-        {/* Everything on the row centres on the two-line block (tags, then the
-            question): the number mark, the status + score cluster and the
-            chevron all sit on the same axis, so a closed row reads as one line
-            of information rather than three things at three heights. */}
-        <CardContent className="flex items-center gap-3 p-5">
-          <QuestionNumber index={q.index} />
-          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <SuccessDriverCompetencyPill
-                  variant="filled"
-                  driver={q.driver as SuccessDriverId}
-                  label={
-                    <>
-                      {SUCCESS_DRIVERS[q.driver as SuccessDriverId].shortLabel}
-                      {" · "}
-                      {q.facet}
-                    </>
-                  }
-                />
-                <span className="inline-flex h-7 items-center gap-2 rounded-full bg-pill-surface px-3 text-pill-foreground">
-                  <Clock3 className="size-4 shrink-0 text-primary" aria-hidden />
-                  <span className="text-[13px] leading-none font-medium tabular-nums text-pill-foreground">
-                    {fmtDuration(q.timeSeconds)}
-                    {answerLengthNote(q) ? (
-                      <span className="text-scoring-yellow-fg">
-                        {" · "}
-                        {answerLengthNote(q)}
-                      </span>
-                    ) : null}
-                  </span>
-                </span>
-                {isSpotlight ? <Badge>Weakest answer</Badge> : null}
-              </div>
-
-              <div className="mt-3 text-body-sm font-semibold text-text-primary">
-                “{q.text}”
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-2.5">
-              <Badge variant="outline" className={badgeClasses(q.status)}>
-                {q.status}
-              </Badge>
-              <ScoreLockup score={q.score} />
-            </div>
-          </div>
-          <ChevronDown
-            className={cn(
-              "size-5 shrink-0 text-text-primary/60 transition-transform",
-              open ? "rotate-180" : "rotate-0",
-            )}
-            aria-hidden
-          />
-        </CardContent>
-      </button>
-
-      {open ? (
-        <div id={`q-panel-${q.id}`} className="border-t border-border">
-          <CardContent className="p-5">
-            <div className="grid gap-5 lg:grid-cols-2">
-              <div className="min-w-0">
-                <PanelLabel icon={MessageSquareQuote}>Your answer</PanelLabel>
-                <blockquote className="mt-3 rounded-lg border border-border bg-card p-4 text-caption leading-relaxed text-text-primary">
-                  {q.answer}
-                </blockquote>
-              </div>
-              <div className="min-w-0">
-                <PanelLabel icon={LogoMark}>Areas for improvement</PanelLabel>
-                <div className="mt-3 overflow-hidden rounded-lg border border-border bg-card">
-                  <div className="divide-y divide-border">
-                    {q.improvements.map((imp, index) => {
-                      const Icon = improvementIconFor(imp.title, index);
-                      return (
-                        <div key={imp.title} className="flex items-start gap-3 p-4">
-                          <Icon
-                            className="mt-0.5 size-4 shrink-0 text-extended-cyan-green"
-                            aria-hidden
-                          />
-                          <div className="min-w-0">
-                            <div className="text-body-sm font-semibold text-extended-cyan-green">
-                              {imp.title}
-                            </div>
-                            <p className="mt-1 text-caption leading-relaxed text-text-secondary">
-                              {imp.detail}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </div>
-      ) : null}
-    </Card>
+    <div className="flex flex-wrap items-center gap-1.5">
+      {driver ? (
+        <Badge>
+          <SuccessDriverIcon driver={driver} className="text-current" />
+          {SUCCESS_DRIVERS[driver].shortLabel}
+        </Badge>
+      ) : (
+        <Badge>{t.pillar}</Badge>
+      )}
+      <Badge>{t.difficulty}</Badge>
+      <Badge>{t.durationMinutes} min</Badge>
+    </div>
   );
 }
+
+/* ------------------------------------------------------------------------ */
+/* Screen                                                                    */
+/* ------------------------------------------------------------------------ */
 
 export function ReportDetailScreen({ reportId }: Props) {
-  const stickySentinelRef = useRef<HTMLDivElement | null>(null);
+  // The stored reports map, read through the same hook the rest of the app
+  // uses: the first client render matches SSR, and `hydrated` tells us when
+  // "not in the map" means "missing" rather than "not read yet".
+  const [reportsMap, , reportsHydrated] = useLocalStorageState<Record<string, InterviewReport>>(
+    StorageKeys.reports,
+    {},
+  );
+  /** `undefined` = storage not read yet. */
+  const report: InterviewReport | null | undefined = reportsHydrated
+    ? (reportsMap[reportId] ?? null)
+    : undefined;
 
-  /** `undefined` = not read yet (after mount we always read from localStorage). */
-  const [report, setReport] = useState<InterviewReport | null | undefined>(undefined);
   const [subscription] = useCandidateSubscription();
   const [accessedReportIds, setAccessedReportIds] = useLocalStorageState<string[]>(
     StorageKeys.candidateAccessedReportIds,
     [],
   );
-  const [nudgeSeen, setNudgeSeen] = useLocalStorageState<boolean>(
-    StorageKeys.candidatePostInterviewUpgradeNudgeSeen,
-    false,
-  );
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [showNudge, setShowNudge] = useState(false);
   const accessRecordedRef = useRef<string | null>(null);
 
   const freePlan = isFreePlan(subscription);
   const reportAllowed = canAccessReport(reportId, accessedReportIds, freePlan);
-  const showSticky = useStickySummary(stickySentinelRef, report != null && reportAllowed);
 
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(StorageKeys.reports);
-      const map = safeParseJson<Record<string, InterviewReport>>(raw) ?? {};
-      setReport(map[reportId] ?? null);
-    } catch {
-      setReport(null);
-    }
-  }, [reportId]);
+  // The upgrade modal opens by itself when the report is locked, and again on
+  // demand from the Upgrade buttons. Derived, not synced: the locked case is
+  // a fact about the data, so it needs no effect — only a "dismissed" flag so
+  // closing it once does not reopen it on the next render.
+  const [lockDismissed, setLockDismissed] = useState(false);
+  const [upgradeRequested, setUpgradeRequested] = useState(false);
+  const locked = report != null && !reportAllowed;
+  const upgradeModalOpen = upgradeRequested || (locked && !lockDismissed);
+  const onUpgradeModalChange = useCallback((open: boolean) => {
+    setUpgradeRequested(open);
+    if (!open) setLockDismissed(true);
+  }, []);
+  const setUpgradeModalOpen = useCallback((open: boolean) => onUpgradeModalChange(open), [onUpgradeModalChange]);
 
+  // Same plan rule as the current report — one free report — recorded the
+  // same way, so opening either version counts once. Recorded on the next
+  // tick: this is a write to storage on behalf of the page mount, not state
+  // the render depends on, so it must not run synchronously inside the effect.
   useEffect(() => {
-    if (report == null) return;
-    if (!reportAllowed) {
-      setUpgradeModalOpen(true);
-      return;
-    }
+    if (report == null || !reportAllowed) return;
     if (accessRecordedRef.current === reportId) return;
     accessRecordedRef.current = reportId;
-    setAccessedReportIds((prev) => withReportAccessRecorded(reportId, prev));
-    if (freePlan && !nudgeSeen) {
-      setShowNudge(true);
-      setNudgeSeen(true);
-    }
-  }, [
-    report,
-    reportAllowed,
-    reportId,
-    freePlan,
-    nudgeSeen,
-    setAccessedReportIds,
-    setNudgeSeen,
-  ]);
+    const t = window.setTimeout(() => {
+      setAccessedReportIds((prev) => withReportAccessRecorded(reportId, prev));
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [report, reportAllowed, reportId, setAccessedReportIds]);
 
-  const [driverExpanded, setDriverExpanded] = useState<Record<string, boolean>>({});
   const [openQuestions, setOpenQuestions] = useState<Record<string, boolean>>({});
-  const printRestoreRef = useRef<{
-    drivers: Record<string, boolean>;
-    questions: Record<string, boolean>;
-    title: string;
-  } | null>(null);
+  const printRestoreRef = useRef<Record<string, boolean> | null>(null);
 
-  const missing = report === null;
-  const overall = report?.overallScore ?? 0;
-
+  const insights = useMemo(() => (report ? deriveInsights(report) : null), [report]);
   const spotlightQuestion = useMemo(() => {
     if (!report) return null;
-    return report.questions.find((q) => q.id === report.spotlight.questionId) ?? report.questions[0] ?? null;
-  }, [report]);
-  // The "Strongest" chip is computed from the questions rather than read from
-  // `highlightChips.strongest`: the stored string can disagree with the scores
-  // shown two sections lower (the mock says "Q3 · 3.8/5" while Q3 scores 2.2).
-  const strongestQuestion = useMemo(() => {
-    if (!report || report.questions.length === 0) return null;
-    return [...report.questions].sort((a, b) => b.score - a.score)[0] ?? null;
-  }, [report]);
-  const [strongestDriver, weakestDriver] = useMemo(() => {
-    if (!report || report.drivers.length === 0) return [null, null] as const;
-    const sorted = [...report.drivers].sort((a, b) => b.score - a.score);
-    return [sorted[0] ?? null, sorted[sorted.length - 1] ?? null] as const;
-  }, [report]);
-  /** Open a question row and bring it into view — evidence one click from
-   *  the claim that cites it. */
-  const revealQuestion = (id: string) => {
+    return report.questions.find((q) => q.id === report.spotlight.questionId) ?? insights?.weakestQuestion ?? null;
+  }, [report, insights]);
+
+  const allOpen = report ? report.questions.every((q) => openQuestions[q.id]) : false;
+  const setAll = useCallback(
+    (open: boolean) => {
+      if (!report) return;
+      setOpenQuestions(Object.fromEntries(report.questions.map((q) => [q.id, open])));
+    },
+    [report],
+  );
+
+  /** Open a question row and bring it into view — used by the coach summary's
+   *  "See answer" links so evidence is one click from the claim. */
+  const revealQuestion = useCallback((id: string) => {
     setOpenQuestions((prev) => ({ ...prev, [id]: true }));
     window.requestAnimationFrame(() => {
       document.getElementById(`q-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-  };
+  }, []);
+
+  const onDownload = useCallback(() => {
+    if (!report) return;
+    if (!canAccessReport(reportId, accessedReportIds, freePlan)) {
+      setUpgradeModalOpen(true);
+      return;
+    }
+    printRestoreRef.current = openQuestions;
+    flushSync(() => setAll(true));
+    const prevTitle = document.title;
+    document.title = `Session report — ${report.meta.roleTitle}`;
+    const restore = () => {
+      window.removeEventListener("afterprint", restore);
+      document.title = prevTitle;
+      if (printRestoreRef.current) setOpenQuestions(printRestoreRef.current);
+      printRestoreRef.current = null;
+    };
+    window.addEventListener("afterprint", restore);
+    window.setTimeout(() => window.print(), 50);
+  }, [report, reportId, accessedReportIds, freePlan, openQuestions, setAll, setUpgradeModalOpen]);
+
+  const chatBar = <CoachBottomChatBar placeholder="Ask AI Coach about this report" />;
+
+  /* ---- Loading / missing / locked -------------------------------------- */
 
   if (report === undefined) {
     return (
       <AppShell contentTopClassName="pt-16">
         <CoachFloatingNav />
-        <div className="pb-44">
-          <Card className="gap-0 py-0">
-            <CardContent>
-              <div className="text-h5 text-text-primary">Loading report…</div>
-            </CardContent>
-          </Card>
+        <div className="pb-44" aria-busy="true">
+          <div className="h-4 w-40 animate-pulse rounded bg-surface" />
+          <div className="mt-4 h-10 w-3/4 animate-pulse rounded bg-surface" />
+          <div className="mt-8 h-56 w-full animate-pulse rounded-[20px] bg-surface" />
         </div>
-        <CoachBottomChatBar placeholder="Ask the Consultant about this report" />
-        <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
+        {chatBar}
       </AppShell>
     );
   }
 
-  if (missing) {
+  if (report === null) {
     return (
       <AppShell contentTopClassName="pt-16">
         <CoachFloatingNav />
         <div className="pb-44">
-          <Card className="gap-0 py-0">
-            <CardContent>
-              <div className="text-h4 text-text-primary">We can&apos;t find this report</div>
-              <div className="mt-3 max-w-2xl text-caption leading-6 text-text-secondary">
-                Reports are stored on the device where the session was recorded. If you just finished
-                a session, it may not have saved — end the session again to generate a new report.
-              </div>
-              <div className="mt-6 flex flex-wrap gap-2">
-                <Button asChild>
-                  <Link href="/interview">Back to sessions</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="/coach?journey=1">Go to Coach</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-[16px] border border-border bg-card p-6">
+            <h1 className="text-h4 text-text-primary">We can&apos;t find this report</h1>
+            <p className="mt-2 max-w-[60ch] text-caption leading-6 text-text-secondary">
+              Reports are stored on the device where the session was recorded. If you just finished
+              a session, it may not have saved — end the session again to generate a new report.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button asChild>
+                <Link href="/interview">
+                  <ArrowLeft />
+                  Back to sessions
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
-        <CoachBottomChatBar placeholder="Ask the Consultant about this report" />
-        <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
+        {chatBar}
       </AppShell>
     );
   }
+
+  const overall = report.overallScore;
+  const role = report.meta.roleTitle.trim();
 
   if (!reportAllowed) {
     return (
       <AppShell contentTopClassName="pt-16">
         <CoachFloatingNav />
         <div className="pb-44">
-          <Card className="gap-0 py-0">
-            <CardContent className="space-y-4 p-6">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge>Report ready</Badge>
-                <Badge variant="outline" className={badgeClasses(report.overallScore)}>
-                  {scoringLabelForScore(report.overallScore)} · {report.overallScore.toFixed(1)} / 5
-                </Badge>
-              </div>
-              <div className="text-h4 text-text-primary">This report is on a paid plan</div>
-              <p className="max-w-2xl text-caption leading-6 text-text-secondary">
-                Your Free plan includes one full report, and you&apos;ve used it. Upgrade to open this
-                one — your {report.meta.roleTitle} session, {fmtDuration(report.meta.durationSeconds)},{" "}
-                {report.meta.questionCount} questions — and every report after it.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={() => setUpgradeModalOpen(true)}>
-                  Upgrade plan
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="/interview">Back to sessions</Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-[16px] border border-border bg-card p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>Report ready</Badge>
+              <Badge variant="outline" className={scoringBadgeClass(overall)}>
+                {scoringLabelForScore(overall)} · {overall.toFixed(1)} / 5
+              </Badge>
+            </div>
+            <h1 className="mt-3 text-h4 text-text-primary">This report is on a paid plan</h1>
+            <p className="mt-2 max-w-[60ch] text-caption leading-6 text-text-secondary">
+              Your Free plan includes one full report, and you&apos;ve used it. Upgrade to open this
+              one — your {role} session, {fmtDuration(report.meta.durationSeconds)},{" "}
+              {report.meta.questionCount} questions — and every report after it.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button type="button" onClick={() => setUpgradeModalOpen(true)}>
+                Upgrade plan
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/interview">Back to sessions</Link>
+              </Button>
+            </div>
+          </div>
         </div>
-        <CoachBottomChatBar placeholder="Ask the Consultant about this report" />
-        <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
+        {chatBar}
+        <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={onUpgradeModalChange} />
       </AppShell>
     );
   }
 
-  const carKeyed = report.spotlight.whyStronger.length === CAR_STEPS.length;
-  const allQuestionsOpen = report.questions.every((q) => openQuestions[q.id]);
+  /* ---- The report --------------------------------------------------------- */
+
+  const featured = report.trainings.featured;
 
   return (
-    <AppShell contentTopClassName="pt-16">
+    <AppShell contentTopClassName="pt-6">
       <CoachFloatingNav />
 
-      {/* Sticky summary — the score that stays with you while you scroll.
-          One opaque card hung directly off the app header (top-14, square top
-          corners, rounded bottom), no gap, no ground strip, no inner divider:
-          every earlier layered version left a seam somewhere — content in the
-          header gap, a ground-coloured band crossing white cards, a long
-          shadow ghosting the row beneath. Now the header's hairline is the
-          only line above it and a tight shadow is the only edge below. */}
-      {showSticky ? (
-        <div className="sticky top-14 z-10 print:hidden">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-3 rounded-b-xl bg-card px-5 py-3 shadow-[0_1px_2px_rgba(4,32,39,0.05),0_8px_16px_-10px_rgba(4,32,39,0.25)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06),0_8px_16px_-8px_rgba(0,0,0,0.6)]">
-            <div className="flex items-center gap-3">
-              <div className="flex items-baseline gap-1 font-gilroy whitespace-nowrap">
-                <span className={cn("text-[26px] leading-none font-medium tracking-[-1px] tabular-nums", scoreTextClasses(overall))}>
-                  {overall.toFixed(1)}
-                </span>
-                <span className="text-[16px] leading-none text-text-secondary/60">/5</span>
-              </div>
-              <Badge variant="outline" className={badgeClasses(overall)}>
-                {scoringLabelForScore(overall)}
-              </Badge>
-            </div>
-
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <MetaChip icon={<ListChecks className="size-4 shrink-0 text-primary" aria-hidden />}>
-                {report.meta.questionCount} questions
-              </MetaChip>
-              <MetaChip icon={<Clock3 className="size-4 shrink-0 text-primary" aria-hidden />}>
-                {fmtDuration(report.meta.durationSeconds)}
-              </MetaChip>
-              {report.meta.hasAudio || report.meta.hasVideo ? (
-                <MetaChip icon={<AudioLines className="size-4 shrink-0 text-primary" aria-hidden />}>
-                  {[report.meta.hasAudio ? "Audio" : null, report.meta.hasVideo ? "Video" : null]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </MetaChip>
-              ) : null}
-            </div>
-
-            <div className="ml-auto flex shrink-0 items-center gap-2">
-              <Button asChild variant="outline" size="sm">
-                <a href="#rewrite">
-                  See the rewrite
-                  <ArrowDown aria-hidden />
-                </a>
-              </Button>
-              <Button asChild size="sm">
-                <Link href="/interview">
-                  <RotateCcw aria-hidden />
-                  Retake session
-                </Link>
-              </Button>
-            </div>
-          </div>
+      {/* Toolbar: the way out on the left, the two actions on the right. Both
+          actions are quiet — the result, not the exits, is the page's job. */}
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <Link
+          href="/interview"
+          className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+          Back to sessions
+        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onDownload}>
+            <Download />
+            Download PDF
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/interview">
+              <RotateCcw />
+              Retake session
+            </Link>
+          </Button>
         </div>
-      ) : null}
+      </div>
 
-      <div className="pb-44 print:pb-0">
-        {showNudge ? (
-          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
-            <div className="flex min-w-0 items-start gap-3">
-              <LogoMark className="mt-0.5 size-4 text-primary" />
-              <div className="min-w-0">
-                <p className="text-caption font-semibold text-text-primary">
-                  Get more from your interview prep
-                </p>
-                <p className="mt-1 text-caption leading-5 text-text-secondary">
-                  Upgrade your plan for additional mock interviews, reports, and coaching access.
-                </p>
-              </div>
-            </div>
-            <Button asChild size="sm" className="shrink-0 self-start sm:self-center">
-              <Link href="/profile/pricing">Upgrade Plan</Link>
-            </Button>
-          </div>
-        ) : null}
-
-        <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-          <Link
-            href="/interview"
-            className="inline-flex items-center gap-1.5 text-caption font-semibold text-text-primary/65 transition hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            <ChevronLeft className="size-4 shrink-0" aria-hidden />
-            Back to sessions
-          </Link>
-          <div className="flex shrink-0 flex-wrap items-center justify-start gap-2 sm:justify-end">
-            {/* Review-only entry points: the redesigned report and the untouched
-                original, both on the same data, so the three can be compared
-                side by side. */}
-            <span className="mr-2 inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-caption font-medium">
-              <Link
-                href={`/report/${encodeURIComponent(reportId)}/v2`}
-                className="app-link inline-flex items-center gap-1"
-              >
-                Preview redesigned report
-              </Link>
-              <span aria-hidden className="text-text-secondary/60">·</span>
-              <Link
-                href={`/report/${encodeURIComponent(reportId)}/original`}
-                className="app-link inline-flex items-center gap-1"
-              >
-                <History className="size-3.5" aria-hidden />
-                Original version
-              </Link>
-            </span>
-            <Button
-              variant="outline"
-              size="default"
-              onClick={() => {
-                if (!canAccessReport(reportId, accessedReportIds, freePlan)) {
-                  setUpgradeModalOpen(true);
-                  return;
-                }
-                printRestoreRef.current = {
-                  drivers: driverExpanded,
-                  questions: openQuestions,
-                  title: document.title,
-                };
-                flushSync(() => {
-                  setDriverExpanded(
-                    Object.fromEntries(report.drivers.map((d) => [d.id, true])),
-                  );
-                  setOpenQuestions(
-                    Object.fromEntries(report.questions.map((q) => [q.id, true])),
-                  );
-                });
-                const role = report.meta.roleTitle?.trim();
-                document.title = role
-                  ? `${report.meta.interviewName} — ${role}`
-                  : report.meta.interviewName;
-
-                const restore = () => {
-                  window.removeEventListener("afterprint", restore);
-                  const prev = printRestoreRef.current;
-                  if (!prev) return;
-                  printRestoreRef.current = null;
-                  document.title = prev.title;
-                  setDriverExpanded(prev.drivers);
-                  setOpenQuestions(prev.questions);
-                };
-                window.addEventListener("afterprint", restore);
-                window.setTimeout(() => window.print(), 50);
-              }}
-            >
-              <Download />
-              Download PDF
-            </Button>
-            <Button asChild variant="outline" size="default">
-              <Link href="/interview">
-                <RotateCcw />
-                Retake session
-              </Link>
-            </Button>
-          </div>
+      {/* Header */}
+      <header className="mt-6">
+        <div className="flex flex-wrap items-center gap-2 text-overline text-text-secondary">
+          <span className="font-medium uppercase tracking-wide">Session report</span>
+          <Badge variant="outline">{report.meta.versionLabel}</Badge>
+          <span className="font-mono">#{report.meta.id}</span>
         </div>
+        <h1 className="mt-2 max-w-[24ch] text-agent-heading text-extended-blue [text-wrap:balance]">
+          Analytics &amp; coaching for {role}
+        </h1>
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 text-caption text-text-secondary">
+          <span>{sessionTypeLabel(report)}</span>
+          <span aria-hidden>·</span>
+          <span>{fmtDate(report.meta.createdAt)}</span>
+          <span aria-hidden>·</span>
+          <span>{fmtDuration(report.meta.durationSeconds)}</span>
+          <span aria-hidden>·</span>
+          <span>{report.meta.questionCount} questions</span>
+        </p>
+      </header>
 
-        <div className="mt-4 min-w-0">
-          {/* Version and id: stored on every report, never shown until now. */}
-          <div className="mb-2 flex flex-wrap items-center gap-2 text-overline text-text-secondary">
-            <Badge variant="outline">
-              <Tag aria-hidden />
-              {report.meta.versionLabel}
-            </Badge>
-            <span className="inline-flex items-center gap-0.5 font-mono">
-              <Hash className="size-3" aria-hidden />
-              {report.meta.id}
-            </span>
-          </div>
-          <h1 className="text-agent-heading text-extended-blue">
-            Session report — analytics &amp; coaching for{" "}
-            <span className="rounded-sm bg-extended-light-cyan px-1 text-link">{report.meta.roleTitle}</span>
-          </h1>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <MetaChip size="md" icon={<ClipboardList className="size-4 shrink-0 text-primary" aria-hidden />}>
-              {sessionTypeLabel(report)}
-            </MetaChip>
-            <MetaChip size="md" icon={<Calendar className="size-4 shrink-0 text-primary" aria-hidden />}>
-              {fmtDate(report.meta.createdAt)}
-            </MetaChip>
-            <MetaChip size="md" icon={<Clock3 className="size-4 shrink-0 text-primary" aria-hidden />}>
-              {fmtDuration(report.meta.durationSeconds)}
-            </MetaChip>
-            <MetaChip size="md" icon={<ListChecks className="size-4 shrink-0 text-primary" aria-hidden />}>
-              {report.meta.questionCount} questions
-            </MetaChip>
-          </div>
-        </div>
+      {/* Direct child of the content column on purpose: a sticky element can
+          only travel within its parent, and a wrapper the height of the bar
+          would pin it to nothing. */}
+      <ReportNav overall={overall} ready={Boolean(report)} className="mt-6" />
 
-        <section className="mt-8">
-          <div
-            data-slot="card"
-            className={cn(
-              "flex w-full flex-col gap-2.5 rounded-[20px]",
-              "px-6 py-4 backdrop-blur-[42px]",
-              "bg-[linear-gradient(114.96deg,var(--glass-from)_0%,var(--glass-to)_98.96%)]",
-            )}
-          >
-            <div className="flex w-full flex-wrap items-center justify-between gap-4 py-4">
-              <div className="flex min-w-0 flex-1 items-baseline gap-4">
-                <div className="flex w-[148px] shrink-0 items-baseline gap-1 font-gilroy whitespace-nowrap">
+      <div className="flex flex-col gap-14 pb-44 pt-8 print:pb-0">
+        {/* 1 — Verdict ------------------------------------------------------ */}
+        <Section id="verdict">
+          <div className={cn(GLASS_CARD, "p-6 sm:p-8")}>
+            <div className="grid gap-8 lg:grid-cols-[auto_1fr_auto] lg:gap-10">
+              {/* Score */}
+              <div className="flex flex-col">
+                <div className="flex items-baseline gap-1.5 font-gilroy tabular-nums">
                   <span
                     className={cn(
-                      "cap-baseline text-[64px] font-normal leading-none tracking-[-3.2px] tabular-nums",
-                      scoreTextClasses(overall),
+                      "text-[72px] leading-none tracking-[-3.6px]",
+                      scoringTextClass(overall),
                     )}
                   >
                     {overall.toFixed(1)}
                   </span>
-                  <span className="cap-baseline text-[48px] font-normal leading-none tracking-[-2.4px] text-text-secondary/60">
-                    /5
+                </div>
+                <div className="mt-2 text-overline font-medium uppercase tracking-wide text-text-secondary">
+                  Out of 5.0
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <Badge variant="outline" className={scoringBadgeClass(overall)}>
+                    {scoringLabelForScore(overall)}
+                  </Badge>
+                  <span className="text-overline font-medium uppercase tracking-wide text-text-secondary">
+                    Overall verdict
                   </span>
                 </div>
-                <span className="cap-baseline text-[16px] font-medium tracking-[-0.5px] text-text-primary">
-                  Overall performance
-                </span>
               </div>
-              <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-2.5">
+
+              {/* Why */}
+              <div className="min-w-0 max-w-[62ch]">
+                <h2 className="text-h4 leading-snug text-text-primary [text-wrap:balance]">
+                  {report.headline}
+                </h2>
+                <p className="mt-3 text-body-sm leading-7 text-text-secondary">{report.summary}</p>
+                {insights?.potentialOverall ? (
+                  <p className="mt-3 text-caption text-text-secondary">
+                    If {SUCCESS_DRIVERS[insights.weakestDriver.id as SuccessDriverId].shortLabel} matched
+                    your other drivers, your overall would be{" "}
+                    <span className={cn("font-semibold", scoringTextClass(insights.potentialOverall))}>
+                      {insights.potentialOverall.toFixed(1)}
+                    </span>
+                    .
+                  </p>
+                ) : null}
+              </div>
+
+              {/* This session */}
+              <dl className="grid content-start gap-3 rounded-[14px] border border-border/70 bg-card/60 p-4 text-caption lg:w-56">
+                <div className="text-overline font-medium uppercase tracking-wide text-text-secondary">
+                  This session
+                </div>
+                <div>
+                  <dt className="text-text-secondary">Role</dt>
+                  <dd className="font-semibold text-text-primary">{role}</dd>
+                </div>
+                <div>
+                  <dt className="text-text-secondary">Assessed on</dt>
+                  <dd className="mt-1 flex flex-wrap gap-1">
+                    {report.meta.pillarChips.map((chip) => (
+                      <Badge key={chip}>{chip}</Badge>
+                    ))}
+                  </dd>
+                </div>
+                <div className="flex gap-4">
+                  <div>
+                    <dt className="text-text-secondary">Questions</dt>
+                    <dd className="font-semibold tabular-nums text-text-primary">{report.meta.questionCount}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-text-secondary">Length</dt>
+                    <dd className="font-semibold tabular-nums text-text-primary">
+                      {fmtDuration(report.meta.durationSeconds)}
+                    </dd>
+                  </div>
+                </div>
+              </dl>
+            </div>
+
+            {/* One next step, right under the verdict. The full list is at the
+                bottom; this is the single thing to do if you read nothing else. */}
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-5">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="text-overline font-medium uppercase tracking-wide text-text-secondary">
-                  Overall verdict
+                  Recommended next step
                 </span>
-                <span
-                  className={cn(
-                    "inline-flex items-center justify-center overflow-hidden rounded-full px-[9px] py-[3px] text-[12px] font-medium leading-[1.2]",
-                    badgeClasses(overall),
-                  )}
-                >
-                  {scoringLabelForScore(overall)}
-                </span>
+                <span className="text-caption font-semibold text-text-primary">{featured.title}</span>
+                <span className="text-caption text-text-secondary">{featured.durationMinutes} min</span>
               </div>
-            </div>
-
-            <div className="text-body-sm font-semibold text-text-primary">{report.headline}</div>
-            <div className="w-full text-caption leading-6 text-text-secondary">{report.summary}</div>
-            {/* What the score was measured against — stored on every report,
-                shown nowhere until now. */}
-            <div className="flex flex-wrap items-center gap-2 pb-2">
-              <span className="text-overline font-medium uppercase tracking-wide text-text-secondary">
-                Assessed on
-              </span>
-              {report.meta.pillarChips.map((chip) => (
-                <Badge key={chip}>{chip}</Badge>
-              ))}
-            </div>
-
-            <div className="flex w-full flex-col">
-              {report.drivers.map((d) => (
-                <DriverRow
-                  key={d.id}
-                  driver={d}
-                  expanded={!!driverExpanded[d.id]}
-                  onToggle={() =>
-                    setDriverExpanded((prev) => ({ ...prev, [d.id]: !prev[d.id] }))
-                  }
-                />
-              ))}
+              <div className="flex flex-wrap items-center gap-4">
+                <a href="#rewrite" className="app-link text-caption">
+                  See the rewrite
+                </a>
+                <Button asChild size="sm" variant="outline">
+                  <Link href={featured.href}>
+                    Start training
+                    <ArrowUpRight />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
-        </section>
-        {/* Sticky summary appears once this sentinel scrolls out of view. */}
-        <div ref={stickySentinelRef} className="h-px w-full" />
+        </Section>
 
-        {/* The rubric, directly under the numbers it explains — the client
-            asked for the redesign's version of this here too, so it is the
-            same component, not a second telling of the same rules. Outside
-            the card above and after the sentinel, so it neither crowds the
-            verdict nor delays the sticky summary. */}
-        <HowScoringWorks className="mt-6" />
+        {/* 2 — Drivers ------------------------------------------------------ */}
+        <Section id="drivers">
+          <SectionHeader
+            title="How your score breaks down"
+            lede="Four Success Drivers, three competencies each. Your overall is their average."
+          />
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {report.drivers.map((d) => (
+              <DriverCard key={d.id} driver={d} />
+            ))}
+          </div>
+          <div className="mt-4">
+            <HowScoringWorks />
+          </div>
+        </Section>
 
-        <section className="mt-10">
-          <Card className="gap-0 overflow-hidden py-0">
-            <CardContent className="relative isolate overflow-hidden p-6">
-              <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/brand/report-ai-coach/logo-artifact.png"
-                  alt=""
-                  className="absolute bottom-0 right-0 h-[min(72%,168px)] w-auto max-w-[40%] origin-bottom-right scale-[1.2] object-contain object-bottom-right opacity-90 mix-blend-screen"
-                />
-              </div>
-              <div className="relative z-[1]">
-                <SectionTitle
-                  title={
-                    <>
-                      What the{" "}
-                      <span className="rounded-sm bg-extended-light-cyan px-1 text-link">AI Consultant</span>{" "}
-                      saw in your session
-                    </>
-                  }
-                  subtitle={report.narrative.subtitle}
-                />
-                <div className="mt-4 max-w-4xl text-caption leading-6 text-text-secondary">
-                  {report.narrative.paragraph}
-                </div>
-                {/* Strongest and weakest, driver and answer, each with its score
-                    and a way to the evidence. Derived from the scores, so the
-                    claims can never disagree with the numbers two sections down.
+        {/* 3 — Coach summary ------------------------------------------------ */}
+        <Section id="coach">
+          <SectionHeader
+            title="What AI Coach saw in your session"
+            lede="Summary of strengths, gaps, and how you showed up."
+          />
+          <div className="mt-6 rounded-[16px] border border-border bg-card">
+            <div className="px-6 pt-6">
+              <Badge>AI Coach</Badge>
+              <p className="mt-3 max-w-[72ch] text-body-sm leading-7 text-text-primary">
+                {report.narrative.paragraph}
+              </p>
+            </div>
 
-                    Two verdict panels, not two lists. Client feedback on the
-                    list version: no hierarchy (which side is good news?), no
-                    context (which pillar was Q8 under?), and links that did not
-                    look clickable. So each panel now carries its verdict in its
-                    own header tint (green / red, the scoring palette), names the
-                    chain pillar → competency → the question itself, and ends in
-                    a real button. */}
-                {/* Full-bleed and split by one divider, not two boxed cards: the
-                    section already sits inside a card, and a border inside a
-                    border read as a container inside a container. The verdict
-                    tint lives in each half's header band; the outer card is
-                    the only frame. `bg-card` also hides the card's artwork,
-                    which is anchored under this block. */}
-                <div className="-mx-6 -mb-6 mt-6 grid border-t border-border bg-card lg:grid-cols-2 lg:divide-x lg:divide-border">
-                  <VerdictPanel
-                    tone="carried"
-                    title="What carried your score"
-                    driver={strongestDriver}
-                    driverEyebrow="Strongest driver"
-                    question={strongestQuestion}
-                    questionEyebrow="Best answer"
-                    questionDriver={
-                      strongestQuestion
-                        ? report.drivers.find((d) => d.id === strongestQuestion.driver)
-                        : undefined
-                    }
-                    cta={
-                      strongestQuestion ? (
-                        <Button
+            {insights ? (
+              <div className="mt-6 grid gap-px border-t border-border bg-border lg:grid-cols-2">
+                <div className="bg-card px-6 py-5">
+                  <div className="flex items-center gap-2 text-caption font-semibold text-scoring-green-fg">
+                    <TrendingUp className="size-4" aria-hidden />
+                    What carried your score
+                  </div>
+                  <ul className="mt-3 flex flex-col gap-3">
+                    <li className="flex items-center justify-between gap-3">
+                      <span className="flex min-w-0 items-center gap-2 text-caption text-text-primary">
+                        <SuccessDriverIcon
+                          driver={insights.strongestDriver.id as SuccessDriverId}
+                          className="size-4 text-extended-blue"
+                        />
+                        <span className="truncate">
+                          <span className="font-semibold">{insights.strongestDriver.fullTitle}</span>
+                          <span className="text-text-secondary"> — your strongest driver</span>
+                        </span>
+                      </span>
+                      <ScoreChip score={insights.strongestDriver.score} />
+                    </li>
+                    <li className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 truncate text-caption text-text-primary">
+                        <span className="font-semibold">Q{insights.bestQuestion.index}</span>
+                        <span className="text-text-secondary"> · {insights.bestQuestion.facet} — best answer</span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        <ScoreChip score={insights.bestQuestion.score} />
+                        <button
                           type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => revealQuestion(strongestQuestion.id)}
+                          onClick={() => revealQuestion(insights.bestQuestion.id)}
+                          className="app-link text-overline"
                         >
                           See answer
-                          <ArrowDown aria-hidden />
-                        </Button>
-                      ) : null
-                    }
-                  />
-                  <VerdictPanel
-                    tone="held"
-                    title="What held it back"
-                    driver={weakestDriver}
-                    driverEyebrow="Weakest driver"
-                    question={spotlightQuestion}
-                    questionEyebrow="Weakest answer"
-                    questionDriver={
-                      spotlightQuestion
-                        ? report.drivers.find((d) => d.id === spotlightQuestion.driver)
-                        : undefined
-                    }
-                    cta={
-                      spotlightQuestion ? (
-                        <Button asChild variant="outline" size="sm">
-                          <a href="#rewrite">
-                            See the rewrite
-                            <ArrowDown aria-hidden />
-                          </a>
-                        </Button>
-                      ) : null
-                    }
-                  />
+                        </button>
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+                <div className="bg-card px-6 py-5">
+                  <div className="flex items-center gap-2 text-caption font-semibold text-scoring-red-fg">
+                    <TrendingDown className="size-4" aria-hidden />
+                    What held it back
+                  </div>
+                  <ul className="mt-3 flex flex-col gap-3">
+                    <li className="flex items-center justify-between gap-3">
+                      <span className="flex min-w-0 items-center gap-2 text-caption text-text-primary">
+                        <SuccessDriverIcon
+                          driver={insights.weakestDriver.id as SuccessDriverId}
+                          className="size-4 text-extended-blue"
+                        />
+                        <span className="truncate">
+                          <span className="font-semibold">{insights.weakestDriver.fullTitle}</span>
+                          <span className="text-text-secondary"> — your weakest driver</span>
+                        </span>
+                      </span>
+                      <ScoreChip score={insights.weakestDriver.score} />
+                    </li>
+                    <li className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 truncate text-caption text-text-primary">
+                        <span className="font-semibold">Q{insights.weakestQuestion.index}</span>
+                        <span className="text-text-secondary"> · {insights.weakestQuestion.facet} — weakest answer</span>
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        <ScoreChip score={insights.weakestQuestion.score} />
+                        <a href="#rewrite" className="app-link text-overline">
+                          See the rewrite
+                        </a>
+                      </span>
+                    </li>
+                  </ul>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </section>
+            ) : null}
+          </div>
+        </Section>
 
-        <section className="mt-10">
-          <SectionTitle
-            title="Your answers, question by question"
-            subtitle="Expand each row for competency analysis and improvements."
+        {/* 4 — Weakest answer ----------------------------------------------- */}
+        {spotlightQuestion ? (
+          <Section id="rewrite">
+            <SectionHeader
+              title="How to improve your weakest answer"
+              lede="Your lowest-scoring answer, rewritten the way it should sound — and what your delivery was doing while you gave it."
+            />
+            <div className="mt-6">
+              <SpotlightRewrite report={report} question={spotlightQuestion} />
+            </div>
+          </Section>
+        ) : null}
+
+        {/* 5 — Answers ------------------------------------------------------ */}
+        <Section id="answers">
+          <SectionHeader
+            title="Your answers — question by question"
+            lede="Expand a row for the competency it tested, what you said, and what would have scored higher."
             right={
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  setOpenQuestions(
-                    Object.fromEntries(report.questions.map((q) => [q.id, !allQuestionsOpen])),
-                  )
-                }
-              >
-                {allQuestionsOpen ? "Collapse all" : "Expand all"}
+              <Button type="button" variant="ghost" size="sm" onClick={() => setAll(!allOpen)}>
+                {allOpen ? "Collapse all" : "Expand all"}
               </Button>
             }
           />
-          <div className="mt-4 grid gap-4">
+          <ol className="mt-6 flex flex-col gap-3">
             {report.questions.map((q) => (
               <QuestionRow
                 key={q.id}
                 q={q}
-                open={!!openQuestions[q.id]}
+                open={Boolean(openQuestions[q.id])}
                 onToggle={() => setOpenQuestions((prev) => ({ ...prev, [q.id]: !prev[q.id] }))}
                 isSpotlight={q.id === spotlightQuestion?.id}
               />
             ))}
+          </ol>
+        </Section>
+
+        {/* 6 — Transcript --------------------------------------------------- */}
+        <Section id="transcript">
+          <SectionHeader
+            title="Recording & transcript"
+            lede="The full conversation, with AI Coach's flags at the moments an answer lost points."
+          />
+          <div className="mt-6">
+            <ReportTranscript report={report} />
           </div>
-        </section>
+        </Section>
 
-        <section id="recording" className="mt-10 scroll-mt-28">
-          <Card className="gap-0 py-0">
-            <CardContent className="p-6">
-              <SectionTitle
-                title="Recording & transcript"
-                subtitle="Replay your session and review the full conversation."
-              />
+        {/* 7 — Next steps --------------------------------------------------- */}
+        <Section id="next">
+          <SectionHeader
+            title="What to work on next"
+            lede="Based on your session — AI Coach's picks for your next training."
+          />
+          <div className="mt-6 rounded-[16px] border border-brand-700 bg-brand-1000/40 p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="default">Featured</Badge>
+              <TrainingMeta t={featured} />
+            </div>
+            <h3 className="mt-3 max-w-[40ch] text-h4 text-text-primary">{featured.title}</h3>
+            <p className="mt-1.5 max-w-[62ch] text-caption leading-relaxed text-text-secondary">
+              {featured.description}
+            </p>
+            <Button asChild className="mt-5">
+              <Link href={featured.href}>
+                Start training module
+                <ArrowRight />
+              </Link>
+            </Button>
+          </div>
+          <ul className="mt-4 grid gap-4 md:grid-cols-3">
+            {report.trainings.more.map((t) => (
+              <li key={t.id} className="flex flex-col rounded-[16px] border border-border bg-card p-5">
+                <TrainingMeta t={t} />
+                <h3 className="mt-3 text-body-sm font-semibold text-text-primary">{t.title}</h3>
+                <p className="mt-1 flex-1 text-caption leading-relaxed text-text-secondary">{t.description}</p>
+                <Link href={t.href} className="app-link mt-4 inline-flex items-center gap-1 text-caption font-medium">
+                  Start training
+                  <ArrowRight className="size-3.5" aria-hidden />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Section>
 
-              <TranscriptReplay
-                className="mt-6"
-                transcript={report.transcript}
-                durationSeconds={report.meta.durationSeconds}
-                hasAudio={report.meta.hasAudio}
-                hasVideo={report.meta.hasVideo}
-              />
-            </CardContent>
-          </Card>
-        </section>
-
-        <section id="rewrite" className="mt-10 scroll-mt-28">
-          <Card className="gap-0 overflow-hidden py-0">
-            <CardContent className="p-6">
-              <SectionTitle
-                title="How to improve your weakest answer"
-                subtitle="Delivery, language, and a sharper version of your highest-priority gap answer."
-              />
-
-              {/* ONE frame. This used to be a box (the spotlight) inside the card,
-                  holding a bordered pair (the comparison) and three bordered
-                  cards (why stronger), with four more bordered cards below — the
-                  client read it as containers inside containers. Now the card is
-                  the only frame: the comparison and the delivery notes are
-                  full-bleed BANDS cut by hairlines, and the lists are divided,
-                  not boxed. The coach rewrite's brand tint stays the one filled
-                  surface in the section, which is what makes it the thing you
-                  look at. */}
-              <div className="mt-6">
-                <div className="flex items-start gap-3">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-                    <Podium className="size-4" aria-hidden />
-                  </span>
-                  <div className="min-w-0">
-                    <h3 className="text-body-sm font-semibold text-extended-cyan-green">
-                      {report.spotlight.title}
-                    </h3>
-                    <p className="mt-1 text-caption leading-relaxed text-text-secondary">
-                      Your lowest-scoring answer, rewritten the way it should sound.
-                    </p>
-                  </div>
-                </div>
-
-                {/* The question, laid out exactly like its row in "Your answers"
-                    (Q tile, tags, the quote, score on the right) so the user
-                    recognises it as the same item they can expand above — one
-                    shape for "a question" across the report. This replaced a
-                    loose stack of pill + badge + score, an "INTERVIEW QUESTION"
-                    overline and the quote, which read as three unrelated bits. */}
-                {spotlightQuestion ? (
-                  <div className="mt-6 flex items-center gap-3">
-                    <QuestionNumber index={spotlightQuestion.index} />
-                    <div className="flex min-w-0 flex-1 flex-col gap-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <SuccessDriverCompetencyPill
-                          variant="filled"
-                          driver={spotlightQuestion.driver as SuccessDriverId}
-                          label={
-                            <>
-                              {SUCCESS_DRIVERS[spotlightQuestion.driver as SuccessDriverId].shortLabel}
-                              {" · "}
-                              {spotlightQuestion.facet}
-                            </>
-                          }
-                        />
-                        <span className="inline-flex h-7 items-center gap-2 rounded-full bg-pill-surface px-3 text-pill-foreground">
-                          <Clock3 className="size-4 shrink-0 text-primary" aria-hidden />
-                          <span className="text-[13px] leading-none font-medium tabular-nums text-pill-foreground">
-                            {fmtDuration(spotlightQuestion.timeSeconds)}
-                            {answerLengthNote(spotlightQuestion) ? (
-                              <span className="text-scoring-yellow-fg">
-                                {" · "}
-                                {answerLengthNote(spotlightQuestion)}
-                              </span>
-                            ) : null}
-                          </span>
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className={badgeClasses(spotlightQuestion.status)}
-                        >
-                          {spotlightQuestion.status}
-                        </Badge>
-                      </div>
-                      <p className="text-body-sm font-semibold text-text-primary">
-                        “{spotlightQuestion.text}”
-                      </p>
-                    </div>
-                    <ScoreLockup score={spotlightQuestion.score} />
-                  </div>
-                ) : null}
-              </div>
-
-              {/* The comparison: what was said beside how it should sound. A
-                  full-bleed band — hairline above and below, one vertical rule
-                  between the halves — with the rewrite on the brand tint and a
-                  primary rule so the eye lands on the stronger version. */}
-              <div className="-mx-6 mt-6 grid border-y border-border lg:grid-cols-2 lg:divide-x lg:divide-border">
-                <div className="min-w-0 bg-card p-6">
-                  <SpotlightLabel icon={MessageSquareQuote} hint="What you said">
-                    Your answer
-                  </SpotlightLabel>
-                  <blockquote className="mt-4 border-l-2 border-border pl-4 text-caption leading-relaxed text-text-primary">
-                    {report.spotlight.yourAnswer}
-                  </blockquote>
-                </div>
-                {/* The same brand-gradient plate as the training course tile
-                    (client's pick). It is a filled plate in both themes, so its
-                    ink is `--primary-foreground` — white on teal in light, dark
-                    on the brighter cyan in dark — not the page's text tokens. */}
-                <div className="min-w-0 border-t border-border bg-[linear-gradient(160deg,color-mix(in_srgb,var(--brand-100)_88%,white)_0%,color-mix(in_srgb,var(--brand-300)_92%,white)_100%)] p-6 text-primary-foreground lg:border-t-0">
-                  {/* `flex-wrap`: on a narrow column the badge drops below the
-                      label instead of squeezing it into three lines. */}
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <SpotlightLabel icon={PencilSparkles} hint="How it should sound" onBrand>
-                      Consultant rewrite
-                    </SpotlightLabel>
-                    <Badge className="border-transparent bg-white/20 text-current backdrop-blur-sm">
-                      AI Consultant
-                    </Badge>
-                  </div>
-                  <blockquote className="mt-4 whitespace-pre-line border-l-2 border-current/60 pl-4 text-caption leading-relaxed text-current">
-                    {report.spotlight.coachRewrite}
-                  </blockquote>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <SpotlightLabel icon={Lightbulb}>Why this version is stronger</SpotlightLabel>
-                {/* Three points side by side, divided by rules rather than boxed:
-                    the CAR beats read as one sentence in three parts. */}
-                <ul className="mt-4 grid gap-y-3 sm:grid-cols-3 sm:gap-y-0 sm:divide-x sm:divide-border">
-                  {report.spotlight.whyStronger.map((s, i) => (
-                    <li key={s} className="flex gap-3 sm:px-5 sm:first:pl-0 sm:last:pr-0">
-                      <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-                      <span className="text-caption leading-relaxed text-text-primary">
-                        {carKeyed ? (
-                          <span className="font-semibold text-extended-blue">{CAR_STEPS[i]}: </span>
-                        ) : null}
-                        {s}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Delivery notes: a second full-bleed band that closes the card.
-                  Four notes in a 2x2 grid divided by hairlines — the same notes
-                  that used to be four more cards. */}
-              <div className="-mx-6 -mb-6 mt-8 border-t border-border">
-                <div className="px-6 pt-5 text-overline font-medium uppercase tracking-wide text-text-secondary">
-                  Delivery &amp; language
-                </div>
-                <div className="mt-3 grid border-t border-border sm:grid-cols-2">
-                  {(
-                    [
-                      {
-                        title: "Body language",
-                        icon: PersonStanding,
-                        items: report.spotlight.delivery.bodyLanguage,
-                      },
-                      {
-                        title: "Grammar & phrasing",
-                        icon: SpellCheck,
-                        items: report.spotlight.delivery.grammarPhrasing,
-                      },
-                      {
-                        title: "Gestures & interview presence",
-                        icon: Hand,
-                        items: report.spotlight.delivery.gesturesPresence,
-                      },
-                    ] as const
-                  ).map(({ title, icon: Icon, items }) => (
-                    <div
-                      key={title}
-                      className="flex gap-3 border-t border-border p-6 first:border-t-0 sm:odd:border-r sm:nth-[-n+2]:border-t-0"
-                    >
-                      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-extended-light-cyan text-extended-cyan-green">
-                        <Icon className="size-4" aria-hidden />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="text-body-sm font-semibold text-extended-cyan-green">{title}</div>
-                        <ul className="mt-2 space-y-2 text-caption leading-relaxed text-text-secondary">
-                          {items.map((s) => (
-                            <li key={s}>{s}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="flex gap-3 border-t border-border p-6 sm:odd:border-r sm:nth-[-n+2]:border-t-0">
-                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-extended-light-cyan text-extended-cyan-green">
-                      <AudioLines className="size-4" aria-hidden />
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-body-sm font-semibold text-extended-cyan-green">
-                        Filler words & pacing
-                      </div>
-                      <p className="mt-2 text-caption leading-relaxed text-text-secondary">
-                        {report.spotlight.delivery.fillerPacing.summary}
-                      </p>
-                      <div className="mt-3 text-overline text-extended-cyan-green">On-camera presence</div>
-                      <p className="mt-1 text-caption leading-relaxed text-text-secondary">
-                        {report.spotlight.delivery.fillerPacing.onCameraPresence}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="mt-10">
-          <Card className="gap-0 py-0">
-            <CardContent className="p-6">
-              <SectionTitle
-                title="What to work on next"
-                subtitle="Based on your session — the Consultant's picks for your next training."
-              />
-
-              <div className="mt-6 flex w-full flex-col">
-                {[
-                  {
-                    id: report.trainings.featured.id,
-                    title: report.trainings.featured.title,
-                    description: report.trainings.featured.description,
-                    href: report.trainings.featured.href,
-                    pillar: report.trainings.featured.pillar,
-                    difficulty: report.trainings.featured.difficulty,
-                    durationMinutes: report.trainings.featured.durationMinutes,
-                  },
-                  ...report.trainings.more.map((t) => ({
-                    id: t.id,
-                    title: t.title,
-                    description: t.description,
-                    href: t.href,
-                    pillar: t.pillar,
-                    difficulty: t.difficulty,
-                    durationMinutes: t.durationMinutes,
-                  })),
-                ].map((item, index, list) => {
-                  const isLast = index === list.length - 1;
-                  const pillarKey = item.pillar?.trim().toLowerCase() ?? "";
-                  const driverId =
-                    SUCCESS_DRIVER_ORDER.find(
-                      (id) => SUCCESS_DRIVERS[id].shortLabel.toLowerCase() === pillarKey,
-                    ) ?? null;
-                  return (
-                    <div
-                      key={item.id}
-                      className={cn(
-                        "flex w-full items-center justify-between gap-4 py-4",
-                        index === 0 && "pt-0",
-                        isLast ? "pb-0" : "border-b border-extended-green",
-                      )}
-                    >
-                      <div className="flex min-w-0 flex-1 items-start gap-4">
-                        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-[18px] font-medium leading-[27px] tracking-[-1.3px] text-text-primary">
-                              {item.title}
-                            </h3>
-                            {index === 0 ? (
-                              <span
-                                className={cn(
-                                  "inline-flex h-7 items-center gap-2 rounded-full px-3",
-                                  "bg-[linear-gradient(135deg,var(--brand-100)_0%,var(--brand-300)_100%)]",
-                                  "text-[13px] leading-none font-medium text-primary-foreground",
-                                )}
-                              >
-                                <LogoMark className="size-4" />
-                                Featured
-                              </span>
-                            ) : null}
-                            {driverId ? (
-                              <SuccessDriverCompetencyPill
-                                variant="filled"
-                                driver={driverId}
-                                label={SUCCESS_DRIVERS[driverId].shortLabel}
-                              />
-                            ) : item.pillar ? (
-                              <span className="inline-flex h-7 items-center rounded-full bg-pill-surface px-3 text-[13px] leading-none font-medium text-pill-foreground">
-                                {item.pillar}
-                              </span>
-                            ) : null}
-                            {item.durationMinutes != null ? (
-                              <MetaChip
-                                icon={
-                                  <Clock3 className="size-4 shrink-0 text-primary" aria-hidden />
-                                }
-                              >
-                                {item.durationMinutes} min
-                              </MetaChip>
-                            ) : null}
-                            {item.difficulty ? (
-                              <MetaChip
-                                icon={
-                                  <BookOpen className="size-4 shrink-0 text-primary" aria-hidden />
-                                }
-                              >
-                                {item.difficulty}
-                              </MetaChip>
-                            ) : null}
-                          </div>
-                          <p className="text-[16px] font-normal leading-6 text-text-secondary">
-                            {item.description}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className="h-auto shrink-0 gap-2 rounded-md py-2 pl-4 pr-2! text-[14px] font-medium leading-5 text-extended-dark-cyan hover:bg-transparent hover:text-extended-dark-cyan"
-                      >
-                        <Link href={item.href}>
-                          {index === 0 ? "Start training module" : "Start training"}
-                          <ArrowUpRight className="size-4" />
-                        </Link>
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        <section className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-8 print:hidden">
+        {/* Close ------------------------------------------------------------- */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-8 print:hidden">
           <div>
             <div className="text-body-sm font-semibold text-text-primary">Ready to go again?</div>
             <p className="mt-1 text-caption text-text-secondary">
-              Another session for {report.meta.roleTitle} is scored the same way, so you can see the
-              difference.
+              Another session for {role} will be scored the same way, so you can see the difference.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -1608,12 +743,11 @@ export function ReportDetailScreen({ reportId }: Props) {
               </Link>
             </Button>
           </div>
-        </section>
+        </div>
       </div>
 
-      <CoachBottomChatBar placeholder="Ask the Consultant about this report" />
-      <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={setUpgradeModalOpen} />
+      {chatBar}
+      <GenericUpgradeModal open={upgradeModalOpen} onOpenChange={onUpgradeModalChange} />
     </AppShell>
   );
 }
-
