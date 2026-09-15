@@ -990,21 +990,38 @@ export function InterviewLiveScreen() {
         aria-live="polite"
         aria-atomic="true"
       >
+        {/* SUBTLE IS A DEFAULT, NOT A PERMANENT STATE.
+   
+            The client asked for the question to be shown but kept quiet, and
+            they are right: in a real interview you HEAR the question — reading
+            it off a lit card is the thing that breaks the illusion. It was the
+            loudest object on the screen after the stage, a raised plate with a
+            border competing with the stage card directly above it.
+   
+            So while the answer is going comfortably it has no plate at all: no
+            fill, no border, no radius. It sets on the room's own ground as a
+            caption under the stage, which is where a line you glance at
+            belongs.
+   
+            What it does NOT do is stay quiet when quiet stops being right. In
+            the last minute, and again in the extra minute, the plate comes
+            back. Subtlety is worth exactly nothing if it also hides the one
+            moment the candidate needs to be told to land the answer. */}
         <div
           className={cn(
-            "flex items-center gap-4 rounded-[18px] border bg-card/80 px-4 py-3.5 transition-colors duration-500",
+            "flex items-center gap-4 rounded-[18px] border px-4 py-3.5 transition-colors duration-500",
             clockLevel === "grace"
               ? "border-scoring-red/60 bg-scoring-red/[0.08]"
               : clockLevel === "warn"
-                ? "border-scoring-yellow/50"
-                : "border-border",
+                ? "border-scoring-yellow/50 bg-scoring-yellow/[0.06]"
+                : "border-transparent bg-transparent",
           )}
         >
           {/* A depleting ring rather than a bare number: the shape says how
               much is left before the digits have been read. */}
           <div
             className={cn(
-              "relative grid size-[58px] shrink-0 place-items-center rounded-full",
+              "relative grid size-[46px] shrink-0 place-items-center rounded-full",
               clockLevel === "grace" && "motion-safe:animate-pulse",
             )}
             style={{
@@ -1025,7 +1042,7 @@ export function InterviewLiveScreen() {
                   : `${formatTimer(turnLeft)} ${turn === "grace" ? "of extra time" : "left to answer"}`
             }
           >
-            <span className="grid size-[48px] place-items-center rounded-full bg-card">
+            <span className="grid size-[38px] place-items-center rounded-full bg-background">
               {turn === "asking" ? (
                 <span className="size-2 rounded-full bg-primary motion-safe:animate-pulse" aria-hidden />
               ) : turn === "done" ? (
@@ -1033,7 +1050,7 @@ export function InterviewLiveScreen() {
               ) : (
                 <span
                   className={cn(
-                    "font-gilroy text-[15px] font-semibold tabular-nums",
+                    "font-gilroy text-[13px] font-semibold tabular-nums",
                     clockLevel === "grace"
                       ? "text-scoring-red"
                       : clockLevel === "warn"
@@ -1062,7 +1079,11 @@ export function InterviewLiveScreen() {
                 </span>
               ) : null}
             </div>
-            <p className="mt-1 text-body-sm leading-6 text-text-primary">
+            {/* Secondary ink, not primary. This is the one line on the screen
+                that a real interview would not hand you in writing, so it
+                reads as a caption you CAN check rather than a script you are
+                meant to follow. */}
+            <p className="mt-1 text-body-sm leading-6 text-text-secondary">
               {turn === "done"
                 ? "That is every question for this attempt. End the session when you are ready and your report will be generated."
                 : current.question}
