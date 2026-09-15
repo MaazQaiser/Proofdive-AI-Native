@@ -403,10 +403,14 @@ export function ReportDetailScreen({ reportId }: Props) {
 
       {/* Header */}
       <header className="mt-6">
-        <div className="flex flex-wrap items-center gap-2 text-overline text-text-secondary">
-          <span className="font-medium uppercase tracking-wide">Session report</span>
-          <Badge variant="outline">{report.meta.versionLabel}</Badge>
-          <span className="font-mono">#{report.meta.id}</span>
+        {/* The eyebrow names the page and stops there. It used to also carry
+            `meta.versionLabel` and `meta.id` — a hardcoded build stamp and the
+            raw storage key — which told the candidate nothing they could read,
+            act on or compare, and put the least meaningful strings on the page
+            in the most prominent slot on it. Both are still stored on the
+            report; they are engineering's, not the reader's. */}
+        <div className="text-overline font-medium uppercase tracking-wide text-text-secondary">
+          Session report
         </div>
         <h1 className="mt-2 max-w-[24ch] text-agent-heading text-extended-blue [text-wrap:balance]">
           Analytics &amp; coaching for {role}
