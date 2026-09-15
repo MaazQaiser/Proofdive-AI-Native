@@ -79,8 +79,10 @@ function SectionHeader({
   );
 }
 
-/** Section anchor: offset for the sticky header + nav so a jump lands the
- *  title just under the bar instead of behind it. */
+/** Section anchor: offset for the app header, the gap under it and the
+ *  floating nav bar, so a jump lands the title just below the bar instead of
+ *  behind it — 56 + 16 + 52 = 124, plus 20px of air. Kept above ReportNav's
+ *  SPY_OFFSET so the tab you just clicked is the tab that lights up. */
 function Section({
   id,
   children,
@@ -91,7 +93,7 @@ function Section({
   className?: string;
 }) {
   return (
-    <section id={id} className={cn("scroll-mt-32", className)}>
+    <section id={id} className={cn("scroll-mt-36", className)}>
       {children}
     </section>
   );
