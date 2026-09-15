@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { IconButton } from "@/components/ui/icon-button";
 import { LogoMark } from "@/components/ui/logo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { ReportGeneratingOverlay } from "@/components/interview/ReportGeneratingOverlay";
 import { cn } from "@/components/cn";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
@@ -565,16 +566,31 @@ const WARN_AT_SECONDS = 60;
    both the room and its dialog: the dialog renders through a portal at body
    level, so it cannot inherit the room's scope and would otherwise arrive in
    the app's ambient theme — a white card over a dark call. */
-const ROOM_PALETTE =
-  "[--background:#0A1013] [--card:#121C21] [--popover:#16232A] [--surface:#18252B] " +
-  "[--muted:#1C2C33] [--border:#273B43] [--divider-soft:#22333A] " +
-  "[--foreground:#E8EFF1] [--text-primary:#E8EFF1] [--card-foreground:#E8EFF1] " +
-  "[--popover-foreground:#E8EFF1] " +
-  "[--text-secondary:#94A6AC] [--muted-foreground:#94A6AC] " +
-  "[--primary:#22B2CC] [--primary-foreground:#03171C] [--ring:#22B2CC] " +
-  "[--destructive:#F0736A] [--destructive-foreground:#2A0B08] " +
-  "[--scoring-green:#34C76A] [--scoring-yellow:#E9A13B] [--scoring-red:#F0736A] " +
-  "[--logo-ink:#CFE3E8]";
+/**
+ * The stage's own ground — the one thing in this room that is not already a
+ * product token.
+ *
+ * Everything else here now rides the app's palette. What used to live at the
+ * top of this file was a block pinning the DARK values in both themes, and
+ * every value in it was character-for-character what `.dark` already
+ * defines — so it was not a room palette at all, it was a copy of one theme
+ * with the toggle disconnected. Deleting it changed nothing in dark and gave
+ * the room its light mode back.
+ *
+ * The gradient stays explicit because a lit stage is a shape, not a surface:
+ * it has to lift at the top and fall away at the edges so the interviewer
+ * reads as standing IN something. Dark keeps the values it always had. Light
+ * is the same shape inverted — near-white at the crown falling to a cooled
+ * grey — rather than a flat panel, so the disc and its glow still sit in a
+ * space in both themes.
+ */
+const STAGE_GROUND =
+  /* Light has to fall FURTHER than it first looks: the page ground is already
+     #F5F5F3, so a stage ending near white is a panel with a hairline round it,
+     not a space. Ending on a cooled #D9E5E9 is what makes the crown read as
+     lit. */
+  "[--stage-crown:#FFFFFF] [--stage-mid:#EFF5F7] [--stage-edge:#D9E5E9] " +
+  "dark:[--stage-crown:#16262E] dark:[--stage-mid:#0D171C] dark:[--stage-edge:#0A1013]";
 
 type Turn = "asking" | "answering" | "grace" | "done";
 
@@ -818,18 +834,23 @@ export function InterviewLiveScreen() {
      the same trick `lib/theme.ts` uses; the alternative was a screenful of
      text that differs between the two renders. */
   if (!mounted) {
-    return <div className="min-h-dvh w-full bg-[#0A1013]" aria-busy="true" />;
+    return <div className="min-h-dvh w-full bg-background" aria-busy="true" />;
   }
 
   return (
-    /* THE PLATE DECIDES. A call room is its own world — Meet, Zoom and every
-       other one is dark whatever the OS is doing, because a dark room is what
-       makes a lit face and a lit stage read. So this screen pins the product's
-       DARK palette in both themes rather than following the toggle: the tokens
-       below are the same values `.dark` defines, so Button, IconButton and the
-       type need no knowledge of where they are. */
+    /* The room follows the toggle like every other screen. It used to pin dark
+       on the "a call room is its own world" argument, which is true of Meet and
+       Zoom because they are full of LIT FACES — video a dark surround makes
+       read. There is no video here: the stage is a CSS gradient and the
+       interviewer is a vector mark, and neither needs a dark room to be
+       legible. What the pinning did cost was real — a candidate who works in
+       light was thrown into a black screen for the one task on this product
+       that already raises their pulse. */
     <div
-      className={cn("flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground", ROOM_PALETTE)}
+      className={cn(
+        "flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground",
+        STAGE_GROUND,
+      )}
     >
       {/* ---- room header -------------------------------------------------- */}
       <header className="flex shrink-0 items-start justify-between gap-4 px-5 py-3.5">
@@ -855,17 +876,26 @@ export function InterviewLiveScreen() {
           )}
         </div>
 
-        {/* The session clock, deliberately the quieter of the two: it is the
-            room's clock, not the one you are answering against. */}
-        <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1.5 text-overline tabular-nums text-text-secondary">
-          <span className="size-1.5 rounded-full bg-scoring-green" aria-hidden />
-          <span>{formatTimer(secondsLeft)} left</span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {/* The room has no AppShell and so no app header — this is the only
+              chrome it has, and the top-right corner is where this product
+              keeps the toggle everywhere else. Comfort, not configuration:
+              someone about to be asked four questions should be able to take
+              the glare down without leaving the room and losing the session. */}
+          <ThemeToggle />
+
+          {/* The session clock, deliberately the quieter of the two: it is the
+              room's clock, not the one you are answering against. */}
+          <div className="inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1.5 text-overline tabular-nums text-text-secondary">
+            <span className="size-1.5 rounded-full bg-scoring-green" aria-hidden />
+            <span>{formatTimer(secondsLeft)} left</span>
+          </div>
         </div>
       </header>
 
       {/* ---- stage --------------------------------------------------------- */}
       <main className="relative min-h-0 flex-1 px-5">
-        <div className="relative h-full w-full overflow-hidden rounded-[20px] border border-border bg-[radial-gradient(120%_90%_at_50%_0%,#16262E_0%,#0D171C_55%,#0A1013_100%)]">
+        <div className="relative h-full w-full overflow-hidden rounded-[20px] border border-border bg-[radial-gradient(120%_90%_at_50%_0%,var(--stage-crown)_0%,var(--stage-mid)_55%,var(--stage-edge)_100%)]">
           {/* The interviewer. No photoreal avatar and no orb: the brand mark
               on a lit plate, with the glow breathing only while it speaks, so
               "who is talking" is legible at a glance and nothing is pretending
@@ -880,11 +910,20 @@ export function InterviewLiveScreen() {
                 className={cn(
                   "absolute size-[260px] rounded-full blur-[56px] transition-opacity duration-700",
                   turn === "asking"
-                    ? "bg-primary/40 motion-safe:animate-pulse"
-                    : "bg-primary/12",
+                    ? "bg-primary/25 motion-safe:animate-pulse dark:bg-primary/40"
+                    : "bg-primary/10 dark:bg-primary/12",
                 )}
               />
-              <span className="relative grid size-[176px] place-items-center rounded-full border border-white/10 bg-white/[0.05] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
+              <span className={cn(
+                  "relative grid size-[176px] place-items-center rounded-full backdrop-blur-sm",
+                  "shadow-[inset_0_1px_0_0_var(--glass-inset)]",
+                  /* Dark lifts the disc off the plate with light, the way
+                     it always did. Light cannot — nothing out-brightens a
+                     white crown — so it holds the disc with the brand hue
+                     and a firmer edge instead. Same read, opposite means. */
+                  "border border-primary/25 bg-primary/[0.07]",
+                  "dark:border-foreground/10 dark:bg-foreground/[0.05]",
+                )}>
                 <LogoMark className="size-[76px] text-primary" />
               </span>
             </div>
@@ -908,30 +947,30 @@ export function InterviewLiveScreen() {
           </div>
 
           {/* State chip, bottom-left, the way a call names the active speaker. */}
-          <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-overline text-white backdrop-blur">
+          <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full border border-border bg-card/85 px-3 py-1.5 text-overline text-text-primary backdrop-blur">
             <span
               aria-hidden
               className={cn(
                 "size-1.5 rounded-full",
-                turn === "asking" ? "bg-scoring-green motion-safe:animate-pulse" : "bg-white/40",
+                turn === "asking" ? "bg-scoring-green motion-safe:animate-pulse" : "bg-text-secondary/60",
               )}
             />
             <span>{turn === "asking" ? "Speaking" : "Listening"}</span>
           </div>
 
           {/* Self view, picture-in-picture, where every call puts it. */}
-          <div className="absolute bottom-3 right-3 w-[128px] overflow-hidden rounded-xl border border-white/10 bg-[#0E1A20] shadow-[0_10px_30px_-12px_rgba(0,0,0,0.9)] sm:w-[216px]">
+          <div className="absolute bottom-3 right-3 w-[128px] overflow-hidden rounded-xl border border-border bg-card shadow-[0_10px_30px_-12px_rgb(0_0_0/0.25)] dark:shadow-[0_10px_30px_-12px_rgb(0_0_0/0.9)] sm:w-[216px]">
             <div className="relative flex aspect-video items-center justify-center">
               {camOn ? (
                 <p className="px-3 text-center text-overline text-text-secondary">
                   Camera preview
                 </p>
               ) : (
-                <span className="grid size-9 place-items-center rounded-full bg-white/[0.06] text-caption font-semibold text-text-primary sm:size-11 sm:text-body-sm">
+                <span className="grid size-9 place-items-center rounded-full bg-foreground/[0.08] text-caption font-semibold text-text-primary sm:size-11 sm:text-body-sm">
                   {name.trim().charAt(0).toUpperCase() || "Y"}
                 </span>
               )}
-              <div className="absolute bottom-1.5 left-1.5 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] leading-4 text-white">
+              <div className="absolute bottom-1.5 left-1.5 inline-flex items-center gap-1.5 rounded-full border border-border bg-background/85 px-2 py-0.5 text-[10px] leading-4 text-text-primary backdrop-blur">
                 <span
                   aria-hidden
                   className={cn(
@@ -1050,7 +1089,7 @@ export function InterviewLiveScreen() {
               onClick={() => setMicOn((v) => !v)}
               className={cn(
                 micOn
-                  ? "bg-white/[0.06] text-text-primary hover:bg-white/[0.12] hover:text-text-primary"
+                  ? "bg-foreground/[0.06] text-text-primary hover:bg-foreground/[0.12] hover:text-text-primary"
                   : "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground",
               )}
               disabled={isEnding}
@@ -1088,7 +1127,7 @@ export function InterviewLiveScreen() {
               onClick={() => setCamOn((v) => !v)}
               className={cn(
                 camOn
-                  ? "bg-white/[0.06] text-text-primary hover:bg-white/[0.12] hover:text-text-primary"
+                  ? "bg-foreground/[0.06] text-text-primary hover:bg-foreground/[0.12] hover:text-text-primary"
                   : "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground",
               )}
               disabled={isEnding}
@@ -1122,7 +1161,7 @@ export function InterviewLiveScreen() {
               variant="outline"
               onClick={nextQuestion}
               disabled={isEnding}
-              className="rounded-full border-border bg-transparent px-5 text-text-primary hover:bg-white/[0.06] hover:text-text-primary"
+              className="rounded-full border-border bg-transparent px-5 text-text-primary hover:bg-foreground/[0.06] hover:text-text-primary"
             >
               {isLastQuestion ? "Finish answering" : "Next question"}
             </Button>
@@ -1148,14 +1187,13 @@ export function InterviewLiveScreen() {
           this screen, so it asks — and says what happens next and how long it
           takes. */}
       <Dialog open={confirmEndOpen} onOpenChange={setConfirmEndOpen}>
-        {/* `text-foreground` is load-bearing here: the title and the outline
-            button set no colour of their own, so without it they inherit a
-            colour already computed on <body> in the app's ambient theme and
-            arrive as near-black text on the room's dark card. Naming it here
-            makes the colour resolve inside the pinned scope. */}
-        <DialogContent
-          className={cn("border-border bg-card text-foreground sm:max-w-md", ROOM_PALETTE)}
-        >
+        {/* The scoped palette this used to wear is gone with the room's. A
+            portalled dialog does not inherit a scope applied to the room, so
+            while the room was pinned dark the palette had to be repeated here
+            or the dialog came up as the app's light card behind a dark screen.
+            Now both read the same ambient theme and there is nothing to
+            repeat. */}
+        <DialogContent className="border-border bg-card sm:max-w-md">
           <DialogHeader>
             <DialogTitle>End the session?</DialogTitle>
             <DialogDescription>
