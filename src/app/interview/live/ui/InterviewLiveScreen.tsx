@@ -710,7 +710,6 @@ export function InterviewLiveScreen() {
   const [now, setNow] = useState(0);
 
   const current = questions[Math.min(qIndex, questions.length - 1)]!;
-  const isLastQuestion = qIndex >= questions.length - 1;
 
   const startTurn = useCallback((next: Turn) => {
     setTurn(next);
@@ -1153,23 +1152,15 @@ export function InterviewLiveScreen() {
             </IconButton>
           </div>
 
-          {/* Nobody should have to sit out five minutes they do not need. The
-              clock is a ceiling, not a quota. */}
-          {turn === "answering" || turn === "grace" ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={nextQuestion}
-              disabled={isEnding}
-              className="rounded-full border-border bg-transparent px-5 text-text-primary hover:bg-foreground/[0.06] hover:text-text-primary"
-            >
-              {isLastQuestion ? "Finish answering" : "Next question"}
-            </Button>
-          ) : (
-            <span className="hidden text-overline tabular-nums text-text-secondary sm:block">
-              {formatTimer(secondsLeft)} remaining
-            </span>
-          )}
+          {/* No "Next question" control. The interviewer moves the session on
+              by itself — five minutes, then the extra minute, then the next
+              question — and a button that does the same thing turns a paced
+              interview into a self-service form: it asks the candidate to
+              decide, mid-answer, whether they are finished, which is a
+              question a real interviewer never puts to you.
+
+              The slot it vacated held the session clock a second time. The
+              header already carries it, so nothing takes its place. */}
 
           <Button
             variant="destructive"
