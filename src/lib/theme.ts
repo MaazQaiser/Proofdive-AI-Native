@@ -164,9 +164,24 @@ export function setThemePreference(next: ThemePreference) {
   if (typeof document.startViewTransition === "function") {
     root.classList.add("theme-crossfade");
     const done = () => root.classList.remove("theme-crossfade");
-    document
-      .startViewTransition(() => applyTheme(resolved))
-      .finished.then(done, done);
+    const transition = document.startViewTransition(() => applyTheme(resolved));
+
+    /* A view transition hands back THREE promises, and the browser rejects
+       them whenever it decides to SKIP the fade: a second toggle before the
+       first settles, a navigation mid-fade, a dev Fast Refresh reload, a tab
+       that goes hidden. Only `finished` was being handled, so every skip
+       surfaced as an unhandled AbortError / InvalidStateError — in production
+       a console error, and in dev a full red error overlay thrown over the
+       app for something the user did nothing wrong to cause.
+   
+       Being skipped is not a failure. The update callback still runs when a
+       transition is skipped, so the theme still flips; what is lost is the
+       crossfade, which is the one part of this that was always optional. So
+       these are swallowed rather than reported. `finished` keeps BOTH handlers
+       because the class has to come off either way. */
+    transition.ready.catch(() => {});
+    transition.updateCallbackDone.catch(() => {});
+    transition.finished.then(done, done);
     return;
   }
 
