@@ -2141,6 +2141,17 @@ body {
       border-radius: 44px;
       corner-shape: squircle;
     }
+    /* The lean's light layers draw corners of their own. `border-radius:
+       inherit` copies the radius but not the corner's shape, so they came out
+       round inside a squircle pane: the rim light ran a circle just inside the
+       pane's edge and showed as a second line at every corner while leaning.
+       Named, not `inherit`: the CSS compiler drops a `corner-shape: inherit`
+       rule outright (it never reaches the browser), and every leaning pane is
+       a squircle here anyway. */
+    .glass-lean:not(.rounded-full)::before,
+    .glass-lean:not(.rounded-full)::after {
+      corner-shape: squircle;
+    }
   }
 
   /* The lean — the website's (src/ui/o2/tilt.ts): the pane tips a few degrees
