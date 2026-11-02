@@ -2073,3 +2073,122 @@ body {
     display: none !important;
   }
 }
+
+/* ==========================================================
+   Pane glass — the marketing website's liquid glass
+   (Proofdive-Website-, src/styles/glass.css), for surfaces that float over
+   water: the auth panel's plates. One material, two looks:
+
+     milk   (light)  silver frost, ink type
+     smoke  (dark)   the deep seen through smoked glass — darker than the
+                     water it sits in, so light type holds whatever the
+                     water behind it is doing
+
+   A rim that catches the light, a sheen from above, a glow along the foot,
+   and a shadow tinted by the sea rather than grey. Literal values on purpose:
+   the extended-* tokens these are drawn from swap their role in dark, and the
+   glass must not swap with them.
+   ========================================================== */
+:root {
+  --pane-bg:
+    radial-gradient(62% 58% at 0% 100%, rgb(140 200 224 / 0.22), transparent 72%),
+    radial-gradient(56% 52% at 100% 100%, rgb(243 234 214 / 0.24), transparent 72%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.8) 0%, rgb(241 245 247 / 0.86) 55%, rgb(228 235 238 / 0.92) 100%);
+  --pane-rim:
+    0 0 0 1px rgb(6 44 53 / 0.08),
+    inset 0 0 0 1px rgb(255 255 255 / 0.6),
+    inset 0 1px 0 #fff,
+    inset 0 -1.5px 0 rgb(255 255 255 / 0.9);
+  --pane-shadow:
+    0 2px 6px -2px rgb(7 62 76 / 0.08),
+    0 34px 80px -36px rgb(7 62 76 / 0.4);
+  --pane-blur: blur(40px) saturate(1.05) brightness(1.02);
+  /* the pointer's light on a leaning pane: a pool on the face, a line on the rim */
+  --pane-pool: rgb(34 211 238 / 0.1);
+  --pane-edge: rgb(14 154 181 / 0.75);
+}
+.dark {
+  --pane-bg:
+    radial-gradient(90% 55% at 50% -12%, rgb(255 255 255 / 0.07), transparent 70%),
+    radial-gradient(60% 50% at 0% 100%, rgb(255 255 255 / 0.05), transparent 72%),
+    radial-gradient(50% 45% at 100% 100%, rgb(255 255 255 / 0.04), transparent 72%),
+    linear-gradient(180deg, rgb(1 22 27 / 0.4), rgb(1 22 27 / 0.58));
+  --pane-rim:
+    inset 0 0 0 1px rgb(255 255 255 / 0.13),
+    inset 0 1px 0 rgb(255 255 255 / 0.26),
+    inset 0 -1px 0 rgb(34 211 238 / 0.3),
+    inset 0 -24px 40px -32px rgb(34 211 238 / 0.3);
+  --pane-shadow: 0 30px 70px -34px rgb(1 22 27 / 0.8);
+  --pane-blur: blur(40px) saturate(1.5) brightness(1.03);
+  --pane-pool: rgb(34 211 238 / 0.08);
+  --pane-edge: rgb(62 200 223 / 0.6);
+}
+
+/* In the components layer, so a utility on the element wins: a chip's
+   rounded-full or rounded-[20px] beats the pane's default radius. Unlayered,
+   these would beat every Tailwind utility whatever its specificity. */
+@layer components {
+  .glass-pane {
+    border-radius: 28px;
+    background: var(--pane-bg);
+    box-shadow: var(--pane-rim), var(--pane-shadow);
+    -webkit-backdrop-filter: var(--pane-blur);
+    backdrop-filter: var(--pane-blur);
+  }
+  /* the continuous corner, where the browser can draw one (as the site does) */
+  @supports (corner-shape: squircle) {
+    .glass-pane:not(.rounded-full) {
+      border-radius: 44px;
+      corner-shape: squircle;
+    }
+  }
+
+  /* The lean — the website's (src/ui/o2/tilt.ts): the pane tips a few degrees
+     towards the pointer and catches its light. GlassPane sets --rx/--ry/--px/
+     --py; a fine pointer and motion allowed only. */
+  .glass-lean {
+    --rx: 0deg;
+    --ry: 0deg;
+    --px: 50%;
+    --py: 0%;
+    position: relative;
+    isolation: isolate;
+    transform: perspective(1200px) rotateX(var(--rx)) rotateY(var(--ry));
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .glass-lean::before,
+  .glass-lean::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .glass-lean::before {
+    z-index: -1;
+    background: radial-gradient(380px circle at var(--px) var(--py), var(--pane-pool), transparent 62%);
+  }
+  .glass-lean::after {
+    padding: 1px;
+    background: radial-gradient(220px circle at var(--px) var(--py), var(--pane-edge), transparent 72%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+  }
+  .glass-lean.is-lean::before,
+  .glass-lean.is-lean::after {
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .glass-lean {
+      transform: none;
+      transition: none;
+    }
+  }
+}
