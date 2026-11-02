@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { AuthShell } from "@/components/auth/AuthShell";
-import { GlassPane } from "@/components/shared/GlassPane";
+import { AuthSteps } from "@/components/auth/AuthSteps";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import { AuthDivider, SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { Button } from "@/components/ui/button";
@@ -49,68 +49,22 @@ const STEP_DETAIL: Record<(typeof ONBOARDING_STEP_LABELS)[number], string> = {
   "First session": "Start with a lesson, a story or a mock interview.",
 };
 
-/**
- * The steps stand on a pane of the website's glass, floating on the panel's
- * water — the same milk (light) / smoke (dark) the site's cards are made of,
- * leaning towards the pointer the way they do — and the pane is sized to the
- * panel rather than left as a small block marooned in its middle. The
- * headline matches the form's own (2rem Gilroy), so the two halves balance.
- * The chip on its corner is the time the left column already promises.
- *
- * The ink is the panel's own teal (extended-green-blue), not the page's grey:
- * grey falls under AA on the water. Labels at full strength, everything else
- * at 80% — the lowest step that clears 4.5:1 at the gradient's darkest end in
- * both themes (70% gave 3.99 in light). The closing line is the product's own
- * promise (SESSION_PROMISES in OnboardingAgent), so the panel claims nothing
- * the product does not.
- */
+/** The panel's sequence and its glass are AuthSteps'; this page only says what the steps are. */
 function SignupAside() {
-  const last = ONBOARDING_STEP_LABELS.length - 1;
   return (
-    <div className="w-full max-w-[460px]">
-      <p className="text-overline uppercase text-extended-green-blue/80">After you sign up</p>
-      <h2 className="mt-3 font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-extended-green-blue [text-wrap:balance]">
-        Four steps to your first session.
-      </h2>
-
-      <div className="relative mt-10">
-        <GlassPane lean className="px-8 pb-8 pt-9">
-          <ol className="flex flex-col">
-            {ONBOARDING_STEP_LABELS.map((label, i) => (
-              <li key={label} className="relative grid grid-cols-[2.25rem_1fr] gap-x-3 pb-8 last:pb-0">
-                {/* the rail, from under this numeral to the next */}
-                {i < last ? (
-                  <span
-                    aria-hidden
-                    className="absolute bottom-1 left-[0.6rem] top-8 w-px bg-extended-green-blue/20"
-                  />
-                ) : null}
-                {/* the list already says the order to a screen reader */}
-                <span
-                  aria-hidden
-                  className="font-gilroy text-body font-semibold tabular-nums text-extended-green-blue/80"
-                >
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <div className="min-w-0">
-                  <h3 className="text-body font-semibold text-extended-green-blue">{label}</h3>
-                  <p className="mt-1 text-body-sm text-extended-green-blue/80">{STEP_DETAIL[label]}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </GlassPane>
-
-        <p className="glass-pane absolute -top-4 right-7 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-caption font-medium text-extended-green-blue">
+    <AuthSteps
+      eyebrow="After you sign up"
+      title="Four steps to your first session."
+      steps={ONBOARDING_STEP_LABELS.map((label) => ({ label, detail: STEP_DETAIL[label] }))}
+      chip={
+        <>
           <Clock3 className="size-3.5" aria-hidden />
           About 10 minutes
-        </p>
-      </div>
-
-      <p className="mt-8 max-w-[42ch] text-caption text-extended-green-blue/80">
-        Nothing is written for you. Everything stays grounded in what actually happened.
-      </p>
-    </div>
+        </>
+      }
+      // the product's own promise (SESSION_PROMISES in OnboardingAgent)
+      footnote="Nothing is written for you. Everything stays grounded in what actually happened."
+    />
   );
 }
 
