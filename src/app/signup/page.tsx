@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import { SuccessDriverIcon } from "@/components/ui/success-driver-icon";
+import { ONBOARDING_STEP_LABELS } from "@/app/onboarding/ui/OnboardingProgressHeader";
 import { StorageKeys } from "@/lib/proofdiveStorageKeys";
 import {
   MOCK_SOCIAL_IDENTITY,
@@ -21,59 +21,79 @@ import {
   type AuthIdentity,
 } from "@/lib/authIdentity";
 import { writeJson } from "@/lib/storage";
-import {
-  SUCCESS_DRIVERS,
-  SUCCESS_DRIVER_ORDER,
-  type SuccessDriverId,
-} from "@/lib/successDrivers";
 import { cn } from "@/lib/utils";
 
 const fieldClassName =
   "h-11 rounded-md border-border bg-card px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
 
-/** Right-panel pitch: the four Success Drivers — the product's fixed
- * assessment standard and its core differentiator. One line of benefit per
- * pillar; the framework sells itself without reading like an ad. */
-const PILLAR_PITCH: Record<SuccessDriverId, string> = {
-  thinking: "Structured judgment under pressure",
-  action: "Ownership that delivers outcomes",
-  people: "Communication that moves decisions",
-  mastery: "Craft depth you can demonstrate",
+/**
+ * The right panel answers the question this screen raises — what happens after
+ * this button? — rather than teaching the scoring framework, which nobody needs
+ * in order to decide to sign up (the client: "make more sense, show what the
+ * user needs here"). The left column promises a first session ten minutes
+ * away; this shows what those ten minutes hold.
+ *
+ * The steps are onboarding's own, named exactly as its progress header names
+ * them one screen later (ONBOARDING_STEP_LABELS), so the next screen confirms
+ * this one. Each line was checked against OnboardingAgent: a CV dropped or
+ * three quick questions; the role and its job description; a Core Four
+ * inferred from that description; a first session the user may start
+ * anywhere. Keyed by the label type, so a renamed step is a type error here,
+ * not a stale promise.
+ */
+const STEP_DETAIL: Record<(typeof ONBOARDING_STEP_LABELS)[number], string> = {
+  "Your background": "Drop your CV, or answer three quick questions.",
+  Target: "The role you want, and its job description.",
+  "Focus areas": "Your Core Four, picked from that job description.",
+  "First session": "Start with a lesson, a story or a mock interview.",
 };
 
+/**
+ * Minimal on purpose: words, a numbered rail and the water — no cards, no
+ * icons, no fills. The ink is the panel's own teal (extended-green-blue),
+ * not the page's grey: grey falls under AA on this gradient. Labels at full
+ * strength, everything else at 80% — measured at the gradient's darkest end,
+ * that is the lowest step that clears 4.5:1 in both themes (70% gave 3.99 in
+ * light), and brand-blue numerals fell to 4.08. Weight and size carry the
+ * hierarchy instead of colour. The closing line is the product's own promise (SESSION_PROMISES in
+ * OnboardingAgent), so the panel claims nothing the product does not.
+ */
 function SignupAside() {
+  const last = ONBOARDING_STEP_LABELS.length - 1;
   return (
     <div className="w-full max-w-[380px]">
-      <h2 className="font-gilroy text-h3 font-bold tracking-[-0.02em] text-extended-green-blue">
-        Interviews come down to four things.
+      <p className="text-overline uppercase text-extended-green-blue/80">After you sign up</p>
+      <h2 className="mt-3 font-gilroy text-h3 font-bold tracking-[-0.02em] text-extended-green-blue [text-wrap:balance]">
+        Four steps to your first session.
       </h2>
-      <p className="mt-3 text-body-sm text-text-secondary">
-        ProofDive scores every answer against them, so you walk in with proof
-        instead of a feeling.
-      </p>
-      <ul className="mt-7 flex flex-col gap-4">
-        {SUCCESS_DRIVER_ORDER.map((id) => (
-          <li key={id} className="flex items-center gap-3.5">
+
+      <ol className="mt-10 flex flex-col">
+        {ONBOARDING_STEP_LABELS.map((label, i) => (
+          <li key={label} className="relative grid grid-cols-[2rem_1fr] gap-x-3 pb-7 last:pb-0">
+            {/* the rail, from under this numeral to the next */}
+            {i < last ? (
+              <span
+                aria-hidden
+                className="absolute bottom-1 left-[0.55rem] top-7 w-px bg-extended-green-blue/20"
+              />
+            ) : null}
+            {/* the list already says the order to a screen reader */}
             <span
               aria-hidden
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-extended-green-blue"
+              className="pt-px font-gilroy text-body-sm font-semibold tabular-nums text-extended-green-blue/80"
             >
-              <SuccessDriverIcon driver={id} className="size-4.5 text-primary-foreground" />
+              {String(i + 1).padStart(2, "0")}
             </span>
-            <div>
-              <h3 className="text-body-sm font-semibold text-foreground">
-                {SUCCESS_DRIVERS[id].label}
-              </h3>
-              <p className="text-caption text-text-secondary">
-                {PILLAR_PITCH[id]}
-              </p>
+            <div className="min-w-0">
+              <h3 className="text-body-sm font-semibold text-extended-green-blue">{label}</h3>
+              <p className="mt-0.5 text-caption text-extended-green-blue/80">{STEP_DETAIL[label]}</p>
             </div>
           </li>
         ))}
-      </ul>
-      <p className="mt-7 text-caption text-text-secondary">
-        Your first session scores all four, and it ends with your first proof
-        report.
+      </ol>
+
+      <p className="mt-10 border-t border-extended-green-blue/15 pt-5 text-caption text-extended-green-blue/80">
+        Nothing is written for you. Everything stays grounded in what actually happened.
       </p>
     </div>
   );
