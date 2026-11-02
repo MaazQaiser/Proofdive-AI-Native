@@ -12,7 +12,9 @@ const linkClassName =
  * Testing scaffolding — one quiet fixed row, bottom-left, out of the product
  * UI: the "Reset flow" control plus, on the login screen only, the role
  * quick-logins (Super Admin / Org Admin / Partner). Grouped here so
- * demo/testing shortcuts never sit inside real product screens.
+ * demo/testing shortcuts never sit inside real product screens. It stands on
+ * a small pane of glass because the auth pages now have the sea along their
+ * foot, and bare grey type over moving water is not readable.
  */
 export function ResetFlowCta() {
   const router = useRouter();
@@ -63,7 +65,7 @@ export function ResetFlowCta() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 flex flex-wrap items-center gap-x-4 gap-y-1 print:hidden">
+    <div className="glass-pane fixed bottom-4 left-4 z-50 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-full px-4 py-1.5 print:hidden">
       <button type="button" onClick={reset} className={linkClassName} aria-label="Reset flow">
         Reset flow
       </button>
