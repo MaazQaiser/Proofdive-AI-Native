@@ -1,0 +1,1593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ProofDive DESIGN.md</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Built from the ProofDive tokens (src/app/globals.css), the same as the
+   Foundation page, so the two read as one pair. */
+:root {
+  --background: #F5F5F3; --card: #FFFFFF; --surface: #EEEEEC; --muted: #E8E8E6;
+  --text-primary: #0E0E0E; --text-secondary: #6B7280;
+  --border: #DFE7E9; --divider-soft: #E4E7E6;
+  --primary: #0E9AB5; --link: #095b73; --brand-1000: #E7F5F8;
+  --code-bg: #EFF2F1; --code-ink: #0d4d5e;
+  --src-bg: #FBFBFA; --src-num: #A3ABAE;
+  --shadow: 0 12px 32px -16px rgba(4, 32, 39, 0.35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #0a1013; --card: #121c21; --surface: #16232a; --muted: #1c2c33;
+    --text-primary: #e8eff1; --text-secondary: #94a6ac;
+    --border: #273b43; --divider-soft: #1f2e35;
+    --primary: #22b2cc; --link: #7fd4e6; --brand-1000: #0c2932;
+    --code-bg: #16232a; --code-ink: #8fd9e8;
+    --src-bg: #0e171b; --src-num: #4c6168;
+    --shadow: inset 0 1px 0 0 rgba(255,255,255,.06), 0 16px 40px -24px rgba(0,0,0,.75);
+  }
+}
+:root[data-theme="dark"] {
+  --background: #0a1013; --card: #121c21; --surface: #16232a; --muted: #1c2c33;
+  --text-primary: #e8eff1; --text-secondary: #94a6ac;
+  --border: #273b43; --divider-soft: #1f2e35;
+  --primary: #22b2cc; --link: #7fd4e6; --brand-1000: #0c2932;
+  --code-bg: #16232a; --code-ink: #8fd9e8;
+  --src-bg: #0e171b; --src-num: #4c6168;
+  --shadow: inset 0 1px 0 0 rgba(255,255,255,.06), 0 16px 40px -24px rgba(0,0,0,.75);
+}
+
+* { box-sizing: border-box; }
+html { scroll-padding-top: 76px; }
+body {
+  margin: 0; background: var(--background); color: var(--text-primary);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px; line-height: 1.65; -webkit-font-smoothing: antialiased;
+}
+code, pre, .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+a { color: var(--link); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ---- file bar: this is a file in a repository ------------------------- */
+.bar {
+  position: sticky; top: 0; z-index: 5;
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.bar-in {
+  max-width: 1200px; margin: 0 auto; padding-inline: 20px;
+  height: 60px; display: flex; align-items: center; gap: 16px;
+}
+.crumb { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13.5px; }
+.crumb .repo { color: var(--text-secondary); }
+.crumb .sep { color: var(--text-secondary); opacity: .6; }
+.crumb .file { font-weight: 600; white-space: nowrap; }
+.crumb .meta { color: var(--text-secondary); font-size: 12px; white-space: nowrap; }
+.bar-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.seg { display: inline-flex; padding: 3px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); }
+.seg button {
+  font: inherit; font-size: 12.5px; font-weight: 500; border: 0; background: transparent;
+  color: var(--text-secondary); padding: 5px 13px; border-radius: 999px; cursor: pointer;
+}
+/* Selected on the quiet brand surface, not white on teal: white on #0E9AB5 is
+   ~3.05:1, which DESIGN.md itself rules out for type this small. */
+.seg button[aria-pressed="true"] { background: var(--brand-1000); color: var(--code-ink); box-shadow: inset 0 0 0 1px var(--primary); }
+
+.tool {
+  font: inherit; font-size: 12.5px; font-weight: 500; height: 32px; padding: 0 12px;
+  border: 1px solid var(--border); border-radius: 999px; background: var(--card);
+  color: var(--text-primary); cursor: pointer; white-space: nowrap;
+}
+.tool:hover { border-color: var(--primary); }
+
+/* ---- shell --------------------------------------------------------------- */
+.shell { max-width: 1200px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 96px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
+@media (min-width: 1040px) {
+  .layout { grid-template-columns: 220px minmax(0, 1fr); gap: 56px; align-items: start; }
+  .toc { position: sticky; top: 92px; }
+}
+
+.masthead { padding-bottom: 28px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
+.eyebrow { font-size: 12px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--text-secondary); margin: 0 0 12px; }
+.masthead h1 { margin: 0; font-size: clamp(34px, 5vw, 48px); font-weight: 500; letter-spacing: -1.6px; line-height: 1.05; }
+.masthead h1 .ext { color: var(--primary); }
+.masthead p { margin: 14px 0 0; max-width: 62ch; color: var(--text-secondary); font-size: 17.5px; letter-spacing: -.2px; }
+.pair {
+  margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
+  font-size: 13.5px; color: var(--text-secondary);
+}
+.pair a { font-weight: 500; }
+
+/* ---- contents ------------------------------------------------------------ */
+.toc p { font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--text-secondary); margin: 0 0 10px; padding-left: 14px; }
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc a {
+  display: block; padding: 5px 0 5px 12px; border-left: 2px solid var(--border);
+  color: var(--text-secondary); text-decoration: none; font-size: 13.5px; line-height: 1.4;
+}
+.toc a:hover, .toc a[aria-current="true"] { color: var(--text-primary); border-left-color: var(--primary); }
+
+/* ---- the document --------------------------------------------------------- */
+.doc { min-width: 0; max-width: 820px; }
+.doc > p, .doc > ul, .doc > ol { max-width: 70ch; }
+.doc h2 {
+  font-size: 28px; font-weight: 500; letter-spacing: -1.2px; line-height: 1.2;
+  margin: 56px 0 14px; padding-top: 28px; border-top: 1px solid var(--border);
+  text-wrap: balance;
+}
+.doc h3 { font-size: 18px; font-weight: 600; letter-spacing: -.3px; margin: 32px 0 8px; }
+.doc p { margin: 0 0 14px; }
+.doc ul, .doc ol { margin: 0 0 16px; padding-left: 22px; }
+.doc li { margin: 4px 0; }
+.doc li::marker { color: var(--text-secondary); }
+.doc strong { font-weight: 600; }
+.doc hr { display: none; }
+.doc > p:first-child { font-size: 17px; }
+
+.doc code {
+  background: var(--code-bg); color: var(--code-ink);
+  padding: 1.5px 5px; border-radius: 5px; font-size: .86em; white-space: nowrap;
+}
+.doc code.val { display: inline-flex; align-items: center; gap: 6px; }
+.doc .sw {
+  width: 11px; height: 11px; border-radius: 3px; flex: none; background: var(--sw);
+  box-shadow: inset 0 0 0 1px rgba(128,128,128,.4);
+}
+
+.doc pre {
+  background: var(--src-bg); border: 1px solid var(--border); border-radius: 14px;
+  padding: 16px 18px; overflow-x: auto; font-size: 13px; line-height: 1.6; margin: 0 0 18px;
+}
+.doc pre code { background: none; padding: 0; color: var(--text-primary); white-space: pre; font-size: inherit; }
+
+.table-wrap {
+  overflow-x: auto; margin: 14px 0 20px; border: 1px solid var(--border);
+  border-radius: 14px; background: var(--card); box-shadow: var(--shadow);
+}
+.doc table { border-collapse: collapse; width: 100%; min-width: 520px; font-variant-numeric: tabular-nums; }
+.doc th, .doc td { text-align: left; padding: 9px 14px; font-size: 13.5px; vertical-align: top; }
+.doc th {
+  font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase;
+  color: var(--text-secondary); background: var(--surface); border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.doc td { border-top: 1px solid var(--divider-soft); }
+.doc tbody tr:first-child td { border-top: 0; }
+
+/* ---- the source ------------------------------------------------------------ */
+.source {
+  margin: 0; background: var(--src-bg); border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px 0; overflow-x: auto; font-size: 13px; line-height: 1.7; counter-reset: ln;
+}
+.source .ln { display: block; padding-right: 20px; white-space: pre; }
+.source .ln::before {
+  counter-increment: ln; content: counter(ln);
+  display: inline-block; width: 52px; padding-right: 18px; margin-right: 4px;
+  text-align: right; color: var(--src-num); user-select: none;
+}
+
+.foot { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); max-width: 70ch; }
+
+@media (max-width: 640px) {
+  .crumb .repo, .crumb .sep, .crumb .meta { display: none; }
+  .bar-in { gap: 10px; }
+  .tool { padding: 0 10px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <div class="crumb">
+      <span class="repo mono">proofdive</span><span class="sep">/</span>
+      <span class="file mono">DESIGN.md</span>
+      <span class="meta mono">431 lines</span>
+    </div>
+    <div class="bar-tools">
+      <div class="seg" role="group" aria-label="View">
+        <button type="button" id="v-rendered" aria-pressed="true">Rendered</button>
+        <button type="button" id="v-source" aria-pressed="false">Source</button>
+      </div>
+      <button type="button" class="tool" id="copy">Copy markdown</button>
+      <button type="button" class="tool" id="theme">Dark</button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <div class="layout">
+    <nav class="toc" aria-label="Contents" id="toc">
+      <p>Contents</p>
+      <ol>
+        <li><a href="#1-visual-theme-and-atmosphere">1. Visual theme and atmosphere</a></li>
+        <li><a href="#2-colour-palette-and-roles">2. Colour palette and roles</a></li>
+        <li><a href="#3-typography">3. Typography</a></li>
+        <li><a href="#4-components">4. Components</a></li>
+        <li><a href="#5-layout">5. Layout</a></li>
+        <li><a href="#6-depth-and-elevation">6. Depth and elevation</a></li>
+        <li><a href="#7-dark-mode">7. Dark mode</a></li>
+        <li><a href="#8-motion-and-interaction">8. Motion and interaction</a></li>
+        <li><a href="#9-responsive-behaviour">9. Responsive behaviour</a></li>
+        <li><a href="#10-voice-in-the-interface">10. Voice in the interface</a></li>
+        <li><a href="#11-do-and-dont">11. Do and don&#39;t</a></li>
+        <li><a href="#12-for-ai-agents-generating-ui">12. For AI agents generating UI</a></li>
+      </ol>
+    </nav>
+
+    <main>
+      <div class="masthead">
+        <p class="eyebrow">ProofDive · Web app</p>
+        <h1>DESIGN<span class="ext">.md</span></h1>
+        <p>The design system of the ProofDive web app, written down — every token, rule and
+          component as the code on <code style="background:var(--code-bg);color:var(--code-ink);padding:1.5px 5px;border-radius:5px;font-size:.86em">main</code> actually has it.</p>
+        <div class="pair">
+          <span>Visual reference: <a href="/design-system">Live design system</a></span>
+          <span>Source of truth: <span class="mono">src/app/globals.css</span></span>
+        </div>
+      </div>
+
+      <article class="doc" id="rendered">
+<p>The design system of the ProofDive web app: an AI interview coach that turns a
+person&#39;s real experience into interview-ready evidence, and measures how ready
+they are.</p>
+<p>This file describes <strong>what the code on <code>main</code> does</strong>, not what it aspires to.
+Every value below is lifted from the source, and the source wins any
+disagreement:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Source of truth</th>
+<th>What lives there</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/app/globals.css</code></td>
+<td>Every token, both themes, the type scale, utilities, keyframes</td>
+</tr>
+<tr>
+<td><code>src/components/ui/</code></td>
+<td>The 40 components (shadcn/ui, <code>new-york</code> style, on Radix)</td>
+</tr>
+<tr>
+<td><code>src/lib/scoringPalette.ts</code></td>
+<td>The scoring bands and the one helper that styles them</td>
+</tr>
+<tr>
+<td><code>src/lib/theme.ts</code></td>
+<td>Theme preference, the pre-paint bootstrap, the crossfade</td>
+</tr>
+<tr>
+<td><code>/design-system</code></td>
+<td>The live showcase — every component, rendered</td>
+</tr>
+</tbody></table></div>
+<p><strong>Stack.</strong> Next.js 16 · React 19 · Tailwind CSS v4 (CSS-first, <code>@theme inline</code>,
+no <code>tailwind.config</code>) · shadcn/ui on Radix primitives · <code>class-variance-authority</code>
+for variants · <code>lucide-react</code> for icons · <code>sonner</code> for toasts · Inter via
+<code>next/font</code>, Gilroy self-hosted.</p>
+<hr>
+<h2 id="1-visual-theme-and-atmosphere">1. Visual theme and atmosphere</h2>
+<p>Calm, precise, quietly confident — a coach, not a cheerleader. The product is
+read in long, focused sessions by people under pressure, so the surface stays
+out of the way and lets the person&#39;s own words carry the screen.</p>
+<ul>
+<li><strong>Teal on warm paper.</strong> One brand hue, a clear teal (<code class="val"><span class="sw" style="--sw:#0E9AB5" aria-hidden="true"></span>#0E9AB5</code>), on an
+off-white ground (<code class="val"><span class="sw" style="--sw:#F5F5F3" aria-hidden="true"></span>#F5F5F3</code>) that is never pure white. Cards step up to white.</li>
+<li><strong>Evidence is the hero.</strong> Scores, answers and the Consultant&#39;s notes are the
+loudest things on any screen; chrome concedes to them.</li>
+<li><strong>Glass, used sparingly.</strong> A translucent card language exists for the
+surfaces that float — never as a default texture.</li>
+<li><strong>Dark is designed, not inverted.</strong> No dark value is a flipped hex. Each token
+keeps its <em>role</em> in both themes (see §7).</li>
+</ul>
+<hr>
+<h2 id="2-colour-palette-and-roles">2. Colour palette and roles</h2>
+<p>Reach for <strong>semantic</strong> tokens first. The ramps underneath exist to build them.
+Every token is declared in <code>:root</code>; <code>.dark</code> only redefines values and never
+introduces a token of its own.</p>
+<h3 id="21-semantic-pairs">2.1 Semantic pairs</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Light</th>
+<th>Dark</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--background</code></td>
+<td><code class="val"><span class="sw" style="--sw:#F5F5F3" aria-hidden="true"></span>#F5F5F3</code></td>
+<td><code class="val"><span class="sw" style="--sw:#0a1013" aria-hidden="true"></span>#0a1013</code></td>
+<td>The page ground</td>
+</tr>
+<tr>
+<td><code>--foreground</code></td>
+<td><code class="val"><span class="sw" style="--sw:#0E0E0E" aria-hidden="true"></span>#0E0E0E</code></td>
+<td><code class="val"><span class="sw" style="--sw:#e8eff1" aria-hidden="true"></span>#e8eff1</code></td>
+<td>Body ink</td>
+</tr>
+<tr>
+<td><code>--card</code></td>
+<td><code class="val"><span class="sw" style="--sw:#FFFFFF" aria-hidden="true"></span>#FFFFFF</code></td>
+<td><code class="val"><span class="sw" style="--sw:#121c21" aria-hidden="true"></span>#121c21</code></td>
+<td>One step above the page</td>
+</tr>
+<tr>
+<td><code>--popover</code></td>
+<td><code class="val"><span class="sw" style="--sw:#FFFFFF" aria-hidden="true"></span>#FFFFFF</code></td>
+<td><code class="val"><span class="sw" style="--sw:#16232a" aria-hidden="true"></span>#16232a</code></td>
+<td>Menus, tooltips, sheets</td>
+</tr>
+<tr>
+<td><code>--surface</code></td>
+<td><code class="val"><span class="sw" style="--sw:#E8E8E6" aria-hidden="true"></span>#E8E8E6</code></td>
+<td><code class="val"><span class="sw" style="--sw:#18252b" aria-hidden="true"></span>#18252b</code></td>
+<td>Inset / nested plate</td>
+</tr>
+<tr>
+<td><code>--muted</code></td>
+<td><code class="val"><span class="sw" style="--sw:#E8E8E6" aria-hidden="true"></span>#E8E8E6</code></td>
+<td><code class="val"><span class="sw" style="--sw:#1c2c33" aria-hidden="true"></span>#1c2c33</code></td>
+<td>Quiet fill, ghost hover</td>
+</tr>
+<tr>
+<td><code>--muted-foreground</code></td>
+<td><code class="val"><span class="sw" style="--sw:#6B7280" aria-hidden="true"></span>#6B7280</code></td>
+<td><code class="val"><span class="sw" style="--sw:#94a6ac" aria-hidden="true"></span>#94a6ac</code></td>
+<td>Secondary ink</td>
+</tr>
+<tr>
+<td><code>--primary</code></td>
+<td><code class="val"><span class="sw" style="--sw:#0E9AB5" aria-hidden="true"></span>#0E9AB5</code></td>
+<td><code class="val"><span class="sw" style="--sw:#22b2cc" aria-hidden="true"></span>#22b2cc</code></td>
+<td>Brand teal — fills, focus, emphasis</td>
+</tr>
+<tr>
+<td><code>--primary-foreground</code></td>
+<td><code class="val"><span class="sw" style="--sw:#F5F5F5" aria-hidden="true"></span>#F5F5F5</code></td>
+<td><code class="val"><span class="sw" style="--sw:#03171c" aria-hidden="true"></span>#03171c</code></td>
+<td>Label on a primary fill</td>
+</tr>
+<tr>
+<td><code>--secondary</code></td>
+<td><code class="val"><span class="sw" style="--sw:#B9EFF4" aria-hidden="true"></span>#B9EFF4</code></td>
+<td><code class="val"><span class="sw" style="--sw:#123842" aria-hidden="true"></span>#123842</code></td>
+<td>Pale brand surface (the default badge)</td>
+</tr>
+<tr>
+<td><code>--secondary-foreground</code></td>
+<td><code class="val"><span class="sw" style="--sw:#073E4C" aria-hidden="true"></span>#073E4C</code></td>
+<td><code class="val"><span class="sw" style="--sw:#a9e4ef" aria-hidden="true"></span>#a9e4ef</code></td>
+<td>Ink on secondary</td>
+</tr>
+<tr>
+<td><code>--accent</code></td>
+<td><code class="val"><span class="sw" style="--sw:#22D3EE" aria-hidden="true"></span>#22D3EE</code></td>
+<td><code class="val"><span class="sw" style="--sw:#3ec8df" aria-hidden="true"></span>#3ec8df</code></td>
+<td>Bright highlight</td>
+</tr>
+<tr>
+<td><code>--accent-foreground</code></td>
+<td><code class="val"><span class="sw" style="--sw:#062C35" aria-hidden="true"></span>#062C35</code></td>
+<td><code class="val"><span class="sw" style="--sw:#03171c" aria-hidden="true"></span>#03171c</code></td>
+<td>Ink on accent</td>
+</tr>
+<tr>
+<td><code>--destructive</code></td>
+<td><code class="val"><span class="sw" style="--sw:#CB3A31" aria-hidden="true"></span>#CB3A31</code></td>
+<td><code class="val"><span class="sw" style="--sw:#f0736a" aria-hidden="true"></span>#f0736a</code></td>
+<td>Errors, End, irreversible actions</td>
+</tr>
+<tr>
+<td><code>--destructive-foreground</code></td>
+<td><code class="val"><span class="sw" style="--sw:#F5F5F3" aria-hidden="true"></span>#F5F5F3</code></td>
+<td><code class="val"><span class="sw" style="--sw:#2a0b08" aria-hidden="true"></span>#2a0b08</code></td>
+<td>Label on destructive</td>
+</tr>
+</tbody></table></div>
+<p>Note the last pairs: in light, a brand or destructive fill carries a
+near-white label; in dark the fill is bright enough to read on the page, so
+its label goes <strong>near-black</strong>. That is the only way both themes clear AA.</p>
+<h3 id="22-structural-tokens">2.2 Structural tokens</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Light</th>
+<th>Dark</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--border</code></td>
+<td><code class="val"><span class="sw" style="--sw:#DFE7E9" aria-hidden="true"></span>#DFE7E9</code></td>
+<td><code class="val"><span class="sw" style="--sw:#273b43" aria-hidden="true"></span>#273b43</code></td>
+<td>Quiet hairline that divides</td>
+</tr>
+<tr>
+<td><code>--divider-soft</code></td>
+<td><code class="val"><span class="sw" style="--sw:#d4d4d2" aria-hidden="true"></span>#d4d4d2</code></td>
+<td><code class="val"><span class="sw" style="--sw:#22333a" aria-hidden="true"></span>#22333a</code></td>
+<td>Softer still (inside the composer)</td>
+</tr>
+<tr>
+<td><code>--input</code></td>
+<td><code class="val"><span class="sw" style="--sw:#DFE7E9" aria-hidden="true"></span>#DFE7E9</code></td>
+<td><code class="val"><span class="sw" style="--sw:#456c78" aria-hidden="true"></span>#456c78</code></td>
+<td>Field edge — an <strong>affordance</strong>, kept above 3:1 in dark</td>
+</tr>
+<tr>
+<td><code>--ring</code></td>
+<td><code class="val"><span class="sw" style="--sw:#0E9AB5" aria-hidden="true"></span>#0E9AB5</code></td>
+<td><code class="val"><span class="sw" style="--sw:#3ec8df" aria-hidden="true"></span>#3ec8df</code></td>
+<td>Focus ring</td>
+</tr>
+<tr>
+<td><code>--text-primary</code></td>
+<td><code class="val"><span class="sw" style="--sw:#0E0E0E" aria-hidden="true"></span>#0E0E0E</code></td>
+<td><code class="val"><span class="sw" style="--sw:#e8eff1" aria-hidden="true"></span>#e8eff1</code></td>
+<td>Primary ink</td>
+</tr>
+<tr>
+<td><code>--text-secondary</code></td>
+<td><code class="val"><span class="sw" style="--sw:#6B7280" aria-hidden="true"></span>#6B7280</code></td>
+<td><code class="val"><span class="sw" style="--sw:#94a6ac" aria-hidden="true"></span>#94a6ac</code></td>
+<td>Secondary ink</td>
+</tr>
+<tr>
+<td><code>--placeholder</code></td>
+<td><code class="val"><span class="sw" style="--sw:#999999" aria-hidden="true"></span>#999999</code></td>
+<td><code class="val"><span class="sw" style="--sw:#778b91" aria-hidden="true"></span>#778b91</code></td>
+<td>Field placeholder</td>
+</tr>
+<tr>
+<td><code>--link</code></td>
+<td><code class="val"><span class="sw" style="--sw:#095b73" aria-hidden="true"></span>#095b73</code></td>
+<td><code class="val"><span class="sw" style="--sw:#7fd4e6" aria-hidden="true"></span>#7fd4e6</code></td>
+<td>Inline text links</td>
+</tr>
+<tr>
+<td><code>--chip-border</code></td>
+<td><code class="val"><span class="sw" style="--sw:#adddda" aria-hidden="true"></span>#adddda</code></td>
+<td><code class="val"><span class="sw" style="--sw:#446e79" aria-hidden="true"></span>#446e79</code></td>
+<td>Selection chip edge — an affordance</td>
+</tr>
+<tr>
+<td><code>--overlay</code></td>
+<td><code class="val"><span class="sw" style="--sw:rgb(0 0 0 / .30)" aria-hidden="true"></span>rgb(0 0 0 / .30)</code></td>
+<td><code class="val"><span class="sw" style="--sw:rgb(0 0 0 / .62)" aria-hidden="true"></span>rgb(0 0 0 / .62)</code></td>
+<td>Scrim behind modals</td>
+</tr>
+</tbody></table></div>
+<h3 id="23-brand-ramp">2.3 Brand ramp</h3>
+<p>Ten steps. The number encodes <strong>use, not lightness</strong>: 100 is the accent end,
+1000 the quiet-surface end — in both themes. So in dark, 100 is the brightest
+step and 1000 the deepest, and <code>bg-brand-1000</code> stays a quiet surface everywhere.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Light</th>
+<th>Dark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>100</td>
+<td><code class="val"><span class="sw" style="--sw:#0E9AB5" aria-hidden="true"></span>#0E9AB5</code></td>
+<td><code class="val"><span class="sw" style="--sw:#5bd6ea" aria-hidden="true"></span>#5bd6ea</code></td>
+</tr>
+<tr>
+<td>200</td>
+<td><code class="val"><span class="sw" style="--sw:#26A4BC" aria-hidden="true"></span>#26A4BC</code></td>
+<td><code class="val"><span class="sw" style="--sw:#3fc3da" aria-hidden="true"></span>#3fc3da</code></td>
+</tr>
+<tr>
+<td>300</td>
+<td><code class="val"><span class="sw" style="--sw:#3EAEC4" aria-hidden="true"></span>#3EAEC4</code></td>
+<td><code class="val"><span class="sw" style="--sw:#2faec6" aria-hidden="true"></span>#2faec6</code></td>
+</tr>
+<tr>
+<td>400</td>
+<td><code class="val"><span class="sw" style="--sw:#56B8CB" aria-hidden="true"></span>#56B8CB</code></td>
+<td><code class="val"><span class="sw" style="--sw:#2898b0" aria-hidden="true"></span>#2898b0</code></td>
+</tr>
+<tr>
+<td>500</td>
+<td><code class="val"><span class="sw" style="--sw:#6EC2D3" aria-hidden="true"></span>#6EC2D3</code></td>
+<td><code class="val"><span class="sw" style="--sw:#22829a" aria-hidden="true"></span>#22829a</code></td>
+</tr>
+<tr>
+<td>600</td>
+<td><code class="val"><span class="sw" style="--sw:#87CDDA" aria-hidden="true"></span>#87CDDA</code></td>
+<td><code class="val"><span class="sw" style="--sw:#1d6d83" aria-hidden="true"></span>#1d6d83</code></td>
+</tr>
+<tr>
+<td>700</td>
+<td><code class="val"><span class="sw" style="--sw:#9FD7E1" aria-hidden="true"></span>#9FD7E1</code></td>
+<td><code class="val"><span class="sw" style="--sw:#18596d" aria-hidden="true"></span>#18596d</code></td>
+</tr>
+<tr>
+<td>800</td>
+<td><code class="val"><span class="sw" style="--sw:#B7E1E9" aria-hidden="true"></span>#B7E1E9</code></td>
+<td><code class="val"><span class="sw" style="--sw:#144857" aria-hidden="true"></span>#144857</code></td>
+</tr>
+<tr>
+<td>900</td>
+<td><code class="val"><span class="sw" style="--sw:#CFEBF0" aria-hidden="true"></span>#CFEBF0</code></td>
+<td><code class="val"><span class="sw" style="--sw:#103743" aria-hidden="true"></span>#103743</code></td>
+</tr>
+<tr>
+<td>1000</td>
+<td><code class="val"><span class="sw" style="--sw:#E7F5F8" aria-hidden="true"></span>#E7F5F8</code></td>
+<td><code class="val"><span class="sw" style="--sw:#0c2932" aria-hidden="true"></span>#0c2932</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="24-extended-brand">2.4 Extended brand</h3>
+<p>Role-preservation at its clearest: in light some of these are pale <em>surfaces</em>
+and others dark <em>text</em>. Each keeps its job in dark.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Light</th>
+<th>Dark</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--extended-light-cyan</code></td>
+<td><code class="val"><span class="sw" style="--sw:#B9EFF4" aria-hidden="true"></span>#B9EFF4</code></td>
+<td><code class="val"><span class="sw" style="--sw:#123039" aria-hidden="true"></span>#123039</code></td>
+<td>Surface — chip hover fill</td>
+</tr>
+<tr>
+<td><code>--extended-cyan</code></td>
+<td><code class="val"><span class="sw" style="--sw:#00A8B9" aria-hidden="true"></span>#00A8B9</code></td>
+<td><code class="val"><span class="sw" style="--sw:#3ec8df" aria-hidden="true"></span>#3ec8df</code></td>
+<td>Text</td>
+</tr>
+<tr>
+<td><code>--extended-blue</code></td>
+<td><code class="val"><span class="sw" style="--sw:#006F8F" aria-hidden="true"></span>#006F8F</code></td>
+<td><code class="val"><span class="sw" style="--sw:#7fd4e6" aria-hidden="true"></span>#7fd4e6</code></td>
+<td>Text — the agent&#39;s question</td>
+</tr>
+<tr>
+<td><code>--extended-green</code></td>
+<td><code class="val"><span class="sw" style="--sw:#C7DCD5" aria-hidden="true"></span>#C7DCD5</code></td>
+<td><code class="val"><span class="sw" style="--sw:#273b43" aria-hidden="true"></span>#273b43</code></td>
+<td>Row divider <strong>only</strong></td>
+</tr>
+<tr>
+<td><code>--extended-green-blue</code></td>
+<td><code class="val"><span class="sw" style="--sw:#073E4C" aria-hidden="true"></span>#073E4C</code></td>
+<td><code class="val"><span class="sw" style="--sw:#a9e4ef" aria-hidden="true"></span>#a9e4ef</code></td>
+<td>Text</td>
+</tr>
+<tr>
+<td><code>--extended-cyan-green</code></td>
+<td><code class="val"><span class="sw" style="--sw:#062C35" aria-hidden="true"></span>#062C35</code></td>
+<td><code class="val"><span class="sw" style="--sw:#8fd9e8" aria-hidden="true"></span>#8fd9e8</code></td>
+<td>Text and small dot fills</td>
+</tr>
+<tr>
+<td><code>--extended-dark-cyan</code></td>
+<td><code class="val"><span class="sw" style="--sw:#01161B" aria-hidden="true"></span>#01161B</code></td>
+<td><code class="val"><span class="sw" style="--sw:#d3f1f6" aria-hidden="true"></span>#d3f1f6</code></td>
+<td>Text</td>
+</tr>
+<tr>
+<td><code>--heading-teal</code></td>
+<td><code class="val"><span class="sw" style="--sw:#094149" aria-hidden="true"></span>#094149</code></td>
+<td><code class="val"><span class="sw" style="--sw:#a9dfeb" aria-hidden="true"></span>#a9dfeb</code></td>
+<td>The agent&#39;s greeting headline</td>
+</tr>
+</tbody></table></div>
+<h3 id="25-scoring-palette">2.5 Scoring palette</h3>
+<p>Four bands across a 1.0–5.0 scale — the product&#39;s central measurement, and the
+only colours that carry <strong>meaning</strong> rather than brand.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Band</th>
+<th>Range</th>
+<th>Fill (light / dark)</th>
+<th>Text, light</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Not ready</td>
+<td>1.0 – 2.4</td>
+<td><code class="val"><span class="sw" style="--sw:#CB3A31" aria-hidden="true"></span>#CB3A31</code> / <code class="val"><span class="sw" style="--sw:#f0736a" aria-hidden="true"></span>#f0736a</code></td>
+<td><code class="val"><span class="sw" style="--sw:#CB3A31" aria-hidden="true"></span>#CB3A31</code></td>
+</tr>
+<tr>
+<td>Borderline</td>
+<td>2.5 – 3.4</td>
+<td><code class="val"><span class="sw" style="--sw:#E9A13B" aria-hidden="true"></span>#E9A13B</code> / <code class="val"><span class="sw" style="--sw:#e9a13b" aria-hidden="true"></span>#e9a13b</code></td>
+<td><code class="val"><span class="sw" style="--sw:#A16207" aria-hidden="true"></span>#A16207</code></td>
+</tr>
+<tr>
+<td>Pass</td>
+<td>3.5 – 4.4</td>
+<td><code class="val"><span class="sw" style="--sw:#16A34A" aria-hidden="true"></span>#16A34A</code> / <code class="val"><span class="sw" style="--sw:#34c76a" aria-hidden="true"></span>#34c76a</code></td>
+<td><code class="val"><span class="sw" style="--sw:#15803D" aria-hidden="true"></span>#15803D</code></td>
+</tr>
+<tr>
+<td>Star</td>
+<td>4.5 – 5.0</td>
+<td><code class="val"><span class="sw" style="--sw:#22D3EE" aria-hidden="true"></span>#22D3EE</code> / <code class="val"><span class="sw" style="--sw:#3ec8df" aria-hidden="true"></span>#3ec8df</code></td>
+<td><code class="val"><span class="sw" style="--sw:#0E7490" aria-hidden="true"></span>#0E7490</code></td>
+</tr>
+</tbody></table></div>
+<p>The bright <code>--scoring-*</code> values are for <strong>fills</strong> (bars, the segmented scale,
+chart series). Labels use the <code>--scoring-*-fg</code> variants, tuned to clear 4.5:1
+on a light card. One helper owns all band chrome — <code>scoringBadgeClass()</code> in
+<code>src/lib/scoringPalette.ts</code> — and every pill is a 25 % tint with the <code>-fg</code> ink.</p>
+<hr>
+<h2 id="3-typography">3. Typography</h2>
+<h3 id="31-faces">3.1 Faces</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Face</th>
+<th>Loaded via</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Inter</strong></td>
+<td><code>next/font/google</code> → <code>--font-sans</code></td>
+<td>Everything by default</td>
+</tr>
+<tr>
+<td><strong>Gilroy</strong> 300/400/500/700/800</td>
+<td>Self-hosted <code>.woff</code> → <code>font-gilroy</code></td>
+<td>The wordmark, big tabular numerals, scores — deliberately narrow</td>
+</tr>
+</tbody></table></div>
+<h3 id="32-scale">3.2 Scale</h3>
+<p>Use the utility, never a raw <code>text-[Npx]</code> for running text.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Utility</th>
+<th>Size</th>
+<th>Weight</th>
+<th>Tracking</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>text-h1</code></td>
+<td>40px</td>
+<td>500</td>
+<td>−0.8px</td>
+<td>Page titles</td>
+</tr>
+<tr>
+<td><code>text-agent-heading</code></td>
+<td>40px</td>
+<td>500</td>
+<td>−0.8px</td>
+<td>The agent&#39;s greeting (lh 1.2)</td>
+</tr>
+<tr>
+<td><code>text-subheading</code></td>
+<td>36px</td>
+<td>400</td>
+<td>−1.44px</td>
+<td>Large lead lines</td>
+</tr>
+<tr>
+<td><code>text-h2</code></td>
+<td>32px</td>
+<td>500</td>
+<td>−2px</td>
+<td>Section heads</td>
+</tr>
+<tr>
+<td><code>text-agent-question</code></td>
+<td>28px</td>
+<td>500</td>
+<td>−0.56px</td>
+<td>The question being asked (lh 1.3)</td>
+</tr>
+<tr>
+<td><code>text-h3</code></td>
+<td>24px</td>
+<td>500</td>
+<td>−1.5px</td>
+<td>Card heads</td>
+</tr>
+<tr>
+<td><code>text-h4</code></td>
+<td>20px</td>
+<td>500</td>
+<td>−1.2px</td>
+<td>Sub-heads</td>
+</tr>
+<tr>
+<td><code>text-body-lg</code></td>
+<td>20px</td>
+<td>400</td>
+<td>−1px</td>
+<td>Lead paragraphs, the Consultant Note</td>
+</tr>
+<tr>
+<td><code>text-body</code></td>
+<td>18px</td>
+<td>400</td>
+<td>−1px</td>
+<td>Body (paragraph spacing 18px)</td>
+</tr>
+<tr>
+<td><code>text-h5</code></td>
+<td>16px</td>
+<td>500</td>
+<td>−0.8px</td>
+<td>Small heads</td>
+</tr>
+<tr>
+<td><code>text-body-sm</code></td>
+<td>16px</td>
+<td>400</td>
+<td>0</td>
+<td>Dense body, controls</td>
+</tr>
+<tr>
+<td><code>text-h6</code></td>
+<td>14px</td>
+<td>500</td>
+<td>−0.5px</td>
+<td>Labels with weight</td>
+</tr>
+<tr>
+<td><code>text-caption</code></td>
+<td>14px</td>
+<td>400</td>
+<td>0</td>
+<td>Captions, meta, links in UI</td>
+</tr>
+<tr>
+<td><code>text-overline</code></td>
+<td>12px</td>
+<td>500</td>
+<td><strong>+0.5px</strong></td>
+<td>Eyebrows, badges</td>
+</tr>
+</tbody></table></div>
+<p><strong>The signature:</strong> tracking tightens as size grows (−2px at 32px) and opens
+back up at the smallest size (+0.5px on the 12px overline). Large type is
+pulled in; small type is let out.</p>
+<h3 id="33-rules">3.3 Rules</h3>
+<ul>
+<li>Headings balance their lines (<code>[text-wrap:balance]</code>); running text keeps a
+readable measure (<code>max-w-[62ch]</code>–<code>max-w-[68ch]</code>).</li>
+<li>Numbers that line up use <code>tabular-nums</code>; scores are set in Gilroy.</li>
+<li><code>--primary</code> on near-white measures ~3.05:1 — fine for an 18px+ button label,
+<strong>too low for small text</strong>. Do not set 12–14px type in brand teal on white.</li>
+</ul>
+<hr>
+<h2 id="4-components">4. Components</h2>
+<p>All in <code>src/components/ui/</code>, variants via <code>cva</code>, merged with <code>cn()</code>.</p>
+<h3 id="button">Button</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>Chrome</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>default</code></td>
+<td><code>bg-primary text-primary-foreground</code>, hover 90 %</td>
+</tr>
+<tr>
+<td><code>destructive</code></td>
+<td><code>bg-destructive text-destructive-foreground</code></td>
+</tr>
+<tr>
+<td><code>outline</code></td>
+<td><code>border-input</code> on <code>bg-background</code>, hover <code>bg-muted</code></td>
+</tr>
+<tr>
+<td><code>secondary</code></td>
+<td><code>bg-muted text-foreground</code></td>
+</tr>
+<tr>
+<td><code>ghost</code></td>
+<td>No chrome until hover <code>bg-muted</code></td>
+</tr>
+<tr>
+<td><code>link</code></td>
+<td>The <code>app-link</code> utility</td>
+</tr>
+</tbody></table></div>
+<p>Sizes: <code>default</code> h-9 (36px) px-4 · <code>sm</code> h-8 px-3 · <code>lg</code> h-10 px-6 · <code>icon</code> 36px.
+Padding is <strong>symmetric whether or not the button has an icon</strong> — an offset on
+the icon side read as an off-centre label on real 32–36px buttons.</p>
+<h3 id="badge--the-one-label-chrome">Badge — the one label chrome</h3>
+<p><code>rounded-full</code>, <code>text-overline</code> at <code>font-normal</code>, <code>px-2 py-0.5</code>, icons at
+<code>size-3</code>. Variants: <code>secondary</code> (<strong>default</strong>), <code>default</code>, <code>destructive</code>,
+<code>outline</code>. Tone is passed through <code>className</code> where colour <em>is</em> the
+information — the scoring pills are <code>&lt;Badge variant=&quot;outline&quot; className={scoringBadgeClass(score)}&gt;</code>.</p>
+<p>The app has exactly two label tiers: <strong><code>Badge</code></strong> for everything, and
+<strong><code>StatusPill</code></strong> (<code>success</code> · <code>warning</code> · <code>danger</code> · <code>neutral</code>, with an icon)
+for admin status. <code>SelectionChip</code> is a control, not a label, and is not a Badge.</p>
+<h3 id="card">Card</h3>
+<p><code>bg-card rounded-[16px] py-6 gap-6</code>, with <code>CardNested</code> (<code>bg-surface rounded-[16px]</code>) for a flat card-inside-card layer instead of a shadow.</p>
+<h3 id="input--form-controls">Input / form controls</h3>
+<p><code>h-9 rounded-md border-input</code>; focus is <code>border-ring</code> plus a 3px
+<code>ring-ring/50</code>. Placeholder uses <code>--placeholder</code>, not <code>--muted-foreground</code>.</p>
+<h3 id="iconbutton">IconButton</h3>
+<p><code>default</code> 28px · <code>md</code> 36px · <code>lg</code> 40px · <code>xl</code> 44px (the live interview&#39;s
+mic and camera — a full touch target).</p>
+<h3 id="selectionchip">SelectionChip</h3>
+<p><code>h-9 rounded-full</code>, edged with <code>--chip-border</code> — deliberately stronger than
+<code>--border</code>, because it is the flow&#39;s primary answer control.</p>
+<h3 id="dialog">Dialog</h3>
+<p>Radix dialog, <code>max-w-lg</code>, <code>p-6</code>, on <code>--overlay</code>. A portalled dialog does
+<strong>not</strong> inherit a palette scoped to its opener (see §7.3).</p>
+<h3 id="stepindicator">StepIndicator</h3>
+<p>The one &quot;where am I in this flow&quot; control, for stepped dialogs and full-screen
+wizards alike. Done (check) · current (filled number) · ahead (outlined
+number); the rule between steps fills only once the earlier one is behind you;
+<code>onStepSelect</code> makes a completed step a way back. <code>size=&quot;compact&quot;</code> for dialogs.</p>
+<h3 id="ai-presence">AI presence</h3>
+<p><code>src/components/chat/AiPresence.tsx</code> — a 36px disc holding the ProofDive mark
+inside a thin brand ring: the product&#39;s signature for &quot;the AI is here&quot;, worn by
+the composer and never used as decoration. Every state is a UX moment:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Side</th>
+<th>States</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The AI (set by the host)</td>
+<td><code>idle</code> · <code>thinking</code> · <code>responding</code> · <code>error</code></td>
+</tr>
+<tr>
+<td>The person (read by the composer from focus, text and mic)</td>
+<td>attentive · <code>typing</code> · <code>listening</code></td>
+</tr>
+</tbody></table></div>
+<h3 id="links">Links</h3>
+<p><code>app-link</code>: <strong>underlined at rest</strong>, always — <code>--link</code> against body text is only
+2.53:1 in light and 1.45:1 in dark, below the 3:1 WCAG 1.4.1 needs before
+colour may be a link&#39;s only signal. 1px rule at a 3px offset, 2px on hover,
+focus ring built in.</p>
+<hr>
+<h2 id="5-layout">5. Layout</h2>
+<ul>
+<li><strong>The shell</strong> (<code>AppShell</code>): a sticky header 56px tall (<code>h-14</code>); content in a
+<code>max-w-6xl</code> column (1152px) with <code>gap-10</code>; <code>pb-32</code> keeps content clear of the
+AI composer docked at the foot. A left rail (<code>CoachFloatingNav</code>) carries the
+app&#39;s sections.</li>
+<li><strong>Spacing</strong> is Tailwind&#39;s 4px scale. Siblings are spaced with <code>gap</code>, not
+per-element margins.</li>
+<li><strong>Radius is by role</strong>, not habit:</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Radius</th>
+<th>Used by</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--radius</code> 8px</td>
+<td>Buttons, fields</td>
+</tr>
+<tr>
+<td>16px</td>
+<td>Cards (<code>Card</code>, <code>SuccessDriverCard</code>, <code>CardButton</code>)</td>
+</tr>
+<tr>
+<td>20px</td>
+<td>Glass cards, the report&#39;s floating surfaces, the live interview stage</td>
+</tr>
+<tr>
+<td><code>rounded-full</code></td>
+<td>Selection chips, badges, the control pill, the AI disc</td>
+</tr>
+</tbody></table></div>
+<ul>
+<li><strong>Not everything is a card.</strong> Border, fill, radius and shadow each say
+&quot;separate object&quot;. Spend them on the thing that needs lifting.</li>
+</ul>
+<hr>
+<h2 id="6-depth-and-elevation">6. Depth and elevation</h2>
+<p>Elevation <strong>changes mechanism between themes</strong>: same token, same call sites,
+opposite physics.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Light</th>
+<th>Dark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--elevation-card</code></td>
+<td><code>0 12px 32px -16px rgb(4 32 39 / .35)</code></td>
+<td>lit top edge <code>inset 0 1px 0 0 rgb(255 255 255 / .06)</code> + a deeper, tighter cast</td>
+</tr>
+<tr>
+<td><code>--elevation-media</code></td>
+<td>soft cast</td>
+<td>lit edge + cast</td>
+</tr>
+<tr>
+<td><code>--elevation-pop</code></td>
+<td><code>0 24px 80px -24px rgb(7 62 76 / .35)</code></td>
+<td>lit edge + cast</td>
+</tr>
+<tr>
+<td><code>--elevation-tooltip</code></td>
+<td><code>0 8px 20px rgb(14 154 181 / .12)</code></td>
+<td>lit edge + cast</td>
+</tr>
+</tbody></table></div>
+<p><strong>Glass</strong> — a diagonal translucent fill and a lit top edge:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Light</th>
+<th>Dark</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--glass-from</code></td>
+<td><code class="val"><span class="sw" style="--sw:rgb(255 255 255 / .80)" aria-hidden="true"></span>rgb(255 255 255 / .80)</code></td>
+<td><code class="val"><span class="sw" style="--sw:rgb(255 255 255 / .055)" aria-hidden="true"></span>rgb(255 255 255 / .055)</code></td>
+</tr>
+<tr>
+<td><code>--glass-to</code></td>
+<td><code class="val"><span class="sw" style="--sw:rgb(255 255 255 / .50)" aria-hidden="true"></span>rgb(255 255 255 / .50)</code></td>
+<td><code class="val"><span class="sw" style="--sw:rgb(255 255 255 / .022)" aria-hidden="true"></span>rgb(255 255 255 / .022)</code></td>
+</tr>
+<tr>
+<td><code>--glass-inset</code></td>
+<td><code class="val"><span class="sw" style="--sw:rgb(255 255 255 / .72)" aria-hidden="true"></span>rgb(255 255 255 / .72)</code></td>
+<td><code class="val"><span class="sw" style="--sw:rgb(255 255 255 / .07)" aria-hidden="true"></span>rgb(255 255 255 / .07)</code></td>
+</tr>
+<tr>
+<td><code>--hover-veil</code></td>
+<td><code class="val"><span class="sw" style="--sw:rgb(255 255 255 / .40)" aria-hidden="true"></span>rgb(255 255 255 / .40)</code></td>
+<td><code class="val"><span class="sw" style="--sw:rgb(255 255 255 / .05)" aria-hidden="true"></span>rgb(255 255 255 / .05)</code></td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="7-dark-mode">7. Dark mode</h2>
+<p>Class-based: <code>@custom-variant dark (&amp;:where(.dark, .dark *))</code>. The class is set
+on <code>&lt;html&gt;</code> <strong>before first paint</strong> by an inlined bootstrap (<code>THEME_BOOTSTRAP</code>
+in <code>src/lib/theme.ts</code>), so there is no flash and no hydration mismatch. The
+default follows the OS; the toggle makes it an explicit choice.</p>
+<h3 id="71-the-six-principles-from-the-dark-block">7.1 The six principles (from the <code>.dark</code> block)</h3>
+<ol>
+<li><strong>Surfaces rise.</strong> The page is the darkest thing on screen; every surface
+above it is lighter — the same direction as light mode.</li>
+<li><strong>Cool graphite, not black.</strong> Neutrals carry a slight teal undertone
+(hue ≈197) so the brand reads native. Nothing is <code class="val"><span class="sw" style="--sw:#000" aria-hidden="true"></span>#000</code>.</li>
+<li><strong>Two-tier strokes.</strong> Hairlines that divide stay quiet (~1.3–1.5:1);
+boundaries that <em>are</em> the affordance are pushed past 3:1.</li>
+<li><strong>Light is emitted, not cast.</strong> A drop shadow is invisible on a dark page,
+so elevation becomes a lit top edge; an 80 % white glass becomes a ~5 % veil.</li>
+<li><strong>No harsh white.</strong> Body ink tops out at <code class="val"><span class="sw" style="--sw:#E8EFF1" aria-hidden="true"></span>#E8EFF1</code> (~14.9:1 on card).</li>
+<li><strong>Bright fill, dark label.</strong> Brand and destructive fills go bright, so
+their labels go dark.</li>
+</ol>
+<h3 id="72-the-plate-decides">7.2 The plate decides</h3>
+<p>Anything painted <strong>over imagery</strong> is not themed: the image, not the page, is
+the surface behind it. A play button on a photo stays a light glass disc with
+a dark glyph in both themes; the marketing landing stays light-inked in both,
+because its hero is a permanently near-white image.</p>
+<p>Do this with <strong>scoped CSS-variable overrides on the container</strong> —
+<code>[--text-primary:#0E0E0E] [--foreground:#0E0E0E] …</code> — never <code>dark:</code> classes on
+each child. Children keep asking for the same tokens; only the values change.</p>
+<h3 id="73-three-traps">7.3 Three traps</h3>
+<ul>
+<li>A <strong>portalled</strong> dialog does not inherit a scope applied to its opener —
+repeat the palette on the dialog content.</li>
+<li>An element with no colour of its own inherits a colour already <em>computed</em> on
+<code>&lt;body&gt;</code>; give the scoped container an explicit <code>text-foreground</code>.</li>
+<li>There is <strong>no <code>bg-base</code></strong>: <code>--color-base</code> is left out of <code>@theme</code> on purpose,
+because Tailwind would generate a <code>base</code> colour utility that collides with
+the <code>text-base</code> font-size utility. Use <code>var(--base)</code> directly.</li>
+</ul>
+<hr>
+<h2 id="8-motion-and-interaction">8. Motion and interaction</h2>
+<ul>
+<li><strong>One house curve:</strong> <code>cubic-bezier(0.22, 1, 0.36, 1)</code> — a fast start that
+settles without overshoot. Used across the entrance animations.</li>
+<li><strong>Durations:</strong> ~220ms for a settle (<code>animate-coach-brief-settle</code>);
+550–700ms for an entrance (<code>landing-rise</code>, <code>report-status-rise</code>,
+<code>pricing-rise</code>); 16–24s for ambient background drift (<code>report-blob</code>,
+<code>pricing-blob</code>).</li>
+<li><strong>Theme changes crossfade</strong> through the View Transitions API, and fall back
+to a per-property fade where it is unavailable. A skipped transition is not
+an error — the theme still flips.</li>
+<li><strong>Reduced motion is honoured everywhere</strong> (<code>prefers-reduced-motion</code> and
+<code>motion-safe:</code> variants): the page shows its end state, nothing moves.</li>
+<li><strong>Motion repeats nothing it does not need to.</strong> A block whose text has not
+changed does not re-animate.</li>
+<li><strong>AI waits are narrated truthfully.</strong> <code>AiProgressStatus</code> names the steps the
+code on that screen is actually running — a named step that is not happening
+is a spinner that also lies. Progress comes from the step index, never a
+made-up percentage.</li>
+</ul>
+<hr>
+<h2 id="9-responsive-behaviour">9. Responsive behaviour</h2>
+<ul>
+<li>Tailwind&#39;s default breakpoints, unmodified: <code>sm</code> 640 · <code>md</code> 768 · <code>lg</code> 1024
+· <code>xl</code> 1280 · <code>2xl</code> 1536.</li>
+<li>Mobile first. Rows wrap or stack; nothing produces horizontal page scroll.</li>
+<li>Interactive targets in focused tasks are 44px (the live interview&#39;s controls).</li>
+<li>Wide content (tables, transcripts) scrolls inside its own container.</li>
+</ul>
+<hr>
+<h2 id="10-voice-in-the-interface">10. Voice in the interface</h2>
+<ul>
+<li><strong>Name what makes an item different.</strong> On a screen where everything is
+generated, an &quot;AI&quot; label names nothing: <code>Recommended</code>, not &quot;AI Pick&quot;;
+<code>Draft</code>, not &quot;AI draft&quot;; <code>Suggested for you</code>, not &quot;Suggested by AI coach&quot;.</li>
+<li>The AI that builds stories is the <strong>Consultant</strong> (its block is the
+<strong>Consultant Note</strong>); the mock interview&#39;s AI is the <strong>AI Interviewer</strong>.
+Modules: <strong>MyStoryBoard</strong>, <strong>MasterClass</strong>, <strong>Mock Studios</strong>, the <strong>Report</strong>.</li>
+<li>Short, specific, second person, calm. A control says exactly what it does.</li>
+<li>A score guides preparation; it never predicts a hiring decision.</li>
+</ul>
+<hr>
+<h2 id="11-do-and-dont">11. Do and don&#39;t</h2>
+<p><strong>Do</strong></p>
+<ul>
+<li>Use semantic tokens: <code>bg-card</code>, <code>text-text-secondary</code>, <code>border-border</code>.</li>
+<li>Use <code>Badge</code> for every label, with <code>scoringBadgeClass()</code> for score bands.</li>
+<li>Use the type utilities (<code>text-h2</code>, <code>text-caption</code>, …).</li>
+<li>Underline inline links (<code>app-link</code>).</li>
+<li>Check both themes before calling anything done.</li>
+</ul>
+<p><strong>Don&#39;t</strong></p>
+<ul>
+<li>Hardcode a hex that only works in one theme (<code>bg-white</code>, <code>text-black</code>, <code class="val"><span class="sw" style="--sw:#fff" aria-hidden="true"></span>#fff</code>).</li>
+<li>Use <code>dark:</code> classes to retheme a surface over imagery — scope the variables.</li>
+<li>Put 12–14px text in brand teal on a light surface.</li>
+<li>Use a scoring fill colour as text — use its <code>-fg</code> variant.</li>
+<li>Use <code>--extended-green</code> for anything but a divider.</li>
+<li>Invent a second label chrome, a second step indicator or a second link style.</li>
+</ul>
+<hr>
+<h2 id="12-for-ai-agents-generating-ui">12. For AI agents generating UI</h2>
+<p>When you build a screen in this codebase:</p>
+<ol>
+<li>Compose from <code>src/components/ui/</code> first; add a variant before adding a component.</li>
+<li>Colour only through tokens. If you need a value that has no token, the
+token is missing — add it to <code>:root</code> <strong>and</strong> <code>.dark</code> in <code>globals.css</code>.</li>
+<li>Set type with the scale utilities; scores in <code>font-gilroy tabular-nums</code>.</li>
+<li>Radius by role (§5). Elevation through <code>--elevation-*</code>, never a raw shadow.</li>
+<li>Verify in light <strong>and</strong> dark, and with reduced motion on.</li>
+<li>Open <code>/design-system</code> to see any component rendered before re-creating it.</li>
+</ol>
+<p>Example — a card holding a score:</p>
+<pre><code class="language-tsx">&lt;Card className=&quot;px-6&quot;&gt;
+  &lt;p className=&quot;text-overline uppercase text-text-secondary&quot;&gt;Interview readiness&lt;/p&gt;
+  &lt;p className=&quot;font-gilroy text-[64px] leading-none tabular-nums text-text-primary&quot;&gt;3.8&lt;/p&gt;
+  &lt;Badge variant=&quot;outline&quot; className={scoringBadgeClass(3.8)}&gt;Pass&lt;/Badge&gt;
+&lt;/Card&gt;
+</code></pre>
+
+      </article>
+
+      <pre class="source" id="source" hidden aria-label="DESIGN.md source"><span class="ln"># DESIGN.md — ProofDive</span>
+<span class="ln"> </span>
+<span class="ln">The design system of the ProofDive web app: an AI interview coach that turns a</span>
+<span class="ln">person's real experience into interview-ready evidence, and measures how ready</span>
+<span class="ln">they are.</span>
+<span class="ln"> </span>
+<span class="ln">This file describes **what the code on `main` does**, not what it aspires to.</span>
+<span class="ln">Every value below is lifted from the source, and the source wins any</span>
+<span class="ln">disagreement:</span>
+<span class="ln"> </span>
+<span class="ln">| Source of truth | What lives there |</span>
+<span class="ln">|---|---|</span>
+<span class="ln">| `src/app/globals.css` | Every token, both themes, the type scale, utilities, keyframes |</span>
+<span class="ln">| `src/components/ui/` | The 40 components (shadcn/ui, `new-york` style, on Radix) |</span>
+<span class="ln">| `src/lib/scoringPalette.ts` | The scoring bands and the one helper that styles them |</span>
+<span class="ln">| `src/lib/theme.ts` | Theme preference, the pre-paint bootstrap, the crossfade |</span>
+<span class="ln">| `/design-system` | The live showcase — every component, rendered |</span>
+<span class="ln"> </span>
+<span class="ln">**Stack.** Next.js 16 · React 19 · Tailwind CSS v4 (CSS-first, `@theme inline`,</span>
+<span class="ln">no `tailwind.config`) · shadcn/ui on Radix primitives · `class-variance-authority`</span>
+<span class="ln">for variants · `lucide-react` for icons · `sonner` for toasts · Inter via</span>
+<span class="ln">`next/font`, Gilroy self-hosted.</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 1. Visual theme and atmosphere</span>
+<span class="ln"> </span>
+<span class="ln">Calm, precise, quietly confident — a coach, not a cheerleader. The product is</span>
+<span class="ln">read in long, focused sessions by people under pressure, so the surface stays</span>
+<span class="ln">out of the way and lets the person's own words carry the screen.</span>
+<span class="ln"> </span>
+<span class="ln">- **Teal on warm paper.** One brand hue, a clear teal (`#0E9AB5`), on an</span>
+<span class="ln">  off-white ground (`#F5F5F3`) that is never pure white. Cards step up to white.</span>
+<span class="ln">- **Evidence is the hero.** Scores, answers and the Consultant's notes are the</span>
+<span class="ln">  loudest things on any screen; chrome concedes to them.</span>
+<span class="ln">- **Glass, used sparingly.** A translucent card language exists for the</span>
+<span class="ln">  surfaces that float — never as a default texture.</span>
+<span class="ln">- **Dark is designed, not inverted.** No dark value is a flipped hex. Each token</span>
+<span class="ln">  keeps its *role* in both themes (see §7).</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 2. Colour palette and roles</span>
+<span class="ln"> </span>
+<span class="ln">Reach for **semantic** tokens first. The ramps underneath exist to build them.</span>
+<span class="ln">Every token is declared in `:root`; `.dark` only redefines values and never</span>
+<span class="ln">introduces a token of its own.</span>
+<span class="ln"> </span>
+<span class="ln">### 2.1 Semantic pairs</span>
+<span class="ln"> </span>
+<span class="ln">| Token | Light | Dark | Role |</span>
+<span class="ln">|---|---|---|---|</span>
+<span class="ln">| `--background` | `#F5F5F3` | `#0a1013` | The page ground |</span>
+<span class="ln">| `--foreground` | `#0E0E0E` | `#e8eff1` | Body ink |</span>
+<span class="ln">| `--card` | `#FFFFFF` | `#121c21` | One step above the page |</span>
+<span class="ln">| `--popover` | `#FFFFFF` | `#16232a` | Menus, tooltips, sheets |</span>
+<span class="ln">| `--surface` | `#E8E8E6` | `#18252b` | Inset / nested plate |</span>
+<span class="ln">| `--muted` | `#E8E8E6` | `#1c2c33` | Quiet fill, ghost hover |</span>
+<span class="ln">| `--muted-foreground` | `#6B7280` | `#94a6ac` | Secondary ink |</span>
+<span class="ln">| `--primary` | `#0E9AB5` | `#22b2cc` | Brand teal — fills, focus, emphasis |</span>
+<span class="ln">| `--primary-foreground` | `#F5F5F5` | `#03171c` | Label on a primary fill |</span>
+<span class="ln">| `--secondary` | `#B9EFF4` | `#123842` | Pale brand surface (the default badge) |</span>
+<span class="ln">| `--secondary-foreground` | `#073E4C` | `#a9e4ef` | Ink on secondary |</span>
+<span class="ln">| `--accent` | `#22D3EE` | `#3ec8df` | Bright highlight |</span>
+<span class="ln">| `--accent-foreground` | `#062C35` | `#03171c` | Ink on accent |</span>
+<span class="ln">| `--destructive` | `#CB3A31` | `#f0736a` | Errors, End, irreversible actions |</span>
+<span class="ln">| `--destructive-foreground` | `#F5F5F3` | `#2a0b08` | Label on destructive |</span>
+<span class="ln"> </span>
+<span class="ln">Note the last pairs: in light, a brand or destructive fill carries a</span>
+<span class="ln">near-white label; in dark the fill is bright enough to read on the page, so</span>
+<span class="ln">its label goes **near-black**. That is the only way both themes clear AA.</span>
+<span class="ln"> </span>
+<span class="ln">### 2.2 Structural tokens</span>
+<span class="ln"> </span>
+<span class="ln">| Token | Light | Dark | Role |</span>
+<span class="ln">|---|---|---|---|</span>
+<span class="ln">| `--border` | `#DFE7E9` | `#273b43` | Quiet hairline that divides |</span>
+<span class="ln">| `--divider-soft` | `#d4d4d2` | `#22333a` | Softer still (inside the composer) |</span>
+<span class="ln">| `--input` | `#DFE7E9` | `#456c78` | Field edge — an **affordance**, kept above 3:1 in dark |</span>
+<span class="ln">| `--ring` | `#0E9AB5` | `#3ec8df` | Focus ring |</span>
+<span class="ln">| `--text-primary` | `#0E0E0E` | `#e8eff1` | Primary ink |</span>
+<span class="ln">| `--text-secondary` | `#6B7280` | `#94a6ac` | Secondary ink |</span>
+<span class="ln">| `--placeholder` | `#999999` | `#778b91` | Field placeholder |</span>
+<span class="ln">| `--link` | `#095b73` | `#7fd4e6` | Inline text links |</span>
+<span class="ln">| `--chip-border` | `#adddda` | `#446e79` | Selection chip edge — an affordance |</span>
+<span class="ln">| `--overlay` | `rgb(0 0 0 / .30)` | `rgb(0 0 0 / .62)` | Scrim behind modals |</span>
+<span class="ln"> </span>
+<span class="ln">### 2.3 Brand ramp</span>
+<span class="ln"> </span>
+<span class="ln">Ten steps. The number encodes **use, not lightness**: 100 is the accent end,</span>
+<span class="ln">1000 the quiet-surface end — in both themes. So in dark, 100 is the brightest</span>
+<span class="ln">step and 1000 the deepest, and `bg-brand-1000` stays a quiet surface everywhere.</span>
+<span class="ln"> </span>
+<span class="ln">| Step | Light | Dark |</span>
+<span class="ln">|---|---|---|</span>
+<span class="ln">| 100 | `#0E9AB5` | `#5bd6ea` |</span>
+<span class="ln">| 200 | `#26A4BC` | `#3fc3da` |</span>
+<span class="ln">| 300 | `#3EAEC4` | `#2faec6` |</span>
+<span class="ln">| 400 | `#56B8CB` | `#2898b0` |</span>
+<span class="ln">| 500 | `#6EC2D3` | `#22829a` |</span>
+<span class="ln">| 600 | `#87CDDA` | `#1d6d83` |</span>
+<span class="ln">| 700 | `#9FD7E1` | `#18596d` |</span>
+<span class="ln">| 800 | `#B7E1E9` | `#144857` |</span>
+<span class="ln">| 900 | `#CFEBF0` | `#103743` |</span>
+<span class="ln">| 1000 | `#E7F5F8` | `#0c2932` |</span>
+<span class="ln"> </span>
+<span class="ln">### 2.4 Extended brand</span>
+<span class="ln"> </span>
+<span class="ln">Role-preservation at its clearest: in light some of these are pale *surfaces*</span>
+<span class="ln">and others dark *text*. Each keeps its job in dark.</span>
+<span class="ln"> </span>
+<span class="ln">| Token | Light | Dark | Role |</span>
+<span class="ln">|---|---|---|---|</span>
+<span class="ln">| `--extended-light-cyan` | `#B9EFF4` | `#123039` | Surface — chip hover fill |</span>
+<span class="ln">| `--extended-cyan` | `#00A8B9` | `#3ec8df` | Text |</span>
+<span class="ln">| `--extended-blue` | `#006F8F` | `#7fd4e6` | Text — the agent's question |</span>
+<span class="ln">| `--extended-green` | `#C7DCD5` | `#273b43` | Row divider **only** |</span>
+<span class="ln">| `--extended-green-blue` | `#073E4C` | `#a9e4ef` | Text |</span>
+<span class="ln">| `--extended-cyan-green` | `#062C35` | `#8fd9e8` | Text and small dot fills |</span>
+<span class="ln">| `--extended-dark-cyan` | `#01161B` | `#d3f1f6` | Text |</span>
+<span class="ln">| `--heading-teal` | `#094149` | `#a9dfeb` | The agent's greeting headline |</span>
+<span class="ln"> </span>
+<span class="ln">### 2.5 Scoring palette</span>
+<span class="ln"> </span>
+<span class="ln">Four bands across a 1.0–5.0 scale — the product's central measurement, and the</span>
+<span class="ln">only colours that carry **meaning** rather than brand.</span>
+<span class="ln"> </span>
+<span class="ln">| Band | Range | Fill (light / dark) | Text, light |</span>
+<span class="ln">|---|---|---|---|</span>
+<span class="ln">| Not ready | 1.0 – 2.4 | `#CB3A31` / `#f0736a` | `#CB3A31` |</span>
+<span class="ln">| Borderline | 2.5 – 3.4 | `#E9A13B` / `#e9a13b` | `#A16207` |</span>
+<span class="ln">| Pass | 3.5 – 4.4 | `#16A34A` / `#34c76a` | `#15803D` |</span>
+<span class="ln">| Star | 4.5 – 5.0 | `#22D3EE` / `#3ec8df` | `#0E7490` |</span>
+<span class="ln"> </span>
+<span class="ln">The bright `--scoring-*` values are for **fills** (bars, the segmented scale,</span>
+<span class="ln">chart series). Labels use the `--scoring-*-fg` variants, tuned to clear 4.5:1</span>
+<span class="ln">on a light card. One helper owns all band chrome — `scoringBadgeClass()` in</span>
+<span class="ln">`src/lib/scoringPalette.ts` — and every pill is a 25 % tint with the `-fg` ink.</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 3. Typography</span>
+<span class="ln"> </span>
+<span class="ln">### 3.1 Faces</span>
+<span class="ln"> </span>
+<span class="ln">| Face | Loaded via | Used for |</span>
+<span class="ln">|---|---|---|</span>
+<span class="ln">| **Inter** | `next/font/google` → `--font-sans` | Everything by default |</span>
+<span class="ln">| **Gilroy** 300/400/500/700/800 | Self-hosted `.woff` → `font-gilroy` | The wordmark, big tabular numerals, scores — deliberately narrow |</span>
+<span class="ln"> </span>
+<span class="ln">### 3.2 Scale</span>
+<span class="ln"> </span>
+<span class="ln">Use the utility, never a raw `text-[Npx]` for running text.</span>
+<span class="ln"> </span>
+<span class="ln">| Utility | Size | Weight | Tracking | Use |</span>
+<span class="ln">|---|---|---|---|---|</span>
+<span class="ln">| `text-h1` | 40px | 500 | −0.8px | Page titles |</span>
+<span class="ln">| `text-agent-heading` | 40px | 500 | −0.8px | The agent's greeting (lh 1.2) |</span>
+<span class="ln">| `text-subheading` | 36px | 400 | −1.44px | Large lead lines |</span>
+<span class="ln">| `text-h2` | 32px | 500 | −2px | Section heads |</span>
+<span class="ln">| `text-agent-question` | 28px | 500 | −0.56px | The question being asked (lh 1.3) |</span>
+<span class="ln">| `text-h3` | 24px | 500 | −1.5px | Card heads |</span>
+<span class="ln">| `text-h4` | 20px | 500 | −1.2px | Sub-heads |</span>
+<span class="ln">| `text-body-lg` | 20px | 400 | −1px | Lead paragraphs, the Consultant Note |</span>
+<span class="ln">| `text-body` | 18px | 400 | −1px | Body (paragraph spacing 18px) |</span>
+<span class="ln">| `text-h5` | 16px | 500 | −0.8px | Small heads |</span>
+<span class="ln">| `text-body-sm` | 16px | 400 | 0 | Dense body, controls |</span>
+<span class="ln">| `text-h6` | 14px | 500 | −0.5px | Labels with weight |</span>
+<span class="ln">| `text-caption` | 14px | 400 | 0 | Captions, meta, links in UI |</span>
+<span class="ln">| `text-overline` | 12px | 500 | **+0.5px** | Eyebrows, badges |</span>
+<span class="ln"> </span>
+<span class="ln">**The signature:** tracking tightens as size grows (−2px at 32px) and opens</span>
+<span class="ln">back up at the smallest size (+0.5px on the 12px overline). Large type is</span>
+<span class="ln">pulled in; small type is let out.</span>
+<span class="ln"> </span>
+<span class="ln">### 3.3 Rules</span>
+<span class="ln"> </span>
+<span class="ln">- Headings balance their lines (`[text-wrap:balance]`); running text keeps a</span>
+<span class="ln">  readable measure (`max-w-[62ch]`–`max-w-[68ch]`).</span>
+<span class="ln">- Numbers that line up use `tabular-nums`; scores are set in Gilroy.</span>
+<span class="ln">- `--primary` on near-white measures ~3.05:1 — fine for an 18px+ button label,</span>
+<span class="ln">  **too low for small text**. Do not set 12–14px type in brand teal on white.</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 4. Components</span>
+<span class="ln"> </span>
+<span class="ln">All in `src/components/ui/`, variants via `cva`, merged with `cn()`.</span>
+<span class="ln"> </span>
+<span class="ln">### Button</span>
+<span class="ln">| Variant | Chrome |</span>
+<span class="ln">|---|---|</span>
+<span class="ln">| `default` | `bg-primary text-primary-foreground`, hover 90 % |</span>
+<span class="ln">| `destructive` | `bg-destructive text-destructive-foreground` |</span>
+<span class="ln">| `outline` | `border-input` on `bg-background`, hover `bg-muted` |</span>
+<span class="ln">| `secondary` | `bg-muted text-foreground` |</span>
+<span class="ln">| `ghost` | No chrome until hover `bg-muted` |</span>
+<span class="ln">| `link` | The `app-link` utility |</span>
+<span class="ln"> </span>
+<span class="ln">Sizes: `default` h-9 (36px) px-4 · `sm` h-8 px-3 · `lg` h-10 px-6 · `icon` 36px.</span>
+<span class="ln">Padding is **symmetric whether or not the button has an icon** — an offset on</span>
+<span class="ln">the icon side read as an off-centre label on real 32–36px buttons.</span>
+<span class="ln"> </span>
+<span class="ln">### Badge — the one label chrome</span>
+<span class="ln">`rounded-full`, `text-overline` at `font-normal`, `px-2 py-0.5`, icons at</span>
+<span class="ln">`size-3`. Variants: `secondary` (**default**), `default`, `destructive`,</span>
+<span class="ln">`outline`. Tone is passed through `className` where colour *is* the</span>
+<span class="ln">information — the scoring pills are `&lt;Badge variant="outline" className={scoringBadgeClass(score)}&gt;`.</span>
+<span class="ln"> </span>
+<span class="ln">The app has exactly two label tiers: **`Badge`** for everything, and</span>
+<span class="ln">**`StatusPill`** (`success` · `warning` · `danger` · `neutral`, with an icon)</span>
+<span class="ln">for admin status. `SelectionChip` is a control, not a label, and is not a Badge.</span>
+<span class="ln"> </span>
+<span class="ln">### Card</span>
+<span class="ln">`bg-card rounded-[16px] py-6 gap-6`, with `CardNested` (`bg-surface</span>
+<span class="ln">rounded-[16px]`) for a flat card-inside-card layer instead of a shadow.</span>
+<span class="ln"> </span>
+<span class="ln">### Input / form controls</span>
+<span class="ln">`h-9 rounded-md border-input`; focus is `border-ring` plus a 3px</span>
+<span class="ln">`ring-ring/50`. Placeholder uses `--placeholder`, not `--muted-foreground`.</span>
+<span class="ln"> </span>
+<span class="ln">### IconButton</span>
+<span class="ln">`default` 28px · `md` 36px · `lg` 40px · `xl` 44px (the live interview's</span>
+<span class="ln">mic and camera — a full touch target).</span>
+<span class="ln"> </span>
+<span class="ln">### SelectionChip</span>
+<span class="ln">`h-9 rounded-full`, edged with `--chip-border` — deliberately stronger than</span>
+<span class="ln">`--border`, because it is the flow's primary answer control.</span>
+<span class="ln"> </span>
+<span class="ln">### Dialog</span>
+<span class="ln">Radix dialog, `max-w-lg`, `p-6`, on `--overlay`. A portalled dialog does</span>
+<span class="ln">**not** inherit a palette scoped to its opener (see §7.3).</span>
+<span class="ln"> </span>
+<span class="ln">### StepIndicator</span>
+<span class="ln">The one "where am I in this flow" control, for stepped dialogs and full-screen</span>
+<span class="ln">wizards alike. Done (check) · current (filled number) · ahead (outlined</span>
+<span class="ln">number); the rule between steps fills only once the earlier one is behind you;</span>
+<span class="ln">`onStepSelect` makes a completed step a way back. `size="compact"` for dialogs.</span>
+<span class="ln"> </span>
+<span class="ln">### AI presence</span>
+<span class="ln">`src/components/chat/AiPresence.tsx` — a 36px disc holding the ProofDive mark</span>
+<span class="ln">inside a thin brand ring: the product's signature for "the AI is here", worn by</span>
+<span class="ln">the composer and never used as decoration. Every state is a UX moment:</span>
+<span class="ln"> </span>
+<span class="ln">| Side | States |</span>
+<span class="ln">|---|---|</span>
+<span class="ln">| The AI (set by the host) | `idle` · `thinking` · `responding` · `error` |</span>
+<span class="ln">| The person (read by the composer from focus, text and mic) | attentive · `typing` · `listening` |</span>
+<span class="ln"> </span>
+<span class="ln">### Links</span>
+<span class="ln">`app-link`: **underlined at rest**, always — `--link` against body text is only</span>
+<span class="ln">2.53:1 in light and 1.45:1 in dark, below the 3:1 WCAG 1.4.1 needs before</span>
+<span class="ln">colour may be a link's only signal. 1px rule at a 3px offset, 2px on hover,</span>
+<span class="ln">focus ring built in.</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 5. Layout</span>
+<span class="ln"> </span>
+<span class="ln">- **The shell** (`AppShell`): a sticky header 56px tall (`h-14`); content in a</span>
+<span class="ln">  `max-w-6xl` column (1152px) with `gap-10`; `pb-32` keeps content clear of the</span>
+<span class="ln">  AI composer docked at the foot. A left rail (`CoachFloatingNav`) carries the</span>
+<span class="ln">  app's sections.</span>
+<span class="ln">- **Spacing** is Tailwind's 4px scale. Siblings are spaced with `gap`, not</span>
+<span class="ln">  per-element margins.</span>
+<span class="ln">- **Radius is by role**, not habit:</span>
+<span class="ln"> </span>
+<span class="ln">| Radius | Used by |</span>
+<span class="ln">|---|---|</span>
+<span class="ln">| `--radius` 8px | Buttons, fields |</span>
+<span class="ln">| 16px | Cards (`Card`, `SuccessDriverCard`, `CardButton`) |</span>
+<span class="ln">| 20px | Glass cards, the report's floating surfaces, the live interview stage |</span>
+<span class="ln">| `rounded-full` | Selection chips, badges, the control pill, the AI disc |</span>
+<span class="ln"> </span>
+<span class="ln">- **Not everything is a card.** Border, fill, radius and shadow each say</span>
+<span class="ln">  "separate object". Spend them on the thing that needs lifting.</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 6. Depth and elevation</span>
+<span class="ln"> </span>
+<span class="ln">Elevation **changes mechanism between themes**: same token, same call sites,</span>
+<span class="ln">opposite physics.</span>
+<span class="ln"> </span>
+<span class="ln">| Token | Light | Dark |</span>
+<span class="ln">|---|---|---|</span>
+<span class="ln">| `--elevation-card` | `0 12px 32px -16px rgb(4 32 39 / .35)` | lit top edge `inset 0 1px 0 0 rgb(255 255 255 / .06)` + a deeper, tighter cast |</span>
+<span class="ln">| `--elevation-media` | soft cast | lit edge + cast |</span>
+<span class="ln">| `--elevation-pop` | `0 24px 80px -24px rgb(7 62 76 / .35)` | lit edge + cast |</span>
+<span class="ln">| `--elevation-tooltip` | `0 8px 20px rgb(14 154 181 / .12)` | lit edge + cast |</span>
+<span class="ln"> </span>
+<span class="ln">**Glass** — a diagonal translucent fill and a lit top edge:</span>
+<span class="ln"> </span>
+<span class="ln">| Token | Light | Dark |</span>
+<span class="ln">|---|---|---|</span>
+<span class="ln">| `--glass-from` | `rgb(255 255 255 / .80)` | `rgb(255 255 255 / .055)` |</span>
+<span class="ln">| `--glass-to` | `rgb(255 255 255 / .50)` | `rgb(255 255 255 / .022)` |</span>
+<span class="ln">| `--glass-inset` | `rgb(255 255 255 / .72)` | `rgb(255 255 255 / .07)` |</span>
+<span class="ln">| `--hover-veil` | `rgb(255 255 255 / .40)` | `rgb(255 255 255 / .05)` |</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 7. Dark mode</span>
+<span class="ln"> </span>
+<span class="ln">Class-based: `@custom-variant dark (&amp;:where(.dark, .dark *))`. The class is set</span>
+<span class="ln">on `&lt;html&gt;` **before first paint** by an inlined bootstrap (`THEME_BOOTSTRAP`</span>
+<span class="ln">in `src/lib/theme.ts`), so there is no flash and no hydration mismatch. The</span>
+<span class="ln">default follows the OS; the toggle makes it an explicit choice.</span>
+<span class="ln"> </span>
+<span class="ln">### 7.1 The six principles (from the `.dark` block)</span>
+<span class="ln"> </span>
+<span class="ln">1. **Surfaces rise.** The page is the darkest thing on screen; every surface</span>
+<span class="ln">   above it is lighter — the same direction as light mode.</span>
+<span class="ln">2. **Cool graphite, not black.** Neutrals carry a slight teal undertone</span>
+<span class="ln">   (hue ≈197) so the brand reads native. Nothing is `#000`.</span>
+<span class="ln">3. **Two-tier strokes.** Hairlines that divide stay quiet (~1.3–1.5:1);</span>
+<span class="ln">   boundaries that *are* the affordance are pushed past 3:1.</span>
+<span class="ln">4. **Light is emitted, not cast.** A drop shadow is invisible on a dark page,</span>
+<span class="ln">   so elevation becomes a lit top edge; an 80 % white glass becomes a ~5 % veil.</span>
+<span class="ln">5. **No harsh white.** Body ink tops out at `#E8EFF1` (~14.9:1 on card).</span>
+<span class="ln">6. **Bright fill, dark label.** Brand and destructive fills go bright, so</span>
+<span class="ln">   their labels go dark.</span>
+<span class="ln"> </span>
+<span class="ln">### 7.2 The plate decides</span>
+<span class="ln"> </span>
+<span class="ln">Anything painted **over imagery** is not themed: the image, not the page, is</span>
+<span class="ln">the surface behind it. A play button on a photo stays a light glass disc with</span>
+<span class="ln">a dark glyph in both themes; the marketing landing stays light-inked in both,</span>
+<span class="ln">because its hero is a permanently near-white image.</span>
+<span class="ln"> </span>
+<span class="ln">Do this with **scoped CSS-variable overrides on the container** —</span>
+<span class="ln">`[--text-primary:#0E0E0E] [--foreground:#0E0E0E] …` — never `dark:` classes on</span>
+<span class="ln">each child. Children keep asking for the same tokens; only the values change.</span>
+<span class="ln"> </span>
+<span class="ln">### 7.3 Three traps</span>
+<span class="ln"> </span>
+<span class="ln">- A **portalled** dialog does not inherit a scope applied to its opener —</span>
+<span class="ln">  repeat the palette on the dialog content.</span>
+<span class="ln">- An element with no colour of its own inherits a colour already *computed* on</span>
+<span class="ln">  `&lt;body&gt;`; give the scoped container an explicit `text-foreground`.</span>
+<span class="ln">- There is **no `bg-base`**: `--color-base` is left out of `@theme` on purpose,</span>
+<span class="ln">  because Tailwind would generate a `base` colour utility that collides with</span>
+<span class="ln">  the `text-base` font-size utility. Use `var(--base)` directly.</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 8. Motion and interaction</span>
+<span class="ln"> </span>
+<span class="ln">- **One house curve:** `cubic-bezier(0.22, 1, 0.36, 1)` — a fast start that</span>
+<span class="ln">  settles without overshoot. Used across the entrance animations.</span>
+<span class="ln">- **Durations:** ~220ms for a settle (`animate-coach-brief-settle`);</span>
+<span class="ln">  550–700ms for an entrance (`landing-rise`, `report-status-rise`,</span>
+<span class="ln">  `pricing-rise`); 16–24s for ambient background drift (`report-blob`,</span>
+<span class="ln">  `pricing-blob`).</span>
+<span class="ln">- **Theme changes crossfade** through the View Transitions API, and fall back</span>
+<span class="ln">  to a per-property fade where it is unavailable. A skipped transition is not</span>
+<span class="ln">  an error — the theme still flips.</span>
+<span class="ln">- **Reduced motion is honoured everywhere** (`prefers-reduced-motion` and</span>
+<span class="ln">  `motion-safe:` variants): the page shows its end state, nothing moves.</span>
+<span class="ln">- **Motion repeats nothing it does not need to.** A block whose text has not</span>
+<span class="ln">  changed does not re-animate.</span>
+<span class="ln">- **AI waits are narrated truthfully.** `AiProgressStatus` names the steps the</span>
+<span class="ln">  code on that screen is actually running — a named step that is not happening</span>
+<span class="ln">  is a spinner that also lies. Progress comes from the step index, never a</span>
+<span class="ln">  made-up percentage.</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 9. Responsive behaviour</span>
+<span class="ln"> </span>
+<span class="ln">- Tailwind's default breakpoints, unmodified: `sm` 640 · `md` 768 · `lg` 1024</span>
+<span class="ln">  · `xl` 1280 · `2xl` 1536.</span>
+<span class="ln">- Mobile first. Rows wrap or stack; nothing produces horizontal page scroll.</span>
+<span class="ln">- Interactive targets in focused tasks are 44px (the live interview's controls).</span>
+<span class="ln">- Wide content (tables, transcripts) scrolls inside its own container.</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 10. Voice in the interface</span>
+<span class="ln"> </span>
+<span class="ln">- **Name what makes an item different.** On a screen where everything is</span>
+<span class="ln">  generated, an "AI" label names nothing: `Recommended`, not "AI Pick";</span>
+<span class="ln">  `Draft`, not "AI draft"; `Suggested for you`, not "Suggested by AI coach".</span>
+<span class="ln">- The AI that builds stories is the **Consultant** (its block is the</span>
+<span class="ln">  **Consultant Note**); the mock interview's AI is the **AI Interviewer**.</span>
+<span class="ln">  Modules: **MyStoryBoard**, **MasterClass**, **Mock Studios**, the **Report**.</span>
+<span class="ln">- Short, specific, second person, calm. A control says exactly what it does.</span>
+<span class="ln">- A score guides preparation; it never predicts a hiring decision.</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 11. Do and don't</span>
+<span class="ln"> </span>
+<span class="ln">**Do**</span>
+<span class="ln">- Use semantic tokens: `bg-card`, `text-text-secondary`, `border-border`.</span>
+<span class="ln">- Use `Badge` for every label, with `scoringBadgeClass()` for score bands.</span>
+<span class="ln">- Use the type utilities (`text-h2`, `text-caption`, …).</span>
+<span class="ln">- Underline inline links (`app-link`).</span>
+<span class="ln">- Check both themes before calling anything done.</span>
+<span class="ln"> </span>
+<span class="ln">**Don't**</span>
+<span class="ln">- Hardcode a hex that only works in one theme (`bg-white`, `text-black`, `#fff`).</span>
+<span class="ln">- Use `dark:` classes to retheme a surface over imagery — scope the variables.</span>
+<span class="ln">- Put 12–14px text in brand teal on a light surface.</span>
+<span class="ln">- Use a scoring fill colour as text — use its `-fg` variant.</span>
+<span class="ln">- Use `--extended-green` for anything but a divider.</span>
+<span class="ln">- Invent a second label chrome, a second step indicator or a second link style.</span>
+<span class="ln"> </span>
+<span class="ln">---</span>
+<span class="ln"> </span>
+<span class="ln">## 12. For AI agents generating UI</span>
+<span class="ln"> </span>
+<span class="ln">When you build a screen in this codebase:</span>
+<span class="ln"> </span>
+<span class="ln">1. Compose from `src/components/ui/` first; add a variant before adding a component.</span>
+<span class="ln">2. Colour only through tokens. If you need a value that has no token, the</span>
+<span class="ln">   token is missing — add it to `:root` **and** `.dark` in `globals.css`.</span>
+<span class="ln">3. Set type with the scale utilities; scores in `font-gilroy tabular-nums`.</span>
+<span class="ln">4. Radius by role (§5). Elevation through `--elevation-*`, never a raw shadow.</span>
+<span class="ln">5. Verify in light **and** dark, and with reduced motion on.</span>
+<span class="ln">6. Open `/design-system` to see any component rendered before re-creating it.</span>
+<span class="ln"> </span>
+<span class="ln">Example — a card holding a score:</span>
+<span class="ln"> </span>
+<span class="ln">```tsx</span>
+<span class="ln">&lt;Card className="px-6"&gt;</span>
+<span class="ln">  &lt;p className="text-overline uppercase text-text-secondary"&gt;Interview readiness&lt;/p&gt;</span>
+<span class="ln">  &lt;p className="font-gilroy text-[64px] leading-none tabular-nums text-text-primary"&gt;3.8&lt;/p&gt;</span>
+<span class="ln">  &lt;Badge variant="outline" className={scoringBadgeClass(3.8)}&gt;Pass&lt;/Badge&gt;</span>
+<span class="ln">&lt;/Card&gt;</span>
+<span class="ln">```</span></pre>
+
+      <p class="foot">Rendered from <span class="mono">DESIGN.md</span> at the root of the ProofDive repository on 2026-11-02. The rendered view and the source view are the same file.</p>
+    </main>
+  </div>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var rendered = document.getElementById("rendered");
+  var source = document.getElementById("source");
+  var toc = document.getElementById("toc");
+  var bR = document.getElementById("v-rendered");
+  var bS = document.getElementById("v-source");
+  var copy = document.getElementById("copy");
+  var themeBtn = document.getElementById("theme");
+  var RAW = "# DESIGN.md — ProofDive\n\nThe design system of the ProofDive web app: an AI interview coach that turns a\nperson's real experience into interview-ready evidence, and measures how ready\nthey are.\n\nThis file describes **what the code on `main` does**, not what it aspires to.\nEvery value below is lifted from the source, and the source wins any\ndisagreement:\n\n| Source of truth | What lives there |\n|---|---|\n| `src/app/globals.css` | Every token, both themes, the type scale, utilities, keyframes |\n| `src/components/ui/` | The 40 components (shadcn/ui, `new-york` style, on Radix) |\n| `src/lib/scoringPalette.ts` | The scoring bands and the one helper that styles them |\n| `src/lib/theme.ts` | Theme preference, the pre-paint bootstrap, the crossfade |\n| `/design-system` | The live showcase — every component, rendered |\n\n**Stack.** Next.js 16 · React 19 · Tailwind CSS v4 (CSS-first, `@theme inline`,\nno `tailwind.config`) · shadcn/ui on Radix primitives · `class-variance-authority`\nfor variants · `lucide-react` for icons · `sonner` for toasts · Inter via\n`next/font`, Gilroy self-hosted.\n\n---\n\n## 1. Visual theme and atmosphere\n\nCalm, precise, quietly confident — a coach, not a cheerleader. The product is\nread in long, focused sessions by people under pressure, so the surface stays\nout of the way and lets the person's own words carry the screen.\n\n- **Teal on warm paper.** One brand hue, a clear teal (`#0E9AB5`), on an\n  off-white ground (`#F5F5F3`) that is never pure white. Cards step up to white.\n- **Evidence is the hero.** Scores, answers and the Consultant's notes are the\n  loudest things on any screen; chrome concedes to them.\n- **Glass, used sparingly.** A translucent card language exists for the\n  surfaces that float — never as a default texture.\n- **Dark is designed, not inverted.** No dark value is a flipped hex. Each token\n  keeps its *role* in both themes (see §7).\n\n---\n\n## 2. Colour palette and roles\n\nReach for **semantic** tokens first. The ramps underneath exist to build them.\nEvery token is declared in `:root`; `.dark` only redefines values and never\nintroduces a token of its own.\n\n### 2.1 Semantic pairs\n\n| Token | Light | Dark | Role |\n|---|---|---|---|\n| `--background` | `#F5F5F3` | `#0a1013` | The page ground |\n| `--foreground` | `#0E0E0E` | `#e8eff1` | Body ink |\n| `--card` | `#FFFFFF` | `#121c21` | One step above the page |\n| `--popover` | `#FFFFFF` | `#16232a` | Menus, tooltips, sheets |\n| `--surface` | `#E8E8E6` | `#18252b` | Inset / nested plate |\n| `--muted` | `#E8E8E6` | `#1c2c33` | Quiet fill, ghost hover |\n| `--muted-foreground` | `#6B7280` | `#94a6ac` | Secondary ink |\n| `--primary` | `#0E9AB5` | `#22b2cc` | Brand teal — fills, focus, emphasis |\n| `--primary-foreground` | `#F5F5F5` | `#03171c` | Label on a primary fill |\n| `--secondary` | `#B9EFF4` | `#123842` | Pale brand surface (the default badge) |\n| `--secondary-foreground` | `#073E4C` | `#a9e4ef` | Ink on secondary |\n| `--accent` | `#22D3EE` | `#3ec8df` | Bright highlight |\n| `--accent-foreground` | `#062C35` | `#03171c` | Ink on accent |\n| `--destructive` | `#CB3A31` | `#f0736a` | Errors, End, irreversible actions |\n| `--destructive-foreground` | `#F5F5F3` | `#2a0b08` | Label on destructive |\n\nNote the last pairs: in light, a brand or destructive fill carries a\nnear-white label; in dark the fill is bright enough to read on the page, so\nits label goes **near-black**. That is the only way both themes clear AA.\n\n### 2.2 Structural tokens\n\n| Token | Light | Dark | Role |\n|---|---|---|---|\n| `--border` | `#DFE7E9` | `#273b43` | Quiet hairline that divides |\n| `--divider-soft` | `#d4d4d2` | `#22333a` | Softer still (inside the composer) |\n| `--input` | `#DFE7E9` | `#456c78` | Field edge — an **affordance**, kept above 3:1 in dark |\n| `--ring` | `#0E9AB5` | `#3ec8df` | Focus ring |\n| `--text-primary` | `#0E0E0E` | `#e8eff1` | Primary ink |\n| `--text-secondary` | `#6B7280` | `#94a6ac` | Secondary ink |\n| `--placeholder` | `#999999` | `#778b91` | Field placeholder |\n| `--link` | `#095b73` | `#7fd4e6` | Inline text links |\n| `--chip-border` | `#adddda` | `#446e79` | Selection chip edge — an affordance |\n| `--overlay` | `rgb(0 0 0 / .30)` | `rgb(0 0 0 / .62)` | Scrim behind modals |\n\n### 2.3 Brand ramp\n\nTen steps. The number encodes **use, not lightness**: 100 is the accent end,\n1000 the quiet-surface end — in both themes. So in dark, 100 is the brightest\nstep and 1000 the deepest, and `bg-brand-1000` stays a quiet surface everywhere.\n\n| Step | Light | Dark |\n|---|---|---|\n| 100 | `#0E9AB5` | `#5bd6ea` |\n| 200 | `#26A4BC` | `#3fc3da` |\n| 300 | `#3EAEC4` | `#2faec6` |\n| 400 | `#56B8CB` | `#2898b0` |\n| 500 | `#6EC2D3` | `#22829a` |\n| 600 | `#87CDDA` | `#1d6d83` |\n| 700 | `#9FD7E1` | `#18596d` |\n| 800 | `#B7E1E9` | `#144857` |\n| 900 | `#CFEBF0` | `#103743` |\n| 1000 | `#E7F5F8` | `#0c2932` |\n\n### 2.4 Extended brand\n\nRole-preservation at its clearest: in light some of these are pale *surfaces*\nand others dark *text*. Each keeps its job in dark.\n\n| Token | Light | Dark | Role |\n|---|---|---|---|\n| `--extended-light-cyan` | `#B9EFF4` | `#123039` | Surface — chip hover fill |\n| `--extended-cyan` | `#00A8B9` | `#3ec8df` | Text |\n| `--extended-blue` | `#006F8F` | `#7fd4e6` | Text — the agent's question |\n| `--extended-green` | `#C7DCD5` | `#273b43` | Row divider **only** |\n| `--extended-green-blue` | `#073E4C` | `#a9e4ef` | Text |\n| `--extended-cyan-green` | `#062C35` | `#8fd9e8` | Text and small dot fills |\n| `--extended-dark-cyan` | `#01161B` | `#d3f1f6` | Text |\n| `--heading-teal` | `#094149` | `#a9dfeb` | The agent's greeting headline |\n\n### 2.5 Scoring palette\n\nFour bands across a 1.0–5.0 scale — the product's central measurement, and the\nonly colours that carry **meaning** rather than brand.\n\n| Band | Range | Fill (light / dark) | Text, light |\n|---|---|---|---|\n| Not ready | 1.0 – 2.4 | `#CB3A31` / `#f0736a` | `#CB3A31` |\n| Borderline | 2.5 – 3.4 | `#E9A13B` / `#e9a13b` | `#A16207` |\n| Pass | 3.5 – 4.4 | `#16A34A` / `#34c76a` | `#15803D` |\n| Star | 4.5 – 5.0 | `#22D3EE` / `#3ec8df` | `#0E7490` |\n\nThe bright `--scoring-*` values are for **fills** (bars, the segmented scale,\nchart series). Labels use the `--scoring-*-fg` variants, tuned to clear 4.5:1\non a light card. One helper owns all band chrome — `scoringBadgeClass()` in\n`src/lib/scoringPalette.ts` — and every pill is a 25 % tint with the `-fg` ink.\n\n---\n\n## 3. Typography\n\n### 3.1 Faces\n\n| Face | Loaded via | Used for |\n|---|---|---|\n| **Inter** | `next/font/google` → `--font-sans` | Everything by default |\n| **Gilroy** 300/400/500/700/800 | Self-hosted `.woff` → `font-gilroy` | The wordmark, big tabular numerals, scores — deliberately narrow |\n\n### 3.2 Scale\n\nUse the utility, never a raw `text-[Npx]` for running text.\n\n| Utility | Size | Weight | Tracking | Use |\n|---|---|---|---|---|\n| `text-h1` | 40px | 500 | −0.8px | Page titles |\n| `text-agent-heading` | 40px | 500 | −0.8px | The agent's greeting (lh 1.2) |\n| `text-subheading` | 36px | 400 | −1.44px | Large lead lines |\n| `text-h2` | 32px | 500 | −2px | Section heads |\n| `text-agent-question` | 28px | 500 | −0.56px | The question being asked (lh 1.3) |\n| `text-h3` | 24px | 500 | −1.5px | Card heads |\n| `text-h4` | 20px | 500 | −1.2px | Sub-heads |\n| `text-body-lg` | 20px | 400 | −1px | Lead paragraphs, the Consultant Note |\n| `text-body` | 18px | 400 | −1px | Body (paragraph spacing 18px) |\n| `text-h5` | 16px | 500 | −0.8px | Small heads |\n| `text-body-sm` | 16px | 400 | 0 | Dense body, controls |\n| `text-h6` | 14px | 500 | −0.5px | Labels with weight |\n| `text-caption` | 14px | 400 | 0 | Captions, meta, links in UI |\n| `text-overline` | 12px | 500 | **+0.5px** | Eyebrows, badges |\n\n**The signature:** tracking tightens as size grows (−2px at 32px) and opens\nback up at the smallest size (+0.5px on the 12px overline). Large type is\npulled in; small type is let out.\n\n### 3.3 Rules\n\n- Headings balance their lines (`[text-wrap:balance]`); running text keeps a\n  readable measure (`max-w-[62ch]`–`max-w-[68ch]`).\n- Numbers that line up use `tabular-nums`; scores are set in Gilroy.\n- `--primary` on near-white measures ~3.05:1 — fine for an 18px+ button label,\n  **too low for small text**. Do not set 12–14px type in brand teal on white.\n\n---\n\n## 4. Components\n\nAll in `src/components/ui/`, variants via `cva`, merged with `cn()`.\n\n### Button\n| Variant | Chrome |\n|---|---|\n| `default` | `bg-primary text-primary-foreground`, hover 90 % |\n| `destructive` | `bg-destructive text-destructive-foreground` |\n| `outline` | `border-input` on `bg-background`, hover `bg-muted` |\n| `secondary` | `bg-muted text-foreground` |\n| `ghost` | No chrome until hover `bg-muted` |\n| `link` | The `app-link` utility |\n\nSizes: `default` h-9 (36px) px-4 · `sm` h-8 px-3 · `lg` h-10 px-6 · `icon` 36px.\nPadding is **symmetric whether or not the button has an icon** — an offset on\nthe icon side read as an off-centre label on real 32–36px buttons.\n\n### Badge — the one label chrome\n`rounded-full`, `text-overline` at `font-normal`, `px-2 py-0.5`, icons at\n`size-3`. Variants: `secondary` (**default**), `default`, `destructive`,\n`outline`. Tone is passed through `className` where colour *is* the\ninformation — the scoring pills are `<Badge variant=\"outline\" className={scoringBadgeClass(score)}>`.\n\nThe app has exactly two label tiers: **`Badge`** for everything, and\n**`StatusPill`** (`success` · `warning` · `danger` · `neutral`, with an icon)\nfor admin status. `SelectionChip` is a control, not a label, and is not a Badge.\n\n### Card\n`bg-card rounded-[16px] py-6 gap-6`, with `CardNested` (`bg-surface\nrounded-[16px]`) for a flat card-inside-card layer instead of a shadow.\n\n### Input / form controls\n`h-9 rounded-md border-input`; focus is `border-ring` plus a 3px\n`ring-ring/50`. Placeholder uses `--placeholder`, not `--muted-foreground`.\n\n### IconButton\n`default` 28px · `md` 36px · `lg` 40px · `xl` 44px (the live interview's\nmic and camera — a full touch target).\n\n### SelectionChip\n`h-9 rounded-full`, edged with `--chip-border` — deliberately stronger than\n`--border`, because it is the flow's primary answer control.\n\n### Dialog\nRadix dialog, `max-w-lg`, `p-6`, on `--overlay`. A portalled dialog does\n**not** inherit a palette scoped to its opener (see §7.3).\n\n### StepIndicator\nThe one \"where am I in this flow\" control, for stepped dialogs and full-screen\nwizards alike. Done (check) · current (filled number) · ahead (outlined\nnumber); the rule between steps fills only once the earlier one is behind you;\n`onStepSelect` makes a completed step a way back. `size=\"compact\"` for dialogs.\n\n### AI presence\n`src/components/chat/AiPresence.tsx` — a 36px disc holding the ProofDive mark\ninside a thin brand ring: the product's signature for \"the AI is here\", worn by\nthe composer and never used as decoration. Every state is a UX moment:\n\n| Side | States |\n|---|---|\n| The AI (set by the host) | `idle` · `thinking` · `responding` · `error` |\n| The person (read by the composer from focus, text and mic) | attentive · `typing` · `listening` |\n\n### Links\n`app-link`: **underlined at rest**, always — `--link` against body text is only\n2.53:1 in light and 1.45:1 in dark, below the 3:1 WCAG 1.4.1 needs before\ncolour may be a link's only signal. 1px rule at a 3px offset, 2px on hover,\nfocus ring built in.\n\n---\n\n## 5. Layout\n\n- **The shell** (`AppShell`): a sticky header 56px tall (`h-14`); content in a\n  `max-w-6xl` column (1152px) with `gap-10`; `pb-32` keeps content clear of the\n  AI composer docked at the foot. A left rail (`CoachFloatingNav`) carries the\n  app's sections.\n- **Spacing** is Tailwind's 4px scale. Siblings are spaced with `gap`, not\n  per-element margins.\n- **Radius is by role**, not habit:\n\n| Radius | Used by |\n|---|---|\n| `--radius` 8px | Buttons, fields |\n| 16px | Cards (`Card`, `SuccessDriverCard`, `CardButton`) |\n| 20px | Glass cards, the report's floating surfaces, the live interview stage |\n| `rounded-full` | Selection chips, badges, the control pill, the AI disc |\n\n- **Not everything is a card.** Border, fill, radius and shadow each say\n  \"separate object\". Spend them on the thing that needs lifting.\n\n---\n\n## 6. Depth and elevation\n\nElevation **changes mechanism between themes**: same token, same call sites,\nopposite physics.\n\n| Token | Light | Dark |\n|---|---|---|\n| `--elevation-card` | `0 12px 32px -16px rgb(4 32 39 / .35)` | lit top edge `inset 0 1px 0 0 rgb(255 255 255 / .06)` + a deeper, tighter cast |\n| `--elevation-media` | soft cast | lit edge + cast |\n| `--elevation-pop` | `0 24px 80px -24px rgb(7 62 76 / .35)` | lit edge + cast |\n| `--elevation-tooltip` | `0 8px 20px rgb(14 154 181 / .12)` | lit edge + cast |\n\n**Glass** — a diagonal translucent fill and a lit top edge:\n\n| Token | Light | Dark |\n|---|---|---|\n| `--glass-from` | `rgb(255 255 255 / .80)` | `rgb(255 255 255 / .055)` |\n| `--glass-to` | `rgb(255 255 255 / .50)` | `rgb(255 255 255 / .022)` |\n| `--glass-inset` | `rgb(255 255 255 / .72)` | `rgb(255 255 255 / .07)` |\n| `--hover-veil` | `rgb(255 255 255 / .40)` | `rgb(255 255 255 / .05)` |\n\n---\n\n## 7. Dark mode\n\nClass-based: `@custom-variant dark (&:where(.dark, .dark *))`. The class is set\non `<html>` **before first paint** by an inlined bootstrap (`THEME_BOOTSTRAP`\nin `src/lib/theme.ts`), so there is no flash and no hydration mismatch. The\ndefault follows the OS; the toggle makes it an explicit choice.\n\n### 7.1 The six principles (from the `.dark` block)\n\n1. **Surfaces rise.** The page is the darkest thing on screen; every surface\n   above it is lighter — the same direction as light mode.\n2. **Cool graphite, not black.** Neutrals carry a slight teal undertone\n   (hue ≈197) so the brand reads native. Nothing is `#000`.\n3. **Two-tier strokes.** Hairlines that divide stay quiet (~1.3–1.5:1);\n   boundaries that *are* the affordance are pushed past 3:1.\n4. **Light is emitted, not cast.** A drop shadow is invisible on a dark page,\n   so elevation becomes a lit top edge; an 80 % white glass becomes a ~5 % veil.\n5. **No harsh white.** Body ink tops out at `#E8EFF1` (~14.9:1 on card).\n6. **Bright fill, dark label.** Brand and destructive fills go bright, so\n   their labels go dark.\n\n### 7.2 The plate decides\n\nAnything painted **over imagery** is not themed: the image, not the page, is\nthe surface behind it. A play button on a photo stays a light glass disc with\na dark glyph in both themes; the marketing landing stays light-inked in both,\nbecause its hero is a permanently near-white image.\n\nDo this with **scoped CSS-variable overrides on the container** —\n`[--text-primary:#0E0E0E] [--foreground:#0E0E0E] …` — never `dark:` classes on\neach child. Children keep asking for the same tokens; only the values change.\n\n### 7.3 Three traps\n\n- A **portalled** dialog does not inherit a scope applied to its opener —\n  repeat the palette on the dialog content.\n- An element with no colour of its own inherits a colour already *computed* on\n  `<body>`; give the scoped container an explicit `text-foreground`.\n- There is **no `bg-base`**: `--color-base` is left out of `@theme` on purpose,\n  because Tailwind would generate a `base` colour utility that collides with\n  the `text-base` font-size utility. Use `var(--base)` directly.\n\n---\n\n## 8. Motion and interaction\n\n- **One house curve:** `cubic-bezier(0.22, 1, 0.36, 1)` — a fast start that\n  settles without overshoot. Used across the entrance animations.\n- **Durations:** ~220ms for a settle (`animate-coach-brief-settle`);\n  550–700ms for an entrance (`landing-rise`, `report-status-rise`,\n  `pricing-rise`); 16–24s for ambient background drift (`report-blob`,\n  `pricing-blob`).\n- **Theme changes crossfade** through the View Transitions API, and fall back\n  to a per-property fade where it is unavailable. A skipped transition is not\n  an error — the theme still flips.\n- **Reduced motion is honoured everywhere** (`prefers-reduced-motion` and\n  `motion-safe:` variants): the page shows its end state, nothing moves.\n- **Motion repeats nothing it does not need to.** A block whose text has not\n  changed does not re-animate.\n- **AI waits are narrated truthfully.** `AiProgressStatus` names the steps the\n  code on that screen is actually running — a named step that is not happening\n  is a spinner that also lies. Progress comes from the step index, never a\n  made-up percentage.\n\n---\n\n## 9. Responsive behaviour\n\n- Tailwind's default breakpoints, unmodified: `sm` 640 · `md` 768 · `lg` 1024\n  · `xl` 1280 · `2xl` 1536.\n- Mobile first. Rows wrap or stack; nothing produces horizontal page scroll.\n- Interactive targets in focused tasks are 44px (the live interview's controls).\n- Wide content (tables, transcripts) scrolls inside its own container.\n\n---\n\n## 10. Voice in the interface\n\n- **Name what makes an item different.** On a screen where everything is\n  generated, an \"AI\" label names nothing: `Recommended`, not \"AI Pick\";\n  `Draft`, not \"AI draft\"; `Suggested for you`, not \"Suggested by AI coach\".\n- The AI that builds stories is the **Consultant** (its block is the\n  **Consultant Note**); the mock interview's AI is the **AI Interviewer**.\n  Modules: **MyStoryBoard**, **MasterClass**, **Mock Studios**, the **Report**.\n- Short, specific, second person, calm. A control says exactly what it does.\n- A score guides preparation; it never predicts a hiring decision.\n\n---\n\n## 11. Do and don't\n\n**Do**\n- Use semantic tokens: `bg-card`, `text-text-secondary`, `border-border`.\n- Use `Badge` for every label, with `scoringBadgeClass()` for score bands.\n- Use the type utilities (`text-h2`, `text-caption`, …).\n- Underline inline links (`app-link`).\n- Check both themes before calling anything done.\n\n**Don't**\n- Hardcode a hex that only works in one theme (`bg-white`, `text-black`, `#fff`).\n- Use `dark:` classes to retheme a surface over imagery — scope the variables.\n- Put 12–14px text in brand teal on a light surface.\n- Use a scoring fill colour as text — use its `-fg` variant.\n- Use `--extended-green` for anything but a divider.\n- Invent a second label chrome, a second step indicator or a second link style.\n\n---\n\n## 12. For AI agents generating UI\n\nWhen you build a screen in this codebase:\n\n1. Compose from `src/components/ui/` first; add a variant before adding a component.\n2. Colour only through tokens. If you need a value that has no token, the\n   token is missing — add it to `:root` **and** `.dark` in `globals.css`.\n3. Set type with the scale utilities; scores in `font-gilroy tabular-nums`.\n4. Radius by role (§5). Elevation through `--elevation-*`, never a raw shadow.\n5. Verify in light **and** dark, and with reduced motion on.\n6. Open `/design-system` to see any component rendered before re-creating it.\n\nExample — a card holding a score:\n\n```tsx\n<Card className=\"px-6\">\n  <p className=\"text-overline uppercase text-text-secondary\">Interview readiness</p>\n  <p className=\"font-gilroy text-[64px] leading-none tabular-nums text-text-primary\">3.8</p>\n  <Badge variant=\"outline\" className={scoringBadgeClass(3.8)}>Pass</Badge>\n</Card>\n```\n";
+
+  function view(which) {
+    var src = which === "source";
+    rendered.hidden = src; source.hidden = !src; toc.hidden = src;
+    bR.setAttribute("aria-pressed", String(!src));
+    bS.setAttribute("aria-pressed", String(src));
+  }
+  bR.addEventListener("click", function () { view("rendered"); });
+  bS.addEventListener("click", function () { view("source"); });
+
+  copy.addEventListener("click", function () {
+    var done = function () { copy.textContent = "Copied"; setTimeout(function () { copy.textContent = "Copy markdown"; }, 1600); };
+    var fallback = function () {
+      view("source");
+      var r = document.createRange(); r.selectNodeContents(source);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      copy.textContent = "Selected — press Ctrl/⌘ C";
+      setTimeout(function () { copy.textContent = "Copy markdown"; }, 2600);
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(RAW).then(done, fallback);
+      else fallback();
+    } catch (e) { fallback(); }
+  });
+
+  function current() {
+    var t = root.getAttribute("data-theme");
+    if (t) return t;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  function paint() { themeBtn.textContent = current() === "dark" ? "Light" : "Dark"; }
+  themeBtn.addEventListener("click", function () {
+    root.setAttribute("data-theme", current() === "dark" ? "light" : "dark"); paint();
+  });
+  try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", paint); } catch (e) {}
+  paint();
+
+  // The contents follow the reading.
+  var links = Array.prototype.slice.call(toc.querySelectorAll("a"));
+  var heads = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+  function spy() {
+    var cur = 0;
+    for (var i = 0; i < heads.length; i++) if (heads[i] && heads[i].getBoundingClientRect().top < 140) cur = i;
+    links.forEach(function (a, i) { a.setAttribute("aria-current", i === cur ? "true" : "false"); });
+  }
+  window.addEventListener("scroll", spy, { passive: true });
+  spy();
+})();
+</script>
+</body>
+</html>
