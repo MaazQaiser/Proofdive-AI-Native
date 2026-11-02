@@ -1,11 +1,12 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Clock3, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { AuthShell } from "@/components/auth/AuthShell";
+import { GlassPane } from "@/components/shared/GlassPane";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import { AuthDivider, SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { Button } from "@/components/ui/button";
@@ -49,50 +50,64 @@ const STEP_DETAIL: Record<(typeof ONBOARDING_STEP_LABELS)[number], string> = {
 };
 
 /**
- * Minimal on purpose: words, a numbered rail and the water — no cards, no
- * icons, no fills. The ink is the panel's own teal (extended-green-blue),
- * not the page's grey: grey falls under AA on this gradient. Labels at full
- * strength, everything else at 80% — measured at the gradient's darkest end,
- * that is the lowest step that clears 4.5:1 in both themes (70% gave 3.99 in
- * light), and brand-blue numerals fell to 4.08. Weight and size carry the
- * hierarchy instead of colour. The closing line is the product's own promise (SESSION_PROMISES in
- * OnboardingAgent), so the panel claims nothing the product does not.
+ * The steps stand on a pane of the website's glass, floating on the panel's
+ * water — the same milk (light) / smoke (dark) the site's cards are made of,
+ * leaning towards the pointer the way they do — and the pane is sized to the
+ * panel rather than left as a small block marooned in its middle. The
+ * headline matches the form's own (2rem Gilroy), so the two halves balance.
+ * The chip on its corner is the time the left column already promises.
+ *
+ * The ink is the panel's own teal (extended-green-blue), not the page's grey:
+ * grey falls under AA on the water. Labels at full strength, everything else
+ * at 80% — the lowest step that clears 4.5:1 at the gradient's darkest end in
+ * both themes (70% gave 3.99 in light). The closing line is the product's own
+ * promise (SESSION_PROMISES in OnboardingAgent), so the panel claims nothing
+ * the product does not.
  */
 function SignupAside() {
   const last = ONBOARDING_STEP_LABELS.length - 1;
   return (
-    <div className="w-full max-w-[380px]">
+    <div className="w-full max-w-[460px]">
       <p className="text-overline uppercase text-extended-green-blue/80">After you sign up</p>
-      <h2 className="mt-3 font-gilroy text-h3 font-bold tracking-[-0.02em] text-extended-green-blue [text-wrap:balance]">
+      <h2 className="mt-3 font-gilroy text-[2rem] font-bold leading-tight tracking-[-0.03em] text-extended-green-blue [text-wrap:balance]">
         Four steps to your first session.
       </h2>
 
-      <ol className="mt-10 flex flex-col">
-        {ONBOARDING_STEP_LABELS.map((label, i) => (
-          <li key={label} className="relative grid grid-cols-[2rem_1fr] gap-x-3 pb-7 last:pb-0">
-            {/* the rail, from under this numeral to the next */}
-            {i < last ? (
-              <span
-                aria-hidden
-                className="absolute bottom-1 left-[0.55rem] top-7 w-px bg-extended-green-blue/20"
-              />
-            ) : null}
-            {/* the list already says the order to a screen reader */}
-            <span
-              aria-hidden
-              className="pt-px font-gilroy text-body-sm font-semibold tabular-nums text-extended-green-blue/80"
-            >
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <div className="min-w-0">
-              <h3 className="text-body-sm font-semibold text-extended-green-blue">{label}</h3>
-              <p className="mt-0.5 text-caption text-extended-green-blue/80">{STEP_DETAIL[label]}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
+      <div className="relative mt-10">
+        <GlassPane lean className="px-8 pb-8 pt-9">
+          <ol className="flex flex-col">
+            {ONBOARDING_STEP_LABELS.map((label, i) => (
+              <li key={label} className="relative grid grid-cols-[2.25rem_1fr] gap-x-3 pb-8 last:pb-0">
+                {/* the rail, from under this numeral to the next */}
+                {i < last ? (
+                  <span
+                    aria-hidden
+                    className="absolute bottom-1 left-[0.6rem] top-8 w-px bg-extended-green-blue/20"
+                  />
+                ) : null}
+                {/* the list already says the order to a screen reader */}
+                <span
+                  aria-hidden
+                  className="font-gilroy text-body font-semibold tabular-nums text-extended-green-blue/80"
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-body font-semibold text-extended-green-blue">{label}</h3>
+                  <p className="mt-1 text-body-sm text-extended-green-blue/80">{STEP_DETAIL[label]}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </GlassPane>
 
-      <p className="mt-10 border-t border-extended-green-blue/15 pt-5 text-caption text-extended-green-blue/80">
+        <p className="glass-pane absolute -top-4 right-7 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-caption font-medium text-extended-green-blue">
+          <Clock3 className="size-3.5" aria-hidden />
+          About 10 minutes
+        </p>
+      </div>
+
+      <p className="mt-8 max-w-[42ch] text-caption text-extended-green-blue/80">
         Nothing is written for you. Everything stays grounded in what actually happened.
       </p>
     </div>
