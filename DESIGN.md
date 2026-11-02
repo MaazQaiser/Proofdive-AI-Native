@@ -247,6 +247,13 @@ the composer and never used as decoration. Every state is a UX moment:
 | The AI (set by the host) | `idle` · `thinking` · `responding` · `error` |
 | The person (read by the composer from focus, text and mic) | attentive · `typing` · `listening` |
 
+### Water (`WaterRipple`)
+`src/components/shared/WaterRipple.tsx` — the marketing site's water, on the
+auth panel: a small wave simulation lit from its slope. A pointer trails a wake,
+a click drops a stone; still until touched, so nothing moves beside a form; it
+draws light only (still water is transparent), with a palette per theme; never
+started with reduced motion, never built while its host is hidden.
+
 ### Links
 `app-link`: **underlined at rest**, always — `--link` against body text is only
 2.53:1 in light and 1.45:1 in dark, below the 3:1 WCAG 1.4.1 needs before
@@ -297,6 +304,16 @@ opposite physics.
 | `--glass-to` | `rgb(255 255 255 / .50)` | `rgb(255 255 255 / .022)` |
 | `--glass-inset` | `rgb(255 255 255 / .72)` | `rgb(255 255 255 / .07)` |
 | `--hover-veil` | `rgb(255 255 255 / .40)` | `rgb(255 255 255 / .05)` |
+
+**Pane glass** (`.glass-pane`, `GlassPane`) — the marketing site's liquid glass,
+for surfaces that float over water (the auth panel's plates), not for ordinary
+cards. **Milk** in light (silver frost, ink type) and **smoke** in dark (darker
+than the water, light type), each with a rim that catches the light, a sheen
+from above, a glow along the foot and a sea-tinted shadow (`--pane-*`). 28px
+corner, a 44px squircle where `corner-shape` is supported. `lean` adds the
+site's pointer lean — 5° at the edge, a pool of light and a line on the rim —
+for a fine pointer with motion allowed. It sits in `@layer components`, so a
+utility on the element (`rounded-full`) still wins.
 
 ---
 
