@@ -10,7 +10,7 @@ const LEAN = 5;
 /**
  * A pane of the website's liquid glass (`.glass-pane` in globals.css): milk on
  * a light ground, smoke on a dark one. For surfaces that float over water —
- * the auth panel's plates — not for ordinary cards, which keep `Card`.
+ * the auth form's pane — not for ordinary cards, which keep `Card`.
  *
  * `lean` adds the website's pointer lean: the pane tips towards the pointer
  * and a soft pool of light follows it across the face, with a brighter line

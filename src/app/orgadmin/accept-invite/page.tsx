@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
 
+import { AuthHeading } from "@/components/auth/AuthHeading";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +16,11 @@ import { readJson, writeJson } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
 const EMPTY_PASSWORD_ERROR = "Please enter a password.";
-const MISMATCH_ERROR = "Password and Confirm Password do not match.";
+const MISMATCH_ERROR = "Passwords do not match.";
 const CONSENT_ERROR = "Please accept Terms & Conditions and Privacy Policy.";
 
 const fieldClassName =
-  "h-11 rounded-md border-border bg-white px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
+  "h-11 rounded-md border-border bg-card px-3 text-body-sm placeholder:text-placeholder md:text-body-sm";
 
 export default function OrgAdminAcceptInvitePage() {
   const router = useRouter();
@@ -59,15 +60,10 @@ export default function OrgAdminAcceptInvitePage() {
 
   return (
     <AuthShell>
-      <div className="flex w-full max-w-[400px] flex-col items-stretch gap-5">
-        <div className="flex flex-col items-center gap-1.5 text-center">
-          <h1 className="text-h4 font-medium text-extended-dark-cyan">
-            Activate Your Account
-          </h1>
-          <p className="text-body-sm text-muted-foreground">
-            Set a password for {ORG_ADMIN_DEMO_ORG.name}
-          </p>
-        </div>
+      <div className="flex w-full flex-col items-stretch gap-6">
+        <AuthHeading title="Activate your account">
+          Set a password for {ORG_ADMIN_DEMO_ORG.name}
+        </AuthHeading>
 
         <form className="flex w-full flex-col gap-4" onSubmit={handleSubmit}>
           <div className="flex w-full flex-col gap-3">
@@ -110,7 +106,7 @@ export default function OrgAdminAcceptInvitePage() {
             </div>
             <div className="flex w-full flex-col gap-1.5">
               <Label htmlFor="invite-confirm-password" className="text-caption font-normal text-foreground">
-                Confirm Password
+                Confirm password
               </Label>
               <PasswordInput
                 id="invite-confirm-password"
@@ -148,7 +144,7 @@ export default function OrgAdminAcceptInvitePage() {
                   href="/terms"
                   target="_blank"
                   onClick={(e) => e.stopPropagation()}
-                  className="font-semibold text-foreground underline-offset-2 hover:underline"
+                  className="app-link font-medium"
                 >
                   terms and conditions
                 </Link>{" "}
@@ -157,7 +153,7 @@ export default function OrgAdminAcceptInvitePage() {
                   href="/privacy"
                   target="_blank"
                   onClick={(e) => e.stopPropagation()}
-                  className="font-semibold text-foreground underline-offset-2 hover:underline"
+                  className="app-link font-medium"
                 >
                   privacy policy
                 </Link>
@@ -171,7 +167,7 @@ export default function OrgAdminAcceptInvitePage() {
             ) : null}
           </div>
           <Button type="submit" className="h-11 w-full rounded-md text-body-sm font-medium">
-            Activate Account
+            Activate account
           </Button>
         </form>
       </div>
