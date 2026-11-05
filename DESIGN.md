@@ -247,17 +247,12 @@ the composer and never used as decoration. Every state is a UX moment:
 | The AI (set by the host) | `idle` · `thinking` · `responding` · `error` |
 | The person (read by the composer from focus, text and mic) | attentive · `typing` · `listening` |
 
-### Water (`WaterRipple`, `SeaSurface`)
-Two pieces of the marketing site's water, both light only (transparent where
-still) with a palette per theme, both off with reduced motion:
-
-- `WaterRipple` — a small wave simulation lit from its slope, on the auth
-  panel. A pointer trails a wake, a click drops a stone; still until touched,
-  so nothing moves beside a form; never built while its host is hidden.
-- `SeaSurface` — the site's hero sea, along the foot of the auth pages: its
-  swell, chop, lighting and colours in one fragment shader on a bare WebGL
-  canvas (no three.js), fading into the page at the horizon. Runs only while
-  on screen; one still frame with reduced motion; nothing without WebGL.
+### Water (`SeaSurface`)
+The marketing site's hero sea, along the foot of the auth pages: its swell,
+chop, lighting and colours in one fragment shader on a bare WebGL canvas (no
+three.js), with a palette per theme, fading into the page at the horizon. Runs
+only while on screen; one still frame with reduced motion; nothing without
+WebGL. It is the auth pages' only motion: nothing there answers the pointer.
 
 ### Links
 `app-link`: **underlined at rest**, always — `--link` against body text is only
@@ -273,12 +268,15 @@ focus ring built in.
   `max-w-6xl` column (1152px) with `gap-10`; `pb-32` keeps content clear of the
   AI composer docked at the foot. A left rail (`CoachFloatingNav`) carries the
   app's sections.
-- **The auth shell** (`AuthShell`): the website's hero as a page — logo top
-  left in brand teal, the form on a pane of glass, a breath of sky from the top
-  left, the sea along the foot — and, from `lg`, the panel as a window laid on
-  that surface: inset (28px, 40px below so it rests on the water) and rounded
-  32px. On short screens (≤ 860px tall) the room around the form gives way so
-  it never scrolls on a 1366 × 768 laptop.
+- **The auth shell** (`AuthShell`): the website's hero as a page, with the
+  form alone on it — one pane of glass (500px, a 420px form column) on the
+  page's centre line, the logo above it in brand teal, the sky straight
+  overhead and the sea low along the foot (`clamp(56px, 11vh, 110px)`). No
+  panel beside it: the room round the form is the design. Every auth page
+  opens with `AuthHeading`, so all of them share one centred title; labels and
+  fields stay left-aligned. On short screens (≤ 860px tall) the room around
+  the pane gives way and it may rest on the water, so even sign-up never
+  scrolls on a 1366 × 768 laptop.
 - **Spacing** is Tailwind's 4px scale. Siblings are spaced with `gap`, not
   per-element margins.
 - **Radius is by role**, not habit:
@@ -317,7 +315,7 @@ opposite physics.
 | `--hover-veil` | `rgb(255 255 255 / .40)` | `rgb(255 255 255 / .05)` |
 
 **Pane glass** (`.glass-pane`, `GlassPane`) — the marketing site's liquid glass,
-for surfaces that float over water (the auth panel's plates), not for ordinary
+for surfaces that float over water (the auth form's pane), not for ordinary
 cards. **Milk** in light (silver frost, ink type) and **smoke** in dark (darker
 than the water, light type), each with a rim that catches the light, a sheen
 from above, a glow along the foot and a sea-tinted shadow (`--pane-*`). 28px
